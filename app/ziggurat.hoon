@@ -4,7 +4,11 @@
 /+  default-agent, dbug, verb
 |%
 +$  card  card:agent:gall
-+$  state-0  [%0 ~]
++$  state-0
+  $:  %0
+      validators=(set ship)
+      epochs=(list epoch)
+  ==
 --
 ::
 =|  state-0
@@ -17,12 +21,19 @@
 +*  this  .
     def   ~(. (default-agent this %|) bowl)
 ::
-++  on-init  [~ this]
+++  on-init
+  =/  =state-0
+    :+  %0
+      (silt ~[~zod ~bus ~nec])
+    ~
+  :-  ~
+  this(state state-0)
 ++  on-save  !>(state)
 ++  on-load
   |=  =old=vase
   ^-  (quip card _this)
-  `this
+  =/  old-state  !<(state-0 old-vase)
+  `this(state old-state)
 ::
 ++  on-watch
   |=  =path
