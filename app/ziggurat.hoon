@@ -9,6 +9,12 @@
       validators=(set ship)
       epochs=(list epoch)
   ==
+::
+++  shuffle
+  |=  [set=(set ship) eny=@]
+  ^-  (list ship)
+  ::  TODO: implement Fisher-Yates shuffle based on a random seed
+  ~(tap in set)
 --
 ::
 =|  state-0
@@ -22,12 +28,12 @@
     def   ~(. (default-agent this %|) bowl)
 ::
 ++  on-init
-  =/  =state-0
-    :+  %0
-      (silt ~[~zod ~bus ~nec])
-    ~
-  :-  ~
-  this(state state-0)
+  =/  set  (silt ~[~zod ~bus ~nec])
+  =-  `this(state -)
+  ^-  state-0
+  :+  %0  set
+  [now.bowl 0 (shuffle set (mug ~)) ~]~
+::
 ++  on-save  !>(state)
 ++  on-load
   |=  =old=vase
@@ -38,11 +44,44 @@
 ++  on-watch
   |=  =path
   ^-  (quip card _this)
-  `this
+  ?+    path  !!
+      [%validator @ ~]
+    =/  =ship  (slav %p i.t.path)
+    ~|  "only validators can listen to block production!"
+    ?>  (~(has in validators) ship)
+    `this
+  ==
 ::
 ++  on-poke
   |=  [=mark =vase]
   ^-  (quip card _this)
+  |^
+  ?+    mark  !!
+      %noun
+    =^  cards  state
+      (poke-noun vase)
+    [cards this]
+  ==
+  ::
+  ++  poke-noun
+    |=  =^vase
+    ^-  (quip card _state)
+    =/  action  ;;(?(%start %end) q.vase)
+    ?:  ?=(%end action)  !!
+    :: TODO: start epoch state machine from here
+    `state
+  --
+::
+++  on-agent
+  |=  [=wire =sign:agent:gall]
+  ^-  (quip card _this)
+  `this
+::
+++  on-arvo
+  |=  [=wire =sign-arvo:agent:gall]
+  ^-  (quip card _this)
+  ::  TODO: set up behn timer after last block received such that you
+  ::  know when to skip someone
   `this
 ::
 ++  on-peek
@@ -50,8 +89,6 @@
   ^-  (unit (unit cage))
   ~
 ::
-++  on-arvo   on-arvo:def
-++  on-agent  on-agent:def
 ++  on-leave  on-leave:def
 ++  on-fail   on-fail:def
 --
