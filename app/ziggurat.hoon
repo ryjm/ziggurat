@@ -13,8 +13,20 @@
 ++  shuffle
   |=  [set=(set ship) eny=@]
   ^-  (list ship)
-  ::  TODO: implement Fisher-Yates shuffle based on a random seed
-  ~(tap in set)
+  =/  lis=(list ship)  ~(tap in set)
+  =/  len  (lent lis)
+  =/  rng  ~(. og eny)
+  =|  shuffled=(list ship)
+  |-
+  ?~  lis
+    shuffled
+  =^  num  rng
+    (rads:rng len)
+  %_  $
+    shuffled  [(snag num `(list ship)`lis) shuffled]
+    len       (dec len)
+    lis       (oust [num 1] `(list ship)`lis)
+  ==
 --
 ::
 =|  state-0
@@ -69,6 +81,7 @@
     =/  action  ;;(?(%start %end) q.vase)
     ?:  ?=(%end action)  !!
     :: TODO: start epoch state machine from here
+    ~&  (shuffle validators eny.bowl)
     `state
   --
 ::
