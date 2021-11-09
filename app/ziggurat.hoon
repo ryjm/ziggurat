@@ -45,29 +45,33 @@
   ^-  state-0
   :^  %0  set
     ~
-  [now.bowl 0 (shuffle set (mug ~)) ~]
+  [0 now.bowl (shuffle set (mug ~)) ~]
 ::
 ++  on-save  !>(state)
 ++  on-load
   |=  =old=vase
   ^-  (quip card _this)
   ::=/  old-state  !<(state-0 old-vase)
-  =/  old-state=state-0  [%0 (silt ~[~zod]) ~ [now.bowl 0 ~[~zod] ~]]
+  =/  old-state=state-0  [%0 (silt ~[~zod]) ~ [0 now.bowl ~[~zod] ~]]
   `this(state old-state)
 ::
 ++  on-watch
   |=  =path
   ^-  (quip card _this)
   ?+    path  !!
-      [%validator ?(%catch-up %updates) ^]
+      [%validator ?([%catch-up @ ~] [%updates ~])]
     ~|  "only validators can listen to block production!"
     ?>  (~(has in validators) src.bowl)
     =*  kind  i.t.path
     ?-    kind
         %catch-up
-      ::  TODO: issue fact containing missing epochs and then kick.
-      ::
-      `this
+      =/  start=@ud  (slav %ud i.t.t.path)
+      :_  this
+      :+  =-  [%give %fact ~ %zig-update !>(-)]
+          ^-  update
+          [%epochs-catchup (lot:poc epochs `start ~)]
+        [%give %kick ~ ~]
+      ~
     ::
         %updates
       ::  do nothing here, but send all new blocks and epochs on this path
@@ -82,36 +86,75 @@
   ?+    mark  !!
       %zig-action
     =^  cards  state
-      (poke-zig-action vase)
+      (poke-zig-action !<(action vase))
     [cards this]
   ==
   ::
   ++  poke-zig-action
-    |=  =^vase
+    |=  =action
     ^-  (quip card _state)
-    =/  action  ;;(?(%start %end) q.vase)
-    ?:  ?=(%end action)  !!
-    =^  cards  current-epoch
-      ~(catch-up epo current-epoch [our now]:bowl)
-    [cards state]
+    ?-    -.action
+        %start-epoch
+      `state
+    ==
   --
 ::
 ++  on-agent
   |=  [=wire =sign:agent:gall]
   ^-  (quip card _this)
-  `this
+  ?+    wire  (on-agent:def wire sign)
+      [%validator ?(%catch-up %updates) ^]
+    =*  kind  i.t.wire
+    ?-    kind
+        %catch-up
+      ::  TODO: pick a random validator from list and %watch his
+      ::  catchup path. set a timer, and wait for him to send you
+      ::  data. if he doesn't send it within a specified time,
+      ::  pick a random other validator to ask for the data from.
+      ::  rinse and repeat until you have caught up to the latest
+      ::  epoch.
+      ::
+      ::  TODO: handle %kicks, etc
+      ?>  ?=(%fact -.sign)
+      =/  =update  !<(update q.cage.sign)
+      `this
+    ::
+        %updates
+      ::  TODO: handle %kicks, etc
+      ?>  ?=(%fact -.sign)
+      =/  =update  !<(update q.cage.sign)
+      ~|  "updates must be new blocks"
+      ?>  ?=(%new-block -.update)
+      ~|  "new blocks can only be applied to the current epoch"
+      ?>  =(num.current-epoch epoch-num.update)
+      =^  cards  current-epoch
+        (~(their-turn epo [current-epoch [our now]:bowl]) `block.update)
+      [cards this]
+    ==
+  ==
 ::
 ++  on-arvo
   |=  [=wire =sign-arvo:agent:gall]
   ^-  (quip card _this)
   ?+    wire  (on-arvo:def wire sign-arvo)
-      [%skip-block @ ~]
+      [%timer @ @ ~]
+    =/  epoch-num  (slav %ud i.t.wire)
+    =/  block-num  (slav %ud i.t.t.wire)
     ?>  ?=([%behn %wake *] sign-arvo)
     ?~  error.sign-arvo
       ~&  error.sign-arvo
       `this
-    ::  TODO: skip this validator's turn, as we hit their timeout
-    `this
+    ~|  "we can only skip blocks in the current epoch"
+    ?>  =(num.current-epoch epoch-num)
+    =/  current-block-num
+      ?~  p=(bind (pry:bok blocks.current-epoch) head)
+        0
+      +(u.p)
+    ~|  "we can only skip the next block, not past or future blocks"
+    ?>  =(current-block-num block-num)
+    =^  cards  current-epoch
+      (~(their-turn epo [current-epoch [our now]:bowl]) ~)
+    [cards this]
   ==
 ::
 ++  on-peek

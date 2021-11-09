@@ -1,11 +1,10 @@
 |%
 ++  epoch-interval    ~s30
-++  blocks-per-epoch  100
 ::
-+$  epoch   [=start=time num=@ud order=(list ship) =blocks]
++$  epoch   [num=@ud =start=time order=(list ship) =blocks]
 ::
-+$  epochs  ((mop time epoch) gth)
-++  poc     ((on time epoch) gth)
++$  epochs  ((mop @ud epoch) gth)
+++  poc     ((on @ud epoch) gth)
 ::
 +$  block   [num=@ud data=(unit (pair signature chunks))]
 ::
@@ -22,7 +21,6 @@
   ==
 ::
 +$  action
-  $%  [%start-validating ~]
-      [%stop-validating ~]
+  $%  [%start-epoch ~]
   ==
 --
