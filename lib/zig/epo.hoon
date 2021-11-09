@@ -5,19 +5,20 @@
     ++  give-on-updates
       |=  =update
       ^-  card
-      [%give %fact /validator/updates^~ %zig-update !>(update)]
+      =-  [%give %fact - %zig-update !>(update)]
+      ~[/validator/updates /fisherman/updates]
     ::
     ++  wait
       |=  [epoch-num=@ud block-num=@ud epoch-start=@da]
       ^-  card
       =-  [%pass - %arvo %b %wait (deadline epoch-start block-num)]
-      /timer/(scot %ud epoch-num)/(scot %ud block-num)
+      /timers/block/(scot %ud epoch-num)/(scot %ud block-num)
     ::
     ++  rest
       |=  [epoch-num=@ud block-num=@ud epoch-start=@da]
       ^-  card
       =-  [%pass - %arvo %b %rest (deadline epoch-start block-num)]
-      /timer/(scot %ud epoch-num)/(scot %ud block-num)
+      /timers/block/(scot %ud epoch-num)/(scot %ud block-num)
     ::
     ++  deadline
       |=  [start-time=@da num=@ud]
@@ -31,49 +32,66 @@
   ++  our-turn
     |=  =chunks
     ^-  (quip card epoch)
-    =/  num=@ud
-      ?~  p=(bind (pry:bok blocks.cur) head)
-        0
-      +(u.p)
-    =/  hash  (mug chunks)
+    =/  [next-num=@ud last-block=(unit block)]
+      ?~(p=(pry:bok blocks.cur) [0 ~] [+(-.u.p) `+.u.p])
+    ::  TODO: use full sha-256 instead of half sha-256 (sham)
+    ::
+    =/  prev-header-hash
+      ?~  last-block  (sham ~)
+      (sham p.u.last-block)
+    =/  data-hash  (sham chunks)
     =/  blk=block
-      [num `[(sign:sig our now hash) chunks]]
-    ::  TODO: kick off next epoch if we are the last block producer
+      =/  =block-header  [next-num prev-header-hash data-hash]
+      :-  block-header
+      `[(sign:sig our now (sham block-header)) chunks]
     :-  (give-on-updates [%new-block num.cur blk])^~
-    cur(blocks (put:bok blocks.cur num blk))
+    cur(blocks (put:bok blocks.cur next-num blk))
   ::
   ++  their-turn
     |=  blk=(unit block)
     ^-  (quip card epoch)
-    =/  num=@ud
-      ?~  p=(bind (pry:bok blocks.cur) head)
-        0
-      +(u.p)
+    =/  [next-num=@ud last-block=(unit block)]
+      ?~(p=(pry:bok blocks.cur) [0 ~] [+(-.u.p) `+.u.p])
+    =/  prev-header-hash
+      ?~  last-block  (sham ~)
+      (sham p.u.last-block)
     ?~  blk
       ::  this case occurs when someone misses their turn
       ::
-      `cur(blocks (put:bok blocks.cur num [num ~]))
-    ~|  "everyone must take their turn in order!"
-    ?>  =(num num.u.blk)
+      =/  =block  [[next-num prev-header-hash (sham ~)] ~]
+      `cur(blocks (put:bok blocks.cur next-num block))
     ::  this case occurs when someone takes their turn
     ::
-    ?>  ?=(^ data.u.blk)
-    =/  hash  (mug q.u.data.u.blk)
-    ~|  "validator's signature must be valid!"
-    ?>  (validate:sig our p.u.data.u.blk hash now)
-    :_  cur(blocks (put:bok blocks.cur num u.blk))
-    :+  ::  cancel old block deadline timer
+    ~|  "everyone must take their turn in order!"
+    ?>  =(next-num num.p.u.blk)
+    ~|  "transmitted blocks must have data!"
+    ?>  ?=(^ q.u.blk)
+    =*  hed  p.u.blk
+    =*  syg  p.u.q.u.blk
+    =*  dat  q.u.q.u.blk
+    ~|  "their previous header hash must equal our previous header hash!"
+    ?>  =(prev-header-hash prev-header-hash.hed)
+    ~|  "there must be at least one chunk!"
+    ?>  ?=(^ dat)
+    =/  data-hash  (sham dat)
+    ~|  "their data hash must be valid!"
+    ?>  =(data-hash data-hash.hed)
+    ~|  "their signature must be valid!"
+    ?>  (validate:sig our syg (sham hed) now)
+    :_  cur(blocks (put:bok blocks.cur next-num u.blk))
+    :~  ::  send block header to others
         ::
-        (rest num.cur num start-time.cur)
-      ::  set new block deadline timer
-      ::
-      %-  wait
-      ?:  =((lent order.cur) +(num))
-        [+(num.cur) 0 (deadline start-time.cur +(num))]
-      [num.cur +(num) start-time.cur]
-    ::  TODO: send out erasure code showing that you've seen this
-    ::  data
-    ~
+        (give-on-updates [%saw-block num.cur hed])
+        ::  cancel old block deadline timer
+        ::
+        (rest num.cur next-num start-time.cur)
+        ::  set new block deadline timer
+        ::
+        %-  wait
+        ?:  =((lent order.cur) +(next-num))
+          [+(num.cur) 0 (deadline start-time.cur +(next-num))]
+        [num.cur +(next-num) start-time.cur]
+    ==
   --
 --
 

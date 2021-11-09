@@ -5,27 +5,10 @@
 +$  card  card:agent:gall
 +$  state-0
   $:  %0
+      mode=?(%fisherman %validator %none)
       validators=(set ship)
       =epochs
       =current=epoch
-  ==
-::
-++  shuffle
-  |=  [set=(set ship) eny=@]
-  ^-  (list ship)
-  =/  lis=(list ship)  ~(tap in set)
-  =/  len  (lent lis)
-  =/  rng  ~(. og eny)
-  =|  shuffled=(list ship)
-  |-
-  ?~  lis
-    shuffled
-  =^  num  rng
-    (rads:rng len)
-  %_  $
-    shuffled  [(snag num `(list ship)`lis) shuffled]
-    len       (dec len)
-    lis       (oust [num 1] `(list ship)`lis)
   ==
 --
 ::
@@ -43,28 +26,27 @@
   =/  set  (silt ~[~zod])
   =-  `this(state -)
   ^-  state-0
-  :^  %0  set
-    ~
-  [0 now.bowl (shuffle set (mug ~)) ~]
+  :^  %0  %none  set
+  `[0 now.bowl (shuffle set (mug ~)) ~]
 ::
 ++  on-save  !>(state)
 ++  on-load
   |=  =old=vase
   ^-  (quip card _this)
   ::=/  old-state  !<(state-0 old-vase)
-  =/  old-state=state-0  [%0 (silt ~[~zod]) ~ [0 now.bowl ~[~zod] ~]]
+  =/  old-state=state-0  [%0 %none (silt ~[~zod]) `[0 now.bowl ~[~zod] ~]]
   `this(state old-state)
 ::
 ++  on-watch
   |=  =path
   ^-  (quip card _this)
   ?+    path  !!
-      [%validator ?([%catch-up @ ~] [%updates ~])]
+      [%validator ?([%catchup @ ~] [%updates ~])]
     ~|  "only validators can listen to block production!"
     ?>  (~(has in validators) src.bowl)
     =*  kind  i.t.path
     ?-    kind
-        %catch-up
+        %catchup
       =/  start=@ud  (slav %ud i.t.t.path)
       :_  this
       :+  =-  [%give %fact ~ %zig-update !>(-)]
@@ -77,6 +59,12 @@
       ::  do nothing here, but send all new blocks and epochs on this path
       `this
     ==
+  ::
+      [%fisherman %updates ~]
+    ~|  "comets and moons may not be fishermen, tiny dos protection"
+    ?>  (lte (met 3 src.bowl) 4)
+    ::  do nothing here, but send all new blocks and epochs on this path
+    `this
   ==
 ::
 ++  on-poke
@@ -94,34 +82,75 @@
     |=  =action
     ^-  (quip card _state)
     ?-    -.action
-        %start-epoch
-      `state
+        %start
+      ~|  "we have already started in this mode"
+      ?<  =(mode mode.action)
+      ?:  ?=(%validator mode)
+        =/  =ship
+          =/  rng  ~(. og eny.bowl)
+          =/  ran  (rad:rng ~(wyt in validators))
+          (snag ran ~(tap in validators))
+        =/  epoch-num=@ud
+          ?~(p=(bind (pry:poc epochs) head) 0 +(u.p))
+        =/  =wire  /validator/catchup/(scot %ud epoch-num)
+        :_  state(mode %validator)
+        :+  =-  [%pass - %arvo %b %wait (add now.bowl ~m1)]
+            /timers/catchup/(scot %ud epoch-num)/(scot %p ship)
+          [%pass (snoc wire (scot %p ship)) %agent [ship %ziggurat] %watch wire]
+        cleanup-fisherman
+      :_  state(mode %fisherman)
+      cleanup-validator
+    ::
+        %stop
+      :_  state(mode %none)
+      (weld cleanup-validator cleanup-fisherman)
     ==
+  ::
+  ++  cleanup-validator
+    ^-  (list card)
+    %+  murn  ~(tap by wex.bowl)
+    |=  [[=wire =ship =term] *]
+    ^-  (unit card)
+    ?.  ?=([%fisherman %updates *] wire)  ~
+    `[%pass wire %agent [ship term] %leave ~]
+  ::
+  ++  cleanup-fisherman
+    ^-  (list card)
+    %+  murn  ~(tap by wex.bowl)
+    |=  [[=wire =ship =term] *]
+    ^-  (unit card)
+    ?.  ?=([%fisherman %updates *] wire)  ~
+    `[%pass wire %agent [ship term] %leave ~]
   --
 ::
 ++  on-agent
   |=  [=wire =sign:agent:gall]
   ^-  (quip card _this)
   ?+    wire  (on-agent:def wire sign)
-      [%validator ?(%catch-up %updates) ^]
+      [%validator ?([%catchup @ @ ~] [%updates ~])]
+    ~|  "can only receive validator updates when we are a validator!"
+    ?>  ?=(%validator mode)
     =*  kind  i.t.wire
     ?-    kind
-        %catch-up
-      ::  TODO: pick a random validator from list and %watch his
-      ::  catchup path. set a timer, and wait for him to send you
-      ::  data. if he doesn't send it within a specified time,
-      ::  pick a random other validator to ask for the data from.
-      ::  rinse and repeat until you have caught up to the latest
-      ::  epoch.
-      ::
+        %catchup
       ::  TODO: handle %kicks, etc
+      ::
       ?>  ?=(%fact -.sign)
       =/  =update  !<(update q.cage.sign)
       `this
     ::
         %updates
-      ::  TODO: handle %kicks, etc
-      ?>  ?=(%fact -.sign)
+      ?<  ?=(%poke-ack -.sign)
+      ?:  ?=(%watch-ack -.sign)
+        ?~  p.sign
+          `this
+        ~&  u.p.sign
+        `this
+      ?:  ?=(%kick -.sign)
+        ::  resubscribe to validators for updates if kicked
+        ::
+        :_  this
+        [%pass wire %agent [src.bowl %ziggurat] %watch (snip `path`wire)]~
       =/  =update  !<(update q.cage.sign)
       ~|  "updates must be new blocks"
       ?>  ?=(%new-block -.update)
@@ -131,27 +160,37 @@
         (~(their-turn epo [current-epoch [our now]:bowl]) `block.update)
       [cards this]
     ==
+  ::
+      [%fisherman %updates ~]
+    ~|  "can only receive fisherman updates when we are a fisherman!"
+    ?>  ?=(%fisherman mode)
+    `this
   ==
 ::
 ++  on-arvo
   |=  [=wire =sign-arvo:agent:gall]
   ^-  (quip card _this)
   ?+    wire  (on-arvo:def wire sign-arvo)
-      [%timer @ @ ~]
-    =/  epoch-num  (slav %ud i.t.wire)
-    =/  block-num  (slav %ud i.t.t.wire)
+      [%timers ?([%block @ @ ~] [%catchup @ @ ~])]
+    ~|  "these timers are only relevant for validators!"
+    ?>  ?=(%validator mode)
+    =*  kind  i.t.wire
+    ?:  ?=(%catchup kind)
+      `this
+    =/  epoch-num  (slav %ud i.t.t.wire)
+    =/  block-num  (slav %ud i.t.t.t.wire)
     ?>  ?=([%behn %wake *] sign-arvo)
     ?~  error.sign-arvo
       ~&  error.sign-arvo
       `this
     ~|  "we can only skip blocks in the current epoch"
     ?>  =(num.current-epoch epoch-num)
-    =/  current-block-num
+    =/  next-block-num
       ?~  p=(bind (pry:bok blocks.current-epoch) head)
         0
       +(u.p)
     ~|  "we can only skip the next block, not past or future blocks"
-    ?>  =(current-block-num block-num)
+    ?>  =(next-block-num block-num)
     =^  cards  current-epoch
       (~(their-turn epo [current-epoch [our now]:bowl]) ~)
     [cards this]
