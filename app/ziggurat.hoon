@@ -156,8 +156,9 @@
       ?>  ?=(%new-block -.update)
       ~|  "new blocks can only be applied to the current epoch"
       ?>  =(num.current-epoch epoch-num.update)
-      =^  cards  current-epoch
-        (~(their-turn epo [current-epoch [our now]:bowl]) `block.update)
+      =*  cur  current-epoch
+      =^  cards  cur
+        (~(their-turn epo [cur [our now]:bowl]) [header block]:update)
       [cards this]
     ==
   ::
@@ -171,28 +172,28 @@
   |=  [=wire =sign-arvo:agent:gall]
   ^-  (quip card _this)
   ?+    wire  (on-arvo:def wire sign-arvo)
-      [%timers ?([%block @ @ ~] [%catchup @ @ ~])]
+      [%timers ?([%slot @ @ ~] [%catchup @ @ ~])]
     ~|  "these timers are only relevant for validators!"
     ?>  ?=(%validator mode)
     =*  kind  i.t.wire
     ?:  ?=(%catchup kind)
       `this
     =/  epoch-num  (slav %ud i.t.t.wire)
-    =/  block-num  (slav %ud i.t.t.t.wire)
+    =/  slot-num  (slav %ud i.t.t.t.wire)
     ?>  ?=([%behn %wake *] sign-arvo)
     ?~  error.sign-arvo
       ~&  error.sign-arvo
       `this
     ~|  "we can only skip blocks in the current epoch"
     ?>  =(num.current-epoch epoch-num)
-    =/  next-block-num
-      ?~  p=(bind (pry:bok blocks.current-epoch) head)
+    =/  next-slot-num
+      ?~  p=(bind (pry:sot slots.current-epoch) head)
         0
       +(u.p)
     ~|  "we can only skip the next block, not past or future blocks"
-    ?>  =(next-block-num block-num)
+    ?>  =(next-slot-num slot-num)
     =^  cards  current-epoch
-      (~(their-turn epo [current-epoch [our now]:bowl]) ~)
+      ~(skip-turn epo [current-epoch [our now]:bowl])
     [cards this]
   ==
 ::
