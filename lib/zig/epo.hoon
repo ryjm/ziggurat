@@ -79,7 +79,6 @@
     =-  `cur(slots (put:sot slots.cur next-num -))
     ^-  slot
     [[next-num prev-hed-hash (sham ~)] ~]
-
   ::
   ::  +their-block: occurs when someone takes their turn
   ::

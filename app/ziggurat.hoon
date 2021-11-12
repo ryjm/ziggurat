@@ -150,6 +150,15 @@
       ::
       ?>  ?=(%fact -.sign)
       =/  =update  !<(update q.cage.sign)
+::      ?:  ?|(?=(~ epochs.update) ?=(~ epochs))
+::        ::  get started producing blocks
+::        ?>  ?=(^ order.cur)
+::        :_  this
+::        =/  =wire  /timer
+::        =-  [%pass wire %arvo %b %rest -]
+::        ?:  =(i.order.cur our.bowl)
+::          now.bowl
+::
       `this
     ::
         %block-catchup
@@ -180,7 +189,18 @@
         =*  cur  current-epoch
         =^  cards  cur
           (~(their-block epo [cur [our now src]:bowl]) [header block]:update)
-        [cards this]
+        =*  slot-num  num.header.update
+        ?.  ?&  (lth +(slot-num) (lent order.cur))
+                =(our.bowl (snag +(slot-num) order.cur))
+            ==
+          ::  we are not the next block producer
+          ::
+          [cards this]
+        ::  our turn to produce a block, produce it immediately
+        ::
+        =^  cards2  cur
+          (~(our-block epo [cur [our now src]:bowl]) *chunks)
+        [(weld cards cards2) this]
       ?.  ?=(%saw-block -.update)  !!
       ~|  "we only care if a validator saw a block in the current epoch"
       ?>  =(num.current-epoch epoch-num.update)
@@ -220,9 +240,20 @@
       +(u.p)
     ~|  "we can only skip the next block, not past or future blocks"
     ?>  =(next-slot-num slot-num)
-    =^  cards  current-epoch
-      ~(skip-block epo [current-epoch [our now src]:bowl])
-    [cards this]
+    =*  cur  current-epoch
+    =^  cards  cur
+      ~(skip-block epo [cur [our now src]:bowl])
+    ?.  ?&  (lth +(slot-num) (lent order.cur))
+            =(our.bowl (snag +(slot-num) order.cur))
+        ==
+      ::  we are not the next block producer
+      ::
+      [cards this]
+    ::  our turn to produce a block, produce it immediately
+    ::
+    =^  cards2  cur
+      (~(our-block epo [cur [our now src]:bowl]) *chunks)
+    [(weld cards cards2) this]
   ==
 ::
 ++  on-peek
