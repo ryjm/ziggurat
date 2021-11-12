@@ -19,6 +19,7 @@
 ::
 +$  update
   $%  [%epochs-catchup =epochs]
+      [%blocks-catchup epoch-num=@ud =slots]
       [%new-block epoch-num=@ud header=block-header =block]
       :: todo: add data availability data
       ::

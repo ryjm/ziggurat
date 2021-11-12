@@ -32,19 +32,28 @@
       ?~  p=(pry:sot slots)
         [0 ~]
       [-.u.p `+.u.p]
+    ::
+    ++  block-catchup
+      |=  [src=ship epoch-num=@ud]
+      ^-  card
+      =/  =wire  /validator/block-catchup/(scot %ud epoch-num)
+      [%pass (snoc wire (scot %p src)) %agent [src %ziggurat] %watch wire]
     --
 |%
 ++  epo
-  |_  [cur=epoch [our=ship now=time]]
+  |_  [cur=epoch [our=ship now=time src=ship]]
   ::
-  ::  +our-turn: produce a block during our slot
+  ::  +our-block: produce a block during our slot
   ::
-  ++  our-turn
+  ++  our-block
     |=  data=chunks
     ^-  (quip card epoch)
     =/  [last-num=@ud last-slot=(unit slot)]
       (get-last-slot slots.cur)
     =/  next-num  ?~(last-slot 0 +(last-num))
+    ~|  "we must be a validator in this epoch and it must be our turn"
+    =/  our-num=@ud  (need (find our^~ order.cur))
+    ?>  =(our-num next-num)
     ::  TODO: use full sha-256 instead of half sha-256 (sham)
     ::
     =/  prev-hed-hash
@@ -57,9 +66,9 @@
     :-  (give-on-updates [%new-block num.cur p.slot (need q.slot)])^~
     cur(slots (put:sot slots.cur next-num slot))
   ::
-  ::  +skip-turn: occurs when someone misses their turn
+  ::  +skip-slot: occurs when someone misses their turn
   ::
-  ++  skip-turn
+  ++  skip-block
     ^-  (quip card epoch)
     =/  [last-num=@ud last-slot=(unit slot)]
       (get-last-slot slots.cur)
@@ -70,10 +79,11 @@
     =-  `cur(slots (put:sot slots.cur next-num -))
     ^-  slot
     [[next-num prev-hed-hash (sham ~)] ~]
+
   ::
-  ::  +their-turn: occurs when someone takes their turn
+  ::  +their-block: occurs when someone takes their turn
   ::
-  ++  their-turn
+  ++  their-block
     |=  [hed=block-header blk=block]
     ^-  (quip card epoch)
     =/  [last-num=@ud last-slot=(unit slot)]
@@ -108,6 +118,23 @@
           [+(num.cur) 0 (deadline start-time.cur +(next-num))]
         [num.cur +(next-num) start-time.cur]
     ==
+  ::
+  ::  +see-block: occurs when we are notified that a validator
+  ::  saw a particular block in a slot
+  ::
+  ++  see-block
+    |=  hed=block-header
+    ^-  (quip card epoch)
+    ::  TODO: check if their block header for this particular slot
+    ::  matches ours, and if not, ask them for more data
+    ::
+    =/  slot=(unit slot)  (get:sot slots.cur num.hed)
+    :_  cur
+    ?~  slot  ~
+    ?:  =(p.u.slot hed)
+      ::  note: everything checked out, they have the same history we do
+      ~
+    (block-catchup src num.cur)^~
   --
 --
 

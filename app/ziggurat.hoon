@@ -41,12 +41,16 @@
   |=  =path
   ^-  (quip card _this)
   ?+    path  !!
-      [%validator ?([%catchup @ ~] [%updates ~])]
+      [%validator ?([%epoch-catchup @ ~] [%block-catchup @ ~] [%updates ~])]
     ~|  "only validators can listen to block production!"
     ?>  (~(has in validators) src.bowl)
     =*  kind  i.t.path
     ?-    kind
-        %catchup
+        %updates
+      ::  do nothing here, but send all new blocks and epochs on this path
+      `this
+    ::
+        %epoch-catchup
       =/  start=@ud  (slav %ud i.t.t.path)
       :_  this
       :+  =-  [%give %fact ~ %zig-update !>(-)]
@@ -55,9 +59,15 @@
         [%give %kick ~ ~]
       ~
     ::
-        %updates
-      ::  do nothing here, but send all new blocks and epochs on this path
-      `this
+        %block-catchup
+      =/  epoch-num  (slav %ud i.t.t.path)
+      ?>  =(epoch-num num.current-epoch)
+      :_  this
+      :+  =-  [%give %fact ~ %zig-update !>(-)]
+          ^-  update
+          [%blocks-catchup [num slots]:current-epoch]
+        [%give %kick ~ ~]
+      ~
     ==
   ::
       [%fisherman %updates ~]
@@ -83,6 +93,7 @@
     ^-  (quip card _state)
     ?-    -.action
         %start
+      ?>  =(src.bowl our.bowl)
       ~|  "we have already started in this mode"
       ?<  =(mode mode.action)
       ?:  ?=(%validator mode)
@@ -92,16 +103,17 @@
           (snag ran ~(tap in validators))
         =/  epoch-num=@ud
           ?~(p=(bind (pry:poc epochs) head) 0 +(u.p))
-        =/  =wire  /validator/catchup/(scot %ud epoch-num)
+        =/  =wire  /validator/epoch-catchup/(scot %ud epoch-num)
         :_  state(mode %validator)
         :+  =-  [%pass - %arvo %b %wait (add now.bowl ~m1)]
-            /timers/catchup/(scot %ud epoch-num)/(scot %p ship)
+            /timers/epoch-catchup/(scot %ud epoch-num)/(scot %p ship)
           [%pass (snoc wire (scot %p ship)) %agent [ship %ziggurat] %watch wire]
         cleanup-fisherman
       :_  state(mode %fisherman)
       cleanup-validator
     ::
         %stop
+      ?>  =(src.bowl our.bowl)
       :_  state(mode %none)
       (weld cleanup-validator cleanup-fisherman)
     ==
@@ -127,12 +139,21 @@
   |=  [=wire =sign:agent:gall]
   ^-  (quip card _this)
   ?+    wire  (on-agent:def wire sign)
-      [%validator ?([%catchup @ @ ~] [%updates ~])]
+      [%validator ?([%epoch-catchup @ @ ~] [%block-catchup @ @ ~] [%updates ~])]
     ~|  "can only receive validator updates when we are a validator!"
     ?>  ?=(%validator mode)
     =*  kind  i.t.wire
     ?-    kind
-        %catchup
+        %epoch-catchup
+      ::  TODO: handle chain selection for epochs here
+      ::  TODO: handle %kicks, etc
+      ::
+      ?>  ?=(%fact -.sign)
+      =/  =update  !<(update q.cage.sign)
+      `this
+    ::
+        %block-catchup
+      ::  TODO: handle chain selection here
       ::  TODO: handle %kicks, etc
       ::
       ?>  ?=(%fact -.sign)
@@ -153,12 +174,19 @@
         [%pass wire %agent [src.bowl %ziggurat] %watch (snip `path`wire)]~
       =/  =update  !<(update q.cage.sign)
       ~|  "updates must be new blocks"
-      ?>  ?=(%new-block -.update)
-      ~|  "new blocks can only be applied to the current epoch"
+      ?:  ?=(%new-block -.update)
+        ~|  "new blocks can only be applied to the current epoch"
+        ?>  =(num.current-epoch epoch-num.update)
+        =*  cur  current-epoch
+        =^  cards  cur
+          (~(their-block epo [cur [our now src]:bowl]) [header block]:update)
+        [cards this]
+      ?.  ?=(%saw-block -.update)  !!
+      ~|  "we only care if a validator saw a block in the current epoch"
       ?>  =(num.current-epoch epoch-num.update)
       =*  cur  current-epoch
       =^  cards  cur
-        (~(their-turn epo [cur [our now]:bowl]) [header block]:update)
+        (~(see-block epo [cur [our now src]:bowl]) header.update)
       [cards this]
     ==
   ::
@@ -172,11 +200,11 @@
   |=  [=wire =sign-arvo:agent:gall]
   ^-  (quip card _this)
   ?+    wire  (on-arvo:def wire sign-arvo)
-      [%timers ?([%slot @ @ ~] [%catchup @ @ ~])]
+      [%timers ?([%slot @ @ ~] [%epoch-catchup @ @ ~])]
     ~|  "these timers are only relevant for validators!"
     ?>  ?=(%validator mode)
     =*  kind  i.t.wire
-    ?:  ?=(%catchup kind)
+    ?:  ?=(%epoch-catchup kind)
       `this
     =/  epoch-num  (slav %ud i.t.t.wire)
     =/  slot-num  (slav %ud i.t.t.t.wire)
@@ -193,7 +221,7 @@
     ~|  "we can only skip the next block, not past or future blocks"
     ?>  =(next-slot-num slot-num)
     =^  cards  current-epoch
-      ~(skip-turn epo [current-epoch [our now]:bowl])
+      ~(skip-block epo [current-epoch [our now src]:bowl])
     [cards this]
   ==
 ::
