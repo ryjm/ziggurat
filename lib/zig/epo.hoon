@@ -38,6 +38,30 @@
       ^-  card
       =/  =wire  /validator/block-catchup/(scot %ud epoch-num)
       [%pass (snoc wire (scot %p src)) %agent [src %ziggurat] %watch wire]
+    ::
+    ++  poke-new-epoch
+      |=  [our=ship epoch-num=@ud]
+      ^-  card
+      =-  [%pass /new-epoch/(scot %ud epoch-num) %agent [our %ziggurat] %poke -]
+      zig-action+!>(`action`[%new-epoch ~])
+    ::
+    ++  shuffle
+      |=  [set=(set ship) eny=@]
+      ^-  (list ship)
+      =/  lis=(list ship)  ~(tap in set)
+      =/  len  (lent lis)
+      =/  rng  ~(. og eny)
+      =|  shuffled=(list ship)
+      |-
+      ?~  lis
+        shuffled
+      =^  num  rng
+        (rads:rng len)
+      %_  $
+        shuffled  [(snag num `(list ship)`lis) shuffled]
+        len       (dec len)
+        lis       (oust [num 1] `(list ship)`lis)
+      ==
     --
 |%
 ++  epo
@@ -63,8 +87,16 @@
     =/  =slot
       =/  hed=block-header  [next-num prev-hed-hash data-hash]
       [hed `[(sign:sig our now (sham hed)) data]]
-    :-  (give-on-updates [%new-block num.cur p.slot (need q.slot)])^~
-    cur(slots (put:sot slots.cur next-num slot))
+    ~&  our-turn+slot
+    :_  cur(slots (put:sot slots.cur next-num slot))
+    :-  (give-on-updates [%new-block num.cur p.slot (need q.slot)])
+    ?:  =((lent order.cur) +(next-num))
+      ::  start new epoch
+      ::
+      (poke-new-epoch our +(num.cur))^~
+    ::  set new block deadline timer
+    ::
+    (wait num.cur +(next-num) start-time.cur)^~
   ::
   ::  +skip-slot: occurs when someone misses their turn
   ::
@@ -76,7 +108,15 @@
     =/  prev-hed-hash
       ?~  last-slot  (sham ~)
       (sham p.u.last-slot)
-    =-  `cur(slots (put:sot slots.cur next-num -))
+    ~&  skip-block+next-num
+    :-  ?:  =((lent order.cur) +(next-num))
+          ::  start new epoch
+          ::
+          (poke-new-epoch our +(num.cur))^~
+        ::  set new block deadline timer
+        ::
+        (wait num.cur +(next-num) start-time.cur)^~
+    =-  cur(slots (put:sot slots.cur next-num -))
     ^-  slot
     [[next-num prev-hed-hash (sham ~)] ~]
   ::
@@ -85,6 +125,7 @@
   ++  their-block
     |=  [hed=block-header blk=block]
     ^-  (quip card epoch)
+    ~&  their-block+[hed blk]
     =/  [last-num=@ud last-slot=(unit slot)]
       (get-last-slot slots.cur)
     =/  next-num  ?~(last-slot 0 +(last-num))
@@ -93,30 +134,32 @@
       (sham p.u.last-slot)
     ~|  "everyone must take their turn in order!"
     ?>  =(next-num num.hed)
-    ~|  "transmitted blocks must have data!"
-    ?>  ?=(^ q.blk)
+    ::  TODO: remove this once we have chunk production
+    ::~|  "transmitted blocks must have data!"
+    ::?>  ?=(^ q.blk)
     ~|  "their previous header hash must equal our previous header hash!"
     ?>  =(prev-hed-hash prev-header-hash.hed)
-    ~|  "there must be at least one chunk!"
-    ?>  ?=(^ q.blk)
+    ::  TODO: remove this once we have chunk production
+    ::~|  "there must be at least one chunk!"
+    ::?>  ?=(^ q.blk)
     ~|  "their data hash must be valid!"
     ?>  =((sham q.blk) data-hash.hed)
     ~|  "their signature must be valid!"
     ?>  (validate:sig our p.blk (sham hed) now)
     :_  cur(slots (put:sot slots.cur next-num [hed `blk]))
-    :~  ::  send block header to others
+  :+    ::  send block header to others
         ::
         (give-on-updates [%saw-block num.cur hed])
-        ::  cancel old block deadline timer
-        ::
-        (rest num.cur next-num start-time.cur)
-        ::  set new block deadline timer
-        ::
-        %-  wait
-        ?:  =((lent order.cur) +(next-num))
-          [+(num.cur) 0 (deadline start-time.cur +(next-num))]
-        [num.cur +(next-num) start-time.cur]
-    ==
+      ::  cancel old block deadline timer
+      ::
+      (rest num.cur next-num start-time.cur)
+    ?:  =((lent order.cur) +(next-num))
+      ::  start new epoch
+      ::
+      (poke-new-epoch our +(num.cur))^~
+    ::  set new block deadline timer
+    ::
+    (wait num.cur +(next-num) start-time.cur)^~
   ::
   ::  +see-block: occurs when we are notified that a validator
   ::  saw a particular block in a slot
@@ -124,6 +167,7 @@
   ++  see-block
     |=  hed=block-header
     ^-  (quip card epoch)
+    ~&  see-block+hed
     ::  TODO: check if their block header for this particular slot
     ::  matches ours, and if not, ask them for more data
     ::
@@ -134,6 +178,16 @@
       ::  note: everything checked out, they have the same history we do
       ~
     (block-catchup src num.cur)^~
+  ::
+  ++  new-epoch
+    |=  =epochs
+    ^-  [epoch ^epochs]
+    :_  (put:poc epochs num.cur cur)
+    ^-  epoch
+    :^    +(num.cur)
+        (deadline start-time.cur +((lent order.cur)))
+      (shuffle (silt order.cur) (mug slots))
+    ~
   --
 --
 
