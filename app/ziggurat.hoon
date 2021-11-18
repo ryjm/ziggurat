@@ -247,14 +247,32 @@
       ?>  (validate-history epochs.update)
       `state(epochs epochs.update)
     ?>  (validate-history epochs.update)
-    =/  a-epochs=^epochs  epochs.update
-    =/  b-epochs=^epochs  epochs
-    |-  ^-  (quip card _state)
-    ::  TODO: full chain selection across epochs and slots here
-    ::
-    ?:  (lth ~(wyt by a-epochs) ~(wyt by b-epochs))
-      `state
-    `state
+    =/  a=(list (pair @ud epoch))  (tap:poc epochs.update)
+    =/  b=(list (pair @ud epoch))  (tap:poc epochs)
+    :-  ~
+    |-  ^-  _state
+    ?~  a
+      state
+    ?~  b
+      state(epochs epochs.update)
+    ?:  =(i.a i.b)
+      $(a t.a, b t.b)
+    =/  a-s=(list (pair @ud slot))  (tap:sot slots.q.i.a)
+    =/  b-s=(list (pair @ud slot))  (tap:sot slots.q.i.b)
+    |-  ^-  _state
+    ?~  a-s
+      state
+    ?~  b-s
+      state(epochs epochs.update)
+    ?:  =(i.a-s i.b-s)
+      $(a-s t.a-s, b-s t.b-s)
+    ?~  q.q.i.a-s
+      state
+    ?~  q.q.i.b-s
+      state(epochs epochs.update)
+    ::  TODO: what to do if neither one is shorter nor does either
+    ::  skip a block first?
+    !!
   ::
   ++  validate-history
     |=  =^epochs
