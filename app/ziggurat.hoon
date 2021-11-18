@@ -7,8 +7,18 @@
   $:  %0
       mode=?(%fisherman %validator %none)
       =epochs
-      =current=epoch
   ==
+::
+::  +got-prv-hed-hash: get last epoch and grab its last header hash,
+::  otherwise if that epoch is empty, then use (sham ~)
+::
+++  got-prv-hed-hash
+  |=  [next-slot-num=@ud =epochs cur=epoch]
+  ?.  =(next-slot-num 0)
+    (sham p:(got:sot slots.cur (dec next-slot-num)))
+  ?:  =(num.cur 0)  (sham ~)
+  =-  (sham p.-)
+  `slot`+:(need (pry:sot slots:(got:poc epochs (dec num.cur))))
 --
 ::
 =|  state-0
@@ -21,28 +31,23 @@
 +*  this  .
     def   ~(. (default-agent this %|) bowl)
 ::
-++  on-init
-  =/  set  (silt ~[~zod ~bus])
-  =-  `this(state -)
-  ^-  state-0
-  :^  %0  %none  ~
-  [0 now.bowl (shuffle:epo set (mug ~)) ~]
+++  on-init  `this(state [%0 %none ~])
 ::
 ++  on-save  !>(state)
 ++  on-load
   |=  =old=vase
   ^-  (quip card _this)
-  ::=/  old-state  !<(state-0 old-vase)
-  =/  old-state=state-0  [%0 %none ~ [0 ~2021.11.16..22.36.00..0000 ~[~zod ~bus] ~]]
+  =/  old-state  !<(state-0 old-vase)
   `this(state old-state)
 ::
 ++  on-watch
   |=  =path
   ^-  (quip card _this)
   ?+    path  !!
-      [%validator ?([%epoch-catchup @ ~] [%block-catchup @ ~] [%updates ~])]
+      [%validator ?([%epoch-catchup @ ~] [%updates ~])]
     ~|  "only validators can listen to block production!"
-    ?>  (~(has in (silt order.current-epoch)) src.bowl)
+    =/  cur=epoch  +:(need (pry:poc epochs))
+    ?>  (~(has in (silt order.cur)) src.bowl)
     =*  kind  i.t.path
     ?-    kind
         %updates
@@ -50,21 +55,15 @@
       `this
     ::
         %epoch-catchup
-      =/  start=@ud  (slav %ud i.t.t.path)
+      ~|  "we must be a validator to be listened to on this path!"
+      ?>  =(mode %validator)
+      =/  start=(unit @ud)
+        =-  ?:(=(- 0) ~ `(dec -))
+        (slav %ud i.t.t.path)
       :_  this
       :+  =-  [%give %fact ~ %zig-update !>(-)]
           ^-  update
-          [%epochs-catchup (lot:poc epochs `start ~) current-epoch]
-        [%give %kick ~ ~]
-      ~
-    ::
-        %block-catchup
-      =/  epoch-num  (slav %ud i.t.t.path)
-      ?>  =(epoch-num num.current-epoch)
-      :_  this
-      :+  =-  [%give %fact ~ %zig-update !>(-)]
-          ^-  update
-          [%blocks-catchup [num slots]:current-epoch]
+          [%epochs-catchup (lot:poc epochs start ~)]
         [%give %kick ~ ~]
       ~
     ==
@@ -95,54 +94,64 @@
       ?>  =(src.bowl our.bowl)
       ~|  "we have already started in this mode"
       ?<  =(mode mode.action)
+      =?  epochs  ?=(^ history.action)
+        history.action
       ?:  ?=(%validator mode.action)
-        =/  validators  (~(del in (silt order.current-epoch)) our.bowl)
-        ?:  =(~(wyt in validators) 0)
-          ::  likely only to occur with a single validator testnet,
-          ::  our turn to produce a block, produce it immediately
-          ::
-          =*  cur  current-epoch
-          =^  cards  cur
-            (~(our-block epo [cur [our now src]:bowl]) *chunks)
-          :_  state(mode %validator)
-          (weld cards cleanup-fisherman)
-        =/  catchup=ship
-          =/  rng  ~(. og eny.bowl)
-          =/  ran  (rad:rng ~(wyt in validators))
-          (snag ran ~(tap in validators))
-        =/  epoch-num=@ud
-          ?~(p=(bind (pry:poc epochs) head) 0 +(u.p))
-        =/  =wire  /validator/epoch-catchup/(scot %ud epoch-num)
+        ?>  ?|(?=(^ epochs) ?=(^ validators.action))
         :_  state(mode %validator)
-        :+  =-  [%pass - %arvo %b %wait (add now.bowl ~m1)]
-            /timers/epoch-catchup/(scot %ud epoch-num)/(scot %p catchup)
-          [%pass (snoc wire (scot %p catchup)) %agent [catchup %ziggurat] %watch wire]
-        %+  weld  (weld cleanup-fisherman cleanup-validator)
-        %+  turn  ~(tap in validators)
-        |=  s=ship
-        ^-  card
-        =/  =^wire  /validator/updates/(scot %p s)
-        [%pass wire %agent [s %ziggurat] %watch /validator/updates]
+        %-  zing
+        :~  cleanup-fisherman
+            cleanup-validator
+            (watch-updates validators.action)
+            ?~  epochs  ~
+            =/  cur=epoch  +:(need (pry:poc epochs))
+            ~|  "we must be a validator in this epoch"
+            =/  our-slot=@ud  (need (find our.bowl^~ order.cur))
+            :_  ~  %^  wait:epo  0
+              our-slot
+            [(sub start-time.cur epoch-interval) `(div epoch-interval 3)]
+        ==
       :_  state(mode %fisherman)
       (weld cleanup-validator cleanup-fisherman)
     ::
         %stop
       ?>  =(src.bowl our.bowl)
-      :_  state(mode %none)
+      :_  state(mode %none, epochs ~)
       (weld cleanup-validator cleanup-fisherman)
     ::
         %new-epoch
       ?>  =(src.bowl our.bowl)
-      =*  cur  current-epoch
+      =/  cur=epoch  +:(need (pry:poc epochs))
+      =/  next-slot-num
+        ?~  p=(bind (pry:sot slots.cur) head)
+          0
+        +(u.p)
+      =/  prev-hash
+        (got-prv-hed-hash next-slot-num epochs cur)
       =^  new-epoch  epochs
-        (~(new-epoch epo [cur [our now src]:bowl]) epochs)
+        (~(new-epoch epo cur prev-hash [our now src]:bowl) epochs)
+      ~&  [new-epoch epochs]
+      :_  state(epochs (put:poc epochs num.new-epoch new-epoch))
+      %+  weld  (watch-updates (silt order.new-epoch))
+      =-  (wait:epo num.new-epoch 0 - ~)^~
       ?:  =(our.bowl (snag 0 order.new-epoch))
-        =^  cards  new-epoch
-          (~(our-block epo [new-epoch [our now src]:bowl]) *chunks)
-        [cards state(current-epoch new-epoch)]
-      :-  (wait:epo num.new-epoch 0 start-time.new-epoch)^~
-      state(current-epoch new-epoch)
+        ::  set a timer to produce our block
+        ::
+        now.bowl
+      ::  set a timer for the next deadline
+      ::
+      start-time.new-epoch
     ==
+  ::
+  ++  watch-updates
+    |=  validators=(set ship)
+    ^-  (list card)
+    =.  validators  (~(del in validators) our.bowl)
+    %+  turn  ~(tap in validators)
+    |=  s=ship
+    ^-  card
+    =/  =^wire  /validator/updates/(scot %p s)
+    [%pass wire %agent [s %ziggurat] %watch /validator/updates]
   ::
   ++  cleanup-validator
     ^-  (list card)
@@ -166,28 +175,11 @@
   ^-  (quip card _this)
   |^
   ?+    wire  (on-agent:def wire sign)
-      [%validator ?([%epoch-catchup @ @ ~] [%block-catchup @ @ ~] [%updates @ ~])]
+      [%validator ?([%epoch-catchup @ @ ~] [%updates @ ~])]
+    ~|  "can only receive validator updates when we are a validator!"
+    ?>  =(mode %validator)
     =*  kind  i.t.wire
     ?-    kind
-        %epoch-catchup
-      ?:  ?=(%kick -.sign)
-        `this
-      ?:  ?=(%watch-ack -.sign)
-        `this
-      ?>  ?=(%fact -.sign)
-      =/  =update  !<(update q.cage.sign)
-      =^  cards  state
-        (epoch-catchup update)
-      [cards this]
-    ::
-        %block-catchup
-      ::  TODO: handle chain selection here
-      ::  TODO: handle %kicks, etc
-      ::
-      ?>  ?=(%fact -.sign)
-      =/  =update  !<(update q.cage.sign)
-      `this
-    ::
         %updates
       ?<  ?=(%poke-ack -.sign)
       ?:  ?=(%watch-ack -.sign)
@@ -200,74 +192,110 @@
         ::
         :_  this
         [%pass wire %agent [src.bowl %ziggurat] %watch (snip `path`wire)]~
-      =/  =update  !<(update q.cage.sign)
-      ~|  "updates must be new blocks"
-      ?:  ?=(%new-block -.update)
-        ~|  "new blocks can only be applied to the current epoch"
-        ?>  =(num.current-epoch epoch-num.update)
-        =*  cur  current-epoch
-        =^  cards  cur
-          (~(their-block epo [cur [our now src]:bowl]) [header block]:update)
-        =*  slot-num  num.header.update
-        ?.  ?&  (lth +(slot-num) (lent order.cur))
-                =(our.bowl (snag +(slot-num) order.cur))
-            ==
-          ::  we are not the next block producer
-          ::
-          [cards this]
-        ::  our turn to produce a block, produce it immediately
-        ::
-        =^  cards2  cur
-          (~(our-block epo [cur [our now src]:bowl]) *chunks)
-        [(weld cards cards2) this]
-      ?.  ?=(%saw-block -.update)  !!
-      ~|  "we only care if a validator saw a block in the current epoch"
-      ?>  =(num.current-epoch epoch-num.update)
-      =*  cur  current-epoch
-      =^  cards  cur
-        (~(see-block epo [cur [our now src]:bowl]) header.update)
+      =^  cards  state
+        (update-fact !<(update q.cage.sign))
+      [cards this]
+    ::
+        %epoch-catchup
+      ?<  ?=(%poke-ack -.sign)
+      ?:  ?=(%kick -.sign)  `this
+      ?:  ?=(%watch-ack -.sign)
+        ?.  ?=(^ p.sign)    `this
+        ::  TODO: watch someone else
+        `this
+      ?>  ?=(%fact -.sign)
+      =^  cards  state
+        (epoch-catchup !<(update q.cage.sign))
       [cards this]
     ==
   ::
       [%fisherman %updates ~]
     ~|  "can only receive fisherman updates when we are a fisherman!"
-    ?>  ?=(%fisherman mode)
+    ?>  =(%fisherman mode)
     `this
   ==
+  ::
+  ++  update-fact
+    |=  =update
+    ^-  (quip card _state)
+    =/  cur=epoch  +:(need (pry:poc epochs))
+    =/  next-slot-num
+      ?~  p=(bind (pry:sot slots.cur) head)
+        0
+      +(u.p)
+    =/  prev-hash
+      (got-prv-hed-hash next-slot-num epochs cur)
+    ?:  ?=(%new-block -.update)
+      ~|  "new blocks can only be applied to the current epoch"
+      ?>  =(num.cur epoch-num.update)
+            =^  cards  cur
+        %-  ~(their-block epo cur prev-hash [our now src]:bowl)
+        [header `block]:update
+      [cards state(epochs (put:poc epochs num.cur cur))]
+    ?.  ?=(%saw-block -.update)  !!
+    ~|  "we only care if a validator saw a block in the current epoch"
+    ?>  =(num.cur epoch-num.update)
+    :_  state
+    (~(see-block epo cur prev-hash [our now src]:bowl) header.update)
   ::
   ++  epoch-catchup
     |=  =update
     ^-  (quip card _state)
-    ~|  "can only receive validator updates when we are a validator!"
-    ?>  ?=(%validator mode)
     ~|  "can only receive an epoch-catchup update"
     ?>  ?=(%epochs-catchup -.update)
     ~&  update
     ~&  [?=(~ epochs.update) ?=(~ epochs)]
-    ?:  ?&(?=(~ epochs.update) ?=(~ epochs))
-      =*  t-cur  current-epoch.update
-      =*  o-cur  current-epoch
-      ~&  %both-empty
-      ?:  ?&  =(num.o-cur num.t-cur)
-              =(start-time.o-cur start-time.t-cur)
-              =(order.o-cur order.t-cur)
-          ==
-        ~&  %same
-        ::  trust our own data and move forward
-        ::
-        ?:  =(our.bowl (snag 0 order.o-cur))
-          =^  cards  o-cur
-            (~(our-block epo [o-cur [our now src]:bowl]) *chunks)
-          [cards state]
-        :-  (wait:epo num.o-cur 0 start-time.o-cur)^~
-        state
-      ::  validate all blocks in current epoch
-      ::
-      :_  state(current-epoch current-epoch.update)
-      ~
+::    =/  cur=epoch  +:(need (pry:poc epochs))
+::    ?:  ?&(?=(~ epochs.update) ?=(~ epochs))
+::      =/  t-cur=epoch  +:(need (pry:poc epochs.update))
+::      ~&  %both-empty
+::      ?:  ?&  =(num.cur num.t-cur)
+::              =(start-time.cur start-time.t-cur)
+::              =(order.cur order.t-cur)
+::          ==
+::        ~&  %same
+::        ::  trust our own data and move forward
+::        ::
+::        ?:  =(our.bowl (snag 0 order.cur))
+::          =^  cards  cur
+::            (~(our-block epo cur [our now src]:bowl) *chunks)
+::          [cards state]
+::        :-  (wait:epo num.cur 0 start-time.cur)^~
+::        state
+::      ::  validate all blocks in current epoch
+::      ::
+::      :_  state(epochs (put:poc epochs num.t-cur t-cur))
+::      ~
     ::  TODO: full chain selection across epochs and slots here
     ::
     `state
+  ::
+  ++  validate-history
+    |=  =^epochs
+    ^-  ?
+    =/  prev=epoch  +:(need (ram:poc epochs))
+    ?>  (validate-slots slots.prev order.prev)
+    =/  pocs=(list (pair @ud epoch))  (tap:poc epochs)
+    |-  ^-  ?
+    ?~  pocs  %.y
+    =*  p  p.i.pocs
+    =*  q  q.i.pocs
+    ?&  =(p num.q)
+    ==
+  ::
+  ++  validate-slots
+    |=  [=slots order=(list ship)]
+    ^-  ?
+    ?<  =(~ slots)
+    |-  ^-  ?
+    ?~  slots  %.y
+    =*  n  p.i.slots
+    =*  s  q.i.slots
+    =*  hed  p.s
+    =*  blk  q.s
+::    =^  cards  cur
+::      (~(their-block epo [cur [our now src]:bowl]) hed blk)
+    %.y
   --
 ::
 ++  on-arvo
@@ -275,13 +303,15 @@
   |^  ^-  (quip card _this)
   ?+    wire  (on-arvo:def wire sign-arvo)
       [%timers ?([%slot @ @ ~] [%epoch-catchup @ @ ~])]
+    ~|  "these timers are only relevant for validators!"
+    ?>  =(%validator mode)
     =*  kind  i.t.wire
     ?:  ?=(%epoch-catchup kind)
       `this
     =/  epoch-num  (slav %ud i.t.t.wire)
     =/  slot-num  (slav %ud i.t.t.t.wire)
     ?>  ?=([%behn %wake *] sign-arvo)
-    ?~  error.sign-arvo
+    ?^  error.sign-arvo
       ~&  error.sign-arvo
       `this
     =^  cards  state
@@ -292,30 +322,28 @@
   ++  slot-timer
     |=  [epoch-num=@ud slot-num=@ud]
     ^-  (quip card _state)
-    ~|  "these timers are only relevant for validators!"
-    ?>  ?=(%validator mode)
+    ~&  slot-timer+[epoch-num slot-num]
     ~|  "we can only skip blocks in the current epoch"
-    ?>  =(num.current-epoch epoch-num)
+    =/  cur=epoch  +:(need (pry:poc epochs))
+    ?>  =(num.cur epoch-num)
     =/  next-slot-num
-      ?~  p=(bind (pry:sot slots.current-epoch) head)
+      ?~  p=(bind (pry:sot slots.cur) head)
         0
       +(u.p)
-    ~|  "we can only skip the next block, not past or future blocks"
+    =/  =ship  (snag slot-num order.cur)
+    ~|  "we can only add the next block, not past or future blocks"
     ?>  =(next-slot-num slot-num)
-    =*  cur  current-epoch
+    =/  prev-hash
+      (got-prv-hed-hash slot-num epochs cur)
+    ?:  ?&(=(ship our.bowl) (lth now.bowl (deadline:epo start-time.cur slot-num)))
+      =^  cards  cur
+        (~(our-block epo cur prev-hash [our now src]:bowl) *chunks)
+      [cards state(epochs (put:poc epochs num.cur cur))]
+    =/  cur=epoch  +:(need (pry:poc epochs))
     =^  cards  cur
-      ~(skip-block epo [cur [our now src]:bowl])
-    ?.  ?&  (lth +(slot-num) (lent order.cur))
-            =(our.bowl (snag +(slot-num) order.cur))
-        ==
-      ::  we are not the next block producer
-      ::
-      [cards state]
-    ::  our turn to produce a block, produce it immediately
-    ::
-    =^  cards2  cur
-      (~(our-block epo [cur [our now src]:bowl]) *chunks)
-    [(weld cards cards2) state]
+      ~(skip-block epo cur prev-hash [our now src]:bowl)
+    ~&  cur
+    [cards state(epochs (put:poc epochs num.cur cur))]
   --
 ::
 ++  on-peek

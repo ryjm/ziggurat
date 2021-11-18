@@ -18,7 +18,7 @@
 +$  chunk      ~
 ::
 +$  update
-  $%  [%epochs-catchup =epochs =current=epoch]
+  $%  [%epochs-catchup =epochs]
       [%blocks-catchup epoch-num=@ud =slots]
       [%new-block epoch-num=@ud header=block-header =block]
       :: todo: add data availability data
@@ -27,7 +27,7 @@
   ==
 ::
 +$  action
-  $%  [%start mode=?(%fisherman %validator)]
+  $%  [%start mode=?(%fisherman %validator) history=epochs validators=(set ship)]
       [%stop ~]
       [%new-epoch ~]
   ==
