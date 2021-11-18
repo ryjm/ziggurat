@@ -95,7 +95,6 @@
     =/  =slot
       =/  hed=block-header  [next-num prev-hed-hash data-hash]
       [hed `[(sign:sig our now (sham hed)) data]]
-    ~&  our-turn+slot
     :_  cur(slots (put:sot slots.cur next-num slot))
     :-  (give-on-updates [%new-block num.cur p.slot (need q.slot)])
     ?:  =((lent order.cur) +(next-num))
@@ -116,7 +115,6 @@
     =/  prev-hed-hash
       ?~  last-slot  prev-hash
       (sham p.u.last-slot)
-    ~&  skip-block+next-num
     :-  ?:  =((lent order.cur) +(next-num))
           ::  start new epoch
           ::
@@ -133,7 +131,6 @@
   ++  their-block
     |=  [hed=block-header blk=(unit block)]
     ^-  (quip card epoch)
-    ~&  their-block+[hed blk]
     =/  [last-num=@ud last-slot=(unit slot)]
       (get-last-slot slots.cur)
     =/  next-num  ?~(last-slot 0 +(last-num))

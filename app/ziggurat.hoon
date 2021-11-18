@@ -130,7 +130,6 @@
         (got-prv-hed-hash next-slot-num epochs cur)
       =^  new-epoch  epochs
         (~(new-epoch epo cur prev-hash [our now src]:bowl) epochs)
-      ~&  [new-epoch epochs]
       :_  state(epochs (put:poc epochs num.new-epoch new-epoch))
       %+  weld  (watch-updates (silt order.new-epoch))
       =-  (wait:epo num.new-epoch 0 - ~)^~
@@ -241,31 +240,9 @@
   ++  epoch-catchup
     |=  =update
     ^-  (quip card _state)
-    ~|  "can only receive an epoch-catchup update"
+    ~|  "must be an %epoch-catchup update"
     ?>  ?=(%epochs-catchup -.update)
-    ~&  update
-    ~&  [?=(~ epochs.update) ?=(~ epochs)]
-::    =/  cur=epoch  +:(need (pry:poc epochs))
-::    ?:  ?&(?=(~ epochs.update) ?=(~ epochs))
-::      =/  t-cur=epoch  +:(need (pry:poc epochs.update))
-::      ~&  %both-empty
-::      ?:  ?&  =(num.cur num.t-cur)
-::              =(start-time.cur start-time.t-cur)
-::              =(order.cur order.t-cur)
-::          ==
-::        ~&  %same
-::        ::  trust our own data and move forward
-::        ::
-::        ?:  =(our.bowl (snag 0 order.cur))
-::          =^  cards  cur
-::            (~(our-block epo cur [our now src]:bowl) *chunks)
-::          [cards state]
-::        :-  (wait:epo num.cur 0 start-time.cur)^~
-::        state
-::      ::  validate all blocks in current epoch
-::      ::
-::      :_  state(epochs (put:poc epochs num.t-cur t-cur))
-::      ~
+    ?~  epochs.update  `state
     ::  TODO: full chain selection across epochs and slots here
     ::
     `state
@@ -342,7 +319,6 @@
     =/  cur=epoch  +:(need (pry:poc epochs))
     =^  cards  cur
       ~(skip-block epo cur prev-hash [our now src]:bowl)
-    ~&  cur
     [cards state(epochs (put:poc epochs num.cur cur))]
   --
 ::
