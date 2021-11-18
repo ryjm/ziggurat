@@ -243,36 +243,53 @@
     ~|  "must be an %epoch-catchup update"
     ?>  ?=(%epochs-catchup -.update)
     ?~  epochs.update  `state
+    ?~  epochs
+      ?>  (validate-history epochs.update)
+      `state(epochs epochs.update)
+    ?>  (validate-history epochs.update)
+    =/  a-epochs=^epochs  epochs.update
+    =/  b-epochs=^epochs  epochs
+    |-  ^-  (quip card _state)
     ::  TODO: full chain selection across epochs and slots here
     ::
+    ?:  (lth ~(wyt by a-epochs) ~(wyt by b-epochs))
+      `state
     `state
   ::
   ++  validate-history
     |=  =^epochs
     ^-  ?
     =/  prev=epoch  +:(need (ram:poc epochs))
-    ?>  (validate-slots slots.prev order.prev)
+    ?>  (validate-slots prev (sham ~))
     =/  pocs=(list (pair @ud epoch))  (tap:poc epochs)
     |-  ^-  ?
     ?~  pocs  %.y
-    =*  p  p.i.pocs
-    =*  q  q.i.pocs
-    ?&  =(p num.q)
-    ==
+    ?.  ?&  =(p.i.pocs num.q.i.pocs)
+            =(+(num.prev) num.q.i.pocs)
+            %+  validate-slots  q.i.pocs
+            (got-prv-hed-hash 0 epochs q.i.pocs)
+        ==
+      %.n
+    $(pocs t.pocs, prev q.i.pocs)
   ::
   ++  validate-slots
-    |=  [=slots order=(list ship)]
+    |=  [=epoch prev-hash=@uvH]
     ^-  ?
+    =/  slots=(list (pair @ud slot))  (tap:sot slots.epoch)
     ?<  =(~ slots)
+    =/  test-epoch=^epoch  epoch(slots ~)
     |-  ^-  ?
     ?~  slots  %.y
-    =*  n  p.i.slots
-    =*  s  q.i.slots
-    =*  hed  p.s
-    =*  blk  q.s
-::    =^  cards  cur
-::      (~(their-block epo [cur [our now src]:bowl]) hed blk)
-    %.y
+    =*  hed  p.q.i.slots
+    =*  blk  q.q.i.slots
+    ?.  =(p.i.slots num.hed)  %.n
+    =/  fake=[ship time ship]
+      :+  our.bowl
+        (dec (deadline:epo start-time.test-epoch num.hed))
+      (snag num.hed order.epoch)
+    =^  *  test-epoch
+      (~(their-block epo test-epoch prev-hash fake) hed blk)
+    $(slots t.slots, prev-hash (sham hed))
   --
 ::
 ++  on-arvo

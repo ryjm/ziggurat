@@ -137,8 +137,12 @@
     =/  prev-hed-hash
       ?~  last-slot  prev-hash
       (sham p.u.last-slot)
+    ~|  "must not be submitted past the deadline!"
+    ?>  (lth now (deadline start-time.cur num.hed))
     ~|  "everyone must take their turn in order!"
     ?>  =(next-num num.hed)
+    ~|  "each ship must take their own turn"
+    ?>  =(src (snag num.hed order.cur))
     ~|  "transmitted blocks must have data or have been skipped!"
     ?>  ?|  ?=(~ blk)
             ?=(^ q.u.blk)
