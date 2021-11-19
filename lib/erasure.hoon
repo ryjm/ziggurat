@@ -2,12 +2,18 @@
   |%
   +$  field
     $:  size=@ud
+        exp=@
+        log=@
+    ==
+  +$  field-list
+    $:  size=@ud
         exp=(list @ud)
         log=(list @ud)
     ==
   :: encoded data type
   +$  encoded-chunks
     $:  amount=@ud
+        needed=@ud
         padding-bytes=@ud
         nsym=@ud
         field-size=@ud
@@ -35,13 +41,25 @@
   ^-  encoded-chunks
   ::  n, the number of chunks needed to reconstruct
   ::
-  =/  n  (dec (div nchunks 2))
+  =/  n  
+    %-  dec 
+    %+  div
+      nchunks
+    2
   =/  padding-bytes
-    (sub n (mod (met 3 input) n))
+    =/  extra
+      %+  mod  (met 3 input)  n
+    ?:  =(extra 0)
+      0
+    %+  sub
+      n
+    extra
   ::  nsym, the number of extra code symbols encoding will generate
   ::
-  =/  nsym  (sub nchunks n)
-  =/  smallest-field-size  (bex (met 0 nchunks))
+  =/  nsym
+    %+  sub  nchunks  n
+  =/  smallest-field-size
+    %-  bex  (met 0 nchunks)
   ::  the galois field used for encoding
   ::
   =/  f
@@ -49,16 +67,22 @@
     ?:  (gth 256 smallest-field-size)
       256
     smallest-field-size
+  ::  irreducible encoder polynomial represented as atom
+  ::
   =/  gen
     (~(rs-generator-poly gf-math f) nsym)
+  =/  gen-lent
+    (met 3 gen)
   ~&  "nchunks: {<nchunks>}"
   ~&  "n: {<n>}"
-  ::  the number of 'slices' input atom will become
+  ::  the number of bytes in 'slices' input atom will become
   ::
   =/  total
     ?:  =(0 padding-bytes)
-      (div (met 3 input) n)
-    (succ (div (met 3 input) n))
+      %+  div  (met 3 input)  n
+    %-  succ
+    %+  div  (met 3 input)  n
+  ~&  "total: {<total>}"
   ::  an atom containing the encoded bytes, but rearranged
   ::  such that erasures can be done to large pieces of data
   ::
@@ -83,7 +107,7 @@
           !! 
       =/  symbols
         =+  :-  i=(dec nchunks)
-            encoded=(lsh [3 (dec (lent gen))] (rev 3 n piece))
+            encoded=(lsh [3 (dec gen-lent)] (rev 3 n piece))
         |-  ^+  encoded
         ?:  =(i +(n))  encoded
         =/  coef  (cut 3 [i 1] encoded)
@@ -96,12 +120,13 @@
         =/  subloop-result
           =+  j=1
           |-  ^+  encoded
-          ?:  =(j (lent gen))  encoded
+          ?:  =(j gen-lent)
+            encoded
           =/  new
             %+  mix
               (cut 3 [(sub i j) 1] encoded)
             %+  ~(gf-mul gf-math f)
-              (snag j gen)
+              (cut 3 [j 1] gen)
             coef
           %=  $
             j  +(j)
@@ -134,39 +159,61 @@
       count  +(count)
       remaining  (rsh [3 n] remaining)
     ==  
-  [nchunks padding-bytes nsym size.f ~ (rip-with-padding [3 total] encoded-frags)]
+  [nchunks n padding-bytes nsym size.f ~ (rip-with-padding [3 total] encoded-frags)]
 ::  $decode: take a list of erasure-coded chunks and perform repairs
 ::
 ::    Decode needs at least as many symbols as missing chunks to
 ::    successfully decode the chunks. TODO change to atom/byte
 ::    manipulation
+::    Gives back a cell of the decoded data and the ECC code symbols
 ::
 ++  decode
   ~/  %decode
   |=  encoded=encoded-chunks
-  ::  gives back a cell of the decoded data and the ECC code symbols
-  ::  TODO change this to atoms
-  ^-  [(list @) (list @)]
+  ^-  (list [(list @) (list @)])
   ?:  (gth amount.encoded 255)
     !!
   ?:  (gth (lent missing.encoded) nsym.encoded)
     !!
   =/  f  (generate-field field-size.encoded)
-  :: need to reconstruct encoded bytes linearly
-  :: rather than split between chunks
-  :: =/  linear-stream
-  ::   =+  [collected=*@ chunk-count=*@ud]
-  ::   |-  ^+  collected
-  ::   ?:  =(chunk-count amount.encoded)
-  ::     :: finished
-  ::     collected
-  =/  repaired  chunks.encoded
+  =/  reconstructed-amount  (met 3 (rear chunks.encoded))
+  ::  need to reconstruct encoded bytes linearly
+  ::  rather than split between chunks
+  ::
+  =/  linear-stream
+    ^-  (list (list @))
+    =+  [collected=*(list (list @)) n=*@ud]
+    |-  ^+  collected
+    ?:  =(n reconstructed-amount)
+      ::  finished
+      collected
+    =/  slice
+      ^-  (list @)
+      ::  grab the nth byte from each chunk
+      ::
+      %+  turn
+        chunks.encoded
+      |=  chunk=@
+      (cut 3 [n 1] chunk)
+    =.  collected
+      %+  snoc
+        collected
+      slice
+    %=  $
+        n  +(n)
+    ==
+  ::  now go through reconstructed chunks and decode one at a time
+  ::
+  %+  turn
+    linear-stream
+  |=  chunk=(list @)
+  ^-  [(list @) (list @)]
   =/  synd
-    (~(calc-syndromes gf-math f) chunks.encoded nsym.encoded)
+    (~(calc-syndromes gf-math f) chunk nsym.encoded)
   ::  if max val in synd is 0, no erasures
   ::
   =/  repaired
-    (~(correct-errata gf-math f) chunks.encoded synd missing.encoded)
+    (~(correct-errata gf-math f) chunk synd missing.encoded)
   ::  check if max val in synd is NOT 0 and throw an error (couldn't correct)
   ::
   =/  pos  (sub amount.encoded nsym.encoded)
@@ -183,22 +230,29 @@
   |=  size=@
   ^-  field
   =/  exp-and-log
-    %^    spin  
-        (gulf 0 (dec size))
-      [(reap size 0) 1]
-    |=  [i=@ud [log=(list @ud) x=@ud]]
-    ?:  =(0 i)
-      [1 [log x]]
-    =/  x  (lsh 0 x)
-    =/  x
+    =+  [i=0 exp=*@ log=*@ x=1]
+    |-  ^+  [exp log]
+    ?:  =(i (dec size))
+      [exp log]
+    ?:  =(i 0)
+      %=  $
+          i  +(i)
+          exp  (cat 3 1 exp)
+      ==
+    =.  x  (lsh 0 x)
+    =.  x
       ?.  =((dis x size) 0)
         (mix x (con size 0x1D))
       x
-    [x [(snap log x i) x]]
+    %=  $
+        i  +(i)
+        exp  (cat 3 exp x)::insert x at i
+        log  (sew 3 [x 1 i] log)
+    ==
   =/  exp
-    (weld p.exp-and-log p.exp-and-log)
+    (cat 3 -.exp-and-log -.exp-and-log)
   =/  log
-    -.q.exp-and-log
+    +.exp-and-log
   [size exp log]
 ::  $rip-with-padding: $rip, but pad the last item to fit bite size.
 :: 
@@ -212,8 +266,6 @@
 ::  Galois math
 ::
 ++  gf-math
-  ::  may need to tweak this jet-hint
-  ::
   ~%  %gf-math-functions  ..field  ~
   |_  f=field
   ++  gf-add
@@ -236,14 +288,11 @@
             =(y 0)
         ==
       0
-    %+  snag
+    %^  cut  3
+      :_  1
       %+  add
-        %+  snag
-          x
-        log.f
-      %+  snag
-        y
-      log.f
+        (cut 3 [x 1] log.f)
+      (cut 3 [y 1] log.f)
     exp.f
   ::
   ++  gf-div
@@ -255,28 +304,26 @@
       !!
     ?:  =(x 0)
       0
-    %+  snag
-      %+  sub
-        %+  add
-          %+  snag
-            x
-          log.f
-        255
-      %+  snag
-        y
-      log.f
+    %^  cut  3
+      :_  1
+      %+  mod
+        %+  sub
+          %+  add
+            (cut 3 [x 1] log.f)
+          255
+        (cut 3 [y 1] log.f)
+      255
     exp.f
   ::
   ++  gf-pow
     ~/  %gf-pow
     |=  [x=@ power=@]
     ^-  @
-    %+  snag
+    %^  cut  3
+      :_  1
       %+  mod
         %+  mul
-          %+  snag
-            x
-          log.f
+          (cut 3 [x 1] log.f)
         power
       255
     exp.f
@@ -285,12 +332,11 @@
     ~/  %gf-inverse
     |=  [x=@]
     ^-  @
-    %+  snag
+    %^  cut  3
+      :_  1
       %+  sub
         255
-      %+  snag
-        x
-      log.f
+      (cut 3 [x 1] log.f)
     exp.f
   ::
   ::  Polynomial math
@@ -345,18 +391,52 @@
         (gulf 0 (sub (lent p) 1))
       [j r]
     |=  [i=@ [j=@ r=(list @)]]
+    =/  a
+      %+  gf-add
+        %+  snag
+          (add i j)
+        r
+      %+  gf-mul
+        (snag i p)
+      (snag j q)
     :-  i
     :-  j
     %^    snap
         r
       (add i j)
-    %+  gf-add
-      %+  snag
-        (add i j)
-      r
-    %+  gf-mul
-      (snag i p)
-    (snag j q)
+    a
+    
+  ::
+  ++  gf-poly-mul-bytes
+    ~/  %gf-poly-mul-bytes
+    |=  [p=@ q=@]
+    ^-  @
+    =/  el-p  (met 3 p)
+    =/  el-q  (met 3 q)
+    =+  [j=0 output=*@]
+    |-  ^-  @
+    ?:  =(j el-q)
+      output
+    ::  inner loop
+    ::
+    =.  output
+      =+  i=0
+      |-  ^-  @
+      ?:  =(i el-p)
+        output
+      =/  r
+        %+  gf-add
+          (cut 3 [(add i j) 1] output)
+        %+  gf-mul
+          (cut 3 [i 1] p)
+        (cut 3 [j 1] q) 
+      %=  $
+          i  +(i)
+          output  (sew 3 [(add i j) 1 r] output)
+      ==
+    %=  $
+        j  +(j)
+    ==
   ::
   ++  gf-poly-eval
     ~/  %gf-poly-eval
@@ -381,23 +461,25 @@
   ::
   ::  Reed-Solomon encoding utils
   ::
-  ::  TODO make faster; this is really inefficient
   ++  rs-generator-poly
     ~/  %rs-generator-poly
     |=  nsym=@
-    ^-  (list @)
-    =/  g  `(list @)`~[1]
-    =<  q
-    %^    spin
-        (gulf 0 (dec nsym))
-      g
-    |=  [i=@ g=(list @)]
-    :-  i
-    %+  gf-poly-mul
-      g
-    %+  weld
-      `(list @)`~[1]
-    ~[(gf-pow 2 i)]
+    ^-  @
+    =+  [i=0 output=1]
+    |-
+    ?:  =(i nsym)
+      output
+    =.  output
+      %+  gf-poly-mul-bytes
+        output
+      %^  cat  3
+        1
+      %+  gf-pow
+        2
+      i
+    %=  $
+        i  +(i)
+    ==
   ::
   ::  Reed-Solomon decoding utils
   ::  Currently just handling repairing *erasures*, 
