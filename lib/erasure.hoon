@@ -41,104 +41,141 @@
   ^-  encoded-chunks
   ::  n, the number of chunks needed to reconstruct
   ::
+  |^
   =/  n  
-    %-  dec 
-    %+  div
-      nchunks
-    2
+    %-  dec  %+  div  nchunks  2
   =/  padding-bytes
     =/  extra
-      %+  mod  (met 3 input)  n
+      %+  mod  %+  met  3  input  n
     ?:  =(extra 0)
       0
-    %+  sub
-      n
-    extra
+    %+  sub  n  extra
   ::  nsym, the number of extra code symbols encoding will generate
   ::
-  =/  nsym
-    %+  sub  nchunks  n
+  =/  nsym  %+  sub  nchunks  n
   =/  smallest-field-size
-    %-  bex  (met 0 nchunks)
+    %-  bex  
+    %+  met  0  nchunks
   ::  the galois field used for encoding
   ::
   =/  f
     %-  generate-field
-    ?:  (gth 256 smallest-field-size)
+    ?:  %+  gth  256  smallest-field-size
       256
     smallest-field-size
   ::  irreducible encoder polynomial represented as atom
   ::
   =/  gen
-    (~(rs-generator-poly gf-math f) nsym)
+    %-  ~(rs-generator-poly gf-math f)  nsym
   =/  gen-lent
-    (met 3 gen)
+    %+  met  3  gen
   ~&  "nchunks: {<nchunks>}"
   ~&  "n: {<n>}"
   ::  the number of bytes in 'slices' input atom will become
   ::
   =/  total
     ?:  =(0 padding-bytes)
-      %+  div  (met 3 input)  n
-    %-  succ
-    %+  div  (met 3 input)  n
+      %+  div  
+        %+  met  3  input
+      n
+    %-  succ  
+    %+  div
+      %+  met  3  input
+    n
   ~&  "total: {<total>}"
   ::  an atom containing the encoded bytes, but rearranged
   ::  such that erasures can be done to large pieces of data
   ::
   =/  encoded-frags
-    =+  [remaining=input encoded-frags=*@ count=*@ud]
+    %:  encode-frags
+        input
+        n
+        f
+        nsym
+        nchunks
+        gen
+        gen-lent
+        total
+    ==
+  :*  nchunks
+      n
+      padding-bytes
+      nsym
+      size.f
+      ~
+      %+  rip-with-padding  
+        [3 total]
+      encoded-frags
+  ==
+  ++  encode-piece
+    |=  [piece=@ n=@ud f=field nsym=@ nchunks=@ generator=@ gen-lent=@ud]
+    ^-  @
+    ::  throw an error if piece is too long
+    ::
+    ?:  (gth nchunks (dec size.f))
+        !! 
+    =+  :-  i=(dec nchunks)
+        encoded=(lsh [3 (dec gen-lent)] (rev 3 n piece))
+    |-  ^+  encoded
+    ?:  =(i +(n))
+      ::  return result
+      ::
+      %^  cat  3
+        piece
+      (rev 3 nsym (end [3 nsym] encoded))
+    =/  coef  (cut 3 [i 1] encoded)
+    ::  don't do anything if on an empty byte
+    ::
+    ?:  =(coef 0)
+      %=  $
+        i  (dec i)
+      ==
+    =/  subloop-result
+      =+  j=1
+      |-  ^+  encoded
+      ?:  =(j gen-lent)
+        encoded
+      =/  new
+        %+  mix
+          (cut 3 [(sub i j) 1] encoded)
+        %+  ~(gf-mul gf-math f)
+          (cut 3 [j 1] generator)
+        coef
+      %=  $
+        j  +(j)
+        encoded  (sew 3 [(sub i j) 1 new] encoded)
+      ==
+    %=  $
+      i  (dec i)
+      encoded  subloop-result
+    ==
+  ++  encode-frags
+    |=  [remaining=@ n=@ud f=field nsym=@ nchunks=@ generator=@ gen-lent=@ud total=@ud]
+    ^-  @
+    =+  [encoded-frags=*@ count=*@ud]
     |-  ^+  encoded-frags
     ?:  =(remaining 0)
       encoded-frags
     =/  piece
-      (end [3 n] remaining)
+      %+  end  [3 n]  remaining
     ::  pad with 0s if input < n bytes
     ::
     =.  piece
       ?.  (lth (met 3 piece) n)
         piece
-      (lsh [3 (sub n (met 3 piece))] piece)
+      %+  lsh
+        [3 (sub n (met 3 piece))]
+      piece
     =/  encoded-piece
-      ^-  @
-      ::  throw an error if message too long
-      ::
-      ?:  (gth nchunks (dec size.f))
-          !! 
-      =/  symbols
-        =+  :-  i=(dec nchunks)
-            encoded=(lsh [3 (dec gen-lent)] (rev 3 n piece))
-        |-  ^+  encoded
-        ?:  =(i +(n))  encoded
-        =/  coef  (cut 3 [i 1] encoded)
-        ::  don't do anything if on an empty byte
-        ::
-        ?:  =(coef 0)
-          %=  $
-            i  (dec i)
-          ==
-        =/  subloop-result
-          =+  j=1
-          |-  ^+  encoded
-          ?:  =(j gen-lent)
-            encoded
-          =/  new
-            %+  mix
-              (cut 3 [(sub i j) 1] encoded)
-            %+  ~(gf-mul gf-math f)
-              (cut 3 [j 1] gen)
-            coef
-          %=  $
-            j  +(j)
-            encoded  (sew 3 [(sub i j) 1 new] encoded)
-          ==
-        %=  $
-          i  (dec i)
-          encoded  subloop-result
-        ==
-      %^  cat  3
-        piece
-      (rev 3 nsym (end [3 nsym] symbols))
+      %:  encode-piece
+          piece
+          n
+          f
+          nsym
+          nchunks
+          generator
+          gen-lent
+      ==
     ::  now, assign every nth byte of encoded-piece
     ::  to the matching index in an encoded set of bytes
     ::
@@ -158,8 +195,8 @@
     %=  $
       count  +(count)
       remaining  (rsh [3 n] remaining)
-    ==  
-  [nchunks n padding-bytes nsym size.f ~ (rip-with-padding [3 total] encoded-frags)]
+    ==
+  --
 ::  $decode: take a list of erasure-coded chunks and perform repairs
 ::
 ::    Decode needs at least as many symbols as missing chunks to
@@ -291,8 +328,8 @@
     %^  cut  3
       :_  1
       %+  add
-        (cut 3 [x 1] log.f)
-      (cut 3 [y 1] log.f)
+        %^  cut  3  [x 1]  log.f
+      %^  cut  3  [y 1]  log.f
     exp.f
   ::
   ++  gf-div
@@ -309,9 +346,9 @@
       %+  mod
         %+  sub
           %+  add
-            (cut 3 [x 1] log.f)
+            %^  cut  3  [x 1]  log.f
           255
-        (cut 3 [y 1] log.f)
+        %^  cut  3  [y 1]  log.f
       255
     exp.f
   ::
@@ -323,7 +360,7 @@
       :_  1
       %+  mod
         %+  mul
-          (cut 3 [x 1] log.f)
+          %^  cut  3  [x 1]  log.f
         power
       255
     exp.f
@@ -336,7 +373,7 @@
       :_  1
       %+  sub
         255
-      (cut 3 [x 1] log.f)
+      %^  cut  3  [x 1]  log.f
     exp.f
   ::
   ::  Polynomial math
@@ -348,16 +385,14 @@
     %+  turn
       p
     |=  i=@
-    %+  gf-mul
-      i
-    x
+    %+  gf-mul  i  x
   ::
   ++  gf-poly-add
     ~/  %gf-poly-add
     |=  [p=(list @) q=(list @)]
     ^-  (list @)
     =/  [longer=(list @) shorter=(list @)]
-      ?:  (gth (lent p) (lent q))
+      ?:  %+  gth  (lent p)  (lent q)
         [p q]
       [q p]
     =/  diff
