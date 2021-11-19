@@ -43,45 +43,39 @@
   ::
   |^
   =/  n  
-    %-  dec  %+  div  nchunks  2
+    (dec (div nchunks 2))
   =/  padding-bytes
     =/  extra
-      %+  mod  %+  met  3  input  n
+      (mod (met 3 input) n)
     ?:  =(extra 0)
       0
-    %+  sub  n  extra
+    (sub n extra)
   ::  nsym, the number of extra code symbols encoding will generate
   ::
-  =/  nsym  %+  sub  nchunks  n
+  =/  nsym  (sub nchunks n)
   =/  smallest-field-size
-    %-  bex  
-    %+  met  0  nchunks
+    (bex (met 0 nchunks))
   ::  the galois field used for encoding
   ::
   =/  f
     %-  generate-field
-    ?:  %+  gth  256  smallest-field-size
+    ?:  (gth 256 smallest-field-size)
       256
     smallest-field-size
   ::  irreducible encoder polynomial represented as atom
   ::
   =/  gen
-    %-  ~(rs-generator-poly gf-math f)  nsym
+    (~(rs-generator-poly gf-math f) nsym)
   =/  gen-lent
-    %+  met  3  gen
+   (met 3 gen)
   ~&  "nchunks: {<nchunks>}"
   ~&  "n: {<n>}"
   ::  the number of bytes in 'slices' input atom will become
   ::
   =/  total
     ?:  =(0 padding-bytes)
-      %+  div  
-        %+  met  3  input
-      n
-    %-  succ  
-    %+  div
-      %+  met  3  input
-    n
+      (div (met 3 input) n)
+    (succ (div (met 3 input) n))
   ~&  "total: {<total>}"
   ::  an atom containing the encoded bytes, but rearranged
   ::  such that erasures can be done to large pieces of data
@@ -108,6 +102,7 @@
       encoded-frags
   ==
   ++  encode-piece
+    ~/  %encode-piece
     |=  [piece=@ n=@ud f=field nsym=@ nchunks=@ generator=@ gen-lent=@ud]
     ^-  @
     ::  throw an error if piece is too long
@@ -127,9 +122,7 @@
     ::  don't do anything if on an empty byte
     ::
     ?:  =(coef 0)
-      %=  $
-        i  (dec i)
-      ==
+      $(i (dec i))
     =/  subloop-result
       =+  j=1
       |-  ^+  encoded
@@ -150,6 +143,7 @@
       encoded  subloop-result
     ==
   ++  encode-frags
+    ~/  %encode-frags
     |=  [remaining=@ n=@ud f=field nsym=@ nchunks=@ generator=@ gen-lent=@ud total=@ud]
     ^-  @
     =+  [encoded-frags=*@ count=*@ud]
@@ -157,7 +151,7 @@
     ?:  =(remaining 0)
       encoded-frags
     =/  piece
-      %+  end  [3 n]  remaining
+      (end [3 n] remaining)
     ::  pad with 0s if input < n bytes
     ::
     =.  piece
@@ -186,7 +180,9 @@
         encoded-frags
       =.  encoded-frags
         %^  sew  3
-          [(add (mul i total) count) 1 (end 3 encoded-piece)]
+          :+  (add (mul i total) count)
+              1 
+              (end 3 encoded-piece)
         encoded-frags
       %=  $
         i  +(i)
@@ -230,15 +226,10 @@
       ::
       %+  turn
         chunks.encoded
-      |=  chunk=@
-      (cut 3 [n 1] chunk)
+      |=(chunk=@ (cut 3 [n 1] chunk))
     =.  collected
-      %+  snoc
-        collected
-      slice
-    %=  $
-        n  +(n)
-    ==
+      (snoc collected slice)
+    $(n +(n))
   ::  now go through reconstructed chunks and decode one at a time
   ::
   %+  turn
@@ -266,31 +257,25 @@
   ~/  %generate-field
   |=  size=@
   ^-  field
-  =/  exp-and-log
-    =+  [i=0 exp=*@ log=*@ x=1]
-    |-  ^+  [exp log]
-    ?:  =(i (dec size))
-      [exp log]
-    ?:  =(i 0)
-      %=  $
-          i  +(i)
-          exp  (cat 3 1 exp)
-      ==
-    =.  x  (lsh 0 x)
-    =.  x
-      ?.  =((dis x size) 0)
-        (mix x (con size 0x1D))
-      x
+  =+  [i=0 exp=*@ log=*@ x=1]
+  |-  ^+  [size exp log]
+  ?:  =(i (dec size))
+    [size (cat 3 exp exp) log]
+  ?:  =(i 0)
     %=  $
         i  +(i)
-        exp  (cat 3 exp x)::insert x at i
-        log  (sew 3 [x 1 i] log)
+        exp  (cat 3 1 exp)
     ==
-  =/  exp
-    (cat 3 -.exp-and-log -.exp-and-log)
-  =/  log
-    +.exp-and-log
-  [size exp log]
+  =.  x  (lsh 0 x)
+  =.  x
+    ?.  =((dis x size) 0)
+      (mix x (con size 0x1D))
+    x
+  %=  $
+      i  +(i)
+      exp  (cat 3 exp x)::insert x at i
+      log  (sew 3 [x 1 i] log)
+  ==
 ::  $rip-with-padding: $rip, but pad the last item to fit bite size.
 :: 
 ++  rip-with-padding
