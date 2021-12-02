@@ -152,6 +152,7 @@
             (deadline:epo start-time.cur +((lent order.cur)))
           (shuffle:epo (silt order.cur) (mug slots))
         ~
+      ~&  epoch+[num.cur (sham epochs)]
       :_  state(epochs (put:poc epochs num.new-epoch new-epoch))
       ::  TODO: resubscribe to any ships that we are no longer
       ::  subscribed to
@@ -381,6 +382,7 @@
     =/  cur=epoch  +:(need (pry:poc epochs))
     =^  cards  cur
       ~(skip-block epo cur prev-hash [our now src]:bowl)
+    ~&  skip-block+[num.cur slot-num]
     [cards state(epochs (put:poc epochs num.cur cur))]
   --
 ::

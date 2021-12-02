@@ -14,6 +14,7 @@
       =/  =time
         =-  ?.(our-block - (sub - (mul 8 (div epoch-interval 10))))
         (deadline epoch-start slot-num)
+      ~&  timer+[[%our our-block] epoch-num slot-num]
       =-  [%pass - %arvo %b %wait time]
       /timers/slot/(scot %ud epoch-num)/(scot %ud slot-num)
     ::
