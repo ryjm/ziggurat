@@ -1,5 +1,5 @@
 |%
-++  epoch-interval    ~s15
+++  epoch-interval    ~s10
 ::
 +$  epoch   [num=@ud =start=time order=(list ship) =slots]
 ::
