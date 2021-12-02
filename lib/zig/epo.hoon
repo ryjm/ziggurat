@@ -12,9 +12,8 @@
       |=  [epoch-num=@ud slot-num=@ud epoch-start=@da our-block=?]
       ^-  card
       =/  =time
-        =-  ?.(our-block - (sub - (mul 13 (div epoch-interval 15))))
+        =-  ?.(our-block - (sub - (mul 8 (div epoch-interval 10))))
         (deadline epoch-start slot-num)
-      ~&  timer+[epoch-num slot-num time]
       =-  [%pass - %arvo %b %wait time]
       /timers/slot/(scot %ud epoch-num)/(scot %ud slot-num)
     ::
@@ -74,8 +73,8 @@
     :: (lth now.bowl (deadline:epo start-time.cur slot-num))
     =/  [last-num=@ud last-slot=(unit slot)]
       (get-last-slot slots.cur)
+    ?<  ?&((gth (lent (tap:sot slots.cur)) 1) ?=(~ last-slot))
     =/  next-num  ?~(last-slot 0 +(last-num))
-    ~&  our-block+[num.cur next-num]
     ~|  "we must be a validator in this epoch and it must be our turn"
     =/  our-num=@ud  (need (find our^~ order.cur))
     ?>  =(our-num next-num)
@@ -102,7 +101,6 @@
     =/  [last-num=@ud last-slot=(unit slot)]
       (get-last-slot slots.cur)
     =/  next-num  ?~(last-slot 0 +(last-num))
-    ~&  skip-block+[num.cur next-num]
     =/  prev-hed-hash
       ?~  last-slot  prev-hash
       (sham p.u.last-slot)
@@ -119,9 +117,9 @@
   ++  their-block
     |=  [hed=block-header blk=(unit block)]
     ^-  (quip card epoch)
-    ~&  their-block+[num.cur num.hed]
     =/  [last-num=@ud last-slot=(unit slot)]
       (get-last-slot slots.cur)
+    ?<  ?&((gth (lent (tap:sot slots.cur)) 1) ?=(~ last-slot))
     =/  next-num  ?~(last-slot 0 +(last-num))
     =/  prev-hed-hash
       ?~  last-slot  prev-hash
@@ -132,16 +130,21 @@
     ?>  =(next-num num.hed)
     ~|  "each ship must take their own turn"
     ?>  =(src (snag num.hed order.cur))
-    ::~|  "transmitted blocks must have data or have been skipped!"
-    ::?>  ?|  ?=(~ blk)
-    ::        ?=(^ q.u.blk)
-    ::    ==
-    ~|  "their previous header hash must equal our previous header hash!"
-    ?>  =(prev-hed-hash prev-header-hash.hed)
+    ~|  "transmitted blocks must have data or have been skipped!"
+    ?>  ?|  ?=(~ blk)
+            ?=(^ q.u.blk)
+        ==
     ~|  "their data hash must be valid!"
-    ?>  =(?~(blk (sham ~) (sham q.u.blk)) data-hash.hed)
-    ~|  "their signature must be valid!"
-    ?>  ?~(blk %& (validate:sig our p.u.blk (sham hed) now))
+    ?>  ?&  =(?~(blk (sham ~) (sham q.u.blk)) data-hash.hed)
+            ?|(?=(~ blk) !=(data-hash.hed (sham ~)))
+        ==
+    ::  TODO: replace with pubkeys in a helix
+    ::~|  "their signature must be valid!"
+    ::?>  ?~(blk %& (validate:sig our p.u.blk (sham hed) now))
+    ~|  "their previous header hash must equal our previous header hash!"
+    ?.  =(prev-hed-hash prev-header-hash.hed)
+      :_  cur
+      (epoch-catchup src num.cur)^~
     :_  cur(slots (put:sot slots.cur next-num [hed blk]))
     :-  ::  send block header to others
         ::
@@ -155,11 +158,16 @@
   ::  saw a particular block in a slot
   ::
   ++  see-block
-    |=  hed=block-header
+    |=  [epoch-num=@ud hed=block-header]
     ^-  (list card)
+    ?:  (gth epoch-num num.cur)
+      (epoch-catchup src epoch-num)^~
+    ?:  (lth epoch-num num.cur)
+      ~
     =/  slot=(unit slot)  (get:sot slots.cur num.hed)
     ?~  slot  ~
-    ?:  =(p.u.slot hed)  ~
+    ?:  =(p.u.slot hed)
+      ~
     (epoch-catchup src num.cur)^~
   --
 --

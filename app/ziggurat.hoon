@@ -13,10 +13,15 @@
 ::  otherwise if that epoch is empty, then use (sham ~)
 ::
 ++  got-prv-hed-hash
-  |=  [next-slot-num=@ud =epochs cur=epoch]
-  ?.  =(next-slot-num 0)
-    (sham p:(got:sot slots.cur (dec next-slot-num)))
-  ?:  =(num.cur 0)  (sham ~)
+  |=  [slot-num=@ud =epochs cur=epoch]
+  ?:  ?&(=(slot-num 0) =(num.cur 0))
+    (sham ~)
+  ?.  =(slot-num 0)
+    ::  grab last slot header hash in current epoch
+    ::
+    (sham p:(got:sot slots.cur (dec slot-num)))
+  ::  grab last slot header hash in previous epoch
+  ::
   =-  (sham p.-)
   `slot`+:(need (pry:sot slots:(got:poc epochs (dec num.cur))))
 ::
@@ -76,13 +81,14 @@
         %epoch-catchup
       ~|  "we must be a validator to be listened to on this path!"
       ?>  =(mode %validator)
-      =/  start=(unit @ud)
-        =-  ?:(=(- 0) ~ `(dec -))
-        (slav %ud i.t.t.path)
+      ::  TODO: figure out whether to use this number or not
+      ::=/  start=(unit @ud)
+      ::  =-  ?:(=(- 0) ~ `(dec -))
+      ::  (slav %ud i.t.t.path)
       :_  this
       :+  =-  [%give %fact ~ %zig-update !>(-)]
           ^-  update
-          [%epochs-catchup (lot:poc epochs start ~)]
+          [%epochs-catchup epochs]
         [%give %kick ~ ~]
       ~
     ==
@@ -137,12 +143,10 @@
         %new-epoch
       ?>  =(src.bowl our.bowl)
       =/  cur=epoch  +:(need (pry:poc epochs))
-      =/  next-slot-num
-        ?~  p=(bind (pry:sot slots.cur) head)
-          0
-        +(u.p)
+      =/  last-slot-num=@ud
+        (need (bind (pry:sot slots.cur) head))
       =/  prev-hash
-        (got-prv-hed-hash next-slot-num epochs cur)
+        (got-prv-hed-hash last-slot-num epochs cur)
       =/  new-epoch=epoch
         :^    +(num.cur)
             (deadline:epo start-time.cur +((lent order.cur)))
@@ -238,37 +242,35 @@
     ^-  (quip card _state)
     =/  cur=epoch  +:(need (pry:poc epochs))
     =/  next-slot-num
-      ?~  p=(bind (pry:sot slots.cur) head)
-        0
-      +(u.p)
+      ?~(p=(bind (pry:sot slots.cur) head) 0 +(u.p))
     =/  prev-hash
       (got-prv-hed-hash next-slot-num epochs cur)
     ?:  ?=(%new-block -.update)
       ~|  "new blocks can only be applied to the current epoch"
       ?>  =(num.cur epoch-num.update)
-            =^  cards  cur
+      =^  cards  cur
         %-  ~(their-block epo cur prev-hash [our now src]:bowl)
         [header `block]:update
       [cards state(epochs (put:poc epochs num.cur cur))]
     ?.  ?=(%saw-block -.update)  !!
-    ::  we only care if a validator saw a block in the current epoch
-    ::
-    ?.  =(num.cur epoch-num.update)  `state
     :_  state
-    (~(see-block epo cur prev-hash [our now src]:bowl) header.update)
+    %+  ~(see-block epo cur prev-hash [our now src]:bowl)
+      epoch-num.update
+    header.update
   ::
   ++  epoch-catchup
     |=  =update
     ^-  (quip card _state)
     ~|  "must be an %epoch-catchup update"
     ?>  ?=(%epochs-catchup -.update)
+    =/  a=(list (pair @ud epoch))  (bap:poc epochs.update)
+    =/  b=(list (pair @ud epoch))  (bap:poc epochs)
     ?~  epochs.update  `state
     ?~  epochs
       ?>  (validate-history epochs.update)
       `state(epochs epochs.update)
+    ~|  "invalid history"
     ?>  (validate-history epochs.update)
-    =/  a=(list (pair @ud epoch))  (tap:poc epochs.update)
-    =/  b=(list (pair @ud epoch))  (tap:poc epochs)
     :-  ~
     |-  ^-  _state
     ?~  a
@@ -292,42 +294,49 @@
       state(epochs epochs.update)
     ::  TODO: what to do if neither one is shorter nor does either
     ::  skip a block first?
+    ~|  "is this a possible case?"
     !!
   ::
   ++  validate-history
     |=  =^epochs
-    ^-  ?
+    |^  ^-  ?
     =/  prev=epoch  +:(need (ram:poc epochs))
     ?>  (validate-slots prev (sham ~))
-    =/  pocs=(list (pair @ud epoch))  (tap:poc epochs)
-    |-  ^-  ?
+    =/  pocs=(list (pair @ud epoch))  (bap:poc epochs)
     ?~  pocs  %.y
-    ?.  ?&  =(p.i.pocs num.q.i.pocs)
-            =(+(num.prev) num.q.i.pocs)
-            %+  validate-slots  q.i.pocs
-            (got-prv-hed-hash 0 epochs q.i.pocs)
-        ==
-      %.n
-    $(pocs t.pocs, prev q.i.pocs)
-  ::
-  ++  validate-slots
-    |=  [=epoch prev-hash=@uvH]
-    ^-  ?
-    =/  slots=(list (pair @ud slot))  (tap:sot slots.epoch)
-    ?<  =(~ slots)
-    =/  test-epoch=^epoch  epoch(slots ~)
-    |-  ^-  ?
-    ?~  slots  %.y
-    =*  hed  p.q.i.slots
-    =*  blk  q.q.i.slots
-    ?.  =(p.i.slots num.hed)  %.n
-    =/  fake=[ship time ship]
-      :+  our.bowl
-        (dec (deadline:epo start-time.test-epoch num.hed))
-      (snag num.hed order.epoch)
-    =^  *  test-epoch
-      (~(their-block epo test-epoch prev-hash fake) hed blk)
-    $(slots t.slots, prev-hash (sham hed))
+    (iterate-history prev t.pocs)
+    ::
+    ++  iterate-history
+      |=  [prev=epoch pocs=(list (pair @ud epoch))]
+      ^-  ?
+      ?~  pocs  %.y
+      ?.  ?&  =(p.i.pocs num.q.i.pocs)
+              =(+(num.prev) num.q.i.pocs)
+              %+  validate-slots  q.i.pocs
+              (got-prv-hed-hash 0 epochs q.i.pocs)
+          ==
+        %.n
+      $(pocs t.pocs, prev q.i.pocs)
+    ::
+    ++  validate-slots
+      |=  [=epoch prev-hash=@uvH]
+      ^-  ?
+      =/  slots=(list (pair @ud slot))  (bap:sot slots.epoch)
+      ?<  =(~ slots)
+      =/  test-epoch=^epoch  epoch(slots ~)
+      |-  ^-  ?
+      ?~  slots  %.y
+      =*  hed  p.q.i.slots
+      =*  blk  q.q.i.slots
+      ?.  =(p.i.slots num.hed)  %.n
+      =/  fake=[ship time ship]
+        :+  our.bowl
+          (dec (deadline:epo start-time.test-epoch num.hed))
+        (snag num.hed order.epoch)
+      =^  *  test-epoch
+        (~(their-block epo test-epoch prev-hash fake) hed blk)
+      $(slots t.slots, prev-hash (sham hed))
+    --
   --
 ::
 ++  on-arvo
@@ -358,9 +367,7 @@
     ?.  =(num.cur epoch-num)
       `state
     =/  next-slot-num
-      ?~  p=(bind (pry:sot slots.cur) head)
-        0
-      +(u.p)
+      ?~(p=(bind (pry:sot slots.cur) head) 0 +(u.p))
     =/  =ship  (snag slot-num order.cur)
     ?.  =(next-slot-num slot-num)
       ?.  =(ship our.bowl)  `state
@@ -369,7 +376,7 @@
       (got-prv-hed-hash slot-num epochs cur)
     ?:  =(ship our.bowl)
       =^  cards  cur
-        (~(our-block epo cur prev-hash [our now src]:bowl) *chunks)
+        (~(our-block epo cur prev-hash [our now src]:bowl) eny.bowl^~)
       [cards state(epochs (put:poc epochs num.cur cur))]
     =/  cur=epoch  +:(need (pry:poc epochs))
     =^  cards  cur

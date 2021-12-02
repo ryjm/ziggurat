@@ -15,7 +15,7 @@
 ::
 +$  signature  [p=@ux q=ship r=life]
 +$  chunks     (list chunk)
-+$  chunk      ~
++$  chunk      @
 ::
 +$  update
   $%  [%epochs-catchup =epochs]
