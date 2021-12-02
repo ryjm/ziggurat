@@ -150,7 +150,7 @@
       =/  new-epoch=epoch
         :^    +(num.cur)
             (deadline:epo start-time.cur +((lent order.cur)))
-          (shuffle:epo (silt order.cur) (mug slots))
+          (shuffle:epo (silt order.cur) (mug prev-hash))
         ~
       ~&  epoch+[num.cur (sham epochs)]
       :_  state(epochs (put:poc epochs num.new-epoch new-epoch))
