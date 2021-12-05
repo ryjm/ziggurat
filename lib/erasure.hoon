@@ -7,9 +7,7 @@
     ==
   :: encoded data type
   +$  encoded-chunks
-    $:  amount=@ud
-        needed=@ud
-        padding-bytes=@ud
+    $:  needed=@ud
         nsym=@ud
         field-size=@ud
         :: indices of any missing chunks
@@ -17,6 +15,8 @@
         missing=(list @ud)
         :: should be a map, maybe?
         chunks=(list @)
+        chunk-size=@ud
+        padding-bytes=@ud
     ==
   --
 =<
@@ -76,15 +76,15 @@
         gen-lent
         total
     ==
-  :*  nchunks
-      n
-      padding-bytes
+  :*  n
       nsym
       size.f
       ~
       %+  rip-with-padding  
         [3 total]
       encoded-frags
+      total
+      padding-bytes
   ==
 ++  encode-frags
   ~/  %encode-frags
@@ -142,11 +142,12 @@
   =/  stopping-point
     ?:  =((mod nchunks 2) 0)
       +(n)
-    n
+    n 
   ::  throw an error if piece is too long
   ::
   ?:  (gth nchunks (dec size.f))
       !!
+  ::  throw error if nsym > ?
   =/  gen-lent  (met 3 generator)
   =+  :-  i=nchunks
       encoded=(lsh [3 (dec gen-lent)] (rev 3 n piece))
@@ -196,12 +197,11 @@
   ~/  %decode
   |=  encoded=encoded-chunks
   ^-  (list [(list @) (list @)])
-  ?:  (gth amount.encoded 255)
+  ?:  (gth (lent chunks.encoded) 255)
     !!
   ?:  (gth (lent missing.encoded) nsym.encoded)
     !!
   =/  f  (generate-field field-size.encoded)
-  =/  reconstructed-amount  (met 3 (rear chunks.encoded))
   ::  need to reconstruct encoded bytes linearly
   ::  rather than split between chunks
   ::
@@ -209,7 +209,7 @@
     ^-  (list (list @))
     =+  [collected=*(list (list @)) n=*@ud]
     |-  ^+  collected
-    ?:  =(n reconstructed-amount)
+    ?:  =(n chunk-size.encoded)
       ::  finished
       collected
     =/  slice
@@ -227,9 +227,9 @@
   %+  turn
     linear-stream
   |=  chunk=(list @)
-  (decode-piece chunk f nsym.encoded missing.encoded amount.encoded)
+  (decode-piece chunk f needed.encoded nsym.encoded missing.encoded)
 ++  decode-piece
-  |=  [chunk=(list @) f=field nsym=@ud missing=(list @ud) amount=@ud]
+  |=  [chunk=(list @) f=field needed=@ud nsym=@ud missing=(list @ud)]
   ^-  [(list @) (list @)]
   =/  synd
     (~(calc-syndromes gf-math f) chunk nsym)
@@ -239,7 +239,7 @@
     (~(correct-errata gf-math f) chunk synd missing)
   ::  check if max val in synd is NOT 0 and throw an error (couldn't correct)
   ::
-  =/  pos  (sub amount nsym)
+  =/  pos  needed
   :-  (scag pos repaired)
   (slag pos repaired)
 --
@@ -428,28 +428,56 @@
     (snap r (add i j) a)
   ::
   ++  gf-poly-mul-bytes
+    ~/  %gf-poly-mul-bytes
     |=  [p=@ q=@]
     ^-  @
     =/  el-p  (met 3 p)
     =/  el-q  (met 3 q)
-    =+  [j=0 i=0 result=*@]
+    =+  [j=0 output=*@]
     |-  ^-  @
     ?:  =(j el-q)
-      result
-    =.  result
+      output
+    ::  inner loop
+    ::
+    =.  output
+      =+  i=0
       |-  ^-  @
       ?:  =(i el-p)
-        result
-      =.  result
-        %+  mix
-          result
-        %+  mul
-          (bex (mul (add i j) 8))
+        output
+      =/  r
+        %+  gf-add
+          (cut 3 [(add i j) 1] output)
         %+  gf-mul
           (cut 3 [i 1] p)
-        (cut 3 [j 1] q)
-      $(i +(i))
+        (cut 3 [j 1] q) 
+      %=  $
+          i  +(i)
+          output  (sew 3 [(add i j) 1 r] output)
+      ==
     $(j +(j))
+  ::  ++  gf-poly-mul-bytes
+  ::    |=  [p=@ q=@]
+  ::    ^-  @
+  ::    =/  el-p  (met 3 p)
+  ::    =/  el-q  (met 3 q)
+  ::    =+  [j=0 i=0 result=*@]
+  ::    |-  ^-  @
+  ::    ?:  =(j el-q)
+  ::      result
+  ::    =.  result
+  ::      |-  ^-  @
+  ::      ?:  =(i el-p)
+  ::        result
+  ::      =.  result
+  ::        %+  mix
+  ::          result
+  ::        %+  mul
+  ::          (bex (mul (add i j) 8))
+  ::        %+  gf-mul
+  ::          (cut 3 [i 1] p)
+  ::        (cut 3 [j 1] q)
+  ::      $(i +(i))
+  ::    $(j +(j))
   ::
   ++  gf-poly-eval
     ~/  %gf-poly-eval
