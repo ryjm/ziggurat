@@ -1,14 +1,9 @@
-=>  ~%  %erasure-types-lib  ..part  ~
+=>  ~%  %erasure-types  ..part  ~
   |%
   +$  field
     $:  size=@ud
         exp=@
         log=@
-    ==
-  +$  field-list
-    $:  size=@ud
-        exp=(list @ud)
-        log=(list @ud)
     ==
   :: encoded data type
   +$  encoded-chunks
@@ -31,7 +26,7 @@
 ::
 ::    Encode takes an atom and a number of chunks to produce
 ::    that can then be erased up to a certain threshold. That
-::    threshold is defined as n=(number of chunks)/2 - 1.
+::    threshold is defined as n=(number of chunks - 1)/2.
 ::    Returns a type containing amount of chunks, padding bytes
 ::    if any, size of Galois field used, and the chunks themselves.
 ::
@@ -42,7 +37,7 @@
   ::  n, the number of chunks needed to reconstruct
   ::
   =/  n  
-    (dec (div nchunks 2))
+    (div (dec nchunks) 2)
   =/  padding-bytes
     =/  extra
       (mod (met 3 input) n)
@@ -52,15 +47,9 @@
   ::  nsym, the number of extra code symbols encoding will generate
   ::
   =/  nsym  (sub nchunks n)
-  =/  smallest-field-size
-    (bex (met 0 nchunks))
   ::  the galois field used for encoding
   ::
-  =/  f
-    %-  generate-field
-    ?:  (gth 256 smallest-field-size)
-      256
-    smallest-field-size
+  =/  f  (generate-field 256)
   ::  irreducible encoder polynomial represented as atom
   ::
   =/  gen
@@ -115,20 +104,12 @@
     %+  lsh
       [3 (sub n (met 3 piece))]
     piece
-  :: ~&  >  "piece: {<(rip 3 piece)>}"
-  :: ~&  >  "n: {<n>}"
-  :: ~&  >  "nsym: {<nsym>}"
-  :: ~&  >  "nchunks: {<nchunks>}"
-  :: ~&  >  "gen-lent: {<gen-lent>}"
   =/  encoded-piece
     %:  encode-piece
         piece
-        n
-        f
         nsym
-        nchunks
+        f
         generator
-        gen-lent
     ==
   ::  now, assign every nth byte of encoded-piece
   ::  to the matching index in an encoded set of bytes
@@ -154,25 +135,32 @@
   ==  
 ++  encode-piece
   ~/  %encode-piece
-  |=  [piece=@ n=@ud f=field nsym=@ nchunks=@ generator=@ gen-lent=@ud]
+  |=  [piece=@ nsym=@ud f=field generator=@]
   ^-  @
+  =/  n  (met 3 piece)
+  =/  nchunks  (add n nsym)
+  =/  stopping-point
+    ?:  =((mod nchunks 2) 0)
+      +(n)
+    n
   ::  throw an error if piece is too long
   ::
   ?:  (gth nchunks (dec size.f))
-      !! 
-  =+  :-  i=(dec nchunks)
+      !!
+  =/  gen-lent  (met 3 generator)
+  =+  :-  i=nchunks
       encoded=(lsh [3 (dec gen-lent)] (rev 3 n piece))
   |-  ^+  encoded
-  ?:  =(i +(n))
-    ::  return result
-    ::
+  ::  return result if we've generated the full set of symbols
+  ::
+  ?:  =(i stopping-point)
     %^  cat  3
       piece
     (rev 3 nsym (end [3 nsym] encoded))
   =/  coef  (cut 3 [i 1] encoded)
-  ::  don't do anything if on an empty byte
-  ::
   ?:  =(coef 0)
+    ::  don't do anything if on an empty byte
+    ::
     $(i (dec i))
   %=    $
     i  (dec i)
@@ -185,11 +173,13 @@
     %=    $
       j  +(j)
     ::
-      :: multiply by bex to edit byte instead of sewing
-        encoded  
-      =-  (sew 3 [(sub i j) 1 -] encoded)
+        encoded
+      ::  multiply by bex to edit bytearray instead of sewing
+      ::  ~33% time improvement
       %+  mix
-        (cut 3 [(sub i j) 1] encoded)
+        encoded
+      %+  mul
+        (bex (mul (sub i j) 8))
       %+  ~(gf-mul gf-math f)
         (cut 3 [j 1] generator)
       coef
@@ -361,36 +351,6 @@
       (sub 255 (cut 3 [x 1] log.f))
     exp.f
   ::
-  ::  Polynomial math
-  ::
-  ++  gf-poly-mul-bytes
-    ~/  %gf-poly-mul-bytes
-    |=  [p=@ q=@]
-    ^-  @
-    =/  el-p  (met 3 p)
-    =/  el-q  (met 3 q)
-    =+  [j=0 output=*@]
-    |-  ^-  @
-    ?:  =(j el-q)
-      output
-    ::  inner loop
-    ::
-    =.  output
-      =+  i=0
-      |-  ^-  @
-      ?:  =(i el-p)
-        output
-      =/  r
-        %+  gf-add
-          (cut 3 [(add i j) 1] output)
-        %+  gf-mul
-          (cut 3 [i 1] p)
-        (cut 3 [j 1] q) 
-      %=  $
-          i  +(i)
-          output  (sew 3 [(add i j) 1 r] output)
-      ==
-    $(j +(j))
   ::  Reed-Solomon encoding utils
   ::
   ++  rs-generator-poly
@@ -410,15 +370,6 @@
   ::  Reed-Solomon decoding utils
   ::  Currently just handling repairing *erasures*, 
   ::  but can supplement to find and repair *errors*
-  ::
-  ++  gf-poly-scale
-  ~/  %gf-poly-scale
-  |=  [p=(list @) x=@]
-  ^-  (list @)
-  %+  turn
-    p
-  |=  i=@
-  (gf-mul i x)
   ::
   ++  gf-poly-add
     ~/  %gf-poly-add
@@ -444,6 +395,11 @@
       shorter
     |=  [i=@ud r=(list @)]
     [(mix i -.r) +.r]
+  ::
+  ++  gf-poly-add-bytes
+    |=  [p=@ q=@]
+    ^-  @
+    (mix p q)
   ::
   ++  gf-poly-mul
     ~/  %gf-poly-mul
@@ -471,6 +427,30 @@
       j
     (snap r (add i j) a)
   ::
+  ++  gf-poly-mul-bytes
+    |=  [p=@ q=@]
+    ^-  @
+    =/  el-p  (met 3 p)
+    =/  el-q  (met 3 q)
+    =+  [j=0 i=0 result=*@]
+    |-  ^-  @
+    ?:  =(j el-q)
+      result
+    =.  result
+      |-  ^-  @
+      ?:  =(i el-p)
+        result
+      =.  result
+        %+  mix
+          result
+        %+  mul
+          (bex (mul (add i j) 8))
+        %+  gf-mul
+          (cut 3 [i 1] p)
+        (cut 3 [j 1] q)
+      $(i +(i))
+    $(j +(j))
+  ::
   ++  gf-poly-eval
     ~/  %gf-poly-eval
     |=  [p=(list @) x=@]
@@ -481,7 +461,23 @@
         `(list @)`+.p
       y
     |=  [i=@ y=@]
-    [i (mix (gf-mul y x) i)] 
+    [i (mix (gf-mul y x) i)]
+  ::
+  ++  gf-poly-eval-bytes
+    |=  [p=@ x=@]
+    ^-  @
+    =+  [i=1 y=(end [3 1] p)]
+    |-  ^-  @
+    ?:  =(i (met 3 p))
+      y
+    %=    $
+      i  +(i)
+    ::
+        y
+      %+  mix
+        (gf-mul y x)
+      (cut 3 [i 1] p)
+    ==
   ::
   ++  calc-syndromes
     ~/  %calc-syndromes
@@ -496,21 +492,21 @@
       data
     (gf-pow 2 i)
   ::
-  :: ++  calc-syndromes-bytes
-  ::   ~/  %calc-syndromes
-  ::   |=  [data=@ nsym=@]
-  ::   ^-  @
-  ::   =+  [synd=0 i=0]
-  ::   |-
-  ::   ?:  =(i nsym)
-  ::     synd
-  ::   =/  new
-  ::     %+  gf-poly-eval
-  ::       data
-  ::     (gf-pow 2 i)
-  ::   =.  synd
-  ::     (sew 3 [i 1 new] synd)
-  ::   $(i +(i))
+  ++  calc-syndromes-bytes
+    |=  [data=@ nsym=@]
+    ^-  @
+    =+  [synd=*@ i=0]
+    |-  ^+  synd
+    ?:  =(i nsym)
+      synd
+    %=    $
+      i  +(i)
+    ::
+        synd
+      %^  sew  3
+        [i 1 (gf-poly-eval-bytes data (gf-pow 2 i))]
+      synd
+    ==
   ::
   ++  find-errata-locator
     ~/  %find-errata-locator
