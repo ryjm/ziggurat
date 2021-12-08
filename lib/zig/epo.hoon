@@ -120,6 +120,7 @@
     ^-  (quip card epoch)
     =/  [last-num=@ud last-slot=(unit slot)]
       (get-last-slot slots.cur)
+    ::~&  num.hed^[last-num last-slot]
     ?<  ?&((gth (lent (tap:sot slots.cur)) 1) ?=(~ last-slot))
     =/  next-num  ?~(last-slot 0 +(last-num))
     =/  prev-hed-hash

@@ -8,23 +8,6 @@
       mode=?(%fisherman %validator %none)
       =epochs
   ==
-::
-::  +got-prv-hed-hash: get last epoch and grab its last header hash,
-::  otherwise if that epoch is empty, then use (sham ~)
-::
-++  got-prv-hed-hash
-  |=  [slot-num=@ud =epochs cur=epoch]
-  ?:  ?&(=(slot-num 0) =(num.cur 0))
-    (sham ~)
-  ?.  =(slot-num 0)
-    ::  grab last slot header hash in current epoch
-    ::
-    (sham p:(got:sot slots.cur (dec slot-num)))
-  ::  grab last slot header hash in previous epoch
-  ::
-  =-  (sham p.-)
-  `slot`+:(need (pry:sot slots:(got:poc epochs (dec num.cur))))
-::
 ++  new-epoch-timers
   |=  [=epoch our=ship]
   ^-  (list card)
@@ -109,6 +92,9 @@
     =^  cards  state
       (poke-zig-action !<(action vase))
     [cards this]
+      %noun
+    ?>  (validate-history:sel our.bowl epochs)
+    `this
   ==
   ::
   ++  poke-zig-action
@@ -146,18 +132,34 @@
       =/  last-slot-num=@ud
         (need (bind (pry:sot slots.cur) head))
       =/  prev-hash
-        (got-prv-hed-hash last-slot-num epochs cur)
+        (got-hed-hash:sel last-slot-num epochs cur)
       =/  new-epoch=epoch
         :^    +(num.cur)
             (deadline:epo start-time.cur +((lent order.cur)))
           (shuffle:epo (silt order.cur) (mug prev-hash))
         ~
-      ~&  epoch+[num.cur (sham epochs)]
+      =/  validators=(list ship)
+        ~(tap in (~(del in (silt order.cur)) our.bowl))
+      ?:  ?&  ?=(^ validators)
+              %+  lth  start-time.new-epoch
+              (sub now.bowl (mul +((lent order.new-epoch)) epoch-interval))
+          ==
+        :_  state
+        (epoch-catchup:epo i.validators num.cur)^~
+      ~&  num.new-epoch^(sham epochs)
       :_  state(epochs (put:poc epochs num.new-epoch new-epoch))
-      ::  TODO: resubscribe to any ships that we are no longer
-      ::  subscribed to
+      %+  weld
+        (watch-updates (silt (murn order.new-epoch filter-by-wex)))
       (new-epoch-timers new-epoch our.bowl)
     ==
+  ::
+  ++  filter-by-wex
+    |=  shp=ship
+    ^-  (unit ship)
+    ?:  %-  ~(any in ~(key by wex.bowl))
+        |=([* =ship *] =(shp ship))
+      ~
+    `shp
   ::
   ++  watch-updates
     |=  validators=(set ship)
@@ -182,7 +184,6 @@
     ^-  (unit card)
     ?.  ?=([%validator *] q)  ~
     `[%give %kick q^~ `p]
-
   ::
   ++  cleanup-fisherman
     ^-  (list card)
@@ -224,8 +225,12 @@
       ?:  ?=(%kick -.sign)  `this
       ?:  ?=(%watch-ack -.sign)
         ?.  ?=(^ p.sign)    `this
-        ::  TODO: watch someone else
-        `this
+        =/  cur=epoch  +:(need (pry:poc epochs))
+        =/  validators=(list ship)
+          ~(tap in (~(del in (~(del in (silt order.cur)) our.bowl)) src.bowl))
+        ?>  ?=(^ validators)
+        :_  this
+        (epoch-catchup:epo i.validators num.cur)^~
       ?>  ?=(%fact -.sign)
       =^  cards  state
         (epoch-catchup !<(update q.cage.sign))
@@ -245,10 +250,16 @@
     =/  next-slot-num
       ?~(p=(bind (pry:sot slots.cur) head) 0 +(u.p))
     =/  prev-hash
-      (got-prv-hed-hash next-slot-num epochs cur)
+      (got-hed-hash:sel next-slot-num epochs cur)
     ?:  ?=(%new-block -.update)
-      ~|  "new blocks can only be applied to the current epoch"
-      ?>  =(num.cur epoch-num.update)
+      ~|  "new blocks cannot be applied to past epochs"
+      ?<  (lth epoch-num.update num.cur)
+      ?:  (gth epoch-num.update num.cur)
+        =/  validators=(list ship)
+          ~(tap in (~(del in (~(del in (silt order.cur)) our.bowl)) src.bowl))
+        ?>  ?=(^ validators)
+        :_  state
+        (epoch-catchup:epo i.validators num.cur)^~
       =^  cards  cur
         %-  ~(their-block epo cur prev-hash [our now src]:bowl)
         [header `block]:update
@@ -264,80 +275,33 @@
     ^-  (quip card _state)
     ~|  "must be an %epoch-catchup update"
     ?>  ?=(%epochs-catchup -.update)
+    ~&  catching-up-to+src.bowl
     =/  a=(list (pair @ud epoch))  (bap:poc epochs.update)
     =/  b=(list (pair @ud epoch))  (bap:poc epochs)
     ?~  epochs.update  `state
     ?~  epochs
-      ?>  (validate-history epochs.update)
+      ?>  (validate-history:sel our.bowl epochs.update)
       `state(epochs epochs.update)
     ~|  "invalid history"
-    ?>  (validate-history epochs.update)
+    ?>  (validate-history:sel our.bowl epochs.update)
     :-  ~
     |-  ^-  _state
     ?~  a
+      ~&  %picked-our-history
       state
     ?~  b
+      ~&  %picked-their-history
       state(epochs epochs.update)
     ?:  =(i.a i.b)
       $(a t.a, b t.b)
     =/  a-s=(list (pair @ud slot))  (tap:sot slots.q.i.a)
     =/  b-s=(list (pair @ud slot))  (tap:sot slots.q.i.b)
     |-  ^-  _state
-    ?~  a-s
-      state
-    ?~  b-s
-      state(epochs epochs.update)
-    ?:  =(i.a-s i.b-s)
-      $(a-s t.a-s, b-s t.b-s)
-    ?~  q.q.i.a-s
-      state
-    ?~  q.q.i.b-s
-      state(epochs epochs.update)
-    ::  TODO: what to do if neither one is shorter nor does either
-    ::  skip a block first?
-    ~|  "is this a possible case?"
-    !!
-  ::
-  ++  validate-history
-    |=  =^epochs
-    |^  ^-  ?
-    =/  prev=epoch  +:(need (ram:poc epochs))
-    ?>  (validate-slots prev (sham ~))
-    =/  pocs=(list (pair @ud epoch))  (bap:poc epochs)
-    ?~  pocs  %.y
-    (iterate-history prev t.pocs)
-    ::
-    ++  iterate-history
-      |=  [prev=epoch pocs=(list (pair @ud epoch))]
-      ^-  ?
-      ?~  pocs  %.y
-      ?.  ?&  =(p.i.pocs num.q.i.pocs)
-              =(+(num.prev) num.q.i.pocs)
-              %+  validate-slots  q.i.pocs
-              (got-prv-hed-hash 0 epochs q.i.pocs)
-          ==
-        %.n
-      $(pocs t.pocs, prev q.i.pocs)
-    ::
-    ++  validate-slots
-      |=  [=epoch prev-hash=@uvH]
-      ^-  ?
-      =/  slots=(list (pair @ud slot))  (bap:sot slots.epoch)
-      ?<  =(~ slots)
-      =/  test-epoch=^epoch  epoch(slots ~)
-      |-  ^-  ?
-      ?~  slots  %.y
-      =*  hed  p.q.i.slots
-      =*  blk  q.q.i.slots
-      ?.  =(p.i.slots num.hed)  %.n
-      =/  fake=[ship time ship]
-        :+  our.bowl
-          (dec (deadline:epo start-time.test-epoch num.hed))
-        (snag num.hed order.epoch)
-      =^  *  test-epoch
-        (~(their-block epo test-epoch prev-hash fake) hed blk)
-      $(slots t.slots, prev-hash (sham hed))
-    --
+    ?~  a-s        ^$(a t.a, b t.b)
+    ?~  b-s        ^$(a t.a, b t.b)
+    ?~  q.q.i.a-s  ~&  %picked-our-history    state
+    ?~  q.q.i.b-s  ~&  %picked-their-history  state(epochs epochs.update)
+    $(a-s t.a-s, b-s t.b-s)
   --
 ::
 ++  on-arvo
@@ -374,7 +338,7 @@
       ?.  =(ship our.bowl)  `state
       ~|("we can only produce the next block, not past or future blocks" !!)
     =/  prev-hash
-      (got-prv-hed-hash slot-num epochs cur)
+      (got-hed-hash:sel slot-num epochs cur)
     ?:  =(ship our.bowl)
       =^  cards  cur
         (~(our-block epo cur prev-hash [our now src]:bowl) eny.bowl^~)
