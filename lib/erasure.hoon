@@ -36,12 +36,6 @@
   ::
   =/  n  
     (div (dec nchunks) 2)
-  =/  padding-bytes
-    =/  extra
-      (mod (met 3 input) n)
-    ?:  =(extra 0)
-      0
-    (sub n extra)
   ::  nsym, the number of extra code symbols encoding will generate
   ::
   =/  nsym  (sub nchunks n)
@@ -53,7 +47,14 @@
   =/  gen
     (~(rs-generator-poly gf-math f) nsym)
   =/  gen-lent
-   (met 3 gen)
+    (met 3 gen)
+  ::  padding to make input fit evenly in chunks
+  ::  corrected for in $decode so we share the number
+  ::
+  =/  padding-bytes
+    ?:  =((mod (met 3 input) n) 0)
+      0
+    (sub n (mod (met 3 input) n))
   ::  the number of bytes in 'slices' input atom will become
   ::
   =/  total
@@ -73,35 +74,34 @@
         gen
         gen-lent
         total
+        padding-bytes
     ==
   :*  n
       nsym
       size.f
       ~
-      %+  rip-with-padding  
-        [3 total]
       encoded-frags
       total
       padding-bytes
   ==
+::
 ++  encode-frags
   ~/  %encode-frags
-  |=  [remaining=@ n=@ud f=field nsym=@ nchunks=@ generator=@ gen-lent=@ud total=@ud]
-  ^-  @
-  =+  [encoded-frags=*@ count=*@ud]
+  |=  [remaining=@ n=@ud f=field nsym=@ nchunks=@ generator=@ gen-lent=@ud total=@ud padding-bytes=@ud]
+  ^-  (list @)
+  =/  encoded-frags  ^-  (list @)  (reap nchunks 0)
+  =+  count=*@ud
   |-  ^+  encoded-frags
   ?:  =(remaining 0)
     encoded-frags
-  =/  piece
-    (end [3 n] remaining)
   ::  pad with 0s if input < n bytes
   ::
+  =/  piece
+    (end [3 n] remaining)
   =.  piece
     ?.  (lth (met 3 piece) n)
       piece
-    %+  lsh
-      [3 (sub n (met 3 piece))]
-    piece
+    (lsh [3 padding-bytes] piece)
   =/  encoded-piece
     %:  encode-piece
         piece
@@ -116,24 +116,23 @@
   ::  speed in hoon or create a jet for this too.
   ::
   =.  encoded-frags
-    =+  i=0
-    |-
-    ?:  =(encoded-piece 0)
-      encoded-frags
-    =.  encoded-frags
-      %^  sew  3
-        :+  (add (mul i total) count)
-            1 
-            (end 3 encoded-piece)
-      encoded-frags
-    %=  $
-      i  +(i)
-      encoded-piece  (rsh 3 encoded-piece)
-    ==
+    =<  p
+    %^    spin
+        encoded-frags
+      0
+    |=  [frag=@ i=@ud]
+    =/  new-frag
+      %+  add
+        %+  mul
+          (bex (mul count 8))
+        (cut 3 [i 1] encoded-piece)
+      frag
+    [new-frag +(i)]
   %=  $
     count  +(count)
     remaining  (rsh [3 n] remaining)
-  ==  
+  ==
+::
 ++  encode-piece
   ~/  %encode-piece
   |=  [piece=@ nsym=@ud f=field generator=@]
@@ -141,16 +140,13 @@
   =/  n  (met 3 piece)
   =/  nchunks  (add n nsym)
   =/  stopping-point
-    ?:  =((mod nchunks 2) 0)
-      +(n)
-    n 
+    (dec nsym)
   ::  throw an error if piece is too long
   ::
   ?:  (gth nchunks (dec size.f))
       !!
-  ::  throw error if nsym > ?
   =/  gen-lent  (met 3 generator)
-  =+  :-  i=nchunks
+  =+  :-  i=(dec nchunks)
       encoded=(lsh [3 (dec gen-lent)] (swp 3 piece))
   |-  ^+  encoded
   ::  return result if we've generated the full set of symbols
@@ -187,6 +183,7 @@
       coef
     ==
   ==
+::
 ::  $decode: take a list of erasure-coded chunks and perform repairs
 ::
 ::    Decode needs at least as many symbols as missing chunks to
@@ -236,17 +233,18 @@
     %+  turn
       linear-stream
     |=  chunk=(list @)
-    (decode-piece chunk f nsym.encoded missing.encoded)
+    (decode-piece (rep 3 chunk) f nsym.encoded missing.encoded)
   ::  remove any padding bytes from final chunk
   ::  and return single decoded atom
   ::
   =/  unpadded-rear
     (rsh [3 padding-bytes.encoded] (rear decoded-pieces))
-  (cat 3 (rap 3 (snip decoded-pieces)) unpadded-rear) 
+  (cat 3 (rap 3 (snip decoded-pieces)) unpadded-rear)
 ++  decode-piece
   ~/  %decode-piece
-  |=  [chunk=(list @) f=field nsym=@ud missing=(list @ud)]
+  |=  [piece=@ f=field nsym=@ud missing=(list @ud)]
   ^-  @
+  =/  chunk  (rip 3 piece)
   =/  synd
     (~(calc-syndromes gf-math f) chunk nsym)
   ::  if max val in synd is 0, no erasures
@@ -280,7 +278,7 @@
     x
   %=  $
       i  +(i)
-      exp  (cat 3 exp x)::insert x at i
+      exp  (cat 3 exp x)
       log  (sew 3 [x 1 i] log)
   ==
 ::  $rip-with-padding: $rip, but pad the last item to fit bite size.
@@ -374,8 +372,7 @@
     $(i +(i))
   ::
   ::  Reed-Solomon decoding utils
-  ::  Currently just handling repairing *erasures*, 
-  ::  but can supplement to find and repair *errors*
+  ::  Only built to handle erasures, not detect errors
   ::
   ++  gf-poly-add
     ~/  %gf-poly-add
@@ -461,11 +458,10 @@
     ~/  %gf-poly-eval
     |=  [p=(list @) x=@]
     ^-  @
-    =/  y  -.p
     =<  q
     %^    spin
         `(list @)`+.p
-      y
+      -.p
     |=  [i=@ y=@]
     [i (mix (gf-mul y x) i)]
   ::
