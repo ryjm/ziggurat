@@ -11,9 +11,7 @@
         nsym=@ud
         field-size=@ud
         :: indices of any missing chunks
-        :: for erasing by end users
         missing=(list @ud)
-        :: should be a map, maybe?
         chunks=(list @)
         chunk-size=@ud
         padding-bytes=@ud
@@ -113,6 +111,9 @@
     ==
   ::  now, assign every nth byte of encoded-piece
   ::  to the matching index in an encoded set of bytes
+  ::  TODO: this is the slowest part of the algorithm
+  ::  not currently slated for jetting, either improve
+  ::  speed in hoon or create a jet for this too.
   ::
   =.  encoded-frags
     =+  i=0
@@ -150,7 +151,7 @@
   ::  throw error if nsym > ?
   =/  gen-lent  (met 3 generator)
   =+  :-  i=nchunks
-      encoded=(lsh [3 (dec gen-lent)] (rev 3 n piece))
+      encoded=(lsh [3 (dec gen-lent)] (swp 3 piece))
   |-  ^+  encoded
   ::  return result if we've generated the full set of symbols
   ::
@@ -189,18 +190,25 @@
 ::  $decode: take a list of erasure-coded chunks and perform repairs
 ::
 ::    Decode needs at least as many symbols as missing chunks to
-::    successfully decode the chunks. TODO change to atom/byte
-::    manipulation
-::    Gives back a cell of the decoded data and the ECC code symbols
+::    successfully decode the chunks. It will first recombine the
+::    set of fragmented chunks created by $encode, then stream the
+::    resulting linear arrangement of bytes through $decode-piece.
+::    If the encoded data can be reconstructed, it is returned as 
+::    an atom.
 ::
 ++  decode
   ~/  %decode
   |=  encoded=encoded-chunks
-  ^-  (list [(list @) (list @)])
+  ^-  @
   ?:  (gth (lent chunks.encoded) 255)
     !!
   ?:  (gth (lent missing.encoded) nsym.encoded)
     !!
+  :: need something in missing.encoded or we can't generate good syndromes
+  =.  missing.encoded
+    ?:  =(missing.encoded ~)
+      ~[0]
+    missing.encoded
   =/  f  (generate-field field-size.encoded)
   ::  need to reconstruct encoded bytes linearly
   ::  rather than split between chunks
@@ -224,24 +232,28 @@
     $(n +(n))
   ::  now go through reconstructed chunks and decode one at a time
   ::
-  %+  turn
-    linear-stream
-  |=  chunk=(list @)
-  (decode-piece chunk f needed.encoded nsym.encoded missing.encoded)
+  =/  decoded-pieces
+    %+  turn
+      linear-stream
+    |=  chunk=(list @)
+    (decode-piece chunk f nsym.encoded missing.encoded)
+  ::  remove any padding bytes from final chunk
+  ::  and return single decoded atom
+  ::
+  =/  unpadded-rear
+    (rsh [3 padding-bytes.encoded] (rear decoded-pieces))
+  (cat 3 (rap 3 (snip decoded-pieces)) unpadded-rear) 
 ++  decode-piece
-  |=  [chunk=(list @) f=field needed=@ud nsym=@ud missing=(list @ud)]
-  ^-  [(list @) (list @)]
+  ~/  %decode-piece
+  |=  [chunk=(list @) f=field nsym=@ud missing=(list @ud)]
+  ^-  @
   =/  synd
     (~(calc-syndromes gf-math f) chunk nsym)
   ::  if max val in synd is 0, no erasures
   ::
   =/  repaired
     (~(correct-errata gf-math f) chunk synd missing)
-  ::  check if max val in synd is NOT 0 and throw an error (couldn't correct)
-  ::
-  =/  pos  needed
-  :-  (scag pos repaired)
-  (slag pos repaired)
+  (rep 3 (scag (sub (lent repaired) nsym) repaired))
 --
 ::
 ~%  %erasure-lib-utils  ..field  ~
@@ -291,12 +303,6 @@
     |=  [x=@ y=@]
     ^-  @
     %+  mix  x  y
-  ::
-  :: ++  gf-sub
-  ::   ~/  %gf-sub
-  ::   |=  [x=@ y=@]
-  ::   ^-  @
-  ::   %+  mix  x  y
   ::
   ++  gf-mul
     ~/  %gf-mul
@@ -428,56 +434,28 @@
     (snap r (add i j) a)
   ::
   ++  gf-poly-mul-bytes
-    ~/  %gf-poly-mul-bytes
     |=  [p=@ q=@]
     ^-  @
     =/  el-p  (met 3 p)
     =/  el-q  (met 3 q)
-    =+  [j=0 output=*@]
+    =+  [j=0 i=0 result=*@]
     |-  ^-  @
     ?:  =(j el-q)
-      output
-    ::  inner loop
-    ::
-    =.  output
-      =+  i=0
+      result
+    =.  result
       |-  ^-  @
       ?:  =(i el-p)
-        output
-      =/  r
-        %+  gf-add
-          (cut 3 [(add i j) 1] output)
+        result
+      =.  result
+        %+  mix
+          result
+        %+  mul
+          (bex (mul (add i j) 8))
         %+  gf-mul
           (cut 3 [i 1] p)
-        (cut 3 [j 1] q) 
-      %=  $
-          i  +(i)
-          output  (sew 3 [(add i j) 1 r] output)
-      ==
+        (cut 3 [j 1] q)
+      $(i +(i))
     $(j +(j))
-  ::  ++  gf-poly-mul-bytes
-  ::    |=  [p=@ q=@]
-  ::    ^-  @
-  ::    =/  el-p  (met 3 p)
-  ::    =/  el-q  (met 3 q)
-  ::    =+  [j=0 i=0 result=*@]
-  ::    |-  ^-  @
-  ::    ?:  =(j el-q)
-  ::      result
-  ::    =.  result
-  ::      |-  ^-  @
-  ::      ?:  =(i el-p)
-  ::        result
-  ::      =.  result
-  ::        %+  mix
-  ::          result
-  ::        %+  mul
-  ::          (bex (mul (add i j) 8))
-  ::        %+  gf-mul
-  ::          (cut 3 [i 1] p)
-  ::        (cut 3 [j 1] q)
-  ::      $(i +(i))
-  ::    $(j +(j))
   ::
   ++  gf-poly-eval
     ~/  %gf-poly-eval
@@ -520,21 +498,21 @@
       data
     (gf-pow 2 i)
   ::
-  ++  calc-syndromes-bytes
-    |=  [data=@ nsym=@]
-    ^-  @
-    =+  [synd=*@ i=0]
-    |-  ^+  synd
-    ?:  =(i nsym)
-      synd
-    %=    $
-      i  +(i)
-    ::
-        synd
-      %^  sew  3
-        [i 1 (gf-poly-eval-bytes data (gf-pow 2 i))]
-      synd
-    ==
+  ::  ++  calc-syndromes-bytes
+  ::    |=  [data=@ nsym=@]
+  ::    ^-  @
+  ::    =+  [synd=*@ i=0]
+  ::    |-  ^+  synd
+  ::    ?:  =(i nsym)
+  ::      (lsh [3 1] synd)
+  ::    %=    $
+  ::      i  +(i)
+  ::    ::
+  ::        synd
+  ::      %^  sew  3
+  ::        [i 1 (gf-poly-eval-bytes data (gf-pow 2 i))]
+  ::      synd
+  ::    ==
   ::
   ++  find-errata-locator
     ~/  %find-errata-locator
@@ -553,6 +531,23 @@
       `(list @)`~[1]
     `(list @)`~[(gf-pow 2 i) 0]
   ::
+  :: ++  find-errata-locator-bytes
+  ::   :: takes in list, returns bytestring
+  ::   |=  [erasures=(list @)]
+  ::   ^-  @
+  ::   %+  swp  3
+  ::   =<  q
+  ::   %^    spin
+  ::       erasures
+  ::     1
+  ::   |=  [i=@ loc=@]
+  ::   :-  i
+  ::   %+  gf-poly-mul-bytes
+  ::     loc
+  ::   %+  gf-poly-add-bytes
+  ::     1
+  ::   (lsh [3 1] (gf-pow 2 i))
+  ::
   ++  find-error-evaluator
     ~/  %find-error-evaluator
     |=  [synd=(list @) err-locs=(list @) nsym=@]
@@ -568,6 +563,14 @@
       (add nsym 1)
     remainder
   ::
+  :: ++  find-error-evaluator-bytes
+  ::   |=  [synd=@ err-locs=@ nsym=@]
+  ::   ^-  @
+  ::   =/  remainder
+  ::     (gf-poly-mul-bytes synd err-locs)
+  ::   ~&  >>  (rip 3 remainder)
+  ::   (rsh [3 (sub (met 3 remainder) nsym)] remainder)
+  ::
   ++  correct-errata
     ~/  %correct-errata
     |=  [data=(list @) synd=(list @) erasures=(list @)]
@@ -580,7 +583,6 @@
     =/  err-locs
       (find-errata-locator coef-pos)
     =/  err-eval
-      %-  flop 
       %^    find-error-evaluator
           (flop synd)
         err-locs
@@ -618,7 +620,7 @@
         %+  gf-mul
           err
         coef
-        =/  y  (gf-poly-eval (flop err-eval) inverse)
+        =/  y  (gf-poly-eval err-eval inverse)
         =/  y  (gf-mul (gf-pow (snag i x) 1) y)
         ?:  =(err-loc-prime ~[0])
           !! :: could not find error magnitude
