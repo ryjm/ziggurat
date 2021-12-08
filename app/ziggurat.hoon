@@ -1,6 +1,7 @@
 ::  ziggurat [uqbar-dao]
 ::
 /+  *ziggurat, default-agent, dbug, verb
+=,  util
 |%
 +$  card  card:agent:gall
 +$  state-0
@@ -22,7 +23,7 @@
   ::
       cards
     :_  cards
-    (wait:epo num.epoch i start-time.epoch =(our i.order))
+    (wait num.epoch i start-time.epoch =(our i.order))
   ==
 --
 ::
@@ -93,7 +94,7 @@
       (poke-zig-action !<(action vase))
     [cards this]
       %noun
-    ?>  (validate-history:sel our.bowl epochs)
+    ?>  (validate-history our.bowl epochs)
     `this
   ==
   ::
@@ -132,11 +133,11 @@
       =/  last-slot-num=@ud
         (need (bind (pry:sot slots.cur) head))
       =/  prev-hash
-        (got-hed-hash:sel last-slot-num epochs cur)
+        (got-hed-hash last-slot-num epochs cur)
       =/  new-epoch=epoch
         :^    +(num.cur)
-            (deadline:epo start-time.cur +((lent order.cur)))
-          (shuffle:epo (silt order.cur) (mug prev-hash))
+            (deadline start-time.cur +((lent order.cur)))
+          (shuffle (silt order.cur) (mug prev-hash))
         ~
       =/  validators=(list ship)
         ~(tap in (~(del in (silt order.cur)) our.bowl))
@@ -145,7 +146,7 @@
               (sub now.bowl (mul +((lent order.new-epoch)) epoch-interval))
           ==
         :_  state
-        (epoch-catchup:epo i.validators num.cur)^~
+        (start-epoch-catchup i.validators num.cur)^~
       ~&  num.new-epoch^(sham epochs)
       :_  state(epochs (put:poc epochs num.new-epoch new-epoch))
       %+  weld
@@ -230,7 +231,7 @@
           ~(tap in (~(del in (~(del in (silt order.cur)) our.bowl)) src.bowl))
         ?>  ?=(^ validators)
         :_  this
-        (epoch-catchup:epo i.validators num.cur)^~
+        (start-epoch-catchup i.validators num.cur)^~
       ?>  ?=(%fact -.sign)
       =^  cards  state
         (epoch-catchup !<(update q.cage.sign))
@@ -250,7 +251,7 @@
     =/  next-slot-num
       ?~(p=(bind (pry:sot slots.cur) head) 0 +(u.p))
     =/  prev-hash
-      (got-hed-hash:sel next-slot-num epochs cur)
+      (got-hed-hash next-slot-num epochs cur)
     ?:  ?=(%new-block -.update)
       ~|  "new blocks cannot be applied to past epochs"
       ?<  (lth epoch-num.update num.cur)
@@ -259,7 +260,7 @@
           ~(tap in (~(del in (~(del in (silt order.cur)) our.bowl)) src.bowl))
         ?>  ?=(^ validators)
         :_  state
-        (epoch-catchup:epo i.validators num.cur)^~
+        (start-epoch-catchup i.validators num.cur)^~
       =^  cards  cur
         %-  ~(their-block epo cur prev-hash [our now src]:bowl)
         [header `block]:update
@@ -280,10 +281,10 @@
     =/  b=(list (pair @ud epoch))  (bap:poc epochs)
     ?~  epochs.update  `state
     ?~  epochs
-      ?>  (validate-history:sel our.bowl epochs.update)
+      ?>  (validate-history our.bowl epochs.update)
       `state(epochs epochs.update)
     ~|  "invalid history"
-    ?>  (validate-history:sel our.bowl epochs.update)
+    ?>  (validate-history our.bowl epochs.update)
     :-  ~
     |-  ^-  _state
     ?~  a
@@ -338,7 +339,7 @@
       ?.  =(ship our.bowl)  `state
       ~|("we can only produce the next block, not past or future blocks" !!)
     =/  prev-hash
-      (got-hed-hash:sel slot-num epochs cur)
+      (got-hed-hash slot-num epochs cur)
     ?:  =(ship our.bowl)
       =^  cards  cur
         (~(our-block epo cur prev-hash [our now src]:bowl) eny.bowl^~)
