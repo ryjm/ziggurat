@@ -14,18 +14,31 @@
   $%  [%nft minter=account-id uri=@t hash=@ux can-xfer=?]
       [%fung minter=account-id =amount]
   ==
-+$  minter-account
-  $:  =owner
-      =nonce
-      =max=supply
-      =total=supply
+:: +$  minter-account
+::   $:  ::=owner  :: this line creates a fish-loop on line 28 for some bizarre reason
+::       =nonce
+::       max=supply
+::       total=supply
+::   ==
+:: +$  asset-account
+::   $:  =owner
+::       =nonce
+::       assets=(list asset)
+::   ==
++$  account  ::  ?(minter-account asset-account)
+  $%
+    $:  %minter-account
+        =owner
+        =nonce
+        max=supply
+        total=supply
+    ==
+    $:  %asset-account
+        =owner
+        =nonce
+        assets=(list asset)
+    ==
   ==
-+$  asset-account
-  $:  =owner
-      =nonce
-      assets=(list asset)
-  ==
-+$  account  ?(minter-account asset-account)
 +$  state  [hash=@ux accts=(map account-id account)]
 ::  TODO: patricia merkle tree data structure
 
@@ -48,17 +61,17 @@
   ==
 +$  sender  ?(pubkey-sender multisig-sender)
 ::
-++  tx
++$  tx
   $%  
     $:  %send
-        feerate=zigs
         from=sender
+        feerate=zigs
         to=account-id
         assets=(list asset)
     ==
     $:  %mint
-        feerate=zigs
         from=sender
+        feerate=zigs
         to=(list [account-id asset])
     ==
     ::
