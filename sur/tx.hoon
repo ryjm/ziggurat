@@ -1,31 +1,38 @@
 |%
 +$  pubkey  @ux 
 +$  multisig
-  [members=(set pubkey) threshold=@ud]
+  $:  members=(set pubkey)
+      threshold=@ud
+  ==
 +$  owner  ?(pubkey multisig)
 +$  id  @ux
 +$  account-id  id
++$  asset-id  id
 +$  nonce  @ud
 +$  amount  @ud
 +$  supply  @ud
 +$  zigs  amount
 ::
 +$  asset
-  $%  [%nft minter=account-id uri=@t hash=@ux can-xfer=?]
-      [%fung minter=account-id =amount]
+  $%  ::  nft asset-id = minter+hash?
+      [%nft id=asset-id minter=account-id uri=@t hash=@ux can-xfer=?]
+      ::  asset-id = account-id for fungibles
+      [%fung id=asset-id minter=account-id =amount]
   ==
-:: +$  minter-account
-::   $:  ::=owner  :: this line creates a fish-loop on line 28 for some bizarre reason
-::       =nonce
-::       max=supply
-::       total=supply
-::   ==
-:: +$  asset-account
-::   $:  =owner
-::       =nonce
-::       assets=(list asset)
-::   ==
-+$  account  ::  ?(minter-account asset-account)
+::  +$  minter-account
+::    $:  =owner  :: this line creates a fish-loop on line 28
+::        =nonce
+::        max=supply
+::        total=supply
+::    ==
+::  +$  asset-account
+::    $:  =owner
+::        =nonce
+::        assets=(list asset)
+::    ==
+::  double-nesting (set pubkey) caused fish-loop
+::  error when defining account. bizarre.
++$  account  :: ?(minter-account asset-account)
   $%
     $:  %minter-account
         =owner
@@ -36,7 +43,7 @@
     $:  %asset-account
         =owner
         =nonce
-        assets=(list asset)
+        assets=(map asset-id asset) ::  make this a map?
     ==
   ==
 +$  state  [hash=@ux accts=(map account-id account)]
