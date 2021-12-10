@@ -28,15 +28,20 @@
     ?:  =(key.item.a b)
       `val.item.a
     ?-    -.a
-        %8
+        %4
       |-
       ?~  children.a  ~
-      ?:  =((end [3 i] b) p.i.children.a)
+      ?:  =((end [8 i] b) p.i.children.a)
         ^$(a q.i.children.a, i +(i))
       $(children.a t.children.a)
     ::
-        %64
-      =/  result=(unit (radix-tree val))  (get:orm children.a (end [3 i] b))
+        %16
+      =/  result=(unit (radix-tree val))  (get:orm children.a (end [8 i] b))
+      ?~  result  ~
+      $(a u.result, i +(i))
+    ::
+        %48
+      =/  result=(unit (radix-tree val))  (get:orm children.a (end [8 i] b))
       ?~  result  ~
       $(a u.result, i +(i))
     ::
@@ -64,8 +69,9 @@
       --
   |$  [val]
   $@  ~
-  $%  [%8 item=[key=@ val=val] children=(list (child val))]
-      [%64 item=[key=@ val=val] children=((mop @ (radix-tree val)) lth)]
+  $%  [%4 item=[key=@ val=val] children=(list (child val))]
+      [%16 item=[key=@ val=val] children=((mop @ (radix-tree val)) lth)]
+      [%48 item=[key=@ val=val] children=((mop @ (radix-tree val)) lth)]
       $:  %256  item=[key=@ val=val]
           $=  children
           $:  (unit (child val))  (unit (child val))  (unit (child val))  (unit (child val))
