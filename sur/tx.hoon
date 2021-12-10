@@ -11,6 +11,9 @@
 +$  zigs  amount
 ::
 +$  asset
+  ::  issue: nft assets all share one account-id
+  ::  can't share same map key in asset-account assets
+  ::  need a unique key for each nft, hash?
   $%  [%nft minter=account-id uri=@t hash=@ux can-xfer=?]
       [%fung minter=account-id =amount]
   ==
@@ -22,8 +25,8 @@
     $:  %minter-account
         =owner
         =nonce
-        =max=supply
-        =total=supply
+        max=supply
+        total=supply
     ==
     $:  %asset-account
         =owner
@@ -63,6 +66,8 @@
         assets=(list asset)
     ==
     $:  %mint
+        ::  issue: minter accounts don't have zigs
+        ::  with which to pay fee
         from=sender
         to=(list [account-id asset])
     ==
@@ -82,7 +87,7 @@
     ::
     $:  %create-minter
         from=sender
-        =max=supply
+        max=supply
         =owner
     ==
     $:  %update-minter
