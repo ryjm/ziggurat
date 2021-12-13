@@ -49,7 +49,7 @@
     =/  zigs  (~(get by assets.account) zigs-id)
     ?~  zigs  0
     ?+  -.u.zigs  0
-        %fung
+        %tok
       amount.u.zigs
     ==
   ?.  (gte zigs-in-account fee)
@@ -60,8 +60,8 @@
     %+  ~(jab by assets.account)
       zigs-id
     |=  z=asset
-    ?.  ?=([%fung *] z)
-      ::  expect zigs to be fung, real error
+    ?.  ?=([%tok *] z)
+      ::  expect zigs to be tok, real error
       !!
     =.  amount.z
       (sub amount.z fee)
@@ -122,11 +122,15 @@
     ~
   ::  keeping a map to check for dupes
   =/  seen  `(map account-id ?)`~
+  ::  TODO good way to iterate through set?
+  ::  doing a recursion through tree holding modified state
+  ::  in stack seems like a bad idea for v. large state
+  =/  assets  `(list asset)`~(tap in `(set asset)`assets.tx)
   |-  ^-  (unit state)
   ::  if finished successfully, return new state
-  ?~  assets.tx
+  ?~  assets
     (some current)
-  =/  to-send  i.assets.tx
+  =/  to-send  i.assets
   ::  check if asset has been seen
   ::  can't send 1 asset twice in tx
   ?^  (~(get by seen) minter.to-send)
@@ -142,10 +146,10 @@
               can-xfer.u.mine
           ==
         %.n
-          %fung
+          %tok
         =/  mine  (~(get by assets.account) minter.to-send)
         ?~  mine  %.n
-        ?:  ?=([%fung *] u.mine)
+        ?:  ?=([%tok *] u.mine)
           (gth amount.u.mine amount.to-send)
         %.n
       ==
@@ -165,7 +169,7 @@
     (~(put by accts.current) to.tx to)  
   =.  seen
     (~(put by seen) minter.to-send %.y)
-  $(assets.tx t.assets.tx)
+  $(assets t.assets)
 ::
 ++  mint
   |=  [current=state =tx =account]
@@ -177,12 +181,13 @@
     ~
   ::  loop through assets in to.tx and verify all are legit
   ::  while adding to accounts of receivers
+  =/  to  `(list [account-id minting-asset])`~(tap in `(set [account-id minting-asset])`to.tx)
   |-  ^-  (unit state)
-  ?~  to.tx
+  ?~  to
     (some current)
-  =/  to-send  +.i.to.tx
-  =/  to-whom  -.i.to.tx
-  =/  asset-owner  (~(get by accts.current) minter.to-send)
+  =/  to-send  +.i.to
+  =/  to-whom  -.i.to
+  =/  asset-owner  (~(get by accts.current) minter.tx)
   ?~  asset-owner
     ~&  >>>  "error: can't find minter-account for this asset"
     ~
@@ -199,7 +204,7 @@
     ?-  -.to-send
         %nft
       1
-        %fung
+        %tok
       amount.to-send
     ==
   ::  amount of asset to create must not put total above limit
@@ -208,23 +213,23 @@
     ~
   ::  mint is approved, give to receiver and modify total
   =.  total.asset-owner  amount-after-mint
-  =/  to  (~(get by accts.current) to-whom)
-  ?~  to
+  =/  to-acct  (~(get by accts.current) to-whom)
+  ?~  to-acct
     ::  trying to send asset to non-existent account,
     ::  TODO make a new account and add to state?
-    $(to.tx t.to.tx)
+    $(to t.to)
   ::  receivers must be asset accounts
-  ?.  ?=([%asset-account *] u.to)
+  ?.  ?=([%asset-account *] u.to-acct)
     ~&  >>>  "error: sending assets to non-asset account"
     ~
-  =.  assets.u.to
-    (insert-asset to-send assets.u.to)
+  =.  assets.u.to-acct
+    (insert-minting-asset minter.tx to-send assets.u.to-acct)
   ::  update minter and receiver accounts in state
   =.  accts.current
-    (~(put by accts.current) minter.to-send asset-owner)
+    (~(put by accts.current) minter.tx asset-owner)
   =.  accts.current
-    (~(put by accts.current) to-whom u.to)  
-  $(to.tx t.to.tx)
+    (~(put by accts.current) to-whom u.to-acct)  
+  $(to t.to)
 ::
 ++  lone-mint
   |=  [current=state =tx =account]
@@ -241,30 +246,31 @@
     (~(put by accts.current) blank-account-id [%blank-account ~])
   ::  proceed with mint, ensuring all assets
   ::  have same minter of blank-account-id
+  =/  to  `(list [account-id minting-asset])`~(tap in `(set [account-id minting-asset])`to.tx)
   |-  ^-  (unit state)
-  ?~  to.tx
+  ?~  to
     (some current)
-  =/  to-send  +.i.to.tx
-  =/  to-whom  -.i.to.tx
+  =/  to-send  +.i.to
+  =/  to-whom  -.i.to
   ::  for a lone mint, no check needed for matching owner, since blank account?
   ::  ?.  =(minter.to-send blank-account-id)
   ::    ~&  >>>  "error: tx sender doesn't match new account id"
   ::    ~
-  =/  to  (~(get by accts.current) to-whom)
-  ?~  to
+  =/  to-acct  (~(get by accts.current) to-whom)
+  ?~  to-acct
     ::  trying to send asset to non-existent account,
     ::  TODO make a new account and add to state?
-    $(to.tx t.to.tx)
+    $(to t.to)
   ::  receivers must be asset accounts
-  ?.  ?=([%asset-account *] u.to)
+  ?.  ?=([%asset-account *] u.to-acct)
     ~&  >>>  "warning: sent assets to non-asset account"
-    $(to.tx t.to.tx)
-  =.  assets.u.to
-    (insert-asset to-send assets.u.to)
+    $(to t.to)
+  =.  assets.u.to-acct
+    (insert-minting-asset minter.tx to-send assets.u.to-acct)
   ::  update receiver account in state
   =.  accts.current
-    (~(put by accts.current) to-whom u.to)  
-  $(to.tx t.to.tx)
+    (~(put by accts.current) to-whom u.to-acct)  
+  $(to t.to)
 ::
 ++  create-minter
   |=  [current=state =tx =account]
@@ -374,15 +380,42 @@
       %nft
     ::  using hash here since NFTs in a collection share account-id
     (~(put by assets) hash.to-send to-send)
-      %fung
+      %tok
     ?~  (~(get by assets) minter.to-send)
       ::  asset not yet present in wallet, insert
       (~(put by assets) minter.to-send to-send)
     %+  ~(jab by assets)
       minter.to-send
     |=  =asset
-    ?.  ?=([%fung *] asset)
-      ::  expected a fung, found an nft?
+    ?.  ?=([%tok *] asset)
+      ::  expected a tok, found an nft?
+      asset
+    =.  amount.asset
+      (add amount.asset amount.to-send)
+    asset
+  ==
+::
+++  insert-minting-asset
+  |=  [minter=account-id to-send=minting-asset assets=(map account-id asset)]
+  ^+  assets 
+  ::  add to existing assets in wallet
+  ?-  -.to-send
+      %nft
+    =/  new-asset
+      `asset`[%nft minter=minter uri.to-send hash.to-send can-xfer.to-send]
+    ::  using hash here since NFTs in a collection share account-id
+    (~(put by assets) hash.to-send new-asset)
+      %tok
+    =/  new-asset
+      `asset`[%tok minter=minter amount=amount.to-send]
+    ?~  (~(get by assets) minter)
+      ::  asset not yet present in wallet, insert
+      (~(put by assets) minter new-asset)
+    %+  ~(jab by assets)
+      minter
+    |=  =asset
+    ?.  ?=([%tok *] asset)
+      ::  expected a tok, found an nft?
       asset
     =.  amount.asset
       (add amount.asset amount.to-send)
@@ -395,12 +428,12 @@
   ?-  -.to-remove
       %nft
     (~(del by assets) hash.to-remove)
-      %fung
+      %tok
     %+  ~(jab by assets)
       minter.to-remove
     |=  =asset
-    ?.  ?=([%fung *] asset)
-      ::  expected a fung, found an nft?
+    ?.  ?=([%tok *] asset)
+      ::  expected a tok, found an nft?
       asset
     =.  amount.asset
       (sub amount.asset amount.to-remove)
@@ -415,16 +448,12 @@
     |=  [a=@ux b=@ux]
     ^-  @ux
     (cat 0 b a)
-  ::  find out how to assert this is not on ed25519...
-  =/  id  ^-  @ux
-    ::  all 'add's replaced by concat func
-    %+  ux-concat  `@ux`nonce.sender
-    %+  ux-concat  0x0  ::  helix id = ??
-    ?:  ?=(pubkey-sender sender)
-      `@ux`pubkey
-    ::  sorted and concat'd list of multisig pubkeys
-    `@ux`(roll (sort pubkeys.sender lth) ux-concat)
-  id
+  %+  ux-concat  `@ux`nonce.sender
+  %+  ux-concat  0x0  ::  helix id = ??
+  ?:  ?=(pubkey-sender sender)
+    `@ux`pubkey
+  ::  sorted and concat'd list of multisig pubkeys
+  `@ux`(roll (sort pubkeys.sender lth) ux-concat)
 ::
 ++  compute-gas
   |=  [=tx]
@@ -435,7 +464,8 @@
   ::  temporary
   ?-  -.tx
       %send
-    (lent assets.tx)
+    ::  TODO better way to get size of set?
+    (lent ~(tap by assets.tx))
   ::
       %mint
     (lent to.tx)
