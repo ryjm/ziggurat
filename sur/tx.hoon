@@ -3,15 +3,15 @@
 +$  multisig
   [members=(set pubkey) threshold=@ud]
 +$  owner  ?(pubkey multisig)
-+$  id  @ux
-+$  account-id  id
++$  id  @ud
++$  account-id  @ux
 +$  nonce  @ud
 +$  amount  @ud
 +$  supply  @ud
 +$  zigs  amount
 ::
 +$  asset
-  $%  [%nft minter=account-id uri=@t hash=@ux can-xfer=?]
+  $%  [%nft minter=account-id =id uri=@t hash=@ux can-xfer=?]
       [%tok minter=account-id =amount]
   ==
 +$  minting-asset
@@ -69,12 +69,11 @@
     $:  %mint
         from=sender
         minter=account-id
-        to=(set [account-id minting-asset])
+        to=(list [account-id minting-asset])
     ==
     $:  %lone-mint
         from=sender
-        minter=account-id
-        to=(set [account-id minting-asset])
+        to=(list [account-id minting-asset])
     ==
     ::
     $:  %create-multisig

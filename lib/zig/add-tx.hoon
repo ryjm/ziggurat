@@ -1,4 +1,5 @@
 /-  tx
+/+  *zig-sig
 =,  tx
 |%
 ::  something hardcoded
@@ -7,15 +8,34 @@
 ::  $chunk-transactions: take a set of transactions and apply them
 ::
 ++  chunk-transactions
-  |=  [=state txs=(list tx)]
-  ^+  state
-  ::  go through list and process each
+  |=  [current=state txs=(list tx) our=account-id]
+  ^-  [(list [hash=@ux =tx]) state]
+  ::  go through list and process each tx
   ::  make a note of rejected txs?
   ::  collect total fee count then make a tx
   ::  giving fee to ourself
   ::  build list of [hash tx]
-  ::  return final state?
-  state
+  ::  return final state with list?
+  =+  [results=*(list [hash=@ux =tx]) total-fees=*zigs]
+  |-  ^-  [(list [hash=@ux =tx]) state]
+  ?~  txs
+    [results current]
+  =/  res  (process-tx i.txs current)
+  ::  check to see if tx was processed
+  ?~  res
+    $(txs t.txs)
+  =:
+    results  (snoc results [`@ux`(shax (jam i.txs)) i.txs])
+    ::  check to see if tx actually went through
+    current  ?~  +.u.res  current  u.+.u.res
+    total-fees  -.u.res
+  ==
+  ::  TODO, need a way to award fees to validator
+  ::  can't just do a send direct from transactor,
+  ::  need a special tx type, or a special hardcoded
+  ::  escrow account which txs assign fees to, then
+  ::  validator gets a send tx from that account.
+  $(txs t.txs)  
 ::
 ::  $process-tx: modify state to results of transaction, if valid.
 ::
@@ -23,9 +43,8 @@
   |=  [=tx current=state]
   ::  TODO how to access type 'state' and not face named 'state'?
   ::  named state 'current' to do this
-  ^-  (unit state)
-  ::
-  ::  TODO here check validity of signature(s)
+  ^-  (unit [fee=zigs (unit state)])
+  ::  find account which will perform tx
   ::
   =/  account  (~(get by accts.current) account-id.from.tx)
   ?~  account
@@ -34,6 +53,36 @@
   =/  account  u.account
   ?.  ?=([%asset-account *] account)
     ~&  >>>  "error: tx submitted from non-asset account" 
+    ~
+  ::  check validity of signature(s)
+  ::  TODO ECDSA and Schnorr implementations 
+  ?.  ?:  ?=(pubkey-sender from.tx)
+        ::  validate single sig from sender
+        ?.  ?=(pubkey owner.account)
+          %.n
+        ::  %:  validate
+        ::      ~zod
+        ::      [r.sig.from.tx ~zod 1]
+        ::      (shax (con account-id.from.tx nonce.from.tx))
+        ::      ~2021.12.13..19.05.17..7258
+        ::  ==
+        %.y
+      ::  validate all sigs in multisig sender
+      ?:  ?=(pubkey owner.account)
+        %.n
+      ?&  (gte (lent sigs.from.tx) threshold.owner.account)
+          ::  %+  levy
+          ::    sigs.from.tx
+          ::  |=  =signature
+          ::  %:  validate
+          ::      ~zod
+          ::      [r.signature ~zod 1]
+          ::      (shax (con account-id.from.tx nonce.from.tx))
+          ::      ~2021.12.13..19.05.17..7258
+          ::  ==
+          %.y
+      ==
+    ~&  >>>  "error: transaction signature(s) not valid"
     ~
   ?.  =((succ nonce.account) nonce.from.tx)
     ~&  >>>  "error: incorrect tx nonce"
@@ -69,31 +118,27 @@
   ::  update account with inc'd nonce and fee paid
   ::
   =.  accts.current
-    (~(put by accts.current) account-id.from.tx account)  
+    (~(put by accts.current) account-id.from.tx account)
+  %-  some
+  :-  fee
   ::  branch on type of transaction and get output state
   ::  TODO cleaner way to write this?
   ::
   ?-  -.tx
       %send
     (send current tx account)
-  ::
       %mint
     (mint current tx account)
-  ::
       %lone-mint
     (lone-mint current tx account)
-  ::
       %create-multisig
     (create-multisig current tx account)
-  ::
       %update-multisig
     (update-multisig current tx account)
-  ::
       %create-minter
     (create-minter current tx account)
-  ::
       %update-minter
-    (some current)
+    (update-minter current tx account)
   ==
 ::
 ::  handlers for each tx type
@@ -112,7 +157,7 @@
   =/  to  (~(get by accts.current) to.tx)
   ?~  to
     ::  trying to send asset to non-existent account,
-    ::  TODO make a new account and add to state?
+    ::  make a new account and add to state?
     ~&  >>>  "potential error: %send to non-existent account"
     (some current)
   =/  to  u.to
@@ -124,7 +169,7 @@
   =/  seen  `(map account-id ?)`~
   ::  TODO good way to iterate through set?
   ::  doing a recursion through tree holding modified state
-  ::  in stack seems like a bad idea for v. large state
+  ::  in stack seems like a bad idea for very large state
   =/  assets  `(list asset)`~(tap in `(set asset)`assets.tx)
   |-  ^-  (unit state)
   ::  if finished successfully, return new state
@@ -153,22 +198,18 @@
           (gth amount.u.mine amount.to-send)
         %.n
       ==
-    ~&  >>>  "error: don't have enough {<to-send>} to send"
+    ~&  >>>  "error: don't have enough {<minter.to-send>} to send, or tried to send untransferrable NFT"
     ~
   ::  asset is good to send, modify state
   ::  update sender to have x less of asset
-  =.  assets.account
-    (remove-asset to-send assets.account)
   ::  update receiver to have x more
-  =.  assets.to
-    (insert-asset to-send assets.to)
-  ::  update state with 2 modified accounts
-  =.  accts.current
-    (~(put by accts.current) account-id.from.tx account)
-  =.  accts.current
-    (~(put by accts.current) to.tx to)  
-  =.  seen
-    (~(put by seen) minter.to-send %.y)
+  =:  
+    assets.account  (remove-asset to-send assets.account)
+    assets.to  (insert-asset to-send assets.to)
+    seen  (~(put by seen) minter.to-send %.y)
+  ==
+  =.  accts.current  (~(put by accts.current) account-id.from.tx account)
+  =.  accts.current  (~(put by accts.current) to.tx to)
   $(assets t.assets)
 ::
 ++  mint
@@ -181,12 +222,11 @@
     ~
   ::  loop through assets in to.tx and verify all are legit
   ::  while adding to accounts of receivers
-  =/  to  `(list [account-id minting-asset])`~(tap in `(set [account-id minting-asset])`to.tx)
   |-  ^-  (unit state)
-  ?~  to
+  ?~  to.tx
     (some current)
-  =/  to-send  +.i.to
-  =/  to-whom  -.i.to
+  =/  to-send  +.i.to.tx
+  =/  to-whom  -.i.to.tx
   =/  asset-owner  (~(get by accts.current) minter.tx)
   ?~  asset-owner
     ~&  >>>  "error: can't find minter-account for this asset"
@@ -217,19 +257,24 @@
   ?~  to-acct
     ::  trying to send asset to non-existent account,
     ::  TODO make a new account and add to state?
-    $(to t.to)
+    $(to.tx t.to.tx)
   ::  receivers must be asset accounts
   ?.  ?=([%asset-account *] u.to-acct)
     ~&  >>>  "error: sending assets to non-asset account"
     ~
   =.  assets.u.to-acct
-    (insert-minting-asset minter.tx to-send assets.u.to-acct)
+    %:  insert-minting-asset
+        minter.tx
+        total.asset-owner  ::  this becomes ID of nft in collection
+        to-send
+        assets.u.to-acct
+    ==
   ::  update minter and receiver accounts in state
   =.  accts.current
     (~(put by accts.current) minter.tx asset-owner)
   =.  accts.current
     (~(put by accts.current) to-whom u.to-acct)  
-  $(to t.to)
+  $(to.tx t.to.tx)
 ::
 ++  lone-mint
   |=  [current=state =tx =account]
@@ -246,12 +291,13 @@
     (~(put by accts.current) blank-account-id [%blank-account ~])
   ::  proceed with mint, ensuring all assets
   ::  have same minter of blank-account-id
-  =/  to  `(list [account-id minting-asset])`~(tap in `(set [account-id minting-asset])`to.tx)
+  ::  NFT IDs start at i=0 and count up
+  =+  i=0
   |-  ^-  (unit state)
-  ?~  to
+  ?~  to.tx
     (some current)
-  =/  to-send  +.i.to
-  =/  to-whom  -.i.to
+  =/  to-send  +.i.to.tx
+  =/  to-whom  -.i.to.tx
   ::  for a lone mint, no check needed for matching owner, since blank account?
   ::  ?.  =(minter.to-send blank-account-id)
   ::    ~&  >>>  "error: tx sender doesn't match new account id"
@@ -260,17 +306,22 @@
   ?~  to-acct
     ::  trying to send asset to non-existent account,
     ::  TODO make a new account and add to state?
-    $(to t.to)
+    $(to.tx t.to.tx)
   ::  receivers must be asset accounts
   ?.  ?=([%asset-account *] u.to-acct)
     ~&  >>>  "warning: sent assets to non-asset account"
-    $(to t.to)
+    $(to.tx t.to.tx)
   =.  assets.u.to-acct
-    (insert-minting-asset minter.tx to-send assets.u.to-acct)
+    %:  insert-minting-asset
+        blank-account-id
+        i
+        to-send
+        assets.u.to-acct
+    ==
   ::  update receiver account in state
   =.  accts.current
     (~(put by accts.current) to-whom u.to-acct)  
-  $(to t.to)
+  $(to.tx t.to.tx, i +(i))
 ::
 ++  create-minter
   |=  [current=state =tx =account]
@@ -396,13 +447,13 @@
   ==
 ::
 ++  insert-minting-asset
-  |=  [minter=account-id to-send=minting-asset assets=(map account-id asset)]
+  |=  [minter=account-id =id to-send=minting-asset assets=(map account-id asset)]
   ^+  assets 
   ::  add to existing assets in wallet
   ?-  -.to-send
       %nft
     =/  new-asset
-      `asset`[%nft minter=minter uri.to-send hash.to-send can-xfer.to-send]
+      `asset`[%nft minter=minter id uri.to-send hash.to-send can-xfer.to-send]
     ::  using hash here since NFTs in a collection share account-id
     (~(put by assets) hash.to-send new-asset)
       %tok
@@ -439,6 +490,7 @@
       (sub amount.asset amount.to-remove)
     asset
   ==
+::  $generate-account-id: produces a hash based on pubkeys and details of account
 ::
 ++  generate-account-id
   |=  [=sender]
@@ -449,7 +501,7 @@
     ^-  @ux
     (cat 0 b a)
   %+  ux-concat  `@ux`nonce.sender
-  %+  ux-concat  0x0  ::  helix id = ??
+  %+  ux-concat  0x0  ::  TODO helix id = ??
   ?:  ?=(pubkey-sender sender)
     `@ux`pubkey
   ::  sorted and concat'd list of multisig pubkeys
@@ -464,7 +516,7 @@
   ::  temporary
   ?-  -.tx
       %send
-    ::  TODO better way to get size of set?
+    ::  TODO better way to get length/size of set?
     (lent ~(tap by assets.tx))
   ::
       %mint
