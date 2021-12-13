@@ -5,29 +5,30 @@
 ::  something hardcoded
 ++  zigs-id  `@ux`0x0
 ::
-::  $chunk-transactions: take a set of transactions and apply them
+::  $txs-to-chunk: take a set of transactions and apply them
 ::
-++  chunk-transactions
-  |=  [current=state txs=(list tx) our=account-id]
-  ^-  [(list [hash=@ux =tx]) state]
+++  txs-to-chunk
+  |=  [=state txs=(set tx) our=account-id]
+  ^-  [(list [hash=@ux =tx]) _state]
   ::  go through list and process each tx
   ::  make a note of rejected txs?
   ::  collect total fee count then make a tx
   ::  giving fee to ourself
   ::  build list of [hash tx]
   ::  return final state with list?
+  =/  txs=(list tx)  ~(tap in txs)
   =+  [results=*(list [hash=@ux =tx]) total-fees=*zigs]
-  |-  ^-  [(list [hash=@ux =tx]) state]
+  |-  ^-  [(list [hash=@ux =tx]) _state]
   ?~  txs
-    [results current]
-  =/  res  (process-tx i.txs current)
+    [results state]
+  =/  res  (process-tx i.txs state)
   ::  check to see if tx was processed
   ?~  res
     $(txs t.txs)
   =:
     results  (snoc results [`@ux`(shax (jam i.txs)) i.txs])
     ::  check to see if tx actually went through
-    current  ?~  +.u.res  current  u.+.u.res
+    state  +.u.res
     total-fees  -.u.res
   ==
   ::  TODO, need a way to award fees to validator
@@ -40,17 +41,14 @@
 ::  $process-tx: modify state to results of transaction, if valid.
 ::
 ++  process-tx
-  |=  [=tx current=state]
-  ::  TODO how to access type 'state' and not face named 'state'?
-  ::  named state 'current' to do this
-  ^-  (unit [fee=zigs (unit state)])
+  |=  [=tx =state]
+  ^-  (unit [fee=zigs _state])
   ::  find account which will perform tx
   ::
-  =/  account  (~(get by accts.current) account-id.from.tx)
-  ?~  account
+  ?~  acc=(~(get by accts.state) account-id.from.tx)
     ~&  >>>  "error: sender account not found in state"
     ~
-  =/  account  u.account
+  =*  account  u.acc
   ?.  ?=([%asset-account *] account)
     ~&  >>>  "error: tx submitted from non-asset account" 
     ~
@@ -84,12 +82,9 @@
       ==
     ~&  >>>  "error: transaction signature(s) not valid"
     ~
-  ?.  =((succ nonce.account) nonce.from.tx)
+  ?.  =(+(nonce.account) nonce.from.tx)
     ~&  >>>  "error: incorrect tx nonce"
     ~
-  ::  increment nonce of tx sender acct
-  ::
-  =.  nonce.account  (succ nonce.account)
   =/  fee
     %+  mul
       (compute-gas tx)
@@ -117,36 +112,25 @@
     z
   ::  update account with inc'd nonce and fee paid
   ::
-  =.  accts.current
-    (~(put by accts.current) account-id.from.tx account)
-  %-  some
-  :-  fee
-  ::  branch on type of transaction and get output state
-  ::  TODO cleaner way to write this?
-  ::
+  =.  nonce.account  +(nonce.account)
+  =.  accts.state
+    (~(put by accts.state) account-id.from.tx account)
+  =-  `[fee ?~(- state u:-)]
   ?-  -.tx
-      %send
-    (send current tx account)
-      %mint
-    (mint current tx account)
-      %lone-mint
-    (lone-mint current tx account)
-      %create-multisig
-    (create-multisig current tx account)
-      %update-multisig
-    (update-multisig current tx account)
-      %create-minter
-    (create-minter current tx account)
-      %update-minter
-    (update-minter current tx account)
+    %send             (send state tx account)
+    %mint             (mint state tx account)
+    %lone-mint        (lone-mint state tx account)
+    %create-multisig  (create-multisig state tx account)
+    %update-multisig  (update-multisig state tx account)
+    %create-minter    (create-minter state tx account)
+    %update-minter    (update-minter state tx account)
   ==
 ::
 ::  handlers for each tx type
 ::
 ++  send
-  |=  [current=state =tx =account]
-  ::  how do i access type 'state' and not face named 'state'?
-  ^-  (unit state)
+  |=  [=state =tx =account]
+  ^-  (unit _state)
   ?.  ?=([%send *] tx)
     ~
   ?.  ?=([%asset-account *] account)
@@ -154,28 +138,26 @@
     ~&  >>>  "error: %send tx from minter account"
     ~
   ::  TODO if account doesn't exist make a new one?
-  =/  to  (~(get by accts.current) to.tx)
-  ?~  to
+  ?~  to=(~(get by accts.state) to.tx)
     ::  trying to send asset to non-existent account,
     ::  make a new account and add to state?
     ~&  >>>  "potential error: %send to non-existent account"
-    (some current)
-  =/  to  u.to
-  ?.  ?=([%asset-account *] to)
+    (some state)
+  ?.  ?=([%asset-account *] u.to)
     ::  no support for minter account receiving assets
     ~&  >>>  "error: sending assets to non-asset account"
     ~
   ::  keeping a map to check for dupes
-  =/  seen  `(map account-id ?)`~
+  =|  seen=(map @ux ?)
   ::  TODO good way to iterate through set?
   ::  doing a recursion through tree holding modified state
   ::  in stack seems like a bad idea for very large state
-  =/  assets  `(list asset)`~(tap in `(set asset)`assets.tx)
-  |-  ^-  (unit state)
+  =/  assets=(list asset)  ~(tap in `(set asset)`assets.tx)
+  |-  ^-  (unit _state)
   ::  if finished successfully, return new state
   ?~  assets
-    (some current)
-  =/  to-send  i.assets
+    (some state)
+  =*  to-send  i.assets
   ::  check if asset has been seen
   ::  can't send 1 asset twice in tx
   ?^  (~(get by seen) minter.to-send)
@@ -184,16 +166,17 @@
   ::  assert that send is valid for this asset
   ?.  ?-  -.to-send
           %nft
-        =/  mine  (~(get by assets.account) hash.to-send)
-        ?~  mine  %.n
+        ?~  mine=(~(get by assets.account) hash.to-send)
+          %.n
         ?:  ?=([%nft *] u.mine)
           ?&  =(minter.to-send minter.u.mine)
               can-xfer.u.mine
           ==
         %.n
-          %tok
-        =/  mine  (~(get by assets.account) minter.to-send)
-        ?~  mine  %.n
+        ::
+          %tok  
+        ?~  mine=(~(get by assets.account) minter.to-send)
+          %.n
         ?:  ?=([%tok *] u.mine)
           (gth amount.u.mine amount.to-send)
         %.n
@@ -205,16 +188,16 @@
   ::  update receiver to have x more
   =:  
     assets.account  (remove-asset to-send assets.account)
-    assets.to  (insert-asset to-send assets.to)
+    assets.u.to  (insert-asset to-send assets.u.to)
     seen  (~(put by seen) minter.to-send %.y)
   ==
-  =.  accts.current  (~(put by accts.current) account-id.from.tx account)
-  =.  accts.current  (~(put by accts.current) to.tx to)
+  =.  accts.state  (~(put by accts.state) account-id.from.tx account)
+  =.  accts.state  (~(put by accts.state) to.tx u.to)
   $(assets t.assets)
 ::
 ++  mint
-  |=  [current=state =tx =account]
-  ^-  (unit state)
+  |=  [=state =tx =account]
+  ^-  (unit _state)
   ?.  ?=([%mint *] tx)
     ~
   ?.  ?=([%asset-account *] account)
@@ -222,16 +205,15 @@
     ~
   ::  loop through assets in to.tx and verify all are legit
   ::  while adding to accounts of receivers
-  |-  ^-  (unit state)
+  |-  ^-  (unit _state)
   ?~  to.tx
-    (some current)
-  =/  to-send  +.i.to.tx
-  =/  to-whom  -.i.to.tx
-  =/  asset-owner  (~(get by accts.current) minter.tx)
-  ?~  asset-owner
+    (some state)
+  =*  to-send  +.i.to.tx
+  =*  to-whom  -.i.to.tx 
+  ?~  find-owner=(~(get by accts.state) minter.tx)
     ~&  >>>  "error: can't find minter-account for this asset"
     ~
-  =/  asset-owner  u.asset-owner
+  =*  asset-owner  u.find-owner
   ?.  ?=([%minter-account *] asset-owner)
     ~&  >>>  "error: asset to mint not controlled by minter-account"
     ~
@@ -253,8 +235,7 @@
     ~
   ::  mint is approved, give to receiver and modify total
   =.  total.asset-owner  amount-after-mint
-  =/  to-acct  (~(get by accts.current) to-whom)
-  ?~  to-acct
+  ?~  to-acct=(~(get by accts.state) to-whom)
     ::  trying to send asset to non-existent account,
     ::  TODO make a new account and add to state?
     $(to.tx t.to.tx)
@@ -270,40 +251,35 @@
         assets.u.to-acct
     ==
   ::  update minter and receiver accounts in state
-  =.  accts.current
-    (~(put by accts.current) minter.tx asset-owner)
-  =.  accts.current
-    (~(put by accts.current) to-whom u.to-acct)  
+  =.  accts.state
+    (~(put by accts.state) minter.tx asset-owner)
+  =.  accts.state
+    (~(put by accts.state) to-whom u.to-acct)  
   $(to.tx t.to.tx)
 ::
 ++  lone-mint
-  |=  [current=state =tx =account]
-  ^-  (unit state)
+  |=  [=state =tx =account]
+  ^-  (unit _state)
   ?.  ?=([%lone-mint *] tx)
     ~
   =/  blank-account-id  (generate-account-id from.tx)
   ::  create new account in state to hold this mint
   ::  if account-id exists this mint fails
-  ?^  (~(get by accts.current) blank-account-id)
+  ?^  (~(get by accts.state) blank-account-id)
     ~&  >>>  "error: %lone-mint collision with existing account"
     ~
-  =.  accts.current
-    (~(put by accts.current) blank-account-id [%blank-account ~])
+  =.  accts.state
+    (~(put by accts.state) blank-account-id [%blank-account ~])
   ::  proceed with mint, ensuring all assets
   ::  have same minter of blank-account-id
   ::  NFT IDs start at i=0 and count up
   =+  i=0
-  |-  ^-  (unit state)
+  |-  ^-  (unit _state)
   ?~  to.tx
-    (some current)
-  =/  to-send  +.i.to.tx
-  =/  to-whom  -.i.to.tx
-  ::  for a lone mint, no check needed for matching owner, since blank account?
-  ::  ?.  =(minter.to-send blank-account-id)
-  ::    ~&  >>>  "error: tx sender doesn't match new account id"
-  ::    ~
-  =/  to-acct  (~(get by accts.current) to-whom)
-  ?~  to-acct
+    (some state)
+  =*  to-send  +.i.to.tx
+  =*  to-whom  -.i.to.tx
+  ?~  to-acct=(~(get by accts.state) to-whom)
     ::  trying to send asset to non-existent account,
     ::  TODO make a new account and add to state?
     $(to.tx t.to.tx)
@@ -319,39 +295,37 @@
         assets.u.to-acct
     ==
   ::  update receiver account in state
-  =.  accts.current
-    (~(put by accts.current) to-whom u.to-acct)  
+  =.  accts.state
+    (~(put by accts.state) to-whom u.to-acct)  
   $(to.tx t.to.tx, i +(i))
 ::
 ++  create-minter
-  |=  [current=state =tx =account]
-  ^-  (unit state)
+  |=  [=state =tx =account]
+  ^-  (unit _state)
   ?.  ?=([%create-minter *] tx)
     ~
   =/  new-account-id  (generate-account-id from.tx)
   ::  create new account in state to hold this multisig
   ::  if account-id already exists this fails
-  ?^  (~(get by accts.current) new-account-id)
+  ?^  (~(get by accts.state) new-account-id)
     ~&  >>>  "error: %create-minter collision with existing account"
     ~
-  =.  accts.current
-    %+  ~(put by accts.current)
+  =.  accts.state
+    %+  ~(put by accts.state)
       new-account-id
     ::  TODO make sure nonce should start at 0
     [%minter-account owner.tx nonce=0 max=max.tx total=0]
-  (some current)
+  (some state)
 ::
 ++  update-minter
-  |=  [current=state =tx =account]
-  ^-  (unit state)
+  |=  [=state =tx =account]
+  ^-  (unit _state)
   ?.  ?=([%update-minter *] tx)
     ~
-  =/  acct-to-update
-    (~(get by accts.current) account-id.from.tx)
-  ?~  acct-to-update
+  ?~  acct=(~(get by accts.state) account-id.from.tx)
     ~&  >>>  "error: %update-minter on nonexistent account"
     ~
-  =/  acct-to-update  u.acct-to-update
+  =/  acct-to-update  u.acct
   ?.  ?=([%minter-account *] acct-to-update)
     ~&  >>>  "error: %update-minter on non-minter account"
     ~
@@ -361,8 +335,8 @@
       %.y  ::  non-multisig so no need to check
     ~&  >>>  "error: %update-minter multisig threshold set too high"
     ~
-  =.  accts.current
-    %+  ~(put by accts.current)
+  =.  accts.state
+    %+  ~(put by accts.state)
       account-id.from.tx
     :*  %minter-account
         owner.tx
@@ -370,56 +344,54 @@
         max.acct-to-update
         total.acct-to-update
     ==
-  (some current)
+  (some state)
 ::
 ++  create-multisig
-  |=  [current=state =tx =account]
-  ^-  (unit state)
+  |=  [=state =tx =account]
+  ^-  (unit _state)
   ?.  ?=([%create-multisig *] tx)
     ~
   ::  assert assets is empty, where?
   =/  account-id  (generate-account-id from.tx)
   ::  create new account in state to hold this multisig
   ::  if account-id already exists this fails
-  ?^  (~(get by accts.current) account-id)
+  ?^  (~(get by accts.state) account-id)
     ~&  >>>  "error: %create-multisig collision with existing account"
     ~
   ?.  (lte (lent members.owner.tx) threshold.owner.tx)
     ~&  >>>  "error: %create-multisig threshold set too high"
     ~
-  =.  accts.current
-    %+  ~(put by accts.current)
+  =.  accts.state
+    %+  ~(put by accts.state)
       account-id
     ::  TODO make sure nonce should start at 0
     [%asset-account owner.tx nonce=0 assets=~]
-  (some current)
+  (some state)
 ::
 ++  update-multisig
-  |=  [current=state =tx =account]
-  ^-  (unit state)
+  |=  [=state =tx =account]
+  ^-  (unit _state)
   ?.  ?=([%update-multisig *] tx)
     ~
-  =/  acct-to-update
-    (~(get by accts.current) account-id.from.tx)
-  ?~  acct-to-update
+  ?~  acct=(~(get by accts.state) account-id.from.tx)
     ~&  >>>  "error: %update-multisig on nonexistent account"
     ~
-  =/  acct-to-update  u.acct-to-update
+  =/  acct-to-update  u.acct
   ?.  ?=([%asset-account *] acct-to-update)
     ~&  >>>  "error: %update-multisig on non-asset account"
     ~
   ?.  (lte (lent members.owner.tx) threshold.owner.tx)
     ~&  >>>  "error: %update-multisig threshold set too high"
     ~
-  =.  accts.current
-    %+  ~(put by accts.current)
+  =.  accts.state
+    %+  ~(put by accts.state)
       account-id.from.tx
     :*  %asset-account
         owner.tx
         nonce.acct-to-update
         assets.acct-to-update
     ==
-  (some current)
+  (some state)
 ::
 ::  helper/utility functions
 ::

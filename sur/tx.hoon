@@ -64,6 +64,7 @@
     $:  %send
         from=sender
         to=account-id
+        ::  TODO change to MAP
         assets=(set asset)
     ==
     $:  %mint

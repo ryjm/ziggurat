@@ -122,7 +122,7 @@
   =/  correct-state  (insert-asset 0x1 [%tok 0x0 490] build-send-test-state)
   =.  correct-state  (insert-asset 0x2 [%tok 0x0 1.500] correct-state)
   =.  correct-state  (increment-nonce 0x1 correct-state)
-  (expect-eq !>((some [correct-fee (some correct-state)])) !>(output))
+  (expect-eq !>((some [correct-fee correct-state])) !>(output))
 ++  test-send-2-assets
   =/  t
     :*  %send
@@ -139,7 +139,7 @@
   =.  correct-state  (insert-asset 0x1 [%tok 0xf 950] correct-state)
   =.  correct-state  (insert-asset 0x2 [%tok 0xf 1.050] correct-state)
   =.  correct-state  (increment-nonce 0x1 correct-state)
-  (expect-eq !>((some [correct-fee (some correct-state)])) !>(output))
+  (expect-eq !>((some [correct-fee correct-state])) !>(output))
 ++  test-send-nft
   =/  test-nft
     [%nft 0xa id=0 uri='some data' hash=`@ux`(shax 'some data') can-xfer=%.y]
@@ -157,7 +157,7 @@
   =.  correct-state  (remove-asset 0x1 (shax 'some data') correct-state)
   =.  correct-state  (insert-asset 0x4 test-nft correct-state)
   =.  correct-state  (increment-nonce 0x1 correct-state)
-  (expect-eq !>((some [correct-fee (some correct-state)])) !>(output))
+  (expect-eq !>((some [correct-fee correct-state])) !>(output))
 ++  test-send-tok-and-nft
   =/  test-nft
     [%nft 0xa id=0 uri='some data' hash=`@ux`(shax 'some data') can-xfer=%.y]
@@ -176,7 +176,7 @@
   =.  correct-state  (remove-asset 0x1 (shax 'some data') correct-state)
   =.  correct-state  (insert-asset 0x4 test-nft correct-state)
   =.  correct-state  (increment-nonce 0x1 correct-state)
-  (expect-eq !>((some [correct-fee (some correct-state)])) !>(output))
+  (expect-eq !>((some [correct-fee correct-state])) !>(output))
 ++  test-send-untransferrable-nft
   =/  test-nft
     ^-  asset
@@ -197,7 +197,9 @@
     ==
   =/  output  (process-tx t build-send-test-state)
   =/  correct-fee  10
-  (expect-eq !>((some [correct-fee ~])) !>(output))
+  =/  correct-state  (insert-asset 0x1 [%tok 0x0 990] build-send-test-state)
+  =.  correct-state  (increment-nonce 0x1 correct-state)
+  (expect-eq !>((some [correct-fee correct-state])) !>(output))
 ++  test-send-no-zigs
   =/  test-nft
     ^-  asset
@@ -235,7 +237,9 @@
     (insert-asset 0x1 [%tok 0xf 49] build-send-test-state)
   =/  output  (process-tx t starting-state)
   =/  correct-fee  20
-  (expect-eq !>((some [correct-fee ~])) !>(output))
+  =/  correct-state  (insert-asset 0x1 [%tok 0x0 980] starting-state)
+  =.  correct-state  (increment-nonce 0x1 correct-state)
+  (expect-eq !>((some [correct-fee correct-state])) !>(output))
 ++  test-send-no-asset
   =/  t
     :*  %send
@@ -249,7 +253,9 @@
     (remove-asset 0x1 0xf build-send-test-state)
   =/  output  (process-tx t starting-state)
   =/  correct-fee  20
-  (expect-eq !>((some [correct-fee ~])) !>(output))
+  =/  correct-state  (insert-asset 0x1 [%tok 0x0 980] starting-state)
+  =.  correct-state  (increment-nonce 0x1 correct-state)
+  (expect-eq !>((some [correct-fee correct-state])) !>(output))
 ++  test-send-same-asset-twice
   =/  t
     :*  %send
@@ -261,7 +267,9 @@
     ==
   =/  output  (process-tx t build-send-test-state)
   =/  correct-fee  30
-  (expect-eq !>((some [correct-fee ~])) !>(output))
+  =/  correct-state  (insert-asset 0x1 [%tok 0x0 970] build-send-test-state)
+  =.  correct-state  (increment-nonce 0x1 correct-state)
+  (expect-eq !>((some [correct-fee correct-state])) !>(output))
 ++  test-send-part-fail
   =/  t
     :*  %send
@@ -273,7 +281,9 @@
     ==
   =/  output  (process-tx t build-send-test-state)
   =/  correct-fee  30
-  (expect-eq !>((some [correct-fee ~])) !>(output))
+  =/  correct-state  (insert-asset 0x1 [%tok 0x0 970] build-send-test-state)
+  =.  correct-state  (increment-nonce 0x1 correct-state)
+  (expect-eq !>((some [correct-fee correct-state])) !>(output))
 ++  test-send-all-fail
   =/  t
     :*  %send
@@ -285,7 +295,9 @@
     ==
   =/  output  (process-tx t build-send-test-state)
   =/  correct-fee  30
-  (expect-eq !>((some [correct-fee ~])) !>(output))
+  =/  correct-state  (insert-asset 0x1 [%tok 0x0 970] build-send-test-state)
+  =.  correct-state  (increment-nonce 0x1 correct-state)
+  (expect-eq !>((some [correct-fee correct-state])) !>(output))
 ++  test-send-nonexistent-sender
   =/  t
     :*  %send
@@ -343,7 +355,7 @@
             [0x3 `account`[%minter-account 0x1234 0 1.000 200]]
         ==
     ==
-  (expect-eq !>((some [correct-fee (some correct-state)])) !>(output))
+  (expect-eq !>((some [correct-fee correct-state])) !>(output))
   ::++  test-mint-nft
   :: =/  test-nft
   ::   [%nft uri='some data' hash=`@ux`(shax 'some data') can-xfer=%.y]
