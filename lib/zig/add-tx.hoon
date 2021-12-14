@@ -20,23 +20,21 @@
   =+  [results=*(list [hash=@ux =tx]) total-fees=*zigs]
   |-  ^-  [(list [hash=@ux =tx]) _state]
   ?~  txs
-    [results state]
-  =/  res  (process-tx i.txs state)
+    [(flop results) state]
   ::  check to see if tx was processed
-  ?~  res
+  ?~  res=(process-tx i.txs state)
     $(txs t.txs)
-  =:
-    results  (snoc results [`@ux`(shax (jam i.txs)) i.txs])
-    ::  check to see if tx actually went through
-    state  +.u.res
-    total-fees  -.u.res
-  ==
   ::  TODO, need a way to award fees to validator
   ::  can't just do a send direct from transactor,
   ::  need a special tx type, or a special hardcoded
   ::  escrow account which txs assign fees to, then
   ::  validator gets a send tx from that account.
-  $(txs t.txs)  
+  %_  $
+    txs         t.txs
+    results     [[`@ux`(shax (jam i.txs)) i.txs] results]
+    state       +.u.res
+    total-fees  -.u.res
+  ==
 ::
 ::  $process-tx: modify state to results of transaction, if valid.
 ::
@@ -85,34 +83,27 @@
   ?.  =(+(nonce.account) nonce.from.tx)
     ~&  >>>  "error: incorrect tx nonce"
     ~
-  =/  fee
-    %+  mul
-      (compute-gas tx)
-    feerate.from.tx
+  =/  fee  (mul (compute-gas tx) feerate.from.tx)
   =/  zigs-in-account
-    =/  zigs  (~(get by assets.account) zigs-id)
-    ?~  zigs  0
-    ?+  -.u.zigs  0
-        %tok
-      amount.u.zigs
-    ==
+    ?~  zigs=(~(get by assets.account) zigs-id)  0
+    ?.  ?=([%tok *] u.zigs)  0
+    amount.u.zigs
   ?.  (gte zigs-in-account fee)
     ~&  >>>  "error: {<zigs-in-account>} zigs in account, tx fee is {<fee>}"
     ~
+  =:
   ::  take fee from sender account
-  =.  assets.account
-    %+  ~(jab by assets.account)
-      zigs-id
-    |=  z=asset
-    ?.  ?=([%tok *] z)
-      ::  expect zigs to be tok, real error
-      !!
-    =.  amount.z
-      (sub amount.z fee)
-    z
+    assets.account
+  %+  ~(jab by assets.account)
+    zigs-id
+  |=  z=asset
+  ::  zigs will always be tok, just type-asserting
+  ?.  ?=([%tok *] z)  !!
+  z(amount (sub amount.z fee))
   ::  update account with inc'd nonce and fee paid
-  ::
-  =.  nonce.account  +(nonce.account)
+    nonce.account
+  +(nonce.account)
+  ==
   =.  accts.state
     (~(put by accts.state) account-id.from.tx account)
   =-  `[fee ?~(- state u:-)]
@@ -191,8 +182,10 @@
     assets.u.to  (insert-asset to-send assets.u.to)
     seen  (~(put by seen) minter.to-send %.y)
   ==
-  =.  accts.state  (~(put by accts.state) account-id.from.tx account)
-  =.  accts.state  (~(put by accts.state) to.tx u.to)
+  =.  accts.state
+    %+  ~(put by (~(put by accts.state) to.tx u.to))
+      account-id.from.tx
+    account
   $(assets t.assets)
 ::
 ++  mint
@@ -203,13 +196,6 @@
   ?.  ?=([%asset-account *] account)
     ~&  >>>  "error: %mint tx from non-asset account"
     ~
-  ::  loop through assets in to.tx and verify all are legit
-  ::  while adding to accounts of receivers
-  |-  ^-  (unit _state)
-  ?~  to.tx
-    (some state)
-  =*  to-send  +.i.to.tx
-  =*  to-whom  -.i.to.tx 
   ?~  find-owner=(~(get by accts.state) minter.tx)
     ~&  >>>  "error: can't find minter-account for this asset"
     ~
@@ -217,23 +203,26 @@
   ?.  ?=([%minter-account *] asset-owner)
     ~&  >>>  "error: asset to mint not controlled by minter-account"
     ~
-  ::  minter must match tx sender
+  ::  minter owner must match tx sender
   ?.  =(owner.asset-owner owner.account)
     ~&  >>>  "error: tx sender doesn't match minter"
     ~
+  ::  loop through assets in to.tx and verify all are legit
+  ::  while adding to accounts of receivers
+  |-  ^-  (unit _state)
+  ?~  to.tx  [~ state]
+  =*  to-send  +.i.to.tx
+  =*  to-whom  -.i.to.tx
   =/  amount-after-mint
     %+  add  total.asset-owner
     ?-  -.to-send
-        %nft
-      1
-        %tok
-      amount.to-send
+      %nft  1
+      %tok  amount.to-send
     ==
   ::  amount of asset to create must not put total above limit
-  ?.  (gte max.asset-owner amount-after-mint)
+  ?.  (gth max.asset-owner amount-after-mint)
     ~&  >>>  "error: mint would create too many assets"
     ~
-  ::  mint is approved, give to receiver and modify total
   =.  total.asset-owner  amount-after-mint
   ?~  to-acct=(~(get by accts.state) to-whom)
     ::  trying to send asset to non-existent account,
@@ -251,11 +240,14 @@
         assets.u.to-acct
     ==
   ::  update minter and receiver accounts in state
-  =.  accts.state
-    (~(put by accts.state) minter.tx asset-owner)
-  =.  accts.state
-    (~(put by accts.state) to-whom u.to-acct)  
-  $(to.tx t.to.tx)
+  %_  $
+    to.tx    t.to.tx
+    ::
+      accts.state
+    %+  ~(put by (~(put by accts.state) to-whom u.to-acct))
+      minter.tx
+    asset-owner
+  ==
 ::
 ++  lone-mint
   |=  [=state =tx =account]
@@ -295,9 +287,11 @@
         assets.u.to-acct
     ==
   ::  update receiver account in state
-  =.  accts.state
-    (~(put by accts.state) to-whom u.to-acct)  
-  $(to.tx t.to.tx, i +(i))
+  %_  $
+    i            +(i)
+    to.tx        t.to.tx
+    accts.state  (~(put by accts.state) to-whom u.to-acct)
+  ==
 ::
 ++  create-minter
   |=  [=state =tx =account]
@@ -310,12 +304,12 @@
   ?^  (~(get by accts.state) new-account-id)
     ~&  >>>  "error: %create-minter collision with existing account"
     ~
-  =.  accts.state
-    %+  ~(put by accts.state)
-      new-account-id
-    ::  TODO make sure nonce should start at 0
-    [%minter-account owner.tx nonce=0 max=max.tx total=0]
-  (some state)
+  :+  ~
+    hash.state
+  %+  ~(put by accts.state)
+    new-account-id
+  ::  TODO make sure nonce should start at 0
+  [%minter-account owner.tx nonce=0 max=max.tx total=0]
 ::
 ++  update-minter
   |=  [=state =tx =account]
@@ -325,7 +319,7 @@
   ?~  acct=(~(get by accts.state) account-id.from.tx)
     ~&  >>>  "error: %update-minter on nonexistent account"
     ~
-  =/  acct-to-update  u.acct
+  =*  acct-to-update  u.acct
   ?.  ?=([%minter-account *] acct-to-update)
     ~&  >>>  "error: %update-minter on non-minter account"
     ~
@@ -335,16 +329,16 @@
       %.y  ::  non-multisig so no need to check
     ~&  >>>  "error: %update-minter multisig threshold set too high"
     ~
-  =.  accts.state
-    %+  ~(put by accts.state)
-      account-id.from.tx
-    :*  %minter-account
-        owner.tx
-        nonce.acct-to-update
-        max.acct-to-update
-        total.acct-to-update
-    ==
-  (some state)
+  :+  ~
+    hash.state
+  %+  ~(put by accts.state)
+    account-id.from.tx
+  :*  %minter-account
+      owner.tx
+      nonce.acct-to-update
+      max.acct-to-update
+      total.acct-to-update
+  ==
 ::
 ++  create-multisig
   |=  [=state =tx =account]
@@ -361,12 +355,12 @@
   ?.  (lte (lent members.owner.tx) threshold.owner.tx)
     ~&  >>>  "error: %create-multisig threshold set too high"
     ~
-  =.  accts.state
-    %+  ~(put by accts.state)
-      account-id
-    ::  TODO make sure nonce should start at 0
-    [%asset-account owner.tx nonce=0 assets=~]
-  (some state)
+  :+  ~
+    hash.state
+  %+  ~(put by accts.state)
+    account-id
+  ::  TODO make sure nonce should start at 0
+  [%asset-account owner.tx nonce=0 assets=~]
 ::
 ++  update-multisig
   |=  [=state =tx =account]
@@ -383,15 +377,15 @@
   ?.  (lte (lent members.owner.tx) threshold.owner.tx)
     ~&  >>>  "error: %update-multisig threshold set too high"
     ~
-  =.  accts.state
-    %+  ~(put by accts.state)
-      account-id.from.tx
-    :*  %asset-account
-        owner.tx
-        nonce.acct-to-update
-        assets.acct-to-update
-    ==
-  (some state)
+  :+  ~
+    hash.state
+  %+  ~(put by accts.state)
+    account-id.from.tx
+  :*  %asset-account
+      owner.tx
+      nonce.acct-to-update
+      assets.acct-to-update
+  ==
 ::
 ::  helper/utility functions
 ::
@@ -413,9 +407,7 @@
     ?.  ?=([%tok *] asset)
       ::  expected a tok, found an nft?
       asset
-    =.  amount.asset
-      (add amount.asset amount.to-send)
-    asset
+    asset(amount (add amount.asset amount.to-send))
   ==
 ::
 ++  insert-minting-asset
@@ -440,9 +432,7 @@
     ?.  ?=([%tok *] asset)
       ::  expected a tok, found an nft?
       asset
-    =.  amount.asset
-      (add amount.asset amount.to-send)
-    asset
+    asset(amount (add amount.asset amount.to-send))
   ==
 ::
 ++  remove-asset
@@ -458,9 +448,7 @@
     ?.  ?=([%tok *] asset)
       ::  expected a tok, found an nft?
       asset
-    =.  amount.asset
-      (sub amount.asset amount.to-remove)
-    asset
+    asset(amount (sub amount.asset amount.to-remove))
   ==
 ::  $generate-account-id: produces a hash based on pubkeys and details of account
 ::
