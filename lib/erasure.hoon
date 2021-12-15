@@ -143,8 +143,7 @@
     (dec nsym)
   ::  throw an error if piece is too long
   ::
-  ?:  (gth nchunks (dec size.f))
-      !!
+  ?<  (gth nchunks (dec size.f))
   =/  gen-lent  (met 3 generator)
   =+  :-  i=(dec nchunks)
       encoded=(lsh [3 (dec gen-lent)] (swp 3 piece))
@@ -197,13 +196,11 @@
   ~/  %decode
   |=  encoded=encoded-chunks
   ^-  @
-  ?:  (gth (lent chunks.encoded) 255)
-    !!
-  ?:  (gth (lent missing.encoded) nsym.encoded)
-    !!
+  ?<  (gth (lent chunks.encoded) 255)
+  ?<  (gth (lent missing.encoded) nsym.encoded)
   :: need something in missing.encoded or we can't generate good syndromes
   =.  missing.encoded
-    ?:  =(missing.encoded ~)
+    ?~  missing.encoded
       ~[0]
     missing.encoded
   =/  f  (generate-field field-size.encoded)
@@ -271,8 +268,8 @@
         i  +(i)
         exp  (cat 3 1 exp)
     ==
-  =.  x  (lsh 0 x)
   =.  x
+    =/  x  (lsh 0 x)
     ?.  =((dis x size) 0)
       (mix x (con size 0x1D))
     x
@@ -322,8 +319,7 @@
     |=  [x=@ y=@]
     ^-  @
     ::  reject attempt to divide by 0
-    ?:  =(y 0)
-      !!
+    ?<  =(y 0)
     ?:  =(x 0)
       0
     %^  cut  3
@@ -618,8 +614,7 @@
         coef
         =/  y  (gf-poly-eval err-eval inverse)
         =/  y  (gf-mul (gf-pow (snag i x) 1) y)
-        ?:  =(err-loc-prime ~[0])
-          !! :: could not find error magnitude
+        ?<  =(err-loc-prime ~[0])  :: could not find error magnitude
         =/  magnitude  (gf-div y err-loc-prime)
         [i (snap e (snag i erasures) magnitude)]
     :: apply correction field to input for repaired data
