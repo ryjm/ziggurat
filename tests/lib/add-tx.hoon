@@ -113,7 +113,7 @@
         [0x1 1 0x1234 [0xaa 0xbb %ecdsa] 10]
         ::  sending 500 zigs to a2
         0x2
-        (silt ~[[%tok 0x0 500]])
+        (malt ~[[0x0 [%tok 0x0 500]]])
     ==
   =/  output  (process-tx t build-send-test-state)
   =/  correct-fee  10
@@ -130,7 +130,7 @@
         [0x1 1 0x1234 [0xaa 0xbb %ecdsa] 10]
         ::  a1 sending 500 zigs and 50 figs to a2
         0x2
-        (silt ~[[%tok 0x0 500] [%tok 0xf 50]])
+        (malt ~[[0x0 [%tok 0x0 500]] [0xf [%tok 0xf 50]]])
     ==
   =/  output  (process-tx t build-send-test-state)
   =/  correct-fee  20
@@ -149,7 +149,7 @@
         [0x1 1 0x1234 [0xaa 0xbb %ecdsa] 10]
         ::  a1 sending 10 zigs to a4 and nft
         0x4
-        (silt ~[test-nft])
+        (malt ~[[hash.test-nft test-nft]])
     ==
   =/  output  (process-tx t build-send-test-state)
   =/  correct-fee  10
@@ -167,7 +167,7 @@
         [0x1 1 0x1234 [0xaa 0xbb %ecdsa] 10]
         ::  a1 sending 10 zigs to a4 and nft
         0x4
-        (silt `(list asset)`~[[%tok 0x0 10] test-nft])
+        (malt `(list [@ux asset])`~[[0x0 [%tok 0x0 10]] [hash.test-nft test-nft]])
     ==
   =/  output  (process-tx t build-send-test-state)
   =/  correct-fee  20
@@ -178,8 +178,7 @@
   =.  correct-state  (increment-nonce 0x1 correct-state)
   (expect-eq !>((some [correct-fee correct-state])) !>(output))
 ++  test-send-untransferrable-nft
-  =/  test-nft
-    ^-  asset
+  =+  ^=  test-nft
     :*  %nft
         minter=0xa
         id=1
@@ -193,7 +192,7 @@
         [0x1 1 0x1234 [0xaa 0xbb %ecdsa] 10]
         ::  a1 sending 10 zigs to a4 and nft
         0x4
-        (silt ~[test-nft])
+        (malt ~[[hash.test-nft test-nft]])
     ==
   =/  output  (process-tx t build-send-test-state)
   =/  correct-fee  10
@@ -201,8 +200,7 @@
   =.  correct-state  (increment-nonce 0x1 correct-state)
   (expect-eq !>((some [correct-fee correct-state])) !>(output))
 ++  test-send-no-zigs
-  =/  test-nft
-    ^-  asset
+  =+  ^=  test-nft
     :*  %nft
         minter=0xa
         id=1
@@ -216,7 +214,7 @@
         [0x1 1 0x1234 [0xaa 0xbb %ecdsa] 10]
         ::  a1 sending 10 zigs to a4 and nft
         0x4
-        (silt ~[test-nft])
+        (malt ~[[hash.test-nft test-nft]])
     ==
   =/  starting-state
     (insert-asset 0x1 [%tok 0x0 9] build-send-test-state)
@@ -231,7 +229,7 @@
         [0x1 1 0x1234 [0xaa 0xbb %ecdsa] 10]
         ::  a1 sending 500 zigs and 50 figs to a2
         0x2
-        (silt ~[[%tok 0x0 500] [%tok 0xf 50]])
+        (malt ~[[0x0 [%tok 0x0 500]] [0xf [%tok 0xf 50]]])
     ==
   =/  starting-state
     (insert-asset 0x1 [%tok 0xf 49] build-send-test-state)
@@ -247,7 +245,7 @@
         [0x1 1 0x1234 [0xaa 0xbb %ecdsa] 10]
         ::  a1 sending 500 zigs and 50 figs to a2
         0x2
-        (silt ~[[%tok 0x0 500] [%tok 0xf 50]])
+        (malt ~[[0x0 [%tok 0x0 500]] [0xf [%tok 0xf 50]]])
     ==
   =/  starting-state
     (remove-asset 0x1 0xf build-send-test-state)
@@ -263,11 +261,15 @@
         [0x1 1 0x1234 [0xaa 0xbb %ecdsa] 10]
         ::  a1 sending 500 zigs and 50 figs to a2
         0x2
-        (silt ~[[%tok 0x0 500] [%tok 0xf 50] [%tok 0xf 20]])
+        ::  first of duplicates will be replaced in map
+        (malt ~[[0x0 [%tok 0x0 500]] [0xf [%tok 0xf 50]] [0xf [%tok 0xf 20]]])
     ==
   =/  output  (process-tx t build-send-test-state)
-  =/  correct-fee  30
-  =/  correct-state  (insert-asset 0x1 [%tok 0x0 970] build-send-test-state)
+  =/  correct-fee  20
+  =/  correct-state  (insert-asset 0x1 [%tok 0x0 480] build-send-test-state)
+  =.  correct-state  (insert-asset 0x1 [%tok 0xf 980] correct-state)
+  =.  correct-state  (insert-asset 0x2 [%tok 0x0 1.500] correct-state)
+  =.  correct-state  (insert-asset 0x2 [%tok 0xf 1.020] correct-state)
   =.  correct-state  (increment-nonce 0x1 correct-state)
   (expect-eq !>((some [correct-fee correct-state])) !>(output))
 ++  test-send-part-fail
@@ -277,7 +279,7 @@
         [0x1 1 0x1234 [0xaa 0xbb %ecdsa] 10]
         ::  a1 sending 500 zigs and 50 figs to a2
         0x2
-        (silt ~[[%tok 0x0 500] [%tok 0xf 1.000] [%tok 0xb 1.000.000]])
+        (malt ~[[0x0 [%tok 0x0 500]] [0xf [%tok 0xf 1.000]] [0xb [%tok 0xb 1.000.000]]])
     ==
   =/  output  (process-tx t build-send-test-state)
   =/  correct-fee  30
@@ -291,7 +293,7 @@
         [0x1 1 0x1234 [0xaa 0xbb %ecdsa] 10]
         ::  a1 sending 500 zigs and 50 figs to a2
         0x2
-        (silt ~[[%tok 0x0 2.000] [%tok 0xf 2.000] [%tok 0xb 1.000.000]])
+        (malt ~[[0x0 [%tok 0x0 1.000]] [0xf [%tok 0xf 2.000]] [0xb [%tok 0xb 1.000.000]]])
     ==
   =/  output  (process-tx t build-send-test-state)
   =/  correct-fee  30
@@ -305,7 +307,7 @@
         [0xeee 1 0x1234 [0xaa 0xbb %ecdsa] 10]
         ::  sending 500 zigs to a2
         0x2
-        (silt ~[[%tok 0x0 500]])
+        (malt ~[[0x0 [%tok 0x0 500]]])
     ==
   =/  output  (process-tx t build-send-test-state)
   (expect-eq !>(~) !>(output))

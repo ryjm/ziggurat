@@ -5,17 +5,18 @@
 +$  owner  ?(pubkey multisig)
 +$  id  @ud
 +$  account-id  @ux
++$  hash  @ux
 +$  nonce  @ud
 +$  amount  @ud
 +$  supply  @ud
 +$  zigs  amount
 ::
 +$  asset
-  $%  [%nft minter=account-id =id uri=@t hash=@ux can-xfer=?]
+  $%  [%nft minter=account-id =id uri=@t =hash can-xfer=?]
       [%tok minter=account-id =amount]
   ==
 +$  minting-asset
-  $%  [%nft uri=@t hash=@ux can-xfer=?]
+  $%  [%nft uri=@t =hash can-xfer=?]
       [%tok =amount]
   ==
 +$  account
@@ -35,7 +36,7 @@
         assets=(map account-id asset)
     ==
   ==
-+$  state  [hash=@ux accts=(map account-id account)]
++$  state  [=hash accts=(map account-id account)]
 ::  TODO: patricia merkle tree data structure
 
 ::  transactions
@@ -64,8 +65,8 @@
     $:  %send
         from=sender
         to=account-id
-        ::  TODO change to MAP
-        assets=(set asset)
+        ::  making assets a map to enforce uniqueness of assets
+        assets=(map ?(account-id hash) asset)
     ==
     $:  %mint
         from=sender
@@ -94,6 +95,11 @@
     $:  %update-minter
         from=sender
         =owner
+    ==
+    ::
+    $:  %coinbase
+        from=sender
+        fees=zigs
     ==
   ==
 --

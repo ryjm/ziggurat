@@ -3,12 +3,22 @@
 =,  tx
 |%
 ::  something hardcoded
-++  zigs-id  `@ux`0x0
+++  zigs-id  0x0
 ::
-::  $txs-to-chunk: take a set of transactions and apply them
+::  $txs-to-chunk: builds chunk out of selected txs from mempool
+::
+::  Given the current helix state and mempool, the chunk
+::  producer selects a maximally-rewarding subset of transactions
+::  and attempts to apply them to the state. Failing transactions
+::  still result in fees paid to the chunk producer. The resulting
+::  chunk includes a $coinbase transaction, which rewards the
+::  producer for its work.
+::
+::  Need to choose where this hooks into the validator agent
+::  and what format the mempool and chunk should take.
 ::
 ++  txs-to-chunk
-  |=  [=state txs=(set tx) our=account-id]
+  |=  [=state mempool=(list tx) our=sender]
   ^-  [(list [hash=@ux =tx]) _state]
   ::  go through list and process each tx
   ::  make a note of rejected txs?
@@ -16,25 +26,41 @@
   ::  giving fee to ourself
   ::  build list of [hash tx]
   ::  return final state with list?
-  =/  txs=(list tx)  ~(tap in txs)
+  =/  txs  (gather mempool)
   =+  [results=*(list [hash=@ux =tx]) total-fees=*zigs]
   |-  ^-  [(list [hash=@ux =tx]) _state]
   ?~  txs
-    [(flop results) state]
+    ::  time to sum resulting fees and coinbase ourselves
+    =/  payment=tx
+      [%coinbase our total-fees]
+    ?~  res=(process-tx payment state)
+      ~&  >>>  "error: failed to award chunk fees to ourselves"
+      !!
+    :_  +.u.res
+    (flop [[`@ux`(shax (jam payment)) payment] results])
   ::  check to see if tx was processed
   ?~  res=(process-tx i.txs state)
     $(txs t.txs)
-  ::  TODO, need a way to award fees to validator
-  ::  can't just do a send direct from transactor,
-  ::  need a special tx type, or a special hardcoded
-  ::  escrow account which txs assign fees to, then
-  ::  validator gets a send tx from that account.
   %_  $
     txs         t.txs
     results     [[`@ux`(shax (jam i.txs)) i.txs] results]
     state       +.u.res
     total-fees  -.u.res
   ==
+::
+::  $gather: select transactions from mempool
+::
+++  gather
+  |=  mempool=(list tx)
+  ^-  (list tx)
+  ::  choosing the txs with highest feerate
+  ::  to build the best overall chunk for producer
+  ::  TODO determine cutoff point for size of chunk
+  ::  could be size of data, # of CSEs..
+  %+  sort
+    mempool
+  |=  [a=tx b=tx]
+  (gth feerate.from.a feerate.from.b)
 ::
 ::  $process-tx: modify state to results of transaction, if valid.
 ::
@@ -115,6 +141,7 @@
     %update-multisig  (update-multisig state tx account)
     %create-minter    (create-minter state tx account)
     %update-minter    (update-minter state tx account)
+    %coinbase         (reward state tx account)
   ==
 ::
 ::  handlers for each tx type
@@ -133,27 +160,17 @@
     ::  trying to send asset to non-existent account,
     ::  make a new account and add to state?
     ~&  >>>  "potential error: %send to non-existent account"
-    (some state)
+    `state
   ?.  ?=([%asset-account *] u.to)
     ::  no support for minter account receiving assets
     ~&  >>>  "error: sending assets to non-asset account"
     ~
-  ::  keeping a map to check for dupes
-  =|  seen=(map @ux ?)
-  ::  TODO good way to iterate through set?
-  ::  doing a recursion through tree holding modified state
-  ::  in stack seems like a bad idea for very large state
-  =/  assets=(list asset)  ~(tap in `(set asset)`assets.tx)
+  =/  assets=(list asset)  ~(val by assets.tx)
   |-  ^-  (unit _state)
   ::  if finished successfully, return new state
   ?~  assets
-    (some state)
+    `state
   =*  to-send  i.assets
-  ::  check if asset has been seen
-  ::  can't send 1 asset twice in tx
-  ?^  (~(get by seen) minter.to-send)
-    ~&  >>>  "error: sending same asset class twice in one tx"
-    ~
   ::  assert that send is valid for this asset
   ?.  ?-  -.to-send
           %nft
@@ -180,7 +197,6 @@
   =:  
     assets.account  (remove-asset to-send assets.account)
     assets.u.to  (insert-asset to-send assets.u.to)
-    seen  (~(put by seen) minter.to-send %.y)
   ==
   =.  accts.state
     %+  ~(put by (~(put by accts.state) to.tx u.to))
@@ -261,14 +277,16 @@
     ~&  >>>  "error: %lone-mint collision with existing account"
     ~
   =.  accts.state
-    (~(put by accts.state) blank-account-id [%blank-account ~])
+    %+  ~(put by accts.state)
+      blank-account-id
+    [%blank-account ~]
   ::  proceed with mint, ensuring all assets
   ::  have same minter of blank-account-id
   ::  NFT IDs start at i=0 and count up
   =+  i=0
   |-  ^-  (unit _state)
   ?~  to.tx
-    (some state)
+    `state
   =*  to-send  +.i.to.tx
   =*  to-whom  -.i.to.tx
   ?~  to-acct=(~(get by accts.state) to-whom)
@@ -386,6 +404,9 @@
       nonce.acct-to-update
       assets.acct-to-update
   ==
+++  reward
+  |=  [=state =tx =account]
+  ~
 ::
 ::  helper/utility functions
 ::
@@ -416,13 +437,19 @@
   ::  add to existing assets in wallet
   ?-  -.to-send
       %nft
-    =/  new-asset
-      `asset`[%nft minter=minter id uri.to-send hash.to-send can-xfer.to-send]
+    =/  new-asset=asset
+      :*  %nft
+          minter
+          id
+          uri.to-send
+          hash.to-send
+          can-xfer.to-send
+      ==
     ::  using hash here since NFTs in a collection share account-id
     (~(put by assets) hash.to-send new-asset)
       %tok
-    =/  new-asset
-      `asset`[%tok minter=minter amount=amount.to-send]
+    =/  new-asset=asset
+      [%tok minter=minter amount=amount.to-send]
     ?~  (~(get by assets) minter)
       ::  asset not yet present in wallet, insert
       (~(put by assets) minter new-asset)
@@ -461,7 +488,7 @@
     ^-  @ux
     (cat 0 b a)
   %+  ux-concat  `@ux`nonce.sender
-  %+  ux-concat  0x0  ::  TODO helix id = ??
+  %+  ux-concat  0x0  ::  TODO helix id goes here
   ?:  ?=(pubkey-sender sender)
     `@ux`pubkey
   ::  sorted and concat'd list of multisig pubkeys
@@ -496,5 +523,7 @@
   ::
       %update-minter
     1
+      %coinbase
+    0
   ==
 --
