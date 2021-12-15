@@ -40,7 +40,6 @@
       +$  mert  (tree (pair key (pair hash val)))
       --
   |%
-  ::  TODO: implement merkle updating in +del
   ++  del                                               ::  delete at key b
     |=  [a=mert b=key]
     |-  ^+  a
@@ -48,15 +47,19 @@
       ~
     ?.  =(b p.n.a)
       ?:  (sore b p.n.a)
-        a(l $(a l.a))
-      a(r $(a r.a))
+        =.  l.a  $(a l.a)
+        a(n [p.n.a (mer a p.n.a q.q.n.a) q.q.n.a])
+      =.  r.a  $(a r.a)
+      a(n [p.n.a (mer a p.n.a q.q.n.a) q.q.n.a])
     |-  ^-  [$?(~ _a)]
     ?~  l.a  r.a
     ?~  r.a  l.a
     ?:  (sure p.n.l.a p.n.r.a)
-      l.a(r $(l.a r.l.a))
-    r.a(l $(r.a l.r.a))
-  ::  TODO: implement merkle checks in +apt
+      =.  r.l.a  $(l.a r.l.a)
+      l.a(n [p.n.l.a (mer l.a p.n.l.a q.q.n.l.a) q.q.n.l.a])
+    =.  l.r.a  $(r.a l.r.a)
+    r.a(n [p.n.r.a (mer r.a p.n.r.a q.q.n.r.a) q.q.n.r.a])
+  ::
   ++  apt                                               ::  check correctness
     |=  a=mert
     =|  [l=(unit) r=(unit)]
@@ -68,6 +71,7 @@
         &((sure p.n.a p.n.l.a) !=(p.n.a p.n.l.a) $(a l.a, l `p.n.a))
         ?~  r.a   &
         &((sure p.n.a p.n.r.a) !=(p.n.a p.n.r.a) $(a r.a, r `p.n.a))
+        =(p.q.n.a (mer a [p.n.a q.q.n.a]))
     ==
   ::
   ++  gas                                               ::  concatenate
@@ -87,6 +91,15 @@
     ?:  (sore b p.n.a)
       $(a l.a)
     $(a r.a)
+  ::
+  ++  mer                                               ::  generate merkel hash
+    |=  [a=mert b=(pair key val)]
+    ^-  hash
+    ?~  a  (shag [b ~ ~])
+    %-  shag
+    :+  b
+      ?~(l.a ~ p.q.n.l.a)
+    ?~(r.a ~ p.q.n.r.a)
   ::
   ++  get                                               ::  grab value by key
     |=  [a=mert b=key]
@@ -111,39 +124,27 @@
   ::
   ++  put                                               ::  adds key-value pair
     |=  [a=mert b=key c=val]
-    |^  ^+  a
+    ^+  a
     ?~  a
       [[b (mer a b c) c] ~ ~]
     ?:  =(b p.n.a)
       ?:  =(c q.n.a)
         a
       a(n [b (mer a b c) c])
-    ::  make both cases account for the fact that we must now update
-    ::  the merkel hash of node n
     ?:  (sore b p.n.a)
       =/  d  $(a l.a)
       ?>  ?=(^ d)
       =.  a
         ?:  (sure p.n.a p.n.d)
           a(l d)
-        d(r a(l r.d))
+        d(r a(l r.d, n [p.n.a (mer a(l r.d) p.n.a q.q.n.a) q.q.n.a]))
       a(n [p.n.a (mer a p.n.a q.q.n.a) q.q.n.a])
     =/  d  $(a r.a)
     ?>  ?=(^ d)
     =.  a
       ?:  (sure p.n.a p.n.d)
         a(r d)
-      d(l a(r l.d))
+      d(l a(r l.d, n [p.n.a (mer a(r l.d) p.n.a q.q.n.a) q.q.n.a]))
     a(n [p.n.a (mer a p.n.a q.q.n.a) q.q.n.a])
-    ::
-    ++  mer
-      |=  [a=mert b=(pair key val)]
-      ^-  hash
-      ?~  a  (shag [b ~ ~])
-      %-  shag
-      :+  b
-        ?~(l.a ~ p.q.n.l.a)
-      ?~(r.a ~ p.q.n.r.a)
-    --
   --
 --
