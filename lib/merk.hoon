@@ -129,7 +129,7 @@
     ?~  a
       [[b (mer a b c) c] ~ ~]
     ?:  =(b p.n.a)
-      ?:  =(c q.n.a)
+      ?:  =(c q.q.n.a)
         a
       a(n [b (mer a b c) c])
     ?:  (sore b p.n.a)
@@ -138,14 +138,14 @@
       =.  a
         ?:  (sure p.n.a p.n.d)
           a(l d)
-        d(r a(l r.d, n [p.n.a (mer a(l r.d) p.n.a q.q.n.a) q.q.n.a]))
-      a(n [p.n.a (mer a p.n.a q.q.n.a) q.q.n.a])
+        d(r a(l r.d, p.q.n (mer a(l r.d) p.n.a q.q.n.a)))
+      a(p.q.n (mer a p.n.a q.q.n.a))
     =/  d  $(a r.a)
     ?>  ?=(^ d)
     =.  a
       ?:  (sure p.n.a p.n.d)
         a(r d)
-      d(l a(r l.d, n [p.n.a (mer a(r l.d) p.n.a q.q.n.a) q.q.n.a]))
-    a(n [p.n.a (mer a p.n.a q.q.n.a) q.q.n.a])
+      d(l a(r l.d, p.q.n (mer a(r l.d) p.n.a q.q.n.a)))
+    a(p.q.n (mer a p.n.a q.q.n.a))
   --
 --
