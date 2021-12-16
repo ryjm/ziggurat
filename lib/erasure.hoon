@@ -102,6 +102,7 @@
     ?.  (lth (met 3 piece) n)
       piece
     (lsh [3 padding-bytes] piece)
+  ~&  >  `@ux`piece
   =/  encoded-piece
     %:  encode-piece
         piece
@@ -109,6 +110,7 @@
         f
         generator
     ==
+  ~&  >>  `@ux`encoded-piece
   ::  now, assign every nth byte of encoded-piece
   ::  to the matching index in an encoded set of bytes
   ::  TODO: this is the slowest part of the algorithm
@@ -227,16 +229,41 @@
   ::  now go through reconstructed chunks and decode one at a time
   ::
   =/  decoded-pieces
+    %-  flop
     %+  turn
       linear-stream
     |=  chunk=(list @)
+    :: =-  [(met 3 -) -]
     (decode-piece (rep 3 chunk) f nsym.encoded missing.encoded)
   ::  remove any padding bytes from final chunk
   ::  and return single decoded atom
   ::
-  =/  unpadded-rear
-    (rsh [3 padding-bytes.encoded] (rear decoded-pieces))
-  (cat 3 (rap 3 (snip decoded-pieces)) unpadded-rear)
+  ~&  >>>  needed.encoded
+  ~&  >>  `(list @ux)`decoded-pieces
+  =/  unpadded-last
+    (rsh [3 padding-bytes.encoded] -.decoded-pieces)
+  ~&  >  `@ux`unpadded-last
+  %^  cat  3
+  =*  src  +.decoded-pieces
+  =+  [res=*@ acc=(sub needed.encoded (met 3 -.decoded-pieces))]
+  |-  ^-  @
+  ?~  src
+    res
+  =/  fixed
+    ?:  =(0 -.src)
+      0
+    (lsh [3 acc] -.src)
+  ~&  >  "fixed: {<`@ux`fixed>}"
+  =.  acc
+    ?.  =(0 -.src)
+      0
+    acc
+  %_  $
+    res  (cat 3 fixed res)
+    src  +.src
+    acc  (add acc (sub needed.encoded (met 3 -.src)))
+  ==
+  unpadded-last
 ++  decode-piece
   ~/  %decode-piece
   |=  [piece=@ f=field nsym=@ud missing=(list @ud)]

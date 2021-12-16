@@ -14,13 +14,20 @@
 ::  can be truncated and cause missing empty bytes
 ::  in encoded-decoded form. example:
 =/  empty-bytes  0x2000.0000.0004.0000.0000.0000.0000.0001.0000
-::
+::  =/  nsym  10
+::  =/  f  (generate-field 256)
+::  =/  gen  (~(rs-generator-poly gf-math f) nsym)
+::  =/  encoded  (encode-piece empty-bytes nsym f gen)
+::  ~&  >>  `@ux`encoded
+::  =/  decoded  (decode-piece encoded f nsym ~[0])
+::  ~&  >>  `@ux`decoded
 ::  full chunk dispersion testing
 ::  GF(256) can only handle up to 255 validators!
 ::
 =/  nchunks  20
 =/  data  empty-bytes
 ~&  >  "Input size: {<(met 3 data)>} bytes"
+~&  >>>  "encoding"
 =/  encoded  (encode data nchunks)
 :: can erase up to nsym.encoded pieces
 =.  chunks.encoded
@@ -33,6 +40,7 @@
   (snap chunks.encoded 6 0)
 =.  missing.encoded
   ~[1 3 5 6]
+~&  >>>  "decoding"
 =/  corrected
   (decode encoded)
 :-  %noun
