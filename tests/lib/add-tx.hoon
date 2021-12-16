@@ -53,6 +53,7 @@
     :*  %minter-account
         owner=0x1234
         nonce=0
+        whitelist=(silt ~[[0x1234]])
         max=1.000
         total=0
     ==
@@ -332,7 +333,7 @@
   =/  a2  ::  test account 2
     `account`[%asset-account 0x5678 0 (malt ~[[zigs-id z]])]
   =/  a3  ::  test mint account 
-    `account`[%minter-account 0x1234 0 max=1.000 total=0]
+    `account`[%minter-account 0x1234 0 (silt ~[[0x1234]]) max=1.000 total=0]
   :-  0x0  ::  test state hash
   (malt ~[[0x1 a1] [0x2 a2] [0x3 a3]])
 ++  test-mint
@@ -354,7 +355,7 @@
         %-  malt
         :~  [0x1 `account`[%asset-account 0x1234 1 (malt ~[[zigs-id [%tok zigs-id 980]] [0x3 [%tok 0x3 100]]])]]
             [0x2 `account`[%asset-account 0x5678 0 (malt ~[[zigs-id [%tok zigs-id 1.000]] [0x3 [%tok 0x3 100]]])]]
-            [0x3 `account`[%minter-account 0x1234 0 1.000 200]]
+            [0x3 `account`[%minter-account 0x1234 0 (silt ~[[0x1234]]) 1.000 200]]
         ==
     ==
   (expect-eq !>((some [correct-fee correct-state])) !>(output))

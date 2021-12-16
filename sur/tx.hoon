@@ -27,6 +27,7 @@
     $:  %minter-account
         =owner
         =nonce
+        whitelist=(set owner)
         max=supply
         total=supply
     ==
@@ -91,10 +92,12 @@
         from=sender
         max=supply
         =owner
+        whitelist=(set owner)
     ==
     $:  %update-minter
         from=sender
         =owner
+        whitelist=(set owner)
     ==
     ::
     $:  %coinbase

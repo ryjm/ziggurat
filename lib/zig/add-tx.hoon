@@ -219,9 +219,8 @@
   ?.  ?=([%minter-account *] asset-owner)
     ~&  >>>  "error: asset to mint not controlled by minter-account"
     ~
-  ::  minter owner must match tx sender
-  ?.  =(owner.asset-owner owner.account)
-    ~&  >>>  "error: tx sender doesn't match minter"
+  ?.  (~(has in whitelist.asset-owner) owner.account)
+    ~&  >>>  "error: tx sender not in minting whitelist"
     ~
   ::  loop through assets in to.tx and verify all are legit
   ::  while adding to accounts of receivers
@@ -327,7 +326,7 @@
   %+  ~(put by accts.state)
     new-account-id
   ::  TODO make sure nonce should start at 0
-  [%minter-account owner.tx nonce=0 max=max.tx total=0]
+  [%minter-account owner.tx nonce=0 whitelist.tx max.tx total=0]
 ::
 ++  update-minter
   |=  [=state =tx =account]
@@ -354,6 +353,7 @@
   :*  %minter-account
       owner.tx
       nonce.acct-to-update
+      whitelist.tx
       max.acct-to-update
       total.acct-to-update
   ==
