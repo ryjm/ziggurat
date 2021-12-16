@@ -151,19 +151,10 @@
   ^-  (unit _state)
   ?.  ?=([%send *] tx)
     ~
+  ::  purely for type assertion
   ?.  ?=([%asset-account *] account)
     ::  no support for minter account sending assets
     ~&  >>>  "error: %send tx from minter account"
-    ~
-  ::  TODO if account doesn't exist make a new one?
-  ?~  to=(~(get by accts.state) to.tx)
-    ::  trying to send asset to non-existent account,
-    ::  make a new account and add to state?
-    ~&  >>>  "potential error: %send to non-existent account"
-    `state
-  ?.  ?=([%asset-account *] u.to)
-    ::  no support for minter account receiving assets
-    ~&  >>>  "error: sending assets to non-asset account"
     ~
   =/  assets=(list asset)  ~(val by assets.tx)
   |-  ^-  (unit _state)
@@ -171,6 +162,31 @@
   ?~  assets
     `state
   =*  to-send  i.assets
+  ?~  to=(~(get by accts.state) to.tx)
+    ::  trying to send asset to non-existent account
+    ::  TODO if account doesn't exist make a new one?
+    ~&  >>  "warning: %send to non-existent account"
+    =.  assets.account  (remove-asset to-send assets.account)
+    %_  $
+      assets          t.assets
+      ::
+        accts.state
+      %+  ~(put by accts.state)
+        account-id.from.tx
+      account
+    ==
+  ?.  ?=([%asset-account *] u.to)
+    ::  no support for minter account receiving assets
+    ~&  >>  "warning: %send to non-asset account"
+    =.  assets.account  (remove-asset to-send assets.account)
+    %_  $
+      assets          t.assets
+      ::
+        accts.state
+      %+  ~(put by accts.state)
+        account-id.from.tx
+      account
+    ==
   ::  assert that send is valid for this asset
   ?.  ?-  -.to-send
           %nft
@@ -217,7 +233,7 @@
     ~
   =*  asset-owner  u.find-owner
   ?.  ?=([%minter-account *] asset-owner)
-    ~&  >>>  "error: asset to mint not controlled by minter-account"
+    ~&  >>>  "error: account to perform %mint is not a minter-account"
     ~
   ?.  (~(has in whitelist.asset-owner) owner.account)
     ~&  >>>  "error: tx sender not in minting whitelist"
@@ -235,18 +251,26 @@
       %tok  amount.to-send
     ==
   ::  amount of asset to create must not put total above limit
-  ?.  (gth max.asset-owner amount-after-mint)
+  ?.  (gte max.asset-owner amount-after-mint)
     ~&  >>>  "error: mint would create too many assets"
     ~
-  =.  total.asset-owner  amount-after-mint
   ?~  to-acct=(~(get by accts.state) to-whom)
     ::  trying to send asset to non-existent account,
     ::  TODO make a new account and add to state?
-    $(to.tx t.to.tx)
+    ~&  >>  "warning: minted assets to nonexistent account"
+    =.  total.asset-owner  amount-after-mint
+    %_  $
+      to.tx        t.to.tx
+      accts.state  (~(put by accts.state) minter.tx asset-owner)
+    ==
   ::  receivers must be asset accounts
   ?.  ?=([%asset-account *] u.to-acct)
-    ~&  >>>  "error: sending assets to non-asset account"
-    ~
+    ~&  >>  "warning: minted assets to non-asset account"
+    =.  total.asset-owner  amount-after-mint
+    %_  $
+      to.tx        t.to.tx
+      accts.state  (~(put by accts.state) minter.tx asset-owner)
+    ==
   =.  assets.u.to-acct
     %:  insert-minting-asset
         minter.tx
@@ -254,6 +278,7 @@
         to-send
         assets.u.to-acct
     ==
+  =.  total.asset-owner  amount-after-mint
   ::  update minter and receiver accounts in state
   %_  $
     to.tx    t.to.tx
@@ -291,10 +316,11 @@
   ?~  to-acct=(~(get by accts.state) to-whom)
     ::  trying to send asset to non-existent account,
     ::  TODO make a new account and add to state?
+    ~&  >>  "warning: minted assets to nonexistent account"
     $(to.tx t.to.tx)
   ::  receivers must be asset accounts
   ?.  ?=([%asset-account *] u.to-acct)
-    ~&  >>>  "warning: sent assets to non-asset account"
+    ~&  >>  "warning: minted assets to non-asset account"
     $(to.tx t.to.tx)
   =.  assets.u.to-acct
     %:  insert-minting-asset
@@ -325,8 +351,13 @@
     hash.state
   %+  ~(put by accts.state)
     new-account-id
-  ::  TODO make sure nonce should start at 0
-  [%minter-account owner.tx nonce=0 whitelist.tx max.tx total=0]
+  :*  %minter-account
+      owner.tx
+      ::  nonce=0
+      whitelist.tx
+      max.tx
+      total=0
+  ==
 ::
 ++  update-minter
   |=  [=state =tx =account]
@@ -352,7 +383,7 @@
     account-id.from.tx
   :*  %minter-account
       owner.tx
-      nonce.acct-to-update
+      ::  nonce.acct-to-update
       whitelist.tx
       max.acct-to-update
       total.acct-to-update
@@ -486,13 +517,13 @@
   =/  ux-concat
     |=  [a=@ux b=@ux]
     ^-  @ux
-    (cat 0 b a)
+    (cat 3 b a)
   %+  ux-concat  `@ux`nonce.sender
   %+  ux-concat  0x0  ::  TODO helix id goes here
   ?:  ?=(pubkey-sender sender)
-    `@ux`pubkey
+    pubkey.sender
   ::  sorted and concat'd list of multisig pubkeys
-  `@ux`(roll (sort pubkeys.sender lth) ux-concat)
+  (roll (sort pubkeys.sender lth) ux-concat)
 ::
 ++  compute-gas
   |=  [=tx]

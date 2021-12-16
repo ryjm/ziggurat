@@ -26,7 +26,9 @@
     ==
     $:  %minter-account
         =owner
-        =nonce
+        ::  minter accounts can't themselves
+        ::  transact -- no nonce needed?
+        ::  =nonce
         whitelist=(set owner)
         max=supply
         total=supply
