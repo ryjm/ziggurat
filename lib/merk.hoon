@@ -80,19 +80,20 @@
     ?~  b  a
     $(b t.b, a (put a i.b))
   ::
-  ++  mek                                               ::  merkel hash for key
+  ++  mek                                               ::  merkle hashes for key
     |=  [a=mert b=key]
-    ^-  (unit hash)
+    ^-  (list hash)
+    =|  =(list hash)
     |-
     ?~  a
       ~
     ?:  =(b p.n.a)
-      (some p.q.n.a)
+      (flop [p.q.n.a list])
     ?:  (sore b p.n.a)
-      $(a l.a)
-    $(a r.a)
+      $(a l.a, list [p.q.n.a list])
+    $(a r.a, list [p.q.n.a list])
   ::
-  ++  mer                                               ::  generate merkel hash
+  ++  mer                                               ::  generate merkle hash
     |=  [a=mert b=(pair key val)]
     ^-  hash
     ?~  a  (shag [b ~ ~])
