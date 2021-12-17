@@ -29,7 +29,7 @@
         ::  minter accounts can't themselves
         ::  transact -- no nonce needed?
         ::  =nonce
-        whitelist=(set owner)
+        whitelist=(set account-id)
         max=supply
         total=supply
     ==
@@ -94,12 +94,13 @@
         from=sender
         max=supply
         =owner
-        whitelist=(set owner)
+        whitelist=(set account-id)
     ==
     $:  %update-minter
         from=sender
+        minter=account-id
         =owner
-        whitelist=(set owner)
+        whitelist=(set account-id)
     ==
     ::
     $:  %coinbase

@@ -93,6 +93,10 @@
       ?:  ?=(pubkey owner.account)
         %.n
       ?&  (gte (lent sigs.from.tx) threshold.owner.account)
+          %+  levy
+            pubkeys.from.tx
+          |=  =pubkey
+          (~(has in members.owner.account) pubkey)
           ::  %+  levy
           ::    sigs.from.tx
           ::  |=  =signature
@@ -141,7 +145,7 @@
     %update-multisig  (update-multisig state tx account)
     %create-minter    (create-minter state tx account)
     %update-minter    (update-minter state tx account)
-    %coinbase         (reward state tx account)
+    %coinbase         (coinbase state tx account)
   ==
 ::
 ::  handlers for each tx type
@@ -149,13 +153,9 @@
 ++  send
   |=  [=state =tx =account]
   ^-  (unit _state)
-  ?.  ?=([%send *] tx)
-    ~
   ::  purely for type assertion
-  ?.  ?=([%asset-account *] account)
-    ::  no support for minter account sending assets
-    ~&  >>>  "error: %send tx from minter account"
-    ~
+  ?.  ?=([%send *] tx)  ~
+  ?.  ?=([%asset-account *] account)  ~
   =/  assets=(list asset)  ~(val by assets.tx)
   |-  ^-  (unit _state)
   ::  if finished successfully, return new state
@@ -223,11 +223,9 @@
 ++  mint
   |=  [=state =tx =account]
   ^-  (unit _state)
-  ?.  ?=([%mint *] tx)
-    ~
-  ?.  ?=([%asset-account *] account)
-    ~&  >>>  "error: %mint tx from non-asset account"
-    ~
+  ::  purely for type assertion
+  ?.  ?=([%mint *] tx)  ~
+  ?.  ?=([%asset-account *] account)  ~
   ?~  find-owner=(~(get by accts.state) minter.tx)
     ~&  >>>  "error: can't find minter-account for this asset"
     ~
@@ -235,7 +233,7 @@
   ?.  ?=([%minter-account *] asset-owner)
     ~&  >>>  "error: account to perform %mint is not a minter-account"
     ~
-  ?.  (~(has in whitelist.asset-owner) owner.account)
+  ?.  (~(has in whitelist.asset-owner) account-id.from.tx)
     ~&  >>>  "error: tx sender not in minting whitelist"
     ~
   ::  loop through assets in to.tx and verify all are legit
@@ -292,8 +290,7 @@
 ++  lone-mint
   |=  [=state =tx =account]
   ^-  (unit _state)
-  ?.  ?=([%lone-mint *] tx)
-    ~
+  ?.  ?=([%lone-mint *] tx)  ~
   =/  blank-account-id  (generate-account-id from.tx)
   ::  create new account in state to hold this mint
   ::  if account-id exists this mint fails
@@ -339,10 +336,9 @@
 ++  create-minter
   |=  [=state =tx =account]
   ^-  (unit _state)
-  ?.  ?=([%create-minter *] tx)
-    ~
+  ?.  ?=([%create-minter *] tx)  ~
   =/  new-account-id  (generate-account-id from.tx)
-  ::  create new account in state to hold this multisig
+  ::  create new account in state to hold this minter
   ::  if account-id already exists this fails
   ?^  (~(get by accts.state) new-account-id)
     ~&  >>>  "error: %create-minter collision with existing account"
@@ -362,25 +358,36 @@
 ++  update-minter
   |=  [=state =tx =account]
   ^-  (unit _state)
-  ?.  ?=([%update-minter *] tx)
-    ~
-  ?~  acct=(~(get by accts.state) account-id.from.tx)
+  ?.  ?=([%update-minter *] tx)  ~
+  ?~  acct=(~(get by accts.state) minter.tx)
     ~&  >>>  "error: %update-minter on nonexistent account"
     ~
   =*  acct-to-update  u.acct
   ?.  ?=([%minter-account *] acct-to-update)
     ~&  >>>  "error: %update-minter on non-minter account"
     ~
+  ::  verify that tx sender owns the minter
+  ?.  ?.  ?=(pubkey owner.acct-to-update)
+        ::  see if multisig owner is enough
+        ?:  ?=(pubkey-sender from.tx)  %.n
+        %+  levy
+          pubkeys.from.tx
+        |=  =pubkey
+        (~(has in members.owner.acct-to-update) pubkey)
+      ?.  ?=(pubkey-sender from.tx)  %.n
+      =(owner.acct-to-update pubkey.from.tx)
+    ~&  >>>  "error: %update-minter sender doesn't match owner"
+    ~
   ::  if multisig, make sure threshold <= member count
-  ?.  ?.  ?=(pubkey owner.tx)
-        (lte (lent members.owner.tx) threshold.owner.tx)
+  ?.  ?.  ?=(pubkey owner.acct-to-update)
+        (lte (lent members.owner.acct-to-update) threshold.owner.acct-to-update)
       %.y  ::  non-multisig so no need to check
     ~&  >>>  "error: %update-minter multisig threshold set too high"
     ~
   :+  ~
     hash.state
   %+  ~(put by accts.state)
-    account-id.from.tx
+    minter.tx
   :*  %minter-account
       owner.tx
       ::  nonce.acct-to-update
@@ -392,17 +399,18 @@
 ++  create-multisig
   |=  [=state =tx =account]
   ^-  (unit _state)
-  ?.  ?=([%create-multisig *] tx)
-    ~
-  ::  assert assets is empty, where?
+  ?.  ?=([%create-multisig *] tx)  ~
   =/  account-id  (generate-account-id from.tx)
   ::  create new account in state to hold this multisig
   ::  if account-id already exists this fails
   ?^  (~(get by accts.state) account-id)
     ~&  >>>  "error: %create-multisig collision with existing account"
     ~
-  ?.  (lte (lent members.owner.tx) threshold.owner.tx)
+  ?:  (gth threshold.owner.tx (lent ~(tap in members.owner.tx)))
     ~&  >>>  "error: %create-multisig threshold set too high"
+    ~
+  ?:  =(threshold.owner.tx 0)
+    ~&  >>>  "error: %create-multisig threshold set to zero"
     ~
   :+  ~
     hash.state
@@ -414,16 +422,9 @@
 ++  update-multisig
   |=  [=state =tx =account]
   ^-  (unit _state)
-  ?.  ?=([%update-multisig *] tx)
-    ~
-  ?~  acct=(~(get by accts.state) account-id.from.tx)
-    ~&  >>>  "error: %update-multisig on nonexistent account"
-    ~
-  =/  acct-to-update  u.acct
-  ?.  ?=([%asset-account *] acct-to-update)
-    ~&  >>>  "error: %update-multisig on non-asset account"
-    ~
-  ?.  (lte (lent members.owner.tx) threshold.owner.tx)
+  ?.  ?=([%update-multisig *] tx)  ~
+  ?.  ?=([%asset-account *] account)  ~
+  ?:  (gth threshold.owner.tx (lent ~(tap in members.owner.tx)))
     ~&  >>>  "error: %update-multisig threshold set too high"
     ~
   :+  ~
@@ -432,12 +433,19 @@
     account-id.from.tx
   :*  %asset-account
       owner.tx
-      nonce.acct-to-update
-      assets.acct-to-update
+      nonce.account
+      assets.account
   ==
-++  reward
+++  coinbase
   |=  [=state =tx =account]
-  ~
+  ^-  (unit _state)
+  ?.  ?=([%coinbase *] tx)  ~
+  ?.  ?=([%asset-account *] account)  ~
+  :+  ~
+    hash.state
+  %+  ~(put by accts.state)
+    account-id.from.tx
+  account(assets (insert-asset [%tok zigs-id fees.tx] assets.account))
 ::
 ::  helper/utility functions
 ::

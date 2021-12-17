@@ -4,9 +4,10 @@
 ::
 ::  helpers
 ::
+++  zigs-id  0x0
+++  fake-sig  [0xaa 0xbb %ecdsa]
 ++  build-test-state
   ^-  state
-  =/  zigs-id  0x0
   =/  figs-id  0xf
   =/  bigs-id  0xb
   =/  nft-id  0xa
@@ -53,14 +54,14 @@
     :*  %minter-account
         owner=0x1234
         ::  nonce=0
-        whitelist=(silt ~[[0x1234]])
+        whitelist=(silt ~[0x1])
         max=1.000
         total=0
     ==
   =/  a4  ::  multisig of accts 1 and 2
     ^-  account
     :*  %asset-account
-        owner=[members=(silt `(list pubkey)`[0x1234 0x5678 ~]) threshold=2]
+        owner=[members=(silt ~[0x1234 0x5678]) threshold=2]
         nonce=0
         assets=(malt ~[[zigs-id z]])
     ==
@@ -114,7 +115,7 @@
 ++  test-tx-bad-sender
   =/  t
     :*  %send
-        [0xfff 1 0x1234 [0xaa 0xbb %ecdsa] 10]
+        [0xfff 1 0x1234 fake-sig 10]
         ::  sending 500 zigs from bad account to a2
         0x2
         (malt ~[[0x0 [%tok 0x0 500]]])
@@ -125,7 +126,7 @@
   =/  t
     :*  %send
         ::  bad nonce
-        [0x1 127 0x1234 [0xaa 0xbb %ecdsa] 10]
+        [0x1 127 0x1234 fake-sig 10]
         ::  sending 500 zigs from a1 to a2
         0x2
         (malt ~[[0x0 [%tok 0x0 500]]])
@@ -135,7 +136,7 @@
 ++  test-tx-from-minter
   =/  t
     :*  %send
-        [0x3 1 0x1234 [0xaa 0xbb %ecdsa] 10]
+        [0x3 1 0x1234 fake-sig 10]
         ::  sending 500 zigs from bad account to a2
         0x2
         (malt ~[[0x0 [%tok 0x0 500]]])
@@ -145,7 +146,7 @@
 ++  test-tx-cant-cover-fee
   =/  t
     :*  %send
-        [0x1 1 0x1234 [0xaa 0xbb %ecdsa] 10]
+        [0x1 1 0x1234 fake-sig 10]
         ::  sending 2 assets but can't cover 20 fee
         0x2
         (malt ~[[0xf [%tok 0xf 500]] [0xb [%tok 0xb 1.000]]])
@@ -160,7 +161,7 @@
   =/  t
     :*  %send
         ::  a1 paying feerate of 10
-        [0x1 1 0x1234 [0xaa 0xbb %ecdsa] 10]
+        [0x1 1 0x1234 fake-sig 10]
         ::  sending 500 zigs to a2
         0x2
         (malt ~[[0x0 [%tok 0x0 500]]])
@@ -177,7 +178,7 @@
   =/  t
     :*  %send
         ::  a1 paying feerate of 10, fee=10*2
-        [0x1 1 0x1234 [0xaa 0xbb %ecdsa] 10]
+        [0x1 1 0x1234 fake-sig 10]
         ::  a1 sending 500 zigs and 50 figs to a2
         0x2
         (malt ~[[0x0 [%tok 0x0 500]] [0xf [%tok 0xf 50]]])
@@ -196,7 +197,7 @@
   =/  t
     :*  %send
         ::  a1 paying feerate of 10, fee=10*1
-        [0x1 1 0x1234 [0xaa 0xbb %ecdsa] 10]
+        [0x1 1 0x1234 fake-sig 10]
         ::  a1 sending 10 zigs to a4 and nft
         0x4
         (malt ~[[hash.test-nft test-nft]])
@@ -214,7 +215,7 @@
   =/  t
     :*  %send
         ::  a1 paying feerate of 10, fee=10*2
-        [0x1 1 0x1234 [0xaa 0xbb %ecdsa] 10]
+        [0x1 1 0x1234 fake-sig 10]
         ::  a1 sending 10 zigs to a4 and nft
         0x4
         (malt `(list [@ux asset])`~[[0x0 [%tok 0x0 10]] [hash.test-nft test-nft]])
@@ -239,7 +240,7 @@
   =/  t
     :*  %send
         ::  a1 paying feerate of 10, fee=10*1
-        [0x1 1 0x1234 [0xaa 0xbb %ecdsa] 10]
+        [0x1 1 0x1234 fake-sig 10]
         ::  a1 sending 10 zigs to a4 and nft
         0x4
         (malt ~[[hash.test-nft test-nft]])
@@ -261,7 +262,7 @@
   =/  t
     :*  %send
         ::  a1 paying feerate of 10, fee=10*1
-        [0x1 1 0x1234 [0xaa 0xbb %ecdsa] 10]
+        [0x1 1 0x1234 fake-sig 10]
         ::  a1 sending 10 zigs to a4 and nft
         0x4
         (malt ~[[hash.test-nft test-nft]])
@@ -276,7 +277,7 @@
   =/  t
     :*  %send
         ::  a1 paying feerate of 10, fee=10*2
-        [0x1 1 0x1234 [0xaa 0xbb %ecdsa] 10]
+        [0x1 1 0x1234 fake-sig 10]
         ::  a1 sending 500 zigs and 50 figs to a2
         0x2
         (malt ~[[0x0 [%tok 0x0 500]] [0xf [%tok 0xf 50]]])
@@ -292,7 +293,7 @@
   =/  t
     :*  %send
         ::  a1 paying feerate of 10, fee=10*2
-        [0x1 1 0x1234 [0xaa 0xbb %ecdsa] 10]
+        [0x1 1 0x1234 fake-sig 10]
         ::  a1 sending 500 zigs and 50 figs to a2
         0x2
         (malt ~[[0x0 [%tok 0x0 500]] [0xf [%tok 0xf 50]]])
@@ -308,7 +309,7 @@
   =/  t
     :*  %send
         ::  a1 paying feerate of 10, fee=10*3
-        [0x1 1 0x1234 [0xaa 0xbb %ecdsa] 10]
+        [0x1 1 0x1234 fake-sig 10]
         ::  a1 sending 500 zigs and 50 figs to a2
         0x2
         ::  first of duplicates will be replaced in map
@@ -326,7 +327,7 @@
   =/  t
     :*  %send
         ::  a1 paying feerate of 10, fee=10*3
-        [0x1 1 0x1234 [0xaa 0xbb %ecdsa] 10]
+        [0x1 1 0x1234 fake-sig 10]
         ::  a1 sending 500 zigs and 50 figs to a2
         0x2
         (malt ~[[0x0 [%tok 0x0 500]] [0xf [%tok 0xf 1.000]] [0xb [%tok 0xb 1.000.000]]])
@@ -340,7 +341,7 @@
   =/  t
     :*  %send
         ::  a1 paying feerate of 10, fee=10*3
-        [0x1 1 0x1234 [0xaa 0xbb %ecdsa] 10]
+        [0x1 1 0x1234 fake-sig 10]
         ::  a1 sending 500 zigs and 50 figs to a2
         0x2
         (malt ~[[0x0 [%tok 0x0 1.000]] [0xf [%tok 0xf 2.000]] [0xb [%tok 0xb 1.000.000]]])
@@ -354,7 +355,7 @@
   =/  t
     :*  %send
         ::  a1 paying feerate of 10, fee=10*3
-        [0x1 1 0x1234 [0xaa 0xbb %ecdsa] 10]
+        [0x1 1 0x1234 fake-sig 10]
         ::  a1 sending 500 zigs and 50 figs to a3 (minter)
         0x3
         (malt ~[[0x0 [%tok 0x0 500]] [0xf [%tok 0xf 500]]])
@@ -374,7 +375,7 @@
   =/  t
     :*  %send
         ::  a1 paying feerate of 10, fee=10*2
-        [0x1 1 0x1234 [0xaa 0xbb %ecdsa] 10]
+        [0x1 1 0x1234 fake-sig 10]
         ::  a1 sending 500 zigs and 50 figs to nonexistent acct
         0xeee
         (malt ~[[0x0 [%tok 0x0 500]] [0xf [%tok 0xf 50]]])
@@ -389,7 +390,7 @@
   =/  t
     :*  %send
         ::  nonexistent account
-        [0xeee 1 0x1234 [0xaa 0xbb %ecdsa] 10]
+        [0xeee 1 0x1234 fake-sig 10]
         ::  sending 500 zigs to a2
         0x2
         (malt ~[[0x0 [%tok 0x0 500]]])
@@ -403,7 +404,7 @@
   =/  t
     :*  %mint
         ::  a1(owner of minter-account) paying feerate of 10
-        [0x1 1 0x1234 [0xaa 0xbb %ecdsa] 10]
+        [0x1 1 0x1234 fake-sig 10]
         0x3
         ::  sending 100 tokens each to a1 and a2
         ::  sending 2 assets so 10*2 = fee
@@ -414,7 +415,7 @@
   =/  updated-minter
     :*  %minter-account
         owner=0x1234
-        whitelist=(silt ~[[0x1234]])
+        whitelist=(silt ~[0x1])
         max=1.000
         total=200
     ==
@@ -430,7 +431,7 @@
   =/  t
     :*  %mint
         ::  a1(owner of minter-account) paying feerate of 10
-        [0x1 1 0x1234 [0xaa 0xbb %ecdsa] 10]
+        [0x1 1 0x1234 fake-sig 10]
         0x3
         ::  sending 100 tokens each to a1 and a2
         ::  sending 200 to account not in state
@@ -443,7 +444,7 @@
   =/  updated-minter
     :*  %minter-account
         owner=0x1234
-        whitelist=(silt ~[[0x1234]])
+        whitelist=(silt ~[0x1])
         max=1.000
         total=400
     ==
@@ -471,7 +472,7 @@
   =/  t
     :*  %mint
         ::  a1(owner of minter-account) paying feerate of 10
-        [0x1 1 0x1234 [0xaa 0xbb %ecdsa] 10]
+        [0x1 1 0x1234 fake-sig 10]
         0x3
         ::  sending 1 nft to a1 and a2
         ::  sending 2 assets so 10*2 = fee
@@ -482,7 +483,7 @@
   =/  updated-minter
     :*  %minter-account
         owner=0x1234
-        whitelist=(silt ~[[0x1234]])
+        whitelist=(silt ~[0x1])
         max=1.000
         total=2
     ==
@@ -498,7 +499,7 @@
   =/  t
     :*  %mint
         ::  a1(owner of minter-account) paying feerate of 10
-        [0x1 1 0x1234 [0xaa 0xbb %ecdsa] 10]
+        [0x1 1 0x1234 fake-sig 10]
         0x3
         ::  sending 100 tokens each to a1 and a2
         ::  sending 2 assets so 10*2 = fee
@@ -509,7 +510,7 @@
   =/  updated-minter
     :*  %minter-account
         owner=0x1234
-        whitelist=(silt ~[[0x1234]])
+        whitelist=(silt ~[0x1])
         max=1.000
         total=1.000
     ==
@@ -525,7 +526,7 @@
   =/  t
     :*  %mint
         ::  a1(owner of minter-account) paying feerate of 10
-        [0x1 1 0x1234 [0xaa 0xbb %ecdsa] 10]
+        [0x1 1 0x1234 fake-sig 10]
         0x3
         ::  sending 2 assets so 10*2 = fee
         :~  [0x1 [%tok 501]]
@@ -541,7 +542,7 @@
   =/  t
     :*  %mint
         ::  a2(NOT on whitelist of minter-account) paying feerate of 10
-        [0x2 1 0x5678 [0xaa 0xbb %ecdsa] 10]
+        [0x2 1 0x5678 fake-sig 10]
         0x3
         ::  sending 2 assets so 10*2 = fee
         :~  [0x1 [%tok 501]]
@@ -556,7 +557,7 @@
 ++  test-mint-no-minter
   =/  t
     :*  %mint
-        [0x2 1 0x5678 [0xaa 0xbb %ecdsa] 10]
+        [0x2 1 0x5678 fake-sig 10]
         0xeee  ::  (no such minter)
         ::  sending 2 assets so 10*2 = fee
         :~  [0x1 [%tok 501]]
@@ -569,11 +570,11 @@
   =.  correct-state  (increment-nonce 0x2 correct-state)
   (expect-eq !>([~ [correct-fee correct-state]]) !>(output))
 ::
-::  %lone-mint tests
+::  tests for %lone-mint
 ::
 ++  test-lone-mint-tok
   =/  from
-    [0x1 1 0x1234 [0xaa 0xbb %ecdsa] 10]
+    [0x1 1 0x1234 fake-sig 10]
   =/  new-id
     (generate-account-id from)
   =/  t
@@ -596,7 +597,7 @@
   (expect-eq !>([~ [correct-fee correct-state]]) !>(output))
 ++  test-lone-mint-to-nonexistent
   =/  from
-    [0x1 1 0x1234 [0xaa 0xbb %ecdsa] 10]
+    [0x1 1 0x1234 fake-sig 10]
   =/  new-id
     (generate-account-id from)
   =/  t
@@ -621,7 +622,7 @@
   (expect-eq !>([~ [correct-fee correct-state]]) !>(output))
 ++  test-lone-mint-nft
   =/  from
-    [0x1 1 0x1234 [0xaa 0xbb %ecdsa] 10]
+    [0x1 1 0x1234 fake-sig 10]
   =/  new-id
     (generate-account-id from)
   =/  minting-nft
@@ -638,7 +639,7 @@
     nft-0(id 1)
   =/  t
     :*  %lone-mint
-        [0x1 1 0x1234 [0xaa 0xbb %ecdsa] 10]
+        [0x1 1 0x1234 fake-sig 10]
         ::  sending 1 nft to a1 and a2
         ::  sending 2 assets so 10*2 = fee
         :~  [0x1 minting-nft]
@@ -652,5 +653,335 @@
   =.  correct-state  (insert-asset 0x1 [%tok 0x0 980] correct-state)
   =.  correct-state  (increment-nonce 0x1 correct-state)
   =.  correct-state  (edit-acct new-id [%blank-account ~] correct-state)
+  (expect-eq !>([~ [correct-fee correct-state]]) !>(output))
+::
+::  tests for %create-multisig
+::
+++  test-create-multisig
+  =/  new-multisig
+    [members=(silt ~[0x1234 0x5678]) threshold=2]
+  =/  from
+    [0x1 1 0x1234 fake-sig 10]
+  =/  new-id
+    (generate-account-id from)
+  =/  new-account
+    :*  %asset-account
+        owner=new-multisig
+        nonce=0
+        assets=~
+    ==
+  =/  t
+    :*  %create-multisig
+        :: a1 sending tx with feerate 10
+        from
+        new-multisig
+    ==
+  =/  output  (process-tx t build-test-state)
+  =/  correct-fee  10
+  =/  correct-state  (edit-acct new-id new-account build-test-state)
+  =.  correct-state  (insert-asset 0x1 [%tok 0x0 990] correct-state)
+  =.  correct-state  (increment-nonce 0x1 correct-state)
+  (expect-eq !>([~ [correct-fee correct-state]]) !>(output))
+++  test-create-multisig-thresh-too-high
+  =/  new-multisig
+    [members=(silt ~[0x1234 0x5678]) threshold=3]
+  =/  from
+    [0x1 1 0x1234 fake-sig 10]
+  =/  t
+    :*  %create-multisig
+        :: a1 sending tx with feerate 10
+        from
+        new-multisig
+    ==
+  =/  output  (process-tx t build-test-state)
+  =/  correct-fee  10
+  =/  correct-state  (insert-asset 0x1 [%tok 0x0 990] build-test-state)
+  =.  correct-state  (increment-nonce 0x1 correct-state)
+  (expect-eq !>([~ [correct-fee correct-state]]) !>(output))
+++  test-create-two-multisigs
+  =/  new-multisig
+    [members=(silt ~[0x1234 0x5678]) threshold=2]
+  =/  new-multisig-2
+    [members=(silt ~[0x1234 0x5678]) threshold=1]
+  =/  from
+    [0x1 1 0x1234 fake-sig 10]
+  =/  from-2
+    [0x1 2 0x1234 fake-sig 5]
+  =/  new-id
+    (generate-account-id from)
+  =/  new-id-2
+    (generate-account-id from-2)
+  =/  new-account
+    :*  %asset-account
+        owner=new-multisig
+        nonce=0
+        assets=~
+    ==
+  =/  new-account-2
+    :*  %asset-account
+        owner=new-multisig-2
+        nonce=0
+        assets=~
+    ==
+  =/  t
+    :*  %create-multisig
+        :: a1 sending tx with feerate 10
+        from
+        new-multisig
+    ==
+  =/  t2
+    :*  %create-multisig
+        :: a1 sending tx with feerate 5
+        from-2
+        new-multisig-2
+    ==
+  =/  output  (process-tx t build-test-state)
+  ?~  output  !!
+  =/  output-2  (process-tx t2 +.u.output)
+  =/  correct-state  (edit-acct new-id new-account build-test-state)
+  =.  correct-state  (edit-acct new-id-2 new-account-2 correct-state)
+  =.  correct-state  (insert-asset 0x1 [%tok 0x0 985] correct-state)
+  =.  correct-state  (increment-nonce 0x1 correct-state)
+  =.  correct-state  (increment-nonce 0x1 correct-state)
+  (expect-eq !>([~ [5 correct-state]]) !>(output-2))
+::
+::  tests for %update-multisig
+::
+++  test-update-multisig
+  =/  new-multisig
+    [members=(silt ~[0x5678]) threshold=1]
+  =/  from
+    [0x4 1 ~[0x1234 0x5678] ~[fake-sig fake-sig] 5]
+  =/  updated-account
+    :*  %asset-account
+        owner=new-multisig
+        nonce=1
+        assets=(malt ~[[0x0 [%tok 0x0 995]]])
+    ==
+  =/  t
+    :*  %update-multisig
+        :: a1 sending tx with feerate 10
+        from
+        new-multisig
+    ==
+  =/  output  (process-tx t build-test-state)
+  =/  correct-fee  5
+  =/  correct-state  (edit-acct 0x4 updated-account build-test-state)
+  (expect-eq !>([~ [correct-fee correct-state]]) !>(output))
+++  test-update-multisig-thresh-too-high
+  =/  new-multisig
+    [members=(silt ~[0x5678]) threshold=2]
+  =/  from
+    [0x4 1 ~[0x1234 0x5678] ~[fake-sig fake-sig] 5]
+  =/  t
+    :*  %update-multisig
+        :: a1 sending tx with feerate 10
+        from
+        new-multisig
+    ==
+  =/  output  (process-tx t build-test-state)
+  =/  correct-fee  5
+  =/  correct-state  (insert-asset 0x4 [%tok 0x0 995] build-test-state)
+  =.  correct-state  (increment-nonce 0x4 correct-state)
+  (expect-eq !>([~ [correct-fee correct-state]]) !>(output))
+::
+::  tests for %create-minter
+::
+++  test-create-minter
+  =/  from
+    [0x1 1 0x1234 fake-sig 10]
+  =/  new-id
+    (generate-account-id from)
+  =/  new-minter
+    :*  %minter-account
+        owner=0x1234
+        whitelist=(silt ~[0x1])
+        max=3
+        total=0
+    ==
+  =/  t
+    :*  %create-minter
+        :: a1 sending tx with feerate 10
+        from
+        max=3
+        owner=0x1234
+        whitelist=(silt ~[0x1])
+    ==
+  =/  output  (process-tx t build-test-state)
+  =/  correct-fee  10
+  =/  correct-state  (edit-acct new-id new-minter build-test-state)
+  =.  correct-state  (insert-asset 0x1 [%tok 0x0 990] correct-state)
+  =.  correct-state  (increment-nonce 0x1 correct-state)
+  (expect-eq !>([~ [correct-fee correct-state]]) !>(output))
+++  test-create-minter-no-whitelist
+  =/  from
+    [0x1 1 0x1234 fake-sig 10]
+  =/  new-id
+    (generate-account-id from)
+  =/  new-minter
+    :*  %minter-account
+        owner=0x1234
+        whitelist=~
+        max=3
+        total=0
+    ==
+  =/  t
+    :*  %create-minter
+        :: a1 sending tx with feerate 10
+        from
+        max=3
+        owner=0x1234
+        whitelist=~
+    ==
+  =/  output  (process-tx t build-test-state)
+  =/  correct-fee  10
+  =/  correct-state  (edit-acct new-id new-minter build-test-state)
+  =.  correct-state  (insert-asset 0x1 [%tok 0x0 990] correct-state)
+  =.  correct-state  (increment-nonce 0x1 correct-state)
+  (expect-eq !>([~ [correct-fee correct-state]]) !>(output))
+++  test-create-minter-multisig-owner
+  =/  from
+    [0x4 1 ~[0x1234 0x5678] ~[fake-sig fake-sig] 5]
+  =/  new-id
+    (generate-account-id from)
+  =/  new-minter
+    :*  %minter-account
+        owner=[members=(silt ~[0x1234 0x5678]) threshold=2]
+        whitelist=(silt ~[0x4])
+        max=3
+        total=0
+    ==
+  =/  t
+    :*  %create-minter
+        :: a4 sending tx with feerate 5
+        from
+        max=3
+        owner=[members=(silt ~[0x1234 0x5678]) threshold=2]
+        whitelist=(silt ~[0x4])
+    ==
+  =/  output  (process-tx t build-test-state)
+  =/  correct-fee  5
+  =/  correct-state  (edit-acct new-id new-minter build-test-state)
+  =.  correct-state  (insert-asset 0x4 [%tok 0x0 995] correct-state)
+  =.  correct-state  (increment-nonce 0x4 correct-state)
+  (expect-eq !>([~ [correct-fee correct-state]]) !>(output))
+::
+::  tests for %update-minter
+::
+++  test-update-minter-whitelist
+  ::  goal: add account 0x2 to a3's whitelist
+  =/  from  [0x1 1 0x1234 fake-sig 5]
+  =/  updated-minter
+    :*  %minter-account
+        owner=0x1234
+        whitelist=(silt ~[0x1 0x2])
+        max=1.000
+        total=0
+    ==
+  =/  t
+    :*  %update-minter
+        :: a1 sending tx with feerate 10
+        from
+        0x3
+        ::  no change in owner
+        0x1234
+        (silt ~[0x1 0x2])
+    ==
+  =/  output  (process-tx t build-test-state)
+  =/  correct-fee  5
+  =/  correct-state  (edit-acct 0x3 updated-minter build-test-state)
+  =.  correct-state  (insert-asset 0x1 [%tok 0x0 995] correct-state)
+  =.  correct-state  (increment-nonce 0x1 correct-state)
+  (expect-eq !>([~ [correct-fee correct-state]]) !>(output))
+++  test-update-minter-owner
+  ::  goal: change owner of 0x3 from 0x1 to multisig that owns 0x4
+  =/  from  [0x1 1 0x1234 fake-sig 5]
+  =/  updated-minter
+    :*  %minter-account
+        owner=[members=(silt ~[0x1234 0x5678]) threshold=2]
+        whitelist=(silt ~[0x1])
+        max=1.000
+        total=0
+    ==
+  =/  t
+    :*  %update-minter
+        :: a1 sending tx with feerate 10
+        from
+        0x3
+        ::  no change in owner
+        [members=(silt ~[0x1234 0x5678]) threshold=2]
+        (silt ~[0x1])
+    ==
+  =/  output  (process-tx t build-test-state)
+  =/  correct-fee  5
+  =/  correct-state  (edit-acct 0x3 updated-minter build-test-state)
+  =.  correct-state  (insert-asset 0x1 [%tok 0x0 995] correct-state)
+  =.  correct-state  (increment-nonce 0x1 correct-state)
+  (expect-eq !>([~ [correct-fee correct-state]]) !>(output))
+++  test-update-minter-owner-and-whitelist
+  ::  goal: change owner of 0x3 from 0x1 to multisig that owns 0x4
+  ::  and modify whitelist in same way
+  =/  from  [0x1 1 0x1234 fake-sig 5]
+  =/  updated-minter
+    :*  %minter-account
+        owner=[members=(silt ~[0x1234 0x5678]) threshold=2]
+        whitelist=(silt ~[0x4])
+        max=1.000
+        total=0
+    ==
+  =/  t
+    :*  %update-minter
+        :: a1 sending tx with feerate 10
+        from
+        0x3
+        ::  no change in owner
+        [members=(silt ~[0x1234 0x5678]) threshold=2]
+        (silt ~[0x4])
+    ==
+  =/  output  (process-tx t build-test-state)
+  =/  correct-fee  5
+  =/  correct-state  (edit-acct 0x3 updated-minter build-test-state)
+  =.  correct-state  (insert-asset 0x1 [%tok 0x0 995] correct-state)
+  =.  correct-state  (increment-nonce 0x1 correct-state)
+  (expect-eq !>([~ [correct-fee correct-state]]) !>(output))
+++  test-update-minter-from-non-owner
+  ::  try to update minter 0x3 with account 0x2, will fail
+  =/  from  [0x2 1 0x5678 fake-sig 5]
+  =/  t
+    :*  %update-minter
+        :: a1 sending tx with feerate 10
+        from
+        0x3
+        0x5678
+        (silt ~[0x1 0x2])
+    ==
+  =/  output  (process-tx t build-test-state)
+  =/  correct-fee  5
+  =/  correct-state  (insert-asset 0x2 [%tok 0x0 995] build-test-state)
+  =.  correct-state  (increment-nonce 0x2 correct-state)
+  (expect-eq !>([~ [correct-fee correct-state]]) !>(output))
+::
+::  tests for %coinbase
+::
+++  test-coinbase
+  =/  t
+    :*  %coinbase
+        [0x1 1 0x1234 fake-sig 7]
+        1.000
+    ==
+  =/  output  (process-tx t build-test-state)
+  =/  correct-fee  0  :: compute-gas defines coinbases as free
+  =/  correct-state  (insert-asset 0x1 [%tok 0x0 2.000] build-test-state)
+  =.  correct-state  (increment-nonce 0x1 correct-state) 
+  (expect-eq !>([~ [correct-fee correct-state]]) !>(output))
+++  test-coinbase-zero-reward
+  =/  t
+    :*  %coinbase
+        [0x1 1 0x1234 fake-sig 7]
+        0
+    ==
+  =/  output  (process-tx t build-test-state)
+  =/  correct-fee  0  :: compute-gas defines coinbases as free
+  =/  correct-state  (increment-nonce 0x1 build-test-state) 
   (expect-eq !>([~ [correct-fee correct-state]]) !>(output))
 --
