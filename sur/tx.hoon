@@ -50,16 +50,15 @@
 +$  pubkey-sender
   $:  =account-id 
       =nonce
+      feerate=zigs
       =pubkey 
       sig=signature
-      feerate=zigs
   ==
 +$  multisig-sender
   $:  =account-id 
       =nonce
-      pubkeys=(list pubkey) 
-      sigs=(list signature)
       feerate=zigs
+      signers=(set [pubkey signature])
   ==
 +$  sender  ?(pubkey-sender multisig-sender)
 ::
@@ -76,19 +75,10 @@
         minter=account-id
         to=(list [account-id minting-asset])
     ==
-    $:  %lone-mint
-        from=sender
-        to=(list [account-id minting-asset])
-    ==
+    [%lone-mint from=sender to=(list [account-id minting-asset])]
     ::
-    $:  %create-multisig
-        from=sender
-        owner=multisig
-    ==
-    $:  %update-multisig
-        from=multisig-sender 
-        owner=multisig
-    ==
+    [%create-multisig from=sender owner=multisig]
+    [%update-multisig from=multisig-sender owner=multisig]
     ::
     $:  %create-minter
         from=sender
@@ -103,9 +93,6 @@
         whitelist=(set account-id)
     ==
     ::
-    $:  %coinbase
-        from=sender
-        fees=zigs
-    ==
+    [%coinbase from=sender fees=zigs]
   ==
 --

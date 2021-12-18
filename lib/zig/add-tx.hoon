@@ -1,5 +1,4 @@
 /-  tx
-/+  *zig-sig
 =,  tx
 |%
 ::  something hardcoded
@@ -20,12 +19,6 @@
 ++  txs-to-chunk
   |=  [=state mempool=(list tx) our=sender]
   ^-  [(list [hash=@ux =tx]) _state]
-  ::  go through list and process each tx
-  ::  make a note of rejected txs?
-  ::  collect total fee count then make a tx
-  ::  giving fee to ourself
-  ::  build list of [hash tx]
-  ::  return final state with list?
   =/  txs  (gather mempool)
   =+  [results=*(list [hash=@ux =tx]) total-fees=*zigs]
   |-  ^-  [(list [hash=@ux =tx]) _state]
@@ -80,33 +73,17 @@
   ::  TODO ECDSA and Schnorr implementations 
   ?.  ?:  ?=(pubkey-sender from.tx)
         ::  validate single sig from sender
-        ?.  ?=(pubkey owner.account)
-          %.n
-        ::  %:  validate
-        ::      ~zod
-        ::      [r.sig.from.tx ~zod 1]
-        ::      (shax (con account-id.from.tx nonce.from.tx))
-        ::      ~2021.12.13..19.05.17..7258
-        ::  ==
+        ?.  ?=(pubkey owner.account)  %.n
+        ::  TODO actual signature validation here
         %.y
       ::  validate all sigs in multisig sender
-      ?:  ?=(pubkey owner.account)
-        %.n
-      ?&  (gte (lent sigs.from.tx) threshold.owner.account)
+      ?:  ?=(pubkey owner.account)  %.n
+      ?&  (gte (lent signers.from.tx) threshold.owner.account)
           %+  levy
-            pubkeys.from.tx
-          |=  =pubkey
+            ~(tap in signers.from.tx)
+          |=  [=pubkey =signature]
+          ::  TODO actual signature validation here
           (~(has in members.owner.account) pubkey)
-          ::  %+  levy
-          ::    sigs.from.tx
-          ::  |=  =signature
-          ::  %:  validate
-          ::      ~zod
-          ::      [r.signature ~zod 1]
-          ::      (shax (con account-id.from.tx nonce.from.tx))
-          ::      ~2021.12.13..19.05.17..7258
-          ::  ==
-          %.y
       ==
     ~&  >>>  "error: transaction signature(s) not valid"
     ~
@@ -121,18 +98,15 @@
   ?.  (gte zigs-in-account fee)
     ~&  >>>  "error: {<zigs-in-account>} zigs in account, tx fee is {<fee>}"
     ~
-  =:
-  ::  take fee from sender account
-    assets.account
-  %+  ~(jab by assets.account)
-    zigs-id
-  |=  z=asset
-  ::  zigs will always be tok, just type-asserting
-  ?.  ?=([%tok *] z)  !!
-  z(amount (sub amount.z fee))
   ::  update account with inc'd nonce and fee paid
-    nonce.account
-  +(nonce.account)
+  =:  nonce.account  +(nonce.account)
+      assets.account
+    %+  ~(jab by assets.account)
+      zigs-id
+    |=  z=asset
+    ::  zigs will always be tok, just type-asserting
+    ?.  ?=([%tok *] z)  !!
+    z(amount (sub amount.z fee))
   ==
   =.  accts.state
     (~(put by accts.state) account-id.from.tx account)
@@ -159,8 +133,7 @@
   =/  assets=(list asset)  ~(val by assets.tx)
   |-  ^-  (unit _state)
   ::  if finished successfully, return new state
-  ?~  assets
-    `state
+  ?~  assets  `state
   =*  to-send  i.assets
   ?~  to=(~(get by accts.state) to.tx)
     ::  trying to send asset to non-existent account
@@ -168,7 +141,7 @@
     ~&  >>  "warning: %send to non-existent account"
     =.  assets.account  (remove-asset to-send assets.account)
     %_  $
-      assets          t.assets
+      assets  t.assets
       ::
         accts.state
       %+  ~(put by accts.state)
@@ -180,7 +153,7 @@
     ~&  >>  "warning: %send to non-asset account"
     =.  assets.account  (remove-asset to-send assets.account)
     %_  $
-      assets          t.assets
+      assets  t.assets
       ::
         accts.state
       %+  ~(put by accts.state)
@@ -210,9 +183,8 @@
   ::  asset is good to send, modify state
   ::  update sender to have x less of asset
   ::  update receiver to have x more
-  =:  
-    assets.account  (remove-asset to-send assets.account)
-    assets.u.to  (insert-asset to-send assets.u.to)
+  =:  assets.account  (remove-asset to-send assets.account)
+      assets.u.to  (insert-asset to-send assets.u.to)
   ==
   =.  accts.state
     %+  ~(put by (~(put by accts.state) to.tx u.to))
@@ -239,7 +211,8 @@
   ::  loop through assets in to.tx and verify all are legit
   ::  while adding to accounts of receivers
   |-  ^-  (unit _state)
-  ?~  to.tx  [~ state]
+  ?~  to.tx
+    [~ state(accts (~(put by accts.state) minter.tx asset-owner))]
   =*  to-send  +.i.to.tx
   =*  to-whom  -.i.to.tx
   =/  amount-after-mint
@@ -256,18 +229,16 @@
     ::  trying to send asset to non-existent account,
     ::  TODO make a new account and add to state?
     ~&  >>  "warning: minted assets to nonexistent account"
-    =.  total.asset-owner  amount-after-mint
     %_  $
-      to.tx        t.to.tx
-      accts.state  (~(put by accts.state) minter.tx asset-owner)
+      to.tx              t.to.tx
+      total.asset-owner  amount-after-mint
     ==
   ::  receivers must be asset accounts
   ?.  ?=([%asset-account *] u.to-acct)
     ~&  >>  "warning: minted assets to non-asset account"
-    =.  total.asset-owner  amount-after-mint
     %_  $
-      to.tx        t.to.tx
-      accts.state  (~(put by accts.state) minter.tx asset-owner)
+      to.tx              t.to.tx
+      total.asset-owner  amount-after-mint
     ==
   =.  assets.u.to-acct
     %:  insert-minting-asset
@@ -276,15 +247,11 @@
         to-send
         assets.u.to-acct
     ==
-  =.  total.asset-owner  amount-after-mint
   ::  update minter and receiver accounts in state
   %_  $
-    to.tx    t.to.tx
-    ::
-      accts.state
-    %+  ~(put by (~(put by accts.state) to-whom u.to-acct))
-      minter.tx
-    asset-owner
+    to.tx              t.to.tx
+    accts.state        (~(put by accts.state) to-whom u.to-acct)
+    total.asset-owner  amount-after-mint
   ==
 ::
 ++  lone-mint
@@ -306,8 +273,7 @@
   ::  NFT IDs start at i=0 and count up
   =+  i=0
   |-  ^-  (unit _state)
-  ?~  to.tx
-    `state
+  ?~  to.tx  `state
   =*  to-send  +.i.to.tx
   =*  to-whom  -.i.to.tx
   ?~  to-acct=(~(get by accts.state) to-whom)
@@ -367,18 +333,22 @@
     ~&  >>>  "error: %update-minter on non-minter account"
     ~
   ::  verify that tx sender owns the minter
+  ::  the signature(s) here are validated already,
+  ::  but pubkeys/multisigs need to match the current
+  ::  owner of the minting account being edited
   ?.  ?.  ?=(pubkey owner.acct-to-update)
         ::  see if multisig owner is enough
         ?:  ?=(pubkey-sender from.tx)  %.n
         %+  levy
-          pubkeys.from.tx
-        |=  =pubkey
+          ~(tap in signers.from.tx)
+        |=  [=pubkey =signature]
         (~(has in members.owner.acct-to-update) pubkey)
+      ::  just check single sender pubkey
       ?.  ?=(pubkey-sender from.tx)  %.n
       =(owner.acct-to-update pubkey.from.tx)
     ~&  >>>  "error: %update-minter sender doesn't match owner"
     ~
-  ::  if multisig, make sure threshold <= member count
+  ::  if multisig, make sure new threshold <= member count
   ?.  ?.  ?=(pubkey owner.acct-to-update)
         (lte (lent members.owner.acct-to-update) threshold.owner.acct-to-update)
       %.y  ::  non-multisig so no need to check
@@ -519,7 +489,7 @@
 ::  $generate-account-id: produces a hash based on pubkeys and details of account
 ::
 ++  generate-account-id
-  |=  [=sender]
+  |=  =sender
   ^-  account-id
   ::
   =/  ux-concat
@@ -531,38 +501,23 @@
   ?:  ?=(pubkey-sender sender)
     pubkey.sender
   ::  sorted and concat'd list of multisig pubkeys
-  (roll (sort pubkeys.sender lth) ux-concat)
+  (roll (sort (turn ~(tap in signers.sender) |=([=pubkey =signature] pubkey)) lth) ux-concat)
 ::
 ++  compute-gas
-  |=  [=tx]
+  |=  =tx
   ::  determine how much work this tx requires
   ::  these are all single-action transactions,
   ::  can determine set costs for each type of tx
   ::  based on number of state changes maybe?
   ::  temporary
   ?-  -.tx
-      %send
-    ::  TODO better way to get length/size of set?
-    (lent ~(tap by assets.tx))
-  ::
-      %mint
-    (lent to.tx)
-  ::
-      %lone-mint
-    (lent to.tx)
-  ::
-      %create-multisig
-    1
-  ::
-      %update-multisig
-    1
-  ::
-      %create-minter
-    1
-  ::
-      %update-minter
-    1
-      %coinbase
-    0
+    %send             (lent ~(tap by assets.tx))
+    %mint             (lent to.tx)
+    %lone-mint        (lent to.tx)
+    %create-multisig  1
+    %update-multisig  1
+    %create-minter    1
+    %update-minter    1
+    %coinbase         0
   ==
 --
