@@ -119,6 +119,61 @@
     ==
   =/  output  (process-tx t build-test-state)
   (expect-eq !>(~) !>(output))
+++  test-tx-multisig-below-thresh
+  =/  t
+    :*  %send
+        [0x4 1 10 (silt ~[[0x1234 fake-sig]])]
+        0x2
+        (malt ~[[0x0 [%tok 0x0 500]]])
+    ==
+  =/  output  (process-tx t build-test-state)
+  (expect-eq !>(~) !>(output))
+++  test-tx-multisig-same-signer-twice
+  =/  t
+    :*  %send
+        [0x4 1 10 (silt ~[[0x1234 fake-sig] [0x1234 fake-sig]])]
+        0x2
+        (malt ~[[0x0 [%tok 0x0 500]]])
+    ==
+  =/  output  (process-tx t build-test-state)
+  (expect-eq !>(~) !>(output))
+++  test-tx-multisig-one-bad-signer
+  =/  t
+    :*  %send
+        [0x4 1 10 (silt ~[[0x1234 fake-sig] [0xeeee fake-sig]])]
+        0x2
+        (malt ~[[0x0 [%tok 0x0 500]]])
+    ==
+  =/  output  (process-tx t build-test-state)
+  (expect-eq !>(~) !>(output))
+::  test what happens if a multisig is signed with enough
+::  wallets, but also has extraneous signatures from wallets
+::  not included in the multisig. should create failed tx
+::
+++  test-tx-multisig-extra-bad-signer
+  =/  t
+    :*  %send
+        [0x4 1 10 (silt ~[[0x1234 fake-sig] [0x5678 fake-sig] [0xeeee fake-sig]])]
+        0x2
+        (malt ~[[0x0 [%tok 0x0 500]]])
+    ==
+  =/  output  (process-tx t build-test-state)
+  (expect-eq !>(~) !>(output))
+++  test-tx-multisig-at-thresh
+  =/  t
+    :*  %send
+        [0x4 1 10 (silt ~[[0x1234 fake-sig] [0x5678 fake-sig]])]
+        0x2
+        (malt ~[[0x0 [%tok 0x0 500]]])
+    ==
+  =/  output  (process-tx t build-test-state)
+  =/  correct-fee  10
+  ::  a1 less 510 zigs, a2 plus 500
+  ::  a1 nonce ++
+  =/  correct-state  (insert-asset 0x4 [%tok 0x0 490] build-test-state)
+  =.  correct-state  (insert-asset 0x2 [%tok 0x0 1.500] correct-state)
+  =.  correct-state  (increment-nonce 0x4 correct-state)
+  (expect-eq !>([~ [correct-fee correct-state]]) !>(output))
 ++  test-tx-bad-nonce
   =/  t
     :*  %send

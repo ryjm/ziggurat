@@ -77,8 +77,12 @@
         ::  TODO actual signature validation here
         %.y
       ::  validate all sigs in multisig sender
+      ::  and ensure # of signers is above threshold
       ?:  ?=(pubkey owner.account)  %.n
-      ?&  (gte (lent signers.from.tx) threshold.owner.account)
+      ?&  %+  gte
+            (lent ~(tap in signers.from.tx))
+          threshold.owner.account
+          ::
           %+  levy
             ~(tap in signers.from.tx)
           |=  [=pubkey =signature]
@@ -350,7 +354,9 @@
     ~
   ::  if multisig, make sure new threshold <= member count
   ?.  ?.  ?=(pubkey owner.acct-to-update)
-        (lte (lent members.owner.acct-to-update) threshold.owner.acct-to-update)
+        %+  lte
+          (lent ~(tap in members.owner.acct-to-update))
+        threshold.owner.acct-to-update
       %.y  ::  non-multisig so no need to check
     ~&  >>>  "error: %update-minter multisig threshold set too high"
     ~
