@@ -414,22 +414,23 @@
     ==
   =/  output  (process-tx t build-test-state)
   =/  correct-fee  20
-  =/  correct-state  (insert-asset 0x1 [%tok 0x0 480] build-test-state)
-  =.  correct-state  (insert-asset 0x1 [%tok 0xf 500] correct-state)
+  =/  correct-state  (insert-asset 0x1 [%tok 0x0 980] build-test-state)
   =.  correct-state  (increment-nonce 0x1 correct-state)
   (expect-eq !>([~ [correct-fee correct-state]]) !>(output))
-::
-::  TODO: not sure of the correct behavior here.
-::  make a blank account to receive, or delete assets into the aether?
-::  (currently doing latter)
-::
+
 ++  test-send-nonexistent-receiver
   =/  t
     :*  %send
         ::  a1 paying feerate of 10, fee=10*2
         [0x1 1 10 0x1234 fake-sig]
         ::  a1 sending 500 zigs and 50 figs to nonexistent acct
-        0xeee
+        0xeeee
+        (malt ~[[0x0 [%tok 0x0 500]] [0xf [%tok 0xf 50]]])
+    ==
+  =/  new-account
+    :*  %asset-account
+        0xeeee
+        0
         (malt ~[[0x0 [%tok 0x0 500]] [0xf [%tok 0xf 50]]])
     ==
   =/  output  (process-tx t build-test-state)
@@ -437,6 +438,7 @@
   =/  correct-state  (insert-asset 0x1 [%tok 0x0 480] build-test-state)
   =.  correct-state  (insert-asset 0x1 [%tok 0xf 950] correct-state)
   =.  correct-state  (increment-nonce 0x1 correct-state)
+  =.  correct-state  (edit-acct 0xeeee new-account correct-state)
   (expect-eq !>([~ [correct-fee correct-state]]) !>(output))
 ++  test-send-nonexistent-sender
   =/  t
@@ -490,7 +492,7 @@
         ::  sending 3 assets so 10*3 = fee
         :~  [0x1 [%tok 100]]
             [0x2 [%tok 100]]
-            [0xeee [%tok 200]]
+            [0xeeee [%tok 200]]
         ==
     ==
   =/  updated-minter
@@ -500,6 +502,12 @@
         max=1.000
         total=400
     ==
+  =/  new-account
+    :*  %asset-account
+        0xeeee
+        0
+        (malt ~[[0x3 [%tok 0x3 200]]])
+    ==  
   =/  output  (process-tx t build-test-state)
   =/  correct-fee  30
   =/  correct-state  (insert-asset 0x1 [%tok 0x3 100] build-test-state)
@@ -507,6 +515,7 @@
   =.  correct-state  (insert-asset 0x1 [%tok 0x0 970] correct-state)
   =.  correct-state  (increment-nonce 0x1 correct-state)
   =.  correct-state  (edit-acct 0x3 updated-minter correct-state)
+  =.  correct-state  (edit-acct 0xeeee new-account correct-state)
   (expect-eq !>([~ [correct-fee correct-state]]) !>(output))
 ++  test-mint-nfts
   =/  minting-nft
@@ -628,7 +637,7 @@
   =/  from
     [0x1 1 10 0x1234 fake-sig]
   =/  new-id
-    (generate-account-id from)
+    (generate-minter-id from)
   =/  t
     :*  %lone-mint
         ::  a1(owner of minter-account) paying feerate of 10
@@ -651,7 +660,7 @@
   =/  from
     [0x1 1 10 0x1234 fake-sig]
   =/  new-id
-    (generate-account-id from)
+    (generate-minter-id from)
   =/  t
     :*  %lone-mint
         ::  a1(owner of minter-account) paying feerate of 10
@@ -661,8 +670,14 @@
         ::  sending 3 assets so 10*3 = fee
         :~  [0x1 [%tok 100]]
             [0x2 [%tok 100]]
-            [0xeee [%tok 200]]
+            [0xeeee [%tok 200]]
         ==
+    ==
+  =/  new-account
+    :*  %asset-account
+        0xeeee
+        0
+        (malt ~[[new-id [%tok new-id 200]]])
     ==
   =/  output  (process-tx t build-test-state)
   =/  correct-fee  30
@@ -671,12 +686,13 @@
   =.  correct-state  (insert-asset 0x1 [%tok 0x0 970] correct-state)
   =.  correct-state  (increment-nonce 0x1 correct-state)
   =.  correct-state  (edit-acct new-id [%blank-account ~] correct-state)
+  =.  correct-state  (edit-acct 0xeeee new-account correct-state)
   (expect-eq !>([~ [correct-fee correct-state]]) !>(output))
 ++  test-lone-mint-nft
   =/  from
     [0x1 1 10 0x1234 fake-sig]
   =/  new-id
-    (generate-account-id from)
+    (generate-minter-id from)
   =/  minting-nft
     [%nft uri='0' hash=`@ux`(shax '0') can-xfer=%.y]
   =/  nft-0
@@ -715,7 +731,7 @@
   =/  from
     [0x1 1 10 0x1234 fake-sig]
   =/  new-id
-    (generate-account-id from)
+    (generate-asset-account-id new-multisig 1)
   =/  new-account
     :*  %asset-account
         owner=new-multisig
@@ -760,9 +776,9 @@
   =/  from-2
     [0x1 2 5 0x1234 fake-sig]
   =/  new-id
-    (generate-account-id from)
+    (generate-asset-account-id new-multisig 1)
   =/  new-id-2
-    (generate-account-id from-2)
+    (generate-asset-account-id new-multisig-2 2)
   =/  new-account
     :*  %asset-account
         owner=new-multisig
@@ -843,7 +859,7 @@
   =/  from
     [0x1 1 10 0x1234 fake-sig]
   =/  new-id
-    (generate-account-id from)
+    (generate-minter-id from)
   =/  new-minter
     :*  %minter-account
         owner=0x1234
@@ -869,7 +885,7 @@
   =/  from
     [0x1 1 10 0x1234 fake-sig]
   =/  new-id
-    (generate-account-id from)
+    (generate-minter-id from)
   =/  new-minter
     :*  %minter-account
         owner=0x1234
@@ -895,7 +911,7 @@
   =/  from
     [0x4 1 5 (silt ~[[0x1234 fake-sig] [0x5678 fake-sig]])]
   =/  new-id
-    (generate-account-id from)
+    (generate-minter-id from)
   =/  new-minter
     :*  %minter-account
         owner=[members=(silt ~[0x1234 0x5678]) threshold=2]

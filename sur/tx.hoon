@@ -66,19 +66,19 @@
   $%  
     $:  %send
         from=sender
-        to=account-id
+        to=?(account-id pubkey)
         ::  making assets a map to enforce uniqueness of assets
         assets=(map ?(account-id hash) asset)
     ==
     $:  %mint
         from=sender
         minter=account-id
-        to=(list [account-id minting-asset])
+        to=(list [?(account-id pubkey) minting-asset])
     ==
-    [%lone-mint from=sender to=(list [account-id minting-asset])]
-    ::
-    [%create-multisig from=sender owner=multisig]
-    [%update-multisig from=multisig-sender owner=multisig]
+    $:  %lone-mint
+        from=sender
+        to=(list [?(account-id pubkey) minting-asset])
+    ==
     ::
     $:  %create-minter
         from=sender
@@ -92,6 +92,9 @@
         =owner
         whitelist=(set account-id)
     ==
+    ::
+    [%create-multisig from=sender owner=multisig]
+    [%update-multisig from=multisig-sender owner=multisig]
     ::
     [%coinbase from=sender fees=zigs]
   ==

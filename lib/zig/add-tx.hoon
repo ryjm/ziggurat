@@ -135,35 +135,21 @@
   ?.  ?=([%send *] tx)  ~
   ?.  ?=([%asset-account *] account)  ~
   =/  assets=(list asset)  ~(val by assets.tx)
+  =/  to
+    ?~  search=(~(get by accts.state) to.tx)
+        ::  trying to send asset to non-existent account
+        ::  if account doesn't exist, make a new one
+        ~&  >  "%send: creating new pubkey account in state"
+        [%asset-account owner=to.tx nonce=0 assets=~]
+    u.search
+  ?.  ?=([%asset-account *] to)
+    ::  no support for minter account receiving assets
+    ~&  >>  "error: %send to non-asset account"
+    ~
   |-  ^-  (unit _state)
   ::  if finished successfully, return new state
   ?~  assets  `state
   =*  to-send  i.assets
-  ?~  to=(~(get by accts.state) to.tx)
-    ::  trying to send asset to non-existent account
-    ::  TODO if account doesn't exist make a new one?
-    ~&  >>  "warning: %send to non-existent account"
-    =.  assets.account  (remove-asset to-send assets.account)
-    %_  $
-      assets  t.assets
-      ::
-        accts.state
-      %+  ~(put by accts.state)
-        account-id.from.tx
-      account
-    ==
-  ?.  ?=([%asset-account *] u.to)
-    ::  no support for minter account receiving assets
-    ~&  >>  "warning: %send to non-asset account"
-    =.  assets.account  (remove-asset to-send assets.account)
-    %_  $
-      assets  t.assets
-      ::
-        accts.state
-      %+  ~(put by accts.state)
-        account-id.from.tx
-      account
-    ==
   ::  assert that send is valid for this asset
   ?.  ?-  -.to-send
           %nft
@@ -188,10 +174,10 @@
   ::  update sender to have x less of asset
   ::  update receiver to have x more
   =:  assets.account  (remove-asset to-send assets.account)
-      assets.u.to  (insert-asset to-send assets.u.to)
+      assets.to  (insert-asset to-send assets.to)
   ==
   =.  accts.state
-    %+  ~(put by (~(put by accts.state) to.tx u.to))
+    %+  ~(put by (~(put by accts.state) to.tx to))
       account-id.from.tx
     account
   $(assets t.assets)
@@ -227,34 +213,30 @@
     ==
   ::  amount of asset to create must not put total above limit
   ?.  (gte max.asset-owner amount-after-mint)
-    ~&  >>>  "error: mint would create too many assets"
+    ~&  >>>  "error: %mint would create too many assets"
     ~
-  ?~  to-acct=(~(get by accts.state) to-whom)
-    ::  trying to send asset to non-existent account,
-    ::  TODO make a new account and add to state?
-    ~&  >>  "warning: minted assets to nonexistent account"
-    %_  $
-      to.tx              t.to.tx
-      total.asset-owner  amount-after-mint
-    ==
+  =/  to-acct
+    ?~  search=(~(get by accts.state) to-whom)
+      ::  trying to send asset to non-existent account,
+      ::  TODO make a new account and add to state?
+      ~&  >  "%mint: creating new pubkey account in state"
+      [%asset-account owner=to-whom nonce=0 assets=~]
+    u.search
   ::  receivers must be asset accounts
-  ?.  ?=([%asset-account *] u.to-acct)
-    ~&  >>  "warning: minted assets to non-asset account"
-    %_  $
-      to.tx              t.to.tx
-      total.asset-owner  amount-after-mint
-    ==
-  =.  assets.u.to-acct
+  ?.  ?=([%asset-account *] to-acct)
+    ~&  >>>  "error: %mint assets to non-asset account"
+    ~
+  =.  assets.to-acct
     %:  insert-minting-asset
         minter.tx
         total.asset-owner  ::  this becomes ID of nft in collection
         to-send
-        assets.u.to-acct
+        assets.to-acct
     ==
   ::  update minter and receiver accounts in state
   %_  $
     to.tx              t.to.tx
-    accts.state        (~(put by accts.state) to-whom u.to-acct)
+    accts.state        (~(put by accts.state) to-whom to-acct)
     total.asset-owner  amount-after-mint
   ==
 ::
@@ -262,7 +244,7 @@
   |=  [=state =tx =account]
   ^-  (unit _state)
   ?.  ?=([%lone-mint *] tx)  ~
-  =/  blank-account-id  (generate-account-id from.tx)
+  =/  blank-account-id  (generate-minter-id from.tx)
   ::  create new account in state to hold this mint
   ::  if account-id exists this mint fails
   ?^  (~(get by accts.state) blank-account-id)
@@ -280,34 +262,36 @@
   ?~  to.tx  `state
   =*  to-send  +.i.to.tx
   =*  to-whom  -.i.to.tx
-  ?~  to-acct=(~(get by accts.state) to-whom)
-    ::  trying to send asset to non-existent account,
-    ::  TODO make a new account and add to state?
-    ~&  >>  "warning: minted assets to nonexistent account"
-    $(to.tx t.to.tx)
+  =/  to-acct
+    ?~  search=(~(get by accts.state) to-whom)
+      ::  trying to send asset to non-existent account,
+      ::  TODO make a new account and add to state?
+      ~&  >  "%mint: creating new pubkey account in state"
+      [%asset-account owner=to-whom nonce=0 assets=~]
+    u.search
   ::  receivers must be asset accounts
-  ?.  ?=([%asset-account *] u.to-acct)
-    ~&  >>  "warning: minted assets to non-asset account"
-    $(to.tx t.to.tx)
-  =.  assets.u.to-acct
+  ?.  ?=([%asset-account *] to-acct)
+    ~&  >>  "error: %lone-mint assets to non-asset account"
+    ~
+  =.  assets.to-acct
     %:  insert-minting-asset
         blank-account-id
         i
         to-send
-        assets.u.to-acct
+        assets.to-acct
     ==
   ::  update receiver account in state
   %_  $
     i            +(i)
     to.tx        t.to.tx
-    accts.state  (~(put by accts.state) to-whom u.to-acct)
+    accts.state  (~(put by accts.state) to-whom to-acct)
   ==
 ::
 ++  create-minter
   |=  [=state =tx =account]
   ^-  (unit _state)
   ?.  ?=([%create-minter *] tx)  ~
-  =/  new-account-id  (generate-account-id from.tx)
+  =/  new-account-id  (generate-minter-id from.tx)
   ::  create new account in state to hold this minter
   ::  if account-id already exists this fails
   ?^  (~(get by accts.state) new-account-id)
@@ -376,7 +360,7 @@
   |=  [=state =tx =account]
   ^-  (unit _state)
   ?.  ?=([%create-multisig *] tx)  ~
-  =/  account-id  (generate-account-id from.tx)
+  =/  account-id  (generate-asset-account-id owner.tx nonce.from.tx)
   ::  create new account in state to hold this multisig
   ::  if account-id already exists this fails
   ?^  (~(get by accts.state) account-id)
@@ -492,22 +476,47 @@
       asset
     asset(amount (sub amount.asset amount.to-remove))
   ==
-::  $generate-account-id: produces a hash based on pubkeys and details of account
+::  $generate-asset-account-id: produces a hash
+::  to make 1:1 account id from pubkey
 ::
-++  generate-account-id
+++  generate-asset-account-id
+  |=  [=owner =nonce]
+  ^-  account-id
+  =/  helix  0x0  ::  TODO helix id goes here
+  %-  shax
+  ?:  ?=(pubkey owner)
+    (ux-concat helix owner)
+  ::  sorted and concat'd list of multisig pubkeys
+  ::  multisig asset accounts also need nonce, as it
+  ::  should(?) be possible for two multisigs with
+  ::  the same set of signers to exist
+  %+  ux-concat  `@ux`nonce
+  %+  ux-concat  helix
+  (roll (sort ~(tap in members.owner) lth) ux-concat)
+::  $generate-minter-id: produces hash to serve as
+::  new account-id for minter accounts from pubkey
+::
+++  generate-minter-id
   |=  =sender
   ^-  account-id
-  ::
-  =/  ux-concat
-    |=  [a=@ux b=@ux]
-    ^-  @ux
-    (cat 3 b a)
+  %-  shax
   %+  ux-concat  `@ux`nonce.sender
   %+  ux-concat  0x0  ::  TODO helix id goes here
   ?:  ?=(pubkey-sender sender)
     pubkey.sender
   ::  sorted and concat'd list of multisig pubkeys
-  (roll (sort (turn ~(tap in signers.sender) |=([=pubkey =signature] pubkey)) lth) ux-concat)
+  %+  roll
+    %+  sort
+      %+  turn
+        ~(tap in signers.sender)
+      |=([=pubkey =signature] pubkey)
+    lth
+  ux-concat
+::
+++  ux-concat
+  |=  [a=@ux b=@ux]
+  ^-  @ux
+  (cat 3 b a)
 ::
 ++  compute-gas
   |=  =tx
