@@ -80,7 +80,7 @@
       ::  and ensure # of signers is above threshold
       ?:  ?=(pubkey owner.account)  %.n
       ?&  %+  gte
-            (lent ~(tap in signers.from.tx))
+            ~(wyt in signers.from.tx)
           threshold.owner.account
           ::
           %+  levy
@@ -330,7 +330,7 @@
   ::  if multisig, make sure new threshold <= member count
   ?.  ?.  ?=(pubkey owner.acct-to-update)
         %+  lte
-          (lent ~(tap in members.owner.acct-to-update))
+          ~(wyt in members.owner.acct-to-update)
         threshold.owner.acct-to-update
       %.y  ::  non-multisig so no need to check
     ~&  >>>  "error: %update-minter multisig threshold set too high"
@@ -357,7 +357,7 @@
   ?^  (~(get by accts.state) account-id)
     ~&  >>>  "error: %create-multisig collision with existing account"
     ~
-  ?:  (gth threshold.owner.tx (lent ~(tap in members.owner.tx)))
+  ?:  (gth threshold.owner.tx ~(wyt in members.owner.tx))
     ~&  >>>  "error: %create-multisig threshold set too high"
     ~
   ?:  =(threshold.owner.tx 0)
@@ -375,7 +375,7 @@
   ^-  (unit _state)
   ?.  ?=([%update-multisig *] tx)  ~
   ?.  ?=([%asset-account *] account)  ~
-  ?:  (gth threshold.owner.tx (lent ~(tap in members.owner.tx)))
+  ?:  (gth threshold.owner.tx ~(wyt in members.owner.tx))
     ~&  >>>  "error: %update-multisig threshold set too high"
     ~
   :+  ~
@@ -517,7 +517,7 @@
   ::  based on number of state changes maybe?
   ::  temporary
   ?-  -.tx
-    %send             (lent ~(tap by assets.tx))
+    %send             ~(wyt by assets.tx)
     %mint             (lent to.tx)
     %lone-mint        (lent to.tx)
     %create-multisig  1
