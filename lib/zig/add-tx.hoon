@@ -136,12 +136,9 @@
   ?.  ?=([%asset-account *] account)  ~
   =/  assets=(list asset)  ~(val by assets.tx)
   =/  to
-    ?~  search=(~(get by accts.state) to.tx)
-        ::  trying to send asset to non-existent account
-        ::  if account doesn't exist, make a new one
-        ~&  >  "%send: creating new pubkey account in state"
-        [%asset-account owner=to.tx nonce=0 assets=~]
-    u.search
+    %+  fall
+      (~(get by accts.state) to.tx)
+    [%asset-account owner=to.tx nonce=0 assets=~]
   ?.  ?=([%asset-account *] to)
     ::  no support for minter account receiving assets
     ~&  >>  "error: %send to non-asset account"
@@ -216,12 +213,9 @@
     ~&  >>>  "error: %mint would create too many assets"
     ~
   =/  to-acct
-    ?~  search=(~(get by accts.state) to-whom)
-      ::  trying to send asset to non-existent account,
-      ::  TODO make a new account and add to state?
-      ~&  >  "%mint: creating new pubkey account in state"
-      [%asset-account owner=to-whom nonce=0 assets=~]
-    u.search
+    %+  fall
+      (~(get by accts.state) to-whom)
+    [%asset-account owner=to-whom nonce=0 assets=~]
   ::  receivers must be asset accounts
   ?.  ?=([%asset-account *] to-acct)
     ~&  >>>  "error: %mint assets to non-asset account"
@@ -263,12 +257,9 @@
   =*  to-send  +.i.to.tx
   =*  to-whom  -.i.to.tx
   =/  to-acct
-    ?~  search=(~(get by accts.state) to-whom)
-      ::  trying to send asset to non-existent account,
-      ::  TODO make a new account and add to state?
-      ~&  >  "%mint: creating new pubkey account in state"
-      [%asset-account owner=to-whom nonce=0 assets=~]
-    u.search
+    %+  fall
+      (~(get by accts.state) to-whom)
+    [%asset-account owner=to-whom nonce=0 assets=~]
   ::  receivers must be asset accounts
   ?.  ?=([%asset-account *] to-acct)
     ~&  >>  "error: %lone-mint assets to non-asset account"
