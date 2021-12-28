@@ -4,7 +4,7 @@
 ::  something hardcoded
 ++  zigs-id  0x0
 ::
-::  $txs-to-chunk: builds chunk out of selected txs from mempool
+::  +txs-to-chunk: builds chunk out of selected txs from mempool
 ::
 ::  Given the current helix state and mempool, the chunk
 ::  producer selects a maximally-rewarding subset of transactions
@@ -17,7 +17,7 @@
 ::  and what format the mempool and chunk should take.
 ::
 ++  txs-to-chunk
-  |=  [=state mempool=(list tx) our=sender]
+  |=  [=state mempool=(set tx) our=sender]
   ^-  [(list [hash=@ux =tx]) _state]
   =/  txs  (gather mempool)
   =+  [results=*(list [hash=@ux =tx]) total-fees=*zigs]
@@ -27,8 +27,9 @@
     =/  payment=tx
       [%coinbase our total-fees]
     ?~  res=(process-tx payment state)
-      ~&  >>>  "error: failed to award chunk fees to ourselves"
-      !!
+      ~&  >>>  "error: failed to award chunk fees to ourselves!!"
+      :_  state
+      (flop results)
     :_  +.u.res
     (flop [[`@ux`(shax (jam payment)) payment] results])
   ::  check to see if tx was processed
@@ -41,21 +42,21 @@
     total-fees  -.u.res
   ==
 ::
-::  $gather: select transactions from mempool
+::  +gather: select and order transactions from mempool
 ::
 ++  gather
-  |=  mempool=(list tx)
+  |=  mempool=(set tx)
   ^-  (list tx)
   ::  choosing the txs with highest feerate
   ::  to build the best overall chunk for producer
   ::  TODO determine cutoff point for size of chunk
   ::  could be size of data, # of CSEs..
   %+  sort
-    mempool
+    ~(tap in mempool)
   |=  [a=tx b=tx]
   (gth feerate.from.a feerate.from.b)
 ::
-::  $process-tx: modify state to results of transaction, if valid.
+::  +process-tx: modify state to results of transaction, if valid.
 ::
 ++  process-tx
   |=  [=tx =state]
@@ -467,7 +468,7 @@
       asset
     asset(amount (sub amount.asset amount.to-remove))
   ==
-::  $generate-asset-account-id: produces a hash
+::  +generate-asset-account-id: produces a hash
 ::  to make 1:1 account id from pubkey
 ::
 ++  generate-asset-account-id
@@ -484,7 +485,7 @@
   %+  ux-concat  `@ux`nonce
   %+  ux-concat  helix
   (roll (sort ~(tap in members.owner) lth) ux-concat)
-::  $generate-minter-id: produces hash to serve as
+::  +generate-minter-id: produces hash to serve as
 ::  new account-id for minter accounts from pubkey
 ::
 ++  generate-minter-id

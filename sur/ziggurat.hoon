@@ -1,3 +1,4 @@
+/-  *tx
 |%
 ++  epoch-interval    ~s10
 ::
@@ -15,7 +16,8 @@
 ::
 +$  signature  [p=@ux q=ship r=life]
 +$  chunks     (list chunk)
-+$  chunk      @
++$  chunk      [(list [hash=@ux =tx]) state]
++$  mempool    (set tx)
 ::
 +$  update
   $%  [%epochs-catchup =epochs]
@@ -30,5 +32,11 @@
   $%  [%start mode=?(%fisherman %validator) history=epochs validators=(set ship)]
       [%stop ~]
       [%new-epoch ~]
+  ==
+::  can fold these into action possibly
++$  mempool-action
+  $%  [%receive =tx]
+      [%hear =tx]
+      ::  [%forward-set to=ship txs=(set tx:tx)]
   ==
 --

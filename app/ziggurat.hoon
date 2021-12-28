@@ -7,6 +7,7 @@
 +$  state-0
   $:  %0
       mode=?(%fisherman %validator %none)
+      =mempool
       =epochs
   ==
 ++  new-epoch-timers
@@ -37,7 +38,7 @@
 +*  this  .
     def   ~(. (default-agent this %|) bowl)
 ::
-++  on-init  `this(state [%0 %none ~])
+++  on-init  `this(state [%0 %none ~ ~])
 ::
 ++  on-save  !>(state)
 ++  on-load
@@ -93,6 +94,10 @@
     =^  cards  state
       (poke-zig-action !<(action vase))
     [cards this]
+      %zig-mempool-action
+    =^  cards  state
+      (poke-mempool-action !<(mempool-action vase))
+    [cards this]
       %noun
     ?>  (validate-history our.bowl epochs)
     `this
@@ -124,7 +129,7 @@
     ::
         %stop
       ?>  =(src.bowl our.bowl)
-      :_  state(mode %none, epochs ~)
+      :_  state(mode %none, epochs ~, mempool ~)
       (weld cleanup-validator cleanup-fisherman)
     ::
         %new-epoch
@@ -152,6 +157,40 @@
       %+  weld
         (watch-updates (silt (murn order.new-epoch filter-by-wex)))
       (new-epoch-timers new-epoch our.bowl)
+    ==
+  ::
+  ++  poke-mempool-action
+    |=  act=mempool-action
+    ^-  (quip card _state)
+    ?-    -.act
+        %receive
+      ::  getting a tx from user
+      ::  share with all other validators
+      ::  (TODO only send to block producer?)
+      ~&  >  "received a tx: {<tx.act>}"
+      =/  cur=epoch  +:(need (pry:poc epochs))
+      =/  cards=(list card)
+        %+  turn
+          (skip order.cur |=(p=@p =(p our.bowl)))
+        |=  =ship
+        :*  %pass  /mempool-gossip
+            %agent  [ship %ziggurat]  %poke
+            %zig-mempool-action  !>(`mempool-action`[%hear tx.act])
+        ==
+      :_  state(mempool (~(put in mempool) tx.act))
+      cards
+        %hear
+      ::  :ziggurat &mempool [%hear [%send [0x1 100 10 0x1234 [0xa 0xb %schnorr]] 0x2 (malt ~[[0x0 [%tok 0x0 500]]])]]
+      ::  getting tx from other validator
+      ::  don't need to gossip forward
+      ~&  >  "received a gossiped tx from {<src.bowl>}: {<tx.act>}"
+      :_  state(mempool (~(put in mempool) tx.act))
+      ~
+      ::    %forward-set
+      ::  ::  forward our mempool to another validator
+      ::  ::  used when we pass producer status to a new
+      ::  ::  validator, give them existing mempool
+      ::  ?>  =(src.bowl our.bowl)
     ==
   ::
   ++  filter-by-wex
@@ -342,8 +381,16 @@
       (got-hed-hash slot-num epochs cur)
     ?:  =(ship our.bowl)
       =^  cards  cur
-        (~(our-block epo cur prev-hash [our now src]:bowl) eny.bowl^~)
-      [cards state(epochs (put:poc epochs num.cur cur))]
+        %-  ~(our-block epo cur prev-hash [our now src]:bowl)
+        :~
+          %^    txs-to-chunk:add-tx
+              [0xb.00ba (malt ~[[0x1 [%asset-account 0x1234 0 (malt ~[[0x0 [%tok 0x0 100]]])]]])]
+            mempool
+          [0x1 1 10 0x1234 [0xaa 0xbb %schnorr]]
+        ==
+      ::  mempool currently being fully cleared each chunk,
+      ::  TODO limit chunk size and forward unscooped txs
+      [cards state(epochs (put:poc epochs num.cur cur), mempool ~)]
     =/  cur=epoch  +:(need (pry:poc epochs))
     =^  cards  cur
       ~(skip-block epo cur prev-hash [our now src]:bowl)
