@@ -162,35 +162,57 @@
   ++  poke-mempool-action
     |=  act=mempool-action
     ^-  (quip card _state)
+    ?>  (lte (met 3 src.bowl) 4)
     ?-    -.act
         %receive
+      ?>  (lte (met 3 src.bowl) 4)
       ::  getting a tx from user
       ::  share with all other validators
       ::  (TODO only send to block producer?)
       ~&  >  "received a tx: {<tx.act>}"
       =/  cur=epoch  +:(need (pry:poc epochs))
-      =/  cards=(list card)
-        %+  turn
-          (skip order.cur |=(p=@p =(p our.bowl)))
-        |=  =ship
-        :*  %pass  /mempool-gossip
-            %agent  [ship %ziggurat]  %poke
-            %zig-mempool-action  !>(`mempool-action`[%hear tx.act])
-        ==
       :_  state(mempool (~(put in mempool) tx.act))
-      cards
+      %+  turn
+        (skip order.cur |=(p=@p =(p our.bowl)))
+      |=  =ship
+      :*  %pass  /mempool-gossip
+          %agent  [ship %ziggurat]  %poke
+          %zig-mempool-action  !>(`mempool-action`[%hear tx.act])
+      ==
+    ::
         %hear
+      ?>  (lte (met 3 src.bowl) 4)
       ::  :ziggurat &mempool [%hear [%send [0x1 100 10 0x1234 [0xa 0xb %schnorr]] 0x2 (malt ~[[0x0 [%tok 0x0 500]]])]]
       ::  getting tx from other validator
+      ::  should only accept from other validators
+      =/  cur=epoch  +:(need (pry:poc epochs))
+      ?~  (find [src.bowl]~ order.cur)  !!
       ::  don't need to gossip forward
       ~&  >  "received a gossiped tx from {<src.bowl>}: {<tx.act>}"
-      :_  state(mempool (~(put in mempool) tx.act))
-      ~
-      ::    %forward-set
-      ::  ::  forward our mempool to another validator
-      ::  ::  used when we pass producer status to a new
-      ::  ::  validator, give them existing mempool
-      ::  ?>  =(src.bowl our.bowl)
+      :-  ~
+      state(mempool (~(put in mempool) tx.act))
+    ::
+        %forward-set
+      ::  forward our mempool to another validator
+      ::  used when we pass producer status to a new
+      ::  validator, give them existing mempool
+      ::  clear mempool for ourselves
+      ?>  =(src.bowl our.bowl)
+      :_  state(mempool ~)
+      :_  ~
+      :*  %pass  /mempool-gossip
+          %agent  [to.act %ziggurat]  %poke
+          %zig-mempool-action  !>(`mempool-action`[%receive-set mempool])
+      ==
+    ::
+        %receive-set
+      ?>  (lte (met 3 src.bowl) 4)
+      ::  integrate a set of txs into our mempool
+      ::  should only accept from other validators
+      =/  cur=epoch  +:(need (pry:poc epochs))
+      ?~  (find [src.bowl]~ order.cur)  !!
+      :-  ~
+      state(mempool (~(uni in mempool) txs.act))
     ==
   ::
   ++  filter-by-wex
@@ -382,12 +404,13 @@
     ?:  =(ship our.bowl)
       =^  cards  cur
         %-  ~(our-block epo cur prev-hash [our now src]:bowl)
-        :~
-          %^    txs-to-chunk:add-tx
-              [0xb.00ba (malt ~[[0x1 [%asset-account 0x1234 0 (malt ~[[0x0 [%tok 0x0 100]]])]]])]
-            mempool
-          [0x1 1 10 0x1234 [0xaa 0xbb %schnorr]]
-        ==
+        :_  ~
+        %^    txs-to-chunk:add-tx
+            ::  state should be acquired from previous chunk
+            [0xb.00ba (malt ~[[0x1 [%asset-account 0x1234 0 (malt ~[[0x0 [%tok 0x0 100]]])]]])]
+          mempool
+        ::  signer should be acquired from validator or concurrently-running wallet agent?
+        [0x1 1 10 0x1234 [0xaa 0xbb %schnorr]]
       ::  mempool currently being fully cleared each chunk,
       ::  TODO limit chunk size and forward unscooped txs
       [cards state(epochs (put:poc epochs num.cur cur), mempool ~)]
