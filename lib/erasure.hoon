@@ -15,6 +15,7 @@
         chunks=(list @)
         chunk-size=@ud
         padding-bytes=@ud
+        truncated-bytes=(list @ud)
     ==
   --
 =<
@@ -80,20 +81,26 @@
       nsym
       size.f
       ~
-      encoded-frags
+      frags.encoded-frags
       total
       padding-bytes
+      truncs.encoded-frags
   ==
 ::
 ++  encode-frags
   ~/  %encode-frags
   |=  [remaining=@ n=@ud f=field nsym=@ nchunks=@ generator=@ gen-lent=@ud total=@ud padding-bytes=@ud]
-  ^-  (list @)
+  ^-  [frags=(list @) truncs=(list @ud)]
   =/  encoded-frags  ^-  (list @)  (reap nchunks 0)
+  =/  truncated-bytes  (reap (div (met 3 remaining) n) 0)
+  ~&  (div (met 3 remaining) n)
+  ~&  (met 3 remaining)
+  ~&  n
+  ~&  truncated-bytes
   =+  count=*@ud
-  |-  ^+  encoded-frags
+  |-  ^+  [encoded-frags truncated-bytes]
   ?:  =(remaining 0)
-    encoded-frags
+    [encoded-frags truncated-bytes]
   ::  pad with 0s if input < n bytes
   ::
   =/  piece
@@ -102,6 +109,15 @@
     ?.  (lth (met 3 piece) n)
       piece
     (lsh [3 padding-bytes] piece)
+  ::  now pad with more 0s if bytes at front were trunc'd
+  =/  truncated  (sub n (met 3 piece))
+  =.  truncated-bytes
+    (snap truncated-bytes count truncated)
+  ~&  truncated-bytes
+  =.  piece
+    ?:  =(0 truncated)
+      piece
+    (lsh [3 truncated] piece)
   ~&  >  `@ux`piece
   =/  encoded-piece
     %:  encode-piece
@@ -131,8 +147,8 @@
       frag
     [new-frag +(i)]
   %=  $
-    count  +(count)
-    remaining  (rsh [3 n] remaining)
+    count            +(count)
+    remaining        (rsh [3 n] remaining)
   ==
 ::
 ++  encode-piece
@@ -235,6 +251,8 @@
     |=  chunk=(list @)
     :: =-  [(met 3 -) -]
     (decode-piece (rep 3 chunk) f nsym.encoded missing.encoded)
+  =/  truncated-bytes  (flop truncated-bytes.encoded)
+  ~&  "truncated bytes: {<truncated-bytes>}"
   ::  remove any padding bytes from final chunk
   ::  and return single decoded atom
   ::
@@ -243,31 +261,34 @@
   =/  unpadded-last
     (rsh [3 padding-bytes.encoded] -.decoded-pieces)
   ~&  >  `@ux`unpadded-last
-  %^  cat  3
   =*  src  +.decoded-pieces
-  =+  [res=*@ acc=(sub needed.encoded (met 3 -.decoded-pieces))]
+  =+  [res=unpadded-last i=1]
   |-  ^-  @
   ?~  src
     res
-  =/  fixed
-    ?:  =(0 -.src)
-      0
-    (lsh [3 acc] -.src)
-  ~&  >  "fixed: {<`@ux`fixed>}"
-  =.  acc
-    ?.  =(0 -.src)
-      0
-    acc
+  =/  truncated  (snag i truncated-bytes)
+  ~&  >>>  "truncated: {<truncated>}"
+  ?:  =(0 truncated)
+    ~&  >  "UNfixed: {<`@ux`-.src>}"
+    %_  $
+      res  (cat 3 -.src res)
+      src  +.src
+      i    +(i)
+    ==
+  ~&  >  "fixed: {<`@ux`(rsh [3 truncated] -.src)>}"
+  =/  new  (cat 3 (rsh [3 truncated] -.src) (lsh [3 truncated] res))
+  ~&  >>  "new: {<`@ux`new>}"
   %_  $
-    res  (cat 3 fixed res)
+    res  new
     src  +.src
-    acc  (add acc (sub needed.encoded (met 3 -.src)))
+    i    +(i)
   ==
-  unpadded-last
 ++  decode-piece
   ~/  %decode-piece
   |=  [piece=@ f=field nsym=@ud missing=(list @ud)]
   ^-  @
+  ?:  =(0 piece)
+    0
   =/  chunk  (rip 3 piece)
   =/  synd
     (~(calc-syndromes gf-math f) chunk nsym)
