@@ -1,4 +1,4 @@
-/-  *tx
+/-  tx
 |%
 ++  epoch-interval    ~s10
 ::
@@ -15,9 +15,15 @@
 ++  sot    ((on @ud slot) gth)
 ::
 +$  signature  [p=@ux q=ship r=life]
-+$  chunks     (list chunk)
-+$  chunk      [(list [hash=@ux =tx]) state]
-+$  mempool    (set tx)
++$  chunks     (list @)
++$  chunk      [(list [hash=@ux =tx:tx]) state:tx]
++$  mempool    (set tx:tx)
+::
++$  helix
+  $:  =state:tx
+      order=(list ship)
+      leader=ship
+  ==
 ::
 +$  update
   $%  [%epochs-catchup =epochs]
@@ -35,8 +41,15 @@
   ==
 ::  can fold these into action possibly
 +$  mempool-action
-  $%  [%receive =tx]
-      [%hear =tx]
-      ::  [%forward-set to=ship txs=(set tx:tx)]
+  $%  [%receive =tx:tx]
+      [%hear =tx:tx]
+      [%forward-set to=ship txs=(set tx:tx)]
+      [%receive-set txs=(set tx:tx)]
+  ==
+::
++$  chunk-action
+  $%  [%hear =chunk]
+      [%signed =signature hash=@ux]
+      [%submit sigs=(list signature) =chunk]
   ==
 --

@@ -8,6 +8,7 @@
   $:  %0
       mode=?(%fisherman %validator %none)
       =mempool
+      helix=(unit helix)
       =epochs
   ==
 ++  new-epoch-timers
@@ -38,7 +39,7 @@
 +*  this  .
     def   ~(. (default-agent this %|) bowl)
 ::
-++  on-init  `this(state [%0 %none ~ ~])
+++  on-init  `this(state [%0 %none ~ ~ ~])
 ::
 ++  on-save  !>(state)
 ++  on-load
@@ -168,7 +169,7 @@
       ?>  (lte (met 3 src.bowl) 4)
       ::  getting a tx from user
       ::  share with all other validators
-      ::  (TODO only send to block producer?)
+      ::  (TODO only send to our helix chunk producer)
       ~&  >  "received a tx: {<tx.act>}"
       =/  cur=epoch  +:(need (pry:poc epochs))
       :_  state(mempool (~(put in mempool) tx.act))
@@ -403,17 +404,8 @@
       (got-hed-hash slot-num epochs cur)
     ?:  =(ship our.bowl)
       =^  cards  cur
-        %-  ~(our-block epo cur prev-hash [our now src]:bowl)
-        :_  ~
-        %^    txs-to-chunk:add-tx
-            ::  state should be acquired from previous chunk
-            [0xb.00ba (malt ~[[0x1 [%asset-account 0x1234 0 (malt ~[[0x0 [%tok 0x0 100]]])]]])]
-          mempool
-        ::  signer should be acquired from validator or concurrently-running wallet agent?
-        [0x1 1 10 0x1234 [0xaa 0xbb %schnorr]]
-      ::  mempool currently being fully cleared each chunk,
-      ::  TODO limit chunk size and forward unscooped txs
-      [cards state(epochs (put:poc epochs num.cur cur), mempool ~)]
+        (~(our-block epo cur prev-hash [our now src]:bowl) eny.bowl^~) 
+      [cards state(epochs (put:poc epochs num.cur cur))]
     =/  cur=epoch  +:(need (pry:poc epochs))
     =^  cards  cur
       ~(skip-block epo cur prev-hash [our now src]:bowl)
