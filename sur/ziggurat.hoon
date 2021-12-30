@@ -16,11 +16,12 @@
 ::
 +$  signature  [p=@ux q=ship r=life]
 +$  chunks     (list @)
-+$  chunk      [(list [hash=@ux =tx:tx]) state:tx]
++$  chunk      [helix-id=@ux [(list [hash=@ux =tx:tx]) state:tx]]
 +$  mempool    (set tx:tx)
 ::
 +$  helix
-  $:  =state:tx
+  $:  id=@ux
+      =state:tx
       order=(list ship)
       leader=ship
   ==
@@ -38,6 +39,7 @@
   $%  [%start mode=?(%fisherman %validator) history=epochs validators=(set ship)]
       [%stop ~]
       [%new-epoch ~]
+      ::  [%new-helix validators=(set ship)]
   ==
 ::  can fold these into action possibly
 +$  mempool-action

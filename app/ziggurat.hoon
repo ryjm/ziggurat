@@ -7,9 +7,11 @@
 +$  state-0
   $:  %0
       mode=?(%fisherman %validator %none)
-      =mempool
-      helix=(unit helix)
       =epochs
+      helix=(unit helix)
+      our-chunk=(unit chunk)
+      =mempool
+      seen-sigs=(set signature)
   ==
 ++  new-epoch-timers
   |=  [=epoch our=ship]
@@ -39,7 +41,7 @@
 +*  this  .
     def   ~(. (default-agent this %|) bowl)
 ::
-++  on-init  `this(state [%0 %none ~ ~ ~])
+++  on-init  `this(state [%0 %none ~ ~ ~ ~ ~])
 ::
 ++  on-save  !>(state)
 ++  on-load
@@ -98,6 +100,10 @@
       %zig-mempool-action
     =^  cards  state
       (poke-mempool-action !<(mempool-action vase))
+    [cards this]
+      %zig-chunk-action
+    =^  cards  state
+      (poke-chunk-action !<(chunk-action vase))
     [cards this]
       %noun
     ?>  (validate-history our.bowl epochs)
@@ -166,23 +172,22 @@
     ?>  (lte (met 3 src.bowl) 4)
     ?-    -.act
         %receive
-      ?>  (lte (met 3 src.bowl) 4)
       ::  getting a tx from user
       ::  share with all other validators
       ::  (TODO only send to our helix chunk producer)
       ~&  >  "received a tx: {<tx.act>}"
-      =/  cur=epoch  +:(need (pry:poc epochs))
-      :_  state(mempool (~(put in mempool) tx.act))
-      %+  turn
-        (skip order.cur |=(p=@p =(p our.bowl)))
-      |=  =ship
+      ?~  helix=helix.state
+        ~&  >>  "ignoring tx, we're not active in a helix"
+        [~ state]
+      ~&  >  "forwarding to {<leader.u.helix>}'s mempool"
+      :_  state
+      :_  ~
       :*  %pass  /mempool-gossip
-          %agent  [ship %ziggurat]  %poke
+          %agent  [leader.u.helix %ziggurat]  %poke
           %zig-mempool-action  !>(`mempool-action`[%hear tx.act])
       ==
     ::
         %hear
-      ?>  (lte (met 3 src.bowl) 4)
       ::  :ziggurat &mempool [%hear [%send [0x1 100 10 0x1234 [0xa 0xb %schnorr]] 0x2 (malt ~[[0x0 [%tok 0x0 500]]])]]
       ::  getting tx from other validator
       ::  should only accept from other validators
@@ -194,11 +199,11 @@
       state(mempool (~(put in mempool) tx.act))
     ::
         %forward-set
+      ?>  =(src.bowl our.bowl)
       ::  forward our mempool to another validator
       ::  used when we pass producer status to a new
       ::  validator, give them existing mempool
       ::  clear mempool for ourselves
-      ?>  =(src.bowl our.bowl)
       :_  state(mempool ~)
       :_  ~
       :*  %pass  /mempool-gossip
@@ -207,13 +212,61 @@
       ==
     ::
         %receive-set
-      ?>  (lte (met 3 src.bowl) 4)
       ::  integrate a set of txs into our mempool
       ::  should only accept from other validators
       =/  cur=epoch  +:(need (pry:poc epochs))
       ?~  (find [src.bowl]~ order.cur)  !!
       :-  ~
       state(mempool (~(uni in mempool) txs.act))
+    ==
+  ::
+  ++  poke-chunk-action
+    |=  act=chunk-action
+    ^-  (quip card _state)
+    ?>  (lte (met 3 src.bowl) 4)
+    ?-    -.act
+        %hear
+      ::  receiving chunk to be signed from chunk leader
+      ?~  helix=helix.state
+        ~&  >>>  "ignoring received chunk, not active in a helix"
+        [~ state]
+      ::  only accept from our helix leader
+      ?>  =(src.bowl leader.u.helix)
+      ::  sign chunk and return it
+      ::  TODO validate chunk here if even needed
+      :_  state
+      :_  ~
+      (~(sign lix u.helix mempool.state [our now src]:bowl) chunk.act)
+    ::
+        %signed
+      ::  should only accept from other validators
+      =/  cur=epoch  +:(need (pry:poc epochs))
+      ?~  (find [src.bowl]~ order.cur)  !!
+      ?~  helix=helix.state
+        ~&  >>>  "ignoring received chunk, not active in a helix"
+        [~ state]
+      ::  only take if we're the chunk producer
+      ?.  =(our.bowl leader.u.helix)
+        ~&  >>>  "ignoring chunk signature, not leader in our helix"
+        [~ state]
+      ::  validate signature given
+      ~|  "received invalid signature on chunk"
+      ?>  (validate:zig-sig our.bowl signature.act hash.act now.bowl)
+      ::  try to submit chunk if above sig threshold
+      ?:  (gte +(~(wyt in seen-sigs.state)) (div (lent order.u.helix) 2))
+        :_  state
+        %^    ~(submit lix u.helix mempool.state [our now src]:bowl)
+            [signature.act ~(tap in seen-sigs.state)]
+          (need our-chunk.state)
+        ::  find block producer here
+        ~zod
+      :-  ~
+      state(seen-sigs (~(put in seen-sigs.state) signature.act))
+    ::
+        %submit
+      ::  should only get this as a block producer
+      ::  TODO
+      [~ state]
     ==
   ::
   ++  filter-by-wex
@@ -402,7 +455,11 @@
       ~|("we can only produce the next block, not past or future blocks" !!)
     =/  prev-hash
       (got-hed-hash slot-num epochs cur)
+    ::  should check if we're chunk producer here
+    ::  and create a chunk for our helix if so
     ?:  =(ship our.bowl)
+      ::  we're block producer so should collect chunks here
+      ::  
       =^  cards  cur
         (~(our-block epo cur prev-hash [our now src]:bowl) eny.bowl^~) 
       [cards state(epochs (put:poc epochs num.cur cur))]
