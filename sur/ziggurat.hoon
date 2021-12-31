@@ -17,8 +17,11 @@
 +$  signature  [p=@ux q=ship r=life]
 +$  chunks     (list @)
 +$  chunk      [helix-id=@ux [(list [hash=@ux =tx:tx]) state:tx]]
-+$  mempool    (set tx:tx)
 ::
++$  mempools  (map @ux mempool) :: keyed by helix ID
++$  mempool   (set tx:tx)
+::
++$  helices  (map @ux helix) :: keyed by helix ID
 +$  helix
   $:  id=@ux
       =state:tx
@@ -39,19 +42,21 @@
   $%  [%start mode=?(%fisherman %validator) history=epochs validators=(set ship)]
       [%stop ~]
       [%new-epoch ~]
+      ::  who gets to form a new helix? vote/sigs from the existing relay set?
+      ::  what helices are hard-coded into the relay chain?
       ::  [%new-helix validators=(set ship)]
   ==
-::  can fold these into action possibly
+::
 +$  mempool-action
-  $%  [%receive =tx:tx]
-      [%hear =tx:tx]
-      [%forward-set to=ship txs=(set tx:tx)]
-      [%receive-set txs=(set tx:tx)]
+  $%  [%receive helix-id=@ux =tx:tx]
+      [%hear helix-id=@ux =tx:tx]
+      [%forward-set helix-id=@ux to=ship txs=(set tx:tx)]
+      [%receive-set helix-id=@ux txs=(set tx:tx)]
   ==
 ::
 +$  chunk-action
   $%  [%hear =chunk]
-      [%signed =signature hash=@ux]
+      [%signed helix-id=@ux =signature hash=@ux]
       [%submit sigs=(list signature) =chunk]
   ==
 --

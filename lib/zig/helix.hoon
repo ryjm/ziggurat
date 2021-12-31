@@ -8,15 +8,11 @@
 ::  create a new helix
 ::
 ++  form-helix
-  |=  [starting-state=state:tx validators=(set ship) eny=@]
+  |=  [helix-id=@ux validators=(set ship) eny=@]
   ^-  helix
   ::  some helices can be hardcoded at low ids for convenience?
-  =/  new-id  `@ux`(sham starting-state)
   =/  order  (shuffle validators eny)
-  :^  new-id
-      starting-state
-      order
-      -.order
+  [helix-id starting-state=[0x0 ~] order -.order]
 ::
 ++  lix
   |_  [=helix =mempool [our=ship now=time src=ship]]
@@ -53,7 +49,7 @@
     =/  our-sig  (sign:sig our now hash)
     :*  %pass  /chunk-gossip
         %agent  [leader.helix %ziggurat]  %poke
-        %zig-chunk-action  !>(`chunk-action`[%signed our-sig hash])
+        %zig-chunk-action  !>(`chunk-action`[%signed helix-id.chunk our-sig hash])
     ==
   ::
   ::  chunk producer collates majority of signatures to submit to block
