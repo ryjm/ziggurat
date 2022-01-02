@@ -14,44 +14,48 @@
   protocol such that every block producer knows when to produce
   their block, and makes it available to the other producers.
 
-  Phase 1: Build out a minimal mempool system for allowing txs to
-  be submitted and a singular Helix for registering and
-  deregistering validators. Create a trivial chunk production
-  system with no gas, CSEs, *erasure coding*, or *data availability
-  (red/blue)* checks. Build out the necessary Helix runner for
-  importing in and running this Helix from a library.
+  Phase 1: Build a working single helix with basic smart contract support. Features
+  are as follows:
+  - slot system for allocating validators to slots
+  - "mempool" system in which validators receive transactions and send them to the
+  validator responsible for an upcoming slot. Validators send unincluded transactions
+  to the next slot's validator.
+  - smart contract system
+    * need to lock in to a simple standard library; can just import naive.hoon for now, or use something simple enough to handle the token+NFT contract cases.
+    * can just use a map to look up cell & contract ids for now.
+  - cell system, can implement just in memory, no merkleization
+  - no gas
+  
+  Build out the necessary Helix runner for importing in and running this 
+  Helix from a library.
 
-  Phase 2: Flesh out the block and chunk validation system such
+  Phase 2: 
+  Flesh out the block and chunk validation system such
   that all state transitions are actually performed properly and
   validated, at least by the producer. Integrate the erasure coding
   system for ensuring chunk data was available to all validators.
 
   Phase 3:
-  - *Implement the tx fees, post-hoc gas fees, production of Zigs per
-    block, and chunk/block rewards*
-  - *Fully implement native asset / pubkey account system*
+  - Implement the tx fees, post-hoc gas fees, production of UBars per
+    block, and chunk/block rewards
+  - hardcode NFT and token contracts to make them "native assets"
+  - add support for burning cells to move them cross-helix
 
   Phase 4: A few lines of work that can be done in parallel:
-  - Implement the CSE system.
   - *Implement a version of +mink that passes the control flow
     back to the program that ran it every so often as a means
     of limiting time spent executing any particular program*
   - *Fork Naive's std.hoon library and add cryptographic
     functions (Schnorr sigs, Keccak, etc) for smart contracts*
-  - *Implement a second Helix that is meant for more "normal" usage
     as opposed to the initial specialized Helix for validator
     registration.*
-  - *Utilize the existing +azimuth-tracker and +roller code to build
-    a snapshot of existing Urbit ID PKI*
-  - Build out "fisherman" mode to just watch chain state and validate it.
-    Perhaps build a corresponding Helix for this?
 
   Phase 5: Clean up loose ends, such as initial sync for new
   validators, and all the other issues that pop up. Write unit tests.
 
-    Phase 6: Performance optimization and security audit
+  Phase 6: Performance optimization and security audit
 
-    Phase 7: Begin running testnets, doing load tests, and preparing to
+  Phase 7: Begin running testnets, doing load tests, and preparing to
     transition Zig tokens off of Ethereum.
 
     * All asterisks denote work that is easily parallelized.
