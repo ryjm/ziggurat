@@ -8,9 +8,14 @@
   $:  %0
       mode=?(%fisherman %validator %none)
       =epochs
+      ::  for the block producer to collect chunks for slot
+      seen-chunks=chunks
+      ::  these can all be bundled together into a type probably
       =helices
       =mempools
-      seen-sigs=(map @ux (set signature))
+      our-chunks=(map helix-id chunk)
+      seen-sigs=(map helix-id (set signature))
+      
   ==
 ++  new-epoch-timers
   |=  [=epoch our=ship]
@@ -40,7 +45,7 @@
 +*  this  .
     def   ~(. (default-agent this %|) bowl)
 ::
-++  on-init  `this(state [%0 %none ~ ~ ~ ~])
+++  on-init  `this(state [%0 %none ~ ~ ~ ~ ~ ~])
 ::
 ++  on-save  !>(state)
 ++  on-load
@@ -172,8 +177,7 @@
     ?-    -.act
         %receive
       ::  getting a tx from user
-      ::  share with all other validators
-      ::  (TODO only send to our helix chunk producer)
+      ::  send to our helix chunk producer
       ~&  >  "received a tx: {<tx.act>}"
       ?~  helix=(~(get by helices.state) helix-id.act)
         ~&  >>  "ignoring tx, we're not active in that helix"
@@ -234,28 +238,24 @@
         %hear
       ::  receiving chunk to be signed from chunk leader
       ?~  helix=(~(get by helices.state) helix-id.chunk.act)
-        ~&  >>>  "ignoring received chunk, not active in a helix"
-        [~ state]
+        ~|("ignoring received chunk, not active in a helix" !!)
       ::  only accept from our helix leader
       ?>  =(src.bowl leader.u.helix)
       ::  sign chunk and return it
       ::  TODO validate chunk here if even needed
       :_  state
       :_  ~
-      (~(sign lix u.helix (~(gut by mempools.state) helix-id.chunk.act ~) [our now src]:bowl) chunk.act)
+      (~(sign lix u.helix [our now src]:bowl) chunk.act)
     ::
         %signed
       ?~  helix=(~(get by helices.state) helix-id.act)
-        ~&  >>>  "ignoring received sig, not active in a helix"
-        [~ state]
-      ::  should only accept from other validators in helix
-      ~|  "received signature from validator in wrong helix"
+        ~|("ignoring received sig, not active in a helix" !!)
+      ~|  "ship submitting signature is absent from helix"
       ?~  (find [src.bowl]~ order.u.helix)  !!
-      ::  only take if we're the chunk producer
-      ?.  =(our.bowl leader.u.helix)
-        ~&  >>>  "ignoring chunk signature, not leader in our helix"
-        [~ state]
-      ::  validate signature given
+      ?~  our-chunk=(~(get by our-chunks.state) helix-id.act)
+        ~|("ignoring received sig, don't have a chunk to get signed" !!)
+      ?.  =(hash.act (sham u.our-chunk))
+        ~|("ignoring chunk signature, hash doesn't match our chunk" !!)
       ~|  "received invalid signature on chunk"
       ?>  (validate:zig-sig our.bowl signature.act hash.act now.bowl)
       :-  ~
@@ -263,9 +263,10 @@
       |=(seen=(set signature) (~(put in seen) signature.act))
     ::
         %submit
-      ::  should only get this as a block producer
-      ::  TODO
-      [~ state]
+      ::  TODO should only get this as a block producer
+      ::  TODO perform validation?
+      ::  add chunk to our seen set
+      ~^state(seen-chunks (~(put in seen-chunks) (jam chunk.act)))
     ==
   ::
   ++  filter-by-wex
@@ -448,39 +449,53 @@
       `state
     =/  next-slot-num
       ?~(p=(bind (pry:sot slots.cur) head) 0 +(u.p))
-    =/  =ship  (snag slot-num order.cur)
+    =/  block-producer=ship  (snag slot-num order.cur)
+    =/  next-producer=ship  (snag next-slot-num order.cur)
     ?.  =(next-slot-num slot-num)
-      ?.  =(ship our.bowl)  `state
+      ?.  =(block-producer our.bowl)  `state
       ~|("we can only produce the next block, not past or future blocks" !!)
     =/  prev-hash
       (got-hed-hash slot-num epochs cur)
     ::  check if we're chunk producer for any helix
     ::  and create a chunk for that helix if so
-    ::
-    ::  =/  dispersion-cards=(list card)
-    ::    ::  for helix in helices:
-    ::    ?:  =(leader.helix our.bowl)
-    ::      =-  (~(disperse lix helix mempool.state [our now src]:bowl) -)
-    ::      ~(produce lix helix mempool.state [our now src]:bowl)
-    ::    ~
-    ::  try to submit chunk if above sig threshold 
-    ::  ?:  (gte +(~(wyt in seen-sigs.u.helix)) (div (lent order.u.helix) 2))
-    ::    :_  state
-    ::    %^    ~(submit lix u.helix mempool.state [our now src]:bowl)
-    ::        [signature.act ~(tap in seen-sigs.u.helix)]
-    ::      (need our-chunk.u.helix)
-    ::    ship
-    ?:  =(ship our.bowl)
-      ::  we're block producer so should collect chunks here
-      ::  
+    ::  update state to hold our chunk
+    =/  helix-cards
+      ::  cards for chunk signing AND submitting (if already signed)
+      =/  helices  ~(val by helices.state)
+      =|  cards=(list card)
+      |-  ^+  cards
+      ?~  helices  cards
+      =*  helix  i.helices
+      ?:  =(leader.helix our.bowl)
+        =/  mempool  (~(gut by mempools.state) id.helix ~)
+        =/  our-chunk  (~(produce lix helix [our now src]:bowl) mempool)
+        %_  $
+          helices  t.helices
+          cards  (weld (~(disperse lix helix [our now src]:bowl) our-chunk) cards)
+        ==
+      ?~  sigs=(~(get by seen-sigs.state) id.helix)
+        $(helices t.helices)
+      ::  if we have enough signatures, submit chunk to block producer
+      ?:  (gte ~(wyt in u.sigs) (div (lent order.helix) 2))
+        %_  $
+          helices  t.helices
+          cards  (weld (~(submit lix helix [our now src]:bowl) u.sigs (~(got by our-chunks.state) id.helix) block-producer) cards)
+        ==
+      $(helices t.helices)
+    ::  increment all our helices
+    ::  =.  helices.state
+    ::    %+  turn
+    ::      helices.state
+    ::    
+    ?:  =(block-producer our.bowl)
       =^  cards  cur
-        (~(our-block epo cur prev-hash [our now src]:bowl) eny.bowl^~) 
-      [cards state(epochs (put:poc epochs num.cur cur))]
+        (~(our-block epo cur prev-hash [our now src]:bowl) seen-chunks) 
+      [(weld cards helix-cards) state(epochs (put:poc epochs num.cur cur))]
     =/  cur=epoch  +:(need (pry:poc epochs))
     =^  cards  cur
       ~(skip-block epo cur prev-hash [our now src]:bowl)
     ~&  skip-block+[num.cur slot-num]
-    [cards state(epochs (put:poc epochs num.cur cur))]
+    [(weld cards helix-cards) state(epochs (put:poc epochs num.cur cur))]
   --
 ::
 ++  on-peek

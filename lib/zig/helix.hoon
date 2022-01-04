@@ -12,18 +12,27 @@
   ^-  helix
   ::  some helices can be hardcoded at low ids for convenience?
   =/  order  (shuffle validators eny)
-  [helix-id starting-state=[0x0 ~] order -.order]
+  [helix-id [0x0 ~] order -.order 0]
+::
+++  get-next-leader
+  |=  [=helix hash=@uvH]
+  ^+  helix
+  ?:  (gte +(num.helix) (lent order.helix))
+    =/  new-order  (shuffle (silt order.helix) hash)
+    helix(order new-order, leader -.new-order, num 0)
+  helix(leader (snag +(num.helix) order.helix), num +(num.helix))
 ::
 ++  lix
-  |_  [=helix =mempool [our=ship now=time src=ship]]
+  |_  [=helix [our=ship now=time src=ship]]
   ::
   ::  when it's your turn, generate a chunk
   ::
   ++  produce
+    |=  =mempool
     ^-  chunk
     =/  our-sender
       ::  TODO include this in agent state
-      ::  validators should be initialized with account
+      ::  validators should be initialized with account/wallet to store rewards
       [0x1234 nonce=1 feerate=1 pubkey=0x1234 sig=[0xaa 0xbb %schnorr]]
     [id.helix (txs-to-chunk:add state.helix mempool our-sender)]
   ::
@@ -56,7 +65,7 @@
   ::  submit (to block producer)
   ::
   ++  submit
-    |=  [sigs=(list signature) =chunk block-producer=ship]
+    |=  [sigs=(set signature) =chunk block-producer=ship]
     ^-  (list card)
     =/  chunk-hash  `@ux`(sham chunk)
     :_  ~

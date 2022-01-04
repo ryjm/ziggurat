@@ -15,19 +15,21 @@
 ++  sot    ((on @ud slot) gth)
 ::
 +$  signature  [p=@ux q=ship r=life]
-+$  chunks     (list @)
-+$  chunk      [helix-id=@ux [(list [hash=@ux =tx:tx]) state:tx]]
++$  chunks     (set @)
++$  chunk      [=helix-id [(list [hash=@ux =tx:tx]) state:tx]]
 ::
-+$  mempools  (map @ux mempool) :: keyed by helix ID
-+$  mempool   (set tx:tx)
-::
-+$  helices  (map @ux helix) :: keyed by helix ID
++$  helix-id  @ux
++$  helices  (map helix-id helix)
 +$  helix
-  $:  id=@ux
+  $:  id=helix-id
       =state:tx
       order=(list ship)
       leader=ship
+      num=@ud
   ==
+::
++$  mempools  (map helix-id mempool)
++$  mempool   (set tx:tx)
 ::
 +$  update
   $%  [%epochs-catchup =epochs]
@@ -48,15 +50,15 @@
   ==
 ::
 +$  mempool-action
-  $%  [%receive helix-id=@ux =tx:tx]
-      [%hear helix-id=@ux =tx:tx]
-      [%forward-set helix-id=@ux to=ship txs=(set tx:tx)]
-      [%receive-set helix-id=@ux txs=(set tx:tx)]
+  $%  [%receive =helix-id =tx:tx]
+      [%hear =helix-id =tx:tx]
+      [%forward-set =helix-id to=ship txs=(set tx:tx)]
+      [%receive-set =helix-id txs=(set tx:tx)]
   ==
 ::
 +$  chunk-action
   $%  [%hear =chunk]
-      [%signed helix-id=@ux =signature hash=@ux]
-      [%submit sigs=(list signature) =chunk]
+      [%signed =helix-id =signature hash=@ux]
+      [%submit sigs=(set signature) =chunk]
   ==
 --
