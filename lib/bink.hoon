@@ -1,10 +1,7 @@
 ~%  %bink-lib  ..part  ~
 |%
 ::                                                        ::
-+$  bone                                                  ::  bounded tone
-  $:  $@(~ tone)
-      rem=@
-  ==
++$  bone  $:($@(~ tone) rem=@)                            ::  bounded +tone
 ::                                                        ::
 ++  gas-cost-atom
   |=  a=@
@@ -20,10 +17,10 @@
     (gas-cost-atom a)
   (gas-cost-cell a)
 ::                                                        ::
-++  bink
+++  bink                                                  ::  bounded +mink
   ~/  %bink
   |=  $:  [subject=* formula=*]
-          bud=@ud
+          bud=@ud                                         ::  gas budget
           scry=$-(^ (unit (unit)))
       ==
   =|  trace=(list [@ta *])
