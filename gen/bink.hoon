@@ -2,4 +2,4 @@
 :-  %say
 |=  [^ [[subject=* formula=* bud=@ud ~] ~]]
 :-  %noun
-(bink:bink [subject formula] bud |=(^ ~))
+(bink:bink [subject formula] bud)

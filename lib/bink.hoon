@@ -1,7 +1,10 @@
 ~%  %bink-lib  ..part  ~
 |%
 ::                                                        ::
-+$  bone  $:($@(~ tone) rem=@)                            ::  bounded +tone
++$  tone  $%  [%0 product=*]                              ::  +tone without scry
+              [%2 trace=(list [@ta *])]
+          ==
++$  bone  [$@(~ tone) rem=@ud]                            ::  bounded +tone
 ::                                                        ::
 ++  gas-cost-atom
   |=  a=@
@@ -17,11 +20,26 @@
     (gas-cost-atom a)
   (gas-cost-cell a)
 ::                                                        ::
+++  jet-whitelist                                         ::  only these jets
+  ^-  (set @tas)
+  %-  ~(gas in *(set @tas))
+  :~  %'a.50'  %dec   %add   %sub   %mul
+      %div     %dvr   %mod   %bex   %lsh
+      %rsh     %con   %dis   %mix   %lth
+      %lte     %gte   %gth   %swp   %met
+      %end     %cat   %cut   %can   %cad
+      %rep     %rip   %lent  %slag  %snag
+      %flop    %welp  %reap  %mug   %gor
+      %mor     %dor   %por   %by    %get
+      %put     %del   %apt   %on    %apt
+      %get     %has   %put   %in    %put
+      %del     %apt
+  ==
+::
 ++  bink                                                  ::  bounded +mink
   ~/  %bink
   |=  $:  [subject=* formula=*]
           bud=@ud                                         ::  gas budget
-          scry=$-(^ (unit (unit)))
       ==
   =|  trace=(list [@ta *])
   |^
@@ -188,31 +206,22 @@
     ?~  mutant  [%2 trace]
     [%0 u.mutant]
   ::
-      [%11 tag=@ next=*]
-    =.  cos  1
-    ?:  (lth bud cos)  [~ bud]
-    =.  bud  (sub bud cos)
-    =^  next  bud
-      $(formula next.formula)
-    :_  bud
-    ?~  next  ~
-    ?.  ?=(%0 -.next)  next
-    :-  %0
-    .*  subject   ::  XX run through bink?
-    [11 tag.formula 1 product.next]
-  ::
       [%11 [tag=@ clue=*] next=*]
     =.  cos  1
     ?:  (lth bud cos)  [~ bud]
     =.  bud  (sub bud cos)
+    ?.  =(%fast tag.formula)  [%2 trace]^bud
     =^  clue  bud
       $(formula clue.formula)
     ?~  clue  [~ bud]
     ?.  ?=(%0 -.clue)  clue^bud
+    =?    trace
+        ?=(?(%hunk %hand %lose %mean %spot) tag.formula)
+      [[tag.formula product.clue] trace]
+    ?.  ?=(@ product.clue)  [%2 trace]^bud
+    ?.  (~(has in jet-whitelist) product.clue)
+      [%2 trace]^bud
     =^  next  bud
-      =?    trace
-          ?=(?(%hunk %hand %lose %mean %spot) tag.formula)
-        [[tag.formula product.clue] trace]
       $(formula next.formula)
     :_  bud
     ?~  next  ~
@@ -221,25 +230,10 @@
     .*  subject
     [11 [tag.formula 1 product.clue] 1 product.next]
   ::
-      [%12 ref=* path=*]
-    =.  cos  1
-    ?:  (lth bud cos)  [~ bud]
-    =.  bud  (sub bud cos)
-    =^  ref  bud
-      $(formula ref.formula)
-    ?~  ref  [~ bud]
-    ?.  ?=(%0 -.ref)  ref^bud
-    =^  path  bud
-      $(formula path.formula)
-    ?~  path  [~ bud]
-    ?.  ?=(%0 -.path)  path^bud
-    =/  result  (scry product.ref product.path)
-    :_  bud
-    ?~  result
-      [%1 product.path]
-    ?~  u.result
-      [%2 [%hunk product.ref product.path] trace]
-    [%0 u.u.result]
+  ::  [%11 tag=@ next=*]
+  ::
+  ::  [%12 ref=* path=*]
+  ::
   ==
   ::
   ++  frag
