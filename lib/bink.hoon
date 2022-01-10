@@ -41,6 +41,7 @@
   |=  $:  [subject=* formula=*]
           bud=@ud                                         ::  gas budget
       ==
+  ~>  %bout                                               ::  XX remove: timing
   =|  trace=(list [@ta *])
   |^
   =/  cos  (gas-cost-noun [subject formula])
