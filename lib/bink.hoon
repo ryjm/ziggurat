@@ -67,9 +67,11 @@
     =.  cos  1
     ?:  (lth bud cos)  [~ bud]
     =.  bud  (sub bud cos)
-    =/  part  (frag axis.formula subject)
-    ?~  part  [%2 trace]^bud
-    [%0 u.part]^bud
+    =^  part  bud
+      (frag axis.formula subject bud)
+    ?~  part  [~ bud]
+    ?~  u.part  [%2 trace]^bud
+    [%0 u.u.part]^bud
   ::
       [%1 constant=*]
     =.  cos  1
@@ -180,11 +182,13 @@
       $(formula core.formula)
     ?~  core  [~ bud]
     ?.  ?=(%0 -.core)  core^bud
-    =/  arm  (frag axis.formula product.core)
-    ?~  arm  [%2 trace]^bud
+    =^  arm  bud
+      (frag axis.formula product.core bud)
+    ?~  arm  [~ bud]
+    ?~  u.arm  [%2 trace]^bud
     %=  $
       subject  product.core
-      formula  u.arm
+      formula  u.u.arm
     ==
   ::
       [%10 [axis=@ value=*] target=*]
@@ -200,11 +204,12 @@
       $(formula value.formula)
     ?~  value  [~ bud]
     ?.  ?=(%0 -.value)  value^bud
-    =/  mutant=(unit *)
-      (edit axis.formula product.target product.value)
+    =^  mutant=(unit (unit *))  bud
+      (edit axis.formula product.target product.value bud)
     :_  bud
-    ?~  mutant  [%2 trace]
-    [%0 u.mutant]
+    ?~  mutant  ~
+    ?~  u.mutant  [%2 trace]
+    [%0 u.u.mutant]
   ::
       [%11 [tag=@ clue=*] next=*]
     =.  cos  1
@@ -237,33 +242,38 @@
   ==
   ::
   ++  frag
-    |=  [axis=@ noun=*]
-    ^-  (unit)
-    ?:  =(0 axis)  ~
-    |-  ^-  (unit)
-    ?:  =(1 axis)  `noun
-    ?@  noun  ~
+    |=  [axis=@ noun=* bud=@ud]
+    ^-  [(unit (unit)) @ud]
+    ?:  =(0 axis)  [`~ bud]
+    |-  ^-  [(unit (unit)) @ud]
+    ?:  =(0 bud)  [~ bud]
+    ?:  =(1 axis)  [``noun (dec bud)]
+    ?@  noun  [`~ (dec bud)]
     =/  pick  (cap axis)
     %=  $
       axis  (mas axis)
       noun  ?-(pick %2 -.noun, %3 +.noun)
+      bud   (dec bud)
     ==
   ::
   ++  edit
-    |=  [axis=@ target=* value=*]
-    ^-  (unit)
-    ?:  =(1 axis)  `value
-    ?@  target  ~
+    |=  [axis=@ target=* value=* bud=@ud]
+    ^-  [(unit (unit)) @ud]
+    ?:  =(1 axis)  [``value bud]
+    ?@  target  [`~ bud]
+    ?:  =(0 bud)  [~ bud]
     =/  pick  (cap axis)
-    =/  mutant
+    =^  mutant  bud
       %=  $
         axis    (mas axis)
         target  ?-(pick %2 -.target, %3 +.target)
+        bud     (dec bud)
       ==
-    ?~  mutant  ~
+    ?~  mutant  [~ bud]
+    ?~  u.mutant  [`~ bud]
     ?-  pick
-      %2  `[u.mutant +.target]
-      %3  `[-.target u.mutant]
+      %2  [``[u.u.mutant +.target] bud]
+      %3  [``[-.target u.u.mutant] bud]
     ==
   --
 --
