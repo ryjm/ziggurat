@@ -23,17 +23,16 @@
 ++  jet-whitelist                                         ::  only these jets
   ^-  (set @tas)
   %-  ~(gas in *(set @tas))
-  :~  %'a.50'  %dec   %add   %sub   %mul
-      %div     %dvr   %mod   %bex   %lsh
-      %rsh     %con   %dis   %mix   %lth
-      %lte     %gte   %gth   %swp   %met
-      %end     %cat   %cut   %can   %cad
-      %rep     %rip   %lent  %slag  %snag
-      %flop    %welp  %reap  %mug   %gor
-      %mor     %dor   %por   %by    %get
-      %put     %del   %apt   %on    %apt
-      %get     %has   %put   %in    %put
-      %del     %apt
+  :~  %'a.50'                                             ::  XX tiny top-level
+      %add    %apt    %bex  %by     %cad
+      %can    %cat    %con  %cut    %dec
+      %del    %dis    %div  %dor    %dvr
+      %end    %flop   %get  %gor    %gte
+      %gth    %has    %in   %lent   %lsh
+      %lte    %lth    %met  %mix    %mod
+      %mor    %mug    %mul  %on     %por
+      %put    %reap   %rep  %rip    %rsh
+      %slag   %snag   %sub  %swp    %welp
   ==
 ::
 ++  bink                                                  ::  bounded +mink
