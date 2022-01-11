@@ -108,16 +108,20 @@
     [%0 .?(product.argument)]
   ::
       [%4 argument=*]
-    ::  XX change cos if atom size changes?
     =.  cos  1
     ?:  (lth bud cos)  [~ bud]
     =.  bud  (sub bud cos)
     =^  argument  bud
       $(formula argument.formula)
-    :_  bud
-    ?~  argument  ~
-    ?.  ?=(%0 -.argument)  argument
-    ?^  product.argument  [%2 trace]
+    ?~  argument  [~ bud]
+    ?.  ?=(%0 -.argument)  argument^bud
+    ?^  product.argument  [%2 trace]^bud
+    =.  cos
+      %+  sub
+        (gas-cost-noun +(product.argument))
+      (gas-cost-noun product.argument)
+    ?:  (lth bud cos)  [~ bud]
+    :_  (sub bud cos)
     [%0 .+(product.argument)]
   ::
       [%5 a=* b=*]
@@ -212,6 +216,7 @@
     [%0 u.u.mutant]
   ::
       [%11 [tag=@ clue=*] next=*]
+    ::  XX change gas cost if jet changes atom size
     =.  cos  1
     ?:  (lth bud cos)  [~ bud]
     =.  bud  (sub bud cos)
