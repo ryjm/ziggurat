@@ -266,4 +266,48 @@
       %3  `[-.target u.mutant]
     ==
   --
+::::  +mook: convert %tone to %toon, rendering stack frames
+::::
+::++  mook
+::  |=  ton=tone
+::  ^-  toon
+::  ?.  ?=([%2 *] ton)
+::    ton
+::  |^  [%2 (turn skip rend)]
+::  ::
+::  ++  skip
+::    ^+  trace.ton
+::    =/  yel  (lent trace.ton)
+::    ?.  (gth yel 1.024)  trace.ton
+::    %+  weld
+::      (scag 512 trace.ton)
+::    ^+  trace.ton
+::    :_  (slag (sub yel 512) trace.ton)
+::    :-  %lose
+::    (crip "[skipped {(scow %ud (sub yel 1.024))} frames]")
+::::
+::++  bock
+::  |=  [[sub=* fol=*] bud=@ud]
+::  (mook (bink [sub fol] bud))
+::::
+::::  +brute: untyped virtual nock with a budget
+::::
+::++  brute
+::  |=  [tap=(trap) bud=@ud]
+::  ^-  (each * (list tank))
+::  =/  ton  (bock [tap %9 2 %0 1] bud)
+::  ?-  -.ton
+::    %0  [%& p.ton]
+::    %2  [%| p.ton]
+::  ==
+::
+::  +blue: typed virtual nock with a budget
+::
+::++  blue
+::  |*  [tap=(trap) bud=@ud]
+::  =/  mud  (brute tap bud)
+::  ?-  -.mud
+::    %&  [%& p=$:tap]
+::    %|  [%| p=p.mud]
+::  ==
 --

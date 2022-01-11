@@ -5,10 +5,17 @@
 ::
 +$  rice
   $:  =id
-      owner=id
-      helix-id=@ud
+      holder=id
+      lord=id
+      town-id=@ud
       data=*
-      owns=(set id)
+      holds=(set id)
+  ==
+::
++$  wheat
+  $~  [0x0 ~]
+  $:  =id
+      contract=(unit contract)
   ==
 ::
 +$  caller  $@(id user)
@@ -19,12 +26,10 @@
       args=(unit noun)
   ==
 ::
-+$  output  [mutated=(map id rice) issued=(map id grain)]
-::
-+$  wheat
-  $~  [0x0 ~]
-  $:  =id
-      contract=(unit contract)
++$  output
+  $:  changed=(map id rice)
+      issued=(map id grain)
+      next=(list [to=id =town-id args=call-args rice-id=id])
   ==
 ::
 +$  contract
@@ -39,8 +44,9 @@
     *(unit grain)
   --
 ::
-+$  grain  (each rice wheat)
-+$  mill   (map id grain)  :: replace with +merk
++$  grain     (each rice wheat)
++$  granary   (pair (map id grain) (map id @ud))    ::  replace with +merk
++$  town      (map id granary)  ::  "helix"
 ::
 +$  signature  [r=@ux s=@ux type=?(%schnorr %ecdsa)]
 ::
@@ -48,9 +54,11 @@
   $%([%read =id] [%write input])
 ::
 +$  call
-  $:  to=id
+  $:  from=caller
+      to=id
       budget=@ud
-      =helix=id
+      =town=id
       args=call-args
+      rice-id=id
   ==
 --
