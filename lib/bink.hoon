@@ -4,14 +4,15 @@
 +$  lone  $%  [%0 product=*]                              ::  +lone without scry
               [%2 trace=(list [@ta *])]
           ==
+::                                                        ::
 +$  loon  $%  [%0 p=*]                                    ::  success
               [%2 p=(list tank)]                          ::  stack trace
           ==
+::                                                        ::
 +$  bone  [$@(~ lone) rem=@ud]                            ::  bounded +lone
 ::                                                        ::
 ++  gas-cost
   |=  [a=* bud=@ud]
-  ^-  (unit @ud)
   =+  cost=0
   |-  ^-  (unit @ud)
   ?:  (gth cost bud)  ~
@@ -42,7 +43,7 @@
       %get     %has   %put   %in    %put
       %del     %apt
   ==
-::
+::                                                        ::
 ++  bink                                                  ::  bounded +mink
   ~/  %bink
   |=  $:  [subject=* formula=*]
@@ -219,8 +220,9 @@
     =.  cos  1
     ?:  (lth bud cos)  [~ bud]
     =.  bud  (sub bud cos)
-    ::  TODO: fix this
-    ::?.  =(%fast tag.formula)  [%2 trace]^bud
+    ?.  (~(has in (silt `(list @)`~[%spot %mean %fast])) tag.formula)
+      ::  TODO: put something in the trace
+      [%2 trace]^bud
     =^  clue  bud
       $(formula clue.formula)
     ?~  clue  [~ bud]
@@ -228,15 +230,16 @@
     =?    trace
         ?=(?(%hunk %hand %lose %mean %spot) tag.formula)
       [[tag.formula product.clue] trace]
-    ::  TODO: fix this
-    ::?.  ?=(@ product.clue)  [%2 trace]^bud
-    ::?.  (~(has in jet-whitelist) product.clue)
-    ::  [%2 trace]^bud
     =^  next  bud
       $(formula next.formula)
     :_  bud
     ?~  next  ~
     ?.  ?=(%0 -.next)  next
+    ?.  ?|  !=(%fast tag.formula)
+            ?&  ?=([@ *] product.clue)
+                (~(has in jet-whitelist) -.product.clue)
+        ==  ==
+      [%2 trace]
     :-  %0
     .*  subject
     [11 [tag.formula 1 product.clue] 1 product.next]
@@ -277,9 +280,8 @@
       %3  `[-.target u.mutant]
     ==
   --
-::  +mook: convert %lone to %toon, rendering stack frames
-::
-++  book
+::                                                        ::
+++  book                                                  ::  bounded +mook
   |=  ton=lone
   ^-  loon
   ?.  ?=([%2 *] ton)
@@ -338,22 +340,16 @@
       ==
     ==
   --
-::+$  lone  $%  [%0 product=*]                              ::  +lone without scry
-::              [%2 trace=(list [@ta *])]
-::          ==
-::+$  bone  [$@(~ lone) rem=@ud]
-::
-++  bock
+::                                                        ::
+++  bock                                                  ::  raw virtual nock
   |=  [[sub=* fol=*] bud=@ud]
   ^-  [(unit loon) @ud]
   =/  =bone  (bink [sub fol] bud)
   :_  rem.bone
   ?~  -.bone  ~
   `(book -.bone)
-::
-::  +brute: untyped virtual nock with a budget
-::
-++  brute
+::                                                        ::
+++  brute                                                 ::  untyped +bock
   |=  [tap=(trap) bud=@ud]
   ^-  [(unit (each * (list tank))) @ud]
   =+  [ton rem]=(bock [tap %9 2 %0 1] bud)
@@ -364,10 +360,8 @@
     %0  [%& p.u.ton]
     %2  [%| p.u.ton]
   ==
-::
-::  +blue: typed virtual nock with a budget
-::
-++  blue
+::                                                        ::
+++  blue                                                  ::  typed +bock
   |*  [tap=(trap) bud=@ud]
   ::^-  [(unit (each $:tap (list tank))) @ud]
   =+  [mud rem]=(brute tap bud)
