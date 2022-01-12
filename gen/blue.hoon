@@ -1,5 +1,7 @@
-/+  bink
+/+  bink, tiny
 :-  %say
-|=  [^ [[tap=(trap) bud=@ud ~] ~]]
+|=  [^ [[formula=hoon bud=@ud ~] ~]]
+=/  for=nock
+  q:(~(mint ut -:!>(tiny)) %noun formula)
 :-  %noun
-(blue:bink tap bud)
+(bock:bink [tiny for] bud)

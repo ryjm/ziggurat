@@ -6,7 +6,7 @@
           ==
 +$  loon  $%  [%0 p=*]                                    ::  success
               [%2 p=(list tank)]                          ::  stack trace
-          == 
+          ==
 +$  bone  [$@(~ lone) rem=@ud]                            ::  bounded +lone
 ::                                                        ::
 ++  gas-cost
@@ -219,7 +219,8 @@
     =.  cos  1
     ?:  (lth bud cos)  [~ bud]
     =.  bud  (sub bud cos)
-    ?.  =(%fast tag.formula)  [%2 trace]^bud
+    ::  TODO: fix this
+    ::?.  =(%fast tag.formula)  [%2 trace]^bud
     =^  clue  bud
       $(formula clue.formula)
     ?~  clue  [~ bud]
@@ -227,9 +228,10 @@
     =?    trace
         ?=(?(%hunk %hand %lose %mean %spot) tag.formula)
       [[tag.formula product.clue] trace]
-    ?.  ?=(@ product.clue)  [%2 trace]^bud
-    ?.  (~(has in jet-whitelist) product.clue)
-      [%2 trace]^bud
+    ::  TODO: fix this
+    ::?.  ?=(@ product.clue)  [%2 trace]^bud
+    ::?.  (~(has in jet-whitelist) product.clue)
+    ::  [%2 trace]^bud
     =^  next  bud
       $(formula next.formula)
     :_  bud
@@ -276,7 +278,7 @@
     ==
   --
 ::  +mook: convert %lone to %toon, rendering stack frames
-:: 
+::
 ++  book
   |=  ton=lone
   ^-  loon
@@ -284,7 +286,7 @@
     ton
   |^  [%2 (turn skip rend)]
   ::
-  ::  TODO: run +bink on a read call  
+  ::  TODO: run +bink on a read call
   ++  skip
     ^+  trace.ton
     =/  yel  (lent trace.ton)
@@ -339,7 +341,7 @@
 ::+$  lone  $%  [%0 product=*]                              ::  +lone without scry
 ::              [%2 trace=(list [@ta *])]
 ::          ==
-::+$  bone  [$@(~ lone) rem=@ud] 
+::+$  bone  [$@(~ lone) rem=@ud]
 ::
 ++  bock
   |=  [[sub=* fol=*] bud=@ud]
