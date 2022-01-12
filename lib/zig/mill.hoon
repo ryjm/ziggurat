@@ -16,7 +16,7 @@
     [result granary]
   %_  $
     pending  t.pending
-    result   [[`@ux`(shax (jam i.to-run)) i.pending] result]
+    result   [[`@ux`(shax (jam i.pending)) i.pending] result]
     granary  (mill helix-id granary i.pending)
   ==
 ::  +mill: processes a single call and returns updated granary
@@ -36,22 +36,35 @@
     ::  to give some money to our validator-id? or are zigs not in a
     ::  contract?
     ::
-    =/  from-acct  (~(got by granary) from.call)
-    =/  to-acct    (~(got by granary) to.call)
-    granary
+    =/  zigs  (~(got by p.granary) zigs-id)
+    ::  how do we get the shape of this rice?
+    ::  maybe lord/contract stores it
+    ::  =.  balances.data.zigs  (~(jab by balances.data.zigs) from.call |=(bal=@ud (sub bal fee)))
+    ::  =.  balances.data.zigs  (~(jab by balances.data.zigs) to.call |=(bal=@ud (add bal fee)))
+    [(~(put by p.granary) zigs-id zigs) q.granary]
   ::
   ++  main
     ^-  [@ud ^granary]
     ::  TODO: confirm that from account actually has the amount
     ::  specified in "budget"
-    ?:  ?=(%read -.args.call)
-      ::  TODO: run +bink on a read call
+    =/  zigs  (~(got by granary) zigs-id)
+    ::  call 'read-balance' arm in zigs contract
+    ?~  bal=(read-balance zigs)
+      ::  account not found in zigs database
       [0 granary]
-    ::  TODO: run +bink on a write call
+    ?:  (gth budget.call bal)
+      ::  account lacks zigs to spend on gas
+      [0 granary]
+    ?:  ?=(%read -.args.call)
+      ::  TODO: run +blue on a read call
+      [0 granary]
+    ::  TODO: run +blue on a write call
     =/  =output  *output
-    =/  validated  (check-changed changed.output to.call)
+    ?.  (check-changed changed.output to.call)
+      [0 granary]
     ::  TODO: check that mutated rice have that grain as their owner
-    ::  TODO: create any newly issued grains
+    ::  add mutated rice and issued grains to granary
+    =.  granary  (~(uni by granary) (~(uni by changed.output) issued.output))
     ::  TODO: run next calls
     [0 granary]
   ::
@@ -67,6 +80,14 @@
     %.y
   --
 ::
-++  zigs  `rice`[0x0 0x0 0 0 ~]
+++  zigs
+  ^-  rice
+  :*  zigs-id  ::  id/holder/lord
+      zigs-id  
+      zigs-id
+      0    ::  helix 0
+      [balances=(map id @ud)]
+      ~    ::  doesn't hold any other rice
+  ==
 --
 
