@@ -1,5 +1,6 @@
 |%
 +$  id  @ux                   ::  pubkey
+++  zigs-id  0x0
 ::
 +$  user  [=id nonce=@ud]
 ::
@@ -29,7 +30,7 @@
 +$  output
   $:  changed=(map id rice)
       issued=(map id grain)
-      next=(list [to=id =town-id args=call-args rice-id=id])
+      next=(list [to=id town-id=@ud args=call-args rice-id=id])
   ==
 ::
 +$  contract
@@ -56,6 +57,7 @@
 +$  call
   $:  from=caller
       to=id
+      rate=@ud
       budget=@ud
       =town=id
       args=call-args
