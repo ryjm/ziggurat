@@ -16,7 +16,7 @@
   |=  $:  [subject=* formula=*]
           bud=@ud                                         ::  gas budget
       ==
-  ~>  %bout                                               ::  XX remove: timing
+  ::  ~>  %bout                                           ::  XX remove: timing
   =|  trace=(list [@ta *])
   |^
   ?~  formula-cost=(cost formula bud)
