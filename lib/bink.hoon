@@ -28,21 +28,6 @@
   ?:  (gte cost bud)  ~
   `+(cost)
 ::                                                        ::
-++  jet-whitelist                                         ::  only these jets
-  ^-  (set @tas)
-  %-  ~(gas in *(set @tas))
-  :~  %'a.50'                                             ::  XX tiny top-level
-      %add    %apt    %bex  %by     %cad
-      %can    %cat    %con  %cut    %dec
-      %del    %dis    %div  %dor    %dvr
-      %end    %flop   %get  %gor    %gte
-      %gth    %has    %in   %lent   %lsh
-      %lte    %lth    %met  %mix    %mod
-      %mor    %mug    %mul  %on     %por
-      %put    %reap   %rep  %rip    %rsh
-      %slag   %snag   %sub  %swp    %welp
-  ==
-::                                                        ::
 ++  bink                                                  ::  bounded +mink
   ~/  %bink
   |=  $:  [subject=* formula=*]
@@ -229,7 +214,7 @@
     =.  cos  1
     ?:  (lth bud cos)  [~ bud]
     =.  bud  (sub bud cos)
-    ?.  (~(has in (silt `(list @)`~[%spot %mean %fast])) tag.formula)
+    ?.  (~(has in tags) tag.formula)
       ::  TODO: put something in the trace
       [%2 trace]^bud
     =^  clue  bud
@@ -246,7 +231,7 @@
     ?.  ?=(%0 -.next)  next
     ?.  ?|  !=(%fast tag.formula)
             ?&  ?=([@ *] product.clue)
-                (~(has in jet-whitelist) -.product.clue)
+                (~(has in wits) -.product.clue)
         ==  ==
       [%2 trace]
     :-  %0
@@ -293,6 +278,25 @@
       %2  [``[u.u.mutant +.target] bud]
       %3  [``[-.target u.u.mutant] bud]
     ==
+  ::
+  ++  wits
+    ^-  (set @tas)
+    %-  ~(gas in *(set @tas))
+    :~  %'a.50'                                           ::  XX tiny top-level
+        %add    %apt    %bex  %by     %cad
+        %can    %cat    %con  %cut    %dec
+        %del    %dis    %div  %dor    %dvr
+        %end    %flop   %get  %gor    %gte
+        %gth    %has    %in   %lent   %lsh
+        %lte    %lth    %met  %mix    %mod
+        %mor    %mug    %mul  %on     %por
+        %put    %reap   %rep  %rip    %rsh
+        %slag   %snag   %sub  %swp    %welp
+    ==
+  ::
+  ++  tags
+    ^-  (set @tas)
+    (~(gas in *(set @tas)) ~[%fast %mean %spot])
   --
 ::                                                        ::
 ++  book                                                  ::  bounded +mook
