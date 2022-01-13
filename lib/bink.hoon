@@ -11,23 +11,6 @@
 ::                                                        ::
 +$  bone  [$@(~ lone) rem=@ud]                            ::  bounded +lone
 ::                                                        ::
-++  cost                                                  ::  gas cost of noun
-  |^
-  |=  [a=* bud=@ud]
-  ^-  (unit @ud)
-  ?@(a `(pat a) (ket a bud))
-  ++  pat  |=(a=@ (max 1 (met 5 a)))
-  ++  ket
-    |=  [a=^ bud=@ud]
-    ?:  (lth bud 1)  ~
-    =.  bud  (dec bud)
-    ?~  lef=(^$ -.a bud)  ~
-    ?:  (lth bud u.lef)  ~
-    =.  bud  (sub bud u.lef)
-    ?~  rig=(^$ +.a bud)  ~
-    `+((add u.lef u.rig))
-  --
-::                                                        ::
 ++  bink                                                  ::  bounded +mink
   ~/  %bink
   |=  $:  [subject=* formula=*]
@@ -243,6 +226,23 @@
   ::  [%12 ref=* path=*]
   ::
   ==
+  ::
+  ++  cost                                                ::  gas cost of noun
+    |^
+    |=  [a=* bud=@ud]
+    ^-  (unit @ud)
+    ?@(a `(pat a) (ket a bud))
+    ++  pat  |=(a=@ (max 1 (met 5 a)))
+    ++  ket
+      |=  [a=^ bud=@ud]
+      ?:  (lth bud 1)  ~
+      =.  bud  (dec bud)
+      ?~  lef=(^$ -.a bud)  ~
+      ?:  (lth bud u.lef)  ~
+      =.  bud  (sub bud u.lef)
+      ?~  rig=(^$ +.a bud)  ~
+      `+((add u.lef u.rig))
+    --
   ::
   ++  frag
     |=  [axis=@ noun=* bud=@ud]
