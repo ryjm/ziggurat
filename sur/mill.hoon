@@ -1,6 +1,7 @@
 |%
 +$  id  @ux                   ::  pubkey
-++  zigs-id  0x0
+++  zigs-wheat  0x0
+++  zigs-rice   0x1
 ::
 +$  user  [=id nonce=@ud]
 ::

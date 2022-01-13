@@ -47,9 +47,9 @@
     ^-  [@ud ^granary]
     ::  TODO: confirm that from account actually has the amount
     ::  specified in "budget"
-    =/  zigs  (~(got by granary) zigs-id)
+    =/  zigs  (~(got by granary) zigs-rice)
     ::  call 'read-balance' arm in zigs contract
-    ?~  bal=(read-balance zigs)
+    ?~  bal=(~(get by -.+.data) from.call)
       ::  account not found in zigs database
       [0 granary]
     ?:  (gth budget.call bal)
@@ -80,14 +80,50 @@
     %.y
   --
 ::
-++  zigs
+++  zigs-rice
   ^-  rice
-  :*  zigs-id  ::  id/holder/lord
-      zigs-id  
-      zigs-id
-      0    ::  helix 0
-      [balances=(map id @ud)]
+  :*  0x1      ::  id/holder/lord
+      zigs-rice  
+      zigs-rice
+      0        ::  helix 0
+      :*  total=*@ud
+          balances=*(map id @ud)
+          allowances=*(map [owner=id sender=id] @ud)
+          coinbase-rate=50  ::  # of tokens granted in +coinbase
+      ==
       ~    ::  doesn't hold any other rice
   ==
+::
+++  zigs-contract
+  ^-  wheat
+  :-  zigs-wheat
+  :-  ~
+  |%
+  ++  write
+    |~  input  ::  doing this wrong, not sure
+    ^-  output
+    ?~  args.input  *output
+    ?+    -.u.args.input  *output
+        %give
+      ::  expected args: id, amount
+      ::=/  tok  
+      ::  stdlib functions: 
+      ::  ?>  (balance zigs.rice.input )
+      ::  (add-balance zigs.rice.input id.args.input amount.args.input)
+      ::  (sub-balance zigs.rice.input )
+      ::  etc, etc
+      *output
+    ::
+        %take
+      *output
+    ::
+        %set-allow
+      *output
+    ==
+  ++  read
+    ::  read might need args for diff types of 'reads'
+    |~  id
+    *(unit grain)
+  --
 --
 

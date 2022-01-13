@@ -1,4 +1,10 @@
-A token rice (data) contains:
+Standard library functions to add for contracts:
+
+???
+
+### Token spec
+
+A basic token rice (data) contains:
 
 * total: total supply of token
 * balances: map of id->number (balances)
@@ -16,11 +22,13 @@ READ:
 * +get-allow: return how many tokens Y id is allowed to spend from Z id
 * +get-total: return total supply of token
 
+====
+
 ZIGS contract has the following additional methods:
 
 * +coinbase: mint X tokens to Y validator id
 * +take-fee: take X tokens from Y id to pay gas fee
-* +set-inflation: alter amount of tokens minted in coinbase?
+* +set-inflation: alter amount of tokens minted in coinbase
 
 ZIGS rice has following additional data:
 
