@@ -31,17 +31,16 @@
 ++  jet-whitelist                                         ::  only these jets
   ^-  (set @tas)
   %-  ~(gas in *(set @tas))
-  :~  %'a.50'  %dec   %add   %sub   %mul
-      %div     %dvr   %mod   %bex   %lsh
-      %rsh     %con   %dis   %mix   %lth
-      %lte     %gte   %gth   %swp   %met
-      %end     %cat   %cut   %can   %cad
-      %rep     %rip   %lent  %slag  %snag
-      %flop    %welp  %reap  %mug   %gor
-      %mor     %dor   %por   %by    %get
-      %put     %del   %apt   %on    %apt
-      %get     %has   %put   %in    %put
-      %del     %apt
+  :~  %'a.50'                                             ::  XX tiny top-level
+      %add    %apt    %bex  %by     %cad
+      %can    %cat    %con  %cut    %dec
+      %del    %dis    %div  %dor    %dvr
+      %end    %flop   %get  %gor    %gte
+      %gth    %has    %in   %lent   %lsh
+      %lte    %lth    %met  %mix    %mod
+      %mor    %mug    %mul  %on     %por
+      %put    %reap   %rep  %rip    %rsh
+      %slag   %snag   %sub  %swp    %welp
   ==
 ::                                                        ::
 ++  bink                                                  ::  bounded +mink
@@ -49,6 +48,7 @@
   |=  $:  [subject=* formula=*]
           bud=@ud                                         ::  gas budget
       ==
+  ~>  %bout                                               ::  XX remove: timing
   =|  trace=(list [@ta *])
   |^
   ?~  formula-cost=(gas-cost formula bud)
@@ -77,9 +77,11 @@
     =.  cos  1
     ?:  (lth bud cos)  [~ bud]
     =.  bud  (sub bud cos)
-    =/  part  (frag axis.formula subject)
-    ?~  part  [%2 trace]^bud
-    [%0 u.part]^bud
+    =^  part  bud
+      (frag axis.formula subject bud)
+    ?~  part  [~ bud]
+    ?~  u.part  [%2 trace]^bud
+    [%0 u.u.part]^bud
   ::
       [%1 constant=*]
     =.  cos  1
@@ -116,16 +118,19 @@
     [%0 .?(product.argument)]
   ::
       [%4 argument=*]
-    ::  XX change cos if atom size changes?
     =.  cos  1
     ?:  (lth bud cos)  [~ bud]
     =.  bud  (sub bud cos)
     =^  argument  bud
       $(formula argument.formula)
-    :_  bud
-    ?~  argument  ~
-    ?.  ?=(%0 -.argument)  argument
-    ?^  product.argument  [%2 trace]
+    ?~  argument  [~ bud]
+    ?.  ?=(%0 -.argument)  argument^bud
+    ?^  product.argument  [%2 trace]^bud
+    ::  XX maybe we need a cache of computed gas costs
+    =.  cos  %+  sub  (met 8 +(product.argument))
+                      (met 8 product.argument)
+    ?:  (lth bud cos)  [~ bud]
+    :_  (sub bud cos)
     [%0 .+(product.argument)]
   ::
       [%5 a=* b=*]
@@ -190,11 +195,13 @@
       $(formula core.formula)
     ?~  core  [~ bud]
     ?.  ?=(%0 -.core)  core^bud
-    =/  arm  (frag axis.formula product.core)
-    ?~  arm  [%2 trace]^bud
+    =^  arm  bud
+      (frag axis.formula product.core bud)
+    ?~  arm  [~ bud]
+    ?~  u.arm  [%2 trace]^bud
     %=  $
       subject  product.core
-      formula  u.arm
+      formula  u.u.arm
     ==
   ::
       [%10 [axis=@ value=*] target=*]
@@ -210,13 +217,15 @@
       $(formula value.formula)
     ?~  value  [~ bud]
     ?.  ?=(%0 -.value)  value^bud
-    =/  mutant=(unit *)
-      (edit axis.formula product.target product.value)
+    =^  mutant=(unit (unit *))  bud
+      (edit axis.formula product.target product.value bud)
     :_  bud
-    ?~  mutant  [%2 trace]
-    [%0 u.mutant]
+    ?~  mutant  ~
+    ?~  u.mutant  [%2 trace]
+    [%0 u.u.mutant]
   ::
       [%11 [tag=@ clue=*] next=*]
+    ::  XX change gas cost if jet changes atom size
     =.  cos  1
     ?:  (lth bud cos)  [~ bud]
     =.  bud  (sub bud cos)
@@ -251,33 +260,38 @@
   ==
   ::
   ++  frag
-    |=  [axis=@ noun=*]
-    ^-  (unit)
-    ?:  =(0 axis)  ~
-    |-  ^-  (unit)
-    ?:  =(1 axis)  `noun
-    ?@  noun  ~
+    |=  [axis=@ noun=* bud=@ud]
+    ^-  [(unit (unit)) @ud]
+    ?:  =(0 axis)  [`~ bud]
+    |-  ^-  [(unit (unit)) @ud]
+    ?:  =(0 bud)  [~ bud]
+    ?:  =(1 axis)  [``noun (dec bud)]
+    ?@  noun  [`~ (dec bud)]
     =/  pick  (cap axis)
     %=  $
       axis  (mas axis)
       noun  ?-(pick %2 -.noun, %3 +.noun)
+      bud   (dec bud)
     ==
   ::
   ++  edit
-    |=  [axis=@ target=* value=*]
-    ^-  (unit)
-    ?:  =(1 axis)  `value
-    ?@  target  ~
+    |=  [axis=@ target=* value=* bud=@ud]
+    ^-  [(unit (unit)) @ud]
+    ?:  =(1 axis)  [``value bud]
+    ?@  target  [`~ bud]
+    ?:  =(0 bud)  [~ bud]
     =/  pick  (cap axis)
-    =/  mutant
+    =^  mutant  bud
       %=  $
         axis    (mas axis)
         target  ?-(pick %2 -.target, %3 +.target)
+        bud     (dec bud)
       ==
-    ?~  mutant  ~
+    ?~  mutant  [~ bud]
+    ?~  u.mutant  [`~ bud]
     ?-  pick
-      %2  `[u.mutant +.target]
-      %3  `[-.target u.mutant]
+      %2  [``[u.u.mutant +.target] bud]
+      %3  [``[-.target u.u.mutant] bud]
     ==
   --
 ::                                                        ::
