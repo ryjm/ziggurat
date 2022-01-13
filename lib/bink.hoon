@@ -95,8 +95,8 @@
     ?.  ?=(%0 -.argument)  argument^bud
     ?^  product.argument  [%2 trace]^bud
     ::  XX maybe we need a cache of computed gas costs
-    =.  cos  %+  sub  (met 8 +(product.argument))
-                      (met 8 product.argument)
+    =.  cos  %+  sub  (pat:cost +(product.argument))
+                      (pat:cost product.argument)
     ?:  (lth bud cos)  [~ bud]
     :_  (sub bud cos)
     [%0 .+(product.argument)]
