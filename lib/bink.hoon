@@ -1,12 +1,12 @@
 ~%  %bink-lib  ..part  ~
 |%
 ::                                                        ::
-+$  lone  $%  [%0 product=*]                              ::  +lone without scry
++$  lone  $%  [%0 product=*]                              ::  +tone without scry
               [%2 trace=(list [@ta *])]
           ==
 ::                                                        ::
-+$  loon  $%  [%0 p=*]                                    ::  success
-              [%2 p=(list tank)]                          ::  stack trace
++$  loon  $%  [%0 p=*]                                    ::  +toon without scry
+              [%2 p=(list tank)]
           ==
 ::                                                        ::
 +$  bone  [$@(~ lone) rem=@ud]                            ::  bounded +lone
