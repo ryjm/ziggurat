@@ -359,7 +359,7 @@
     ==
   --
 ::                                                        ::
-++  bock                                                  ::  raw virtual nock
+++  bock                                                  ::  bounded +mock
   |=  [[sub=* fol=*] bud=@ud]
   ^-  [(unit loon) @ud]
   =/  =bone  (bink [sub fol] bud)
@@ -367,7 +367,7 @@
   ?~  -.bone  ~
   `(book -.bone)
 ::                                                        ::
-++  brute                                                 ::  untyped +bock
+++  brute                                                 ::  bounbed +mure
   |=  [tap=(trap) bud=@ud]
   ^-  [(unit (each * (list tank))) @ud]
   =+  [ton rem]=(bock [tap %9 2 %0 1] bud)
@@ -379,7 +379,7 @@
     %2  [%| p.u.ton]
   ==
 ::                                                        ::
-++  blue                                                  ::  typed +bock
+++  blue                                                  ::  bounded +mule
   |*  [tap=(trap) bud=@ud]
   ::^-  [(unit (each $:tap (list tank))) @ud]
   =+  [mud rem]=(brute tap bud)
