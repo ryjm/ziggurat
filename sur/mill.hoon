@@ -1,7 +1,7 @@
 |%
 +$  id  @ux                   ::  pubkey
 ++  zigs-wheat  0x0
-++  zigs-rice   0x1
+++  zigs-rice-id   0x1
 ::
 +$  user  [=id nonce=@ud]
 ::
@@ -22,9 +22,9 @@
 ::
 +$  caller  $@(id user)
 ::
-+$  input
++$  contract-input
   $:  =caller
-      rice=(set id)
+      rice=(map id rice)
       args=(unit noun)
   ==
 ::
@@ -35,10 +35,10 @@
   ==
 ::
 +$  contract
-  $_  ^|
+  $_
   |%
   ++  write
-    |~  input
+    |~  contract-input
     *output
   ::
   ++  read
@@ -53,7 +53,12 @@
 +$  signature  [r=@ux s=@ux type=?(%schnorr %ecdsa)]
 ::
 +$  call-args
-  $%([%read =id] [%write input])
+  $%([%read =id] [%write call-input])
++$  call-input
+  $:  =caller
+      rice=(set id)
+      args=(unit noun)
+  ==
 ::
 +$  call
   $:  from=caller

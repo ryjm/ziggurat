@@ -36,37 +36,63 @@
     ::  to give some money to our validator-id? or are zigs not in a
     ::  contract?
     ::
-    =/  zigs  (~(got by p.granary) zigs-id)
-    ::  how do we get the shape of this rice?
-    ::  maybe lord/contract stores it
-    ::  =.  balances.data.zigs  (~(jab by balances.data.zigs) from.call |=(bal=@ud (sub bal fee)))
-    ::  =.  balances.data.zigs  (~(jab by balances.data.zigs) to.call |=(bal=@ud (add bal fee)))
-    [(~(put by p.granary) zigs-id zigs) q.granary]
+    =/  zigs  (~(got by p.granary) zigs-rice-id)
+    ?.  ?=(%& -.zigs)  !!
+    =/  data  ;;(zigs-token-data data.p.zigs)
+    =.  balances.data
+      %+  ~(jab by (~(jab by balances.data) to.call |=(bal=@ud (add bal fee))))
+        from.call
+      |=(bal=@ud (sub bal fee))
+    =.  data.p.zigs  data
+    [(~(put by p.granary) zigs-rice-id zigs) q.granary]
   ::
   ++  main
     ^-  [@ud ^granary]
     ::  TODO: confirm that from account actually has the amount
     ::  specified in "budget"
-    =/  zigs  (~(got by granary) zigs-rice)
-    ::  call 'read-balance' arm in zigs contract
-    ?~  bal=(~(get by -.+.data) from.call)
+    =/  zigs  (~(got by p.granary) zigs-rice-id)
+    ?.  ?=(%& -.zigs)  !!
+    =/  data  ;;(zigs-token-data data.p.zigs)
+    =/  caller-id
+      ?:  ?=(@ux from.call)
+        from.call
+      id.from.call
+    ?~  bal=(~(get by balances.data) caller-id)
       ::  account not found in zigs database
       [0 granary]
-    ?:  (gth budget.call bal)
+    ?:  (gth budget.call u.bal)
       ::  account lacks zigs to spend on gas
       [0 granary]
     ?:  ?=(%read -.args.call)
       ::  TODO: run +blue on a read call
       [0 granary]
+    =/  inp  (call-to-contract +.args.call)
     ::  TODO: run +blue on a write call
-    =/  =output  *output
-    ?.  (check-changed changed.output to.call)
-      [0 granary]
+    =/  op  *output
+    ::  why can't we read faces in op???
+    ~&  op
+    ::?.  (check-changed changed.op to.call)
+    ::  [0 granary]
+    ::?.  (check-issued issued.op)
+    ::  [0 granary]
     ::  TODO: check that mutated rice have that grain as their owner
     ::  add mutated rice and issued grains to granary
-    =.  granary  (~(uni by granary) (~(uni by changed.output) issued.output))
+    ::=.  granary  (~(uni by p.granary) (~(uni by changed.op) issued.op))
     ::  TODO: run next calls
     [0 granary]
+  ::
+  ++  call-to-contract
+    |=  inp=call-input
+    ^-  contract-input
+    :+  caller.inp
+      %-  ~(gas by *(map id rice))
+      %+  murn
+        ~(tap in rice.inp)
+      |=  =id
+      ?~  res=(~(get by p.granary) id)  ~
+      ?.  ?=(%& -.u.res)  ~
+      `[id p.u.res]
+    args.inp
   ::
   ++  check-changed
     |=  [changed=(map id rice) claimed-lord=id]
@@ -74,17 +100,32 @@
     %-  ~(all in changed)
     |=  [=id =rice]
     ^-  ?
-    ?.  =(id id.rice)                    %.n
-    ?~  old-rice=(~(get by granary) id)  %.n
-    ?.  =(lord.u.old-rice claimed-lord)  %.n
+    ?.  =(id id.rice)                      %.n
+    ?~  old-rice=(~(get by p.granary) id)  %.n
+    ?.  ?=(%& -.u.old-rice)                %.n
+    ?.  =(lord.p.u.old-rice claimed-lord)  %.n
     %.y
+  ::
+  ++  check-issued
+    |=  issued=(map id grain)
+    ^-  ?
+    %+  levy
+      ~(tap in ~(key by issued))
+    |=(=id !(~(has by p.granary) id))
   --
+::
+++  zigs-token-data
+  $:  total=@ud
+      balances=(map id @ud)
+      allowances=(map [owner=id sender=id] @ud)
+      coinbase-rate=@ud
+  ==
 ::
 ++  zigs-rice
   ^-  rice
   :*  0x1      ::  id/holder/lord
-      zigs-rice  
-      zigs-rice
+      zigs-rice-id  
+      zigs-rice-id
       0        ::  helix 0
       :*  total=*@ud
           balances=*(map id @ud)
@@ -95,34 +136,71 @@
   ==
 ::
 ++  zigs-contract
-  ^-  wheat
-  :-  zigs-wheat
-  :-  ~
+  ::^-  wheat
+  :::-  zigs-wheat
+  :::-  ~
+  ::^-  contract
   |%
   ++  write
-    |~  input  ::  doing this wrong, not sure
+    |=  inp=contract-input
     ^-  output
-    ?~  args.input  *output
-    ?+    -.u.args.input  *output
+    ?~  args.inp  *output
+    =/  zigs  (~(got by rice.inp) zigs-rice-id)
+    =/  data  ;;(zigs-token-data data.zigs)
+    =/  caller-id
+      ^-  @ux
+      ?:  ?=(@ux caller.inp)
+        caller.inp
+      id.caller.inp
+    =*  args  +.u.args.inp
+    ?+    -.u.args.inp  *output
         %give
       ::  expected args: id, amount
-      ::=/  tok  
-      ::  stdlib functions: 
-      ::  ?>  (balance zigs.rice.input )
-      ::  (add-balance zigs.rice.input id.args.input amount.args.input)
-      ::  (sub-balance zigs.rice.input )
-      ::  etc, etc
+      ?.  ?=([id=@ux amount=@ud] args)  !!
+      ::  TODO check balance for enough, etc
+      =.  balances.data
+      %+  ~(jab by (~(jab by balances.data) id.args |=(bal=@ud (add bal amount.args))))
+        caller-id
+      |=(bal=@ud (sub bal amount.args))  
+      =.  data.zigs  data
       *output
+      ::  not working for some reason
+      ::  ^-  output
+      ::  +  changed=(malt ~[[zigs-rice-id zigs]]) 
+      ::    issued=~ 
+      ::  next=~
     ::
         %take
+      ::  expected args: from, to, amount
+      ?.  ?=([from=@ux to=@ux amount=@ud] args)  !!
+      ::  TODO validation checks
+      =:  allowances.data
+        %+  ~(jab by allowances.data)
+          [from.args caller-id]
+        |=(bal=@ud (sub bal amount.args))
+      ::
+          balances.data
+        %+  ~(jab by balances.data)
+          to.args
+        |=(bal=@ud (add bal amount.args))
+      ==
+      =.  data.zigs  data
       *output
     ::
         %set-allow
+      ::  expected args: sender, amount
+      ?.  ?=([sender=@ux amount=@ud] args)  !!
+      ::  TODO validation checks
+      =.  allowances.data
+        %+  ~(jab by allowances.data)
+          [caller-id sender.args]
+        |=(bal=@ud (add bal amount.args))
+      =.  data.zigs  data
       *output
     ==
   ++  read
     ::  read might need args for diff types of 'reads'
-    |~  id
+    |=  =id
     *(unit grain)
   --
 --
