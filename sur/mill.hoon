@@ -1,7 +1,7 @@
 |%
 +$  id  @ux                   ::  pubkey
-++  zigs-wheat  0x0
-++  zigs-rice-id   0x1
+++  zigs-wheat    0x0
+++  zigs-rice-id  0x1
 ::
 +$  user  [=id nonce=@ud]
 ::
@@ -42,8 +42,8 @@
     *output
   ::
   ++  read
-    |~  id
-    *(unit grain)
+    |~  contract-input
+    *noun  ::  *(unit grain)
   --
 ::
 +$  grain     (each rice wheat)
@@ -53,7 +53,7 @@
 +$  signature  [r=@ux s=@ux type=?(%schnorr %ecdsa)]
 ::
 +$  call-args
-  $%([%read =id] [%write call-input])
+  $%([%read call-input] [%write call-input])
 +$  call-input
   $:  =caller
       rice=(set id)
