@@ -12,7 +12,7 @@
 ::  ++  zigs-rice
 ::    ^-  rice
 ::    :*  0x1      ::  id/holder/lord
-::        zigs-rice-id  
+::        zigs-rice-id
 ::        zigs-rice-id
 ::        0        ::  helix 0
 ::        :*  total=*@ud
@@ -23,10 +23,11 @@
 ::        ~    ::  doesn't hold any other rice
 ::    ==
 ::
-++  contract
+++  zigs-contract
   ::  TODO get this to fit the contract type
-  ::  ^-  wheat  :-  zigs-wheat
-  ::  :-  ~  ^-  contract
+  ^-  wheat  :-  zigs-wheat
+  :-  ~
+  ^-  contract
   |%
   ++  write
     |=  inp=contract-input
@@ -58,7 +59,7 @@
           ::  otherwise, add to their existing balance
           %+  ~(jab by (~(jab by balances.data) id.args |=(bal=@ud (add bal amount.args))))
             caller-id
-          |=(bal=@ud (sub bal amount.args))  
+          |=(bal=@ud (sub bal amount.args))
         data
       ::
           %take
@@ -95,7 +96,7 @@
         ?.  ?=([sender=id amount=@ud] args)  data
         data(allowances (~(put by allowances.data) [caller-id sender.args] amount.args))
       ==
-    :+  changed=(malt ~[[zigs-rice-id zigs]]) 
+    :+  changed=(malt ~[[zigs-rice-id zigs]])
       issued=~
     next=~
   ++  read

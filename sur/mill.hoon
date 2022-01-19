@@ -35,7 +35,7 @@
   ==
 ::
 +$  contract
-  $_
+  $_  ^&
   |%
   ++  write
     |~  contract-input
