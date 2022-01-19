@@ -629,6 +629,15 @@
       l.a(r $(l.a r.l.a))
     r.a(l $(r.a l.r.a))
   ::
+  ++  tap                                               ::  convert to list
+    =<  $
+    ~/  %tap
+    =+  b=`(list _?>(?=(^ a) n.a))`~
+    |.  ^+  b
+    ?~  a
+      b
+    $(a r.a, b [n.a $(a l.a)])
+  ::
   ++  apt
     =<  $
     ~/  %apt
