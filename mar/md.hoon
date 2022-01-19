@@ -1,12 +1,12 @@
-|_  mud=@t
+|_  mud=@
 ++  grow
   |%
-  ++  mime  [/text/markdown (as-octs:mimes:html mud)]
+  ++  mime  [/text/markdown (as-octs:mimes:html (@t mud))]
   --
 ++  grab
-  |%
-  ++  mime  |=((pair mite octs) q.q)
-  ++  noun  @t
+  |%                                                    ::  convert from
+  ++  mime  |=([p=mite q=octs] (@t q.q))
+  ++  noun  cord                                        ::  clam from %noun
   --
-++  grad  %txt
+++  grad  %mime
 --
