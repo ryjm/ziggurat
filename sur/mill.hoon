@@ -29,16 +29,19 @@
       rice=(map id rice)
       args=(unit noun)
   ==
++$  event-args
+  $%  [%read town-id=@ud contract-input]
+      [%write town-id=@ud from=id output]
+  ==
 ::
 +$  output
-  $:  changed=(map id rice)
-      issued=(map id grain)
-      next=(list [to=id town-id=@ud args=call-args rice-id=id])
-  ==
+  %+  each
+    [changed=(map id rice) issued=(map id grain)]
+  [result=* next=(list [to=id town-id=@ud args=call-args])]
 ::
 +$  contract
   $_  ^&
-  |%
+  |_  mem=(unit *)
   ++  write
     |~  contract-input
     *output
@@ -46,6 +49,9 @@
   ++  read
     |~  contract-input
     *noun  ::  *(unit grain)
+  ++  event
+    |~  event-args
+    *output
   --
 ::
 +$  grain     (each rice wheat)
