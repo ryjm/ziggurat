@@ -1,7 +1,15 @@
-/+  *bink, tiny
+/+  *bink, *zig-exp
 :-  %say
-|=  [^ [[formula=hoon bud=@ud ~] ~]]
-=/  for=nock
-  q:(~(mint ut -:!>(tiny)) %noun formula)
+|=  [[now=@da eny=@uvJ bec=beak] [[bud=@ud ~] ~]]
+::=/  for=nock
+::  q:(~(mint ut -:!>(tiny)) %noun formula)
+:::-  %noun
+::(bock [tiny for] bud)
+=/  tiny-hoon=hoon
+  %-  ream
+  .^(@t %cx /(scot %p p.bec)/zig/(scot %da now)/lib/tiny/hoon)
+=/  cont-hoon=hoon
+  %-  ream
+  .^(@t %cx /(scot %p p.bec)/zig/(scot %da now)/lib/zig/exp-cont/hoon)
 :-  %noun
-(bock [tiny for] bud)
+(blue cont-hoon tiny-hoon [%read 136] 1.000.000)

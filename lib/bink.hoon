@@ -197,9 +197,9 @@
     =.  cos  1
     ?:  (lth bud cos)  [~ bud]
     =.  bud  (sub bud cos)
-    ?.  (~(has in tags) tag.formula)
+    ::?.  (~(has in tags) tag.formula)
       ::  TODO: put something in the trace
-      [%2 trace]^bud
+    ::  [%2 trace]^bud
     =^  clue  bud
       $(formula clue.formula)
     ?~  clue  [~ bud]
@@ -212,11 +212,11 @@
     :_  bud
     ?~  next  ~
     ?.  ?=(%0 -.next)  next
-    ?.  ?|  !=(%fast tag.formula)
-            ?&  ?=([@ *] product.clue)
-                (~(has in wits) -.product.clue)
-        ==  ==
-      [%2 trace]
+::    ?.  ?|  !=(%fast tag.formula)
+::            ?&  ?=([@ *] product.clue)
+::                (~(has in wits) -.product.clue)
+::        ==  ==
+::      [%2 trace]
     :-  %0
     .*  subject
     [11 [tag.formula 1 product.clue] 1 product.next]
@@ -379,7 +379,7 @@
     %2  [%| p.u.ton]
   ==
 ::                                                        ::
-++  blue                                                  ::  bounded +mule
+++  bull                                                  ::  bounded +mule
   |*  [tap=(trap) bud=@ud]
   ::^-  [(unit (each $:tap (list tank))) @ud]
   =+  [mud rem]=(brute tap bud)
