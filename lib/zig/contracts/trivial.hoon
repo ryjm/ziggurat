@@ -1,5 +1,5 @@
 ^-  contract
-|_  mem=(unit *)
+|_  mem=(unit vase)
 ++  write
   |=  inp=contract-input
   ^-  output

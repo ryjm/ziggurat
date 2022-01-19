@@ -37,11 +37,11 @@
 +$  output
   %+  each
     [changed=(map id rice) issued=(map id grain)]
-  [result=* next=(list [to=id town-id=@ud args=call-args])]
+  [result=vase next=(list [to=id town-id=@ud args=call-args])]
 ::
 +$  contract
   $_  ^&
-  |_  mem=(unit *)
+  |_  mem=(unit vase)
   ++  write
     |~  contract-input
     *output
