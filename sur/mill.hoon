@@ -22,6 +22,8 @@
 ::
 +$  caller  $@(id user)
 ::
++$  contract-args
+  $%([%read contract-input] [%write contract-input])
 +$  contract-input
   $:  =caller
       rice=(map id rice)

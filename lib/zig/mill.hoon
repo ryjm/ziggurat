@@ -1,6 +1,25 @@
 /-  *mill
-/+  *bink
+/+  *bink, tiny
 |_  [validator-id=@ux =town]
+++  call-trivial
+  |=  trivial-hoon=hoon
+  (blue trivial-hoon [%read 0xaa ~ ~] 1.000.000)
+::  +blue:
+::
+++  blue
+  |=  [for=hoon args=contract-args bud=@ud]
+  =.  for
+    ?:  ?=(%read -.args)
+      [%tsgr for [%wing ~[%read]]]
+    [%tsgr for [%wing ~[%write]]]
+  =/  gat
+    q:(~(mint ut -:!>(tiny)) %noun for)
+  =/  sam
+    ?:  ?=(%read -.args)
+      +.args
+    +.args
+  (bock [tiny [%9 2 %10 [6 %1 sam] gat]] bud)
+::
 ::  +mill-all: mills all calls in mempool
 ::
 ++  mill-all
