@@ -1,13 +1,21 @@
 /-  *mill
 /+  *bink, tiny
-|_  [validator-id=@ux =town]
+|_  [validator-id=@ux =town now=time]
 ++  call-trivial
   |=  trivial-hoon=hoon
   (blue trivial-hoon [%read 0xaa ~ ~] 1.000.000)
+++  our-granary
+  ^-  granary
+  =/  contracts=(list (pair id grain))
+    :~  [0x1 %| 0x1 `(ream .^(@t %cx /(scot %p ~zod)/zig/(scot %da now)/lib/zig/contracts/one/hoon))]
+        [0x2 %| 0x2 `(ream .^(@t %cx /(scot %p ~zod)/zig/(scot %da now)/lib/zig/contracts/two/hoon))]
+    ==
+  (~(gas by *(map id grain)) contracts)^~
 ::  +blue:
 ::
 ++  blue
   |=  [for=hoon args=contract-args bud=@ud]
+  ^-  [(unit loon) @ud]
   =.  for
     ?:  ?=(%read -.args)
       [%tsgr for [%wing ~[%read]]]
@@ -19,6 +27,59 @@
       +.args
     +.args
   (bock [tiny [%9 2 %10 [6 %1 sam] gat]] bud)
+::
+++  call-to-contract
+  |=  [inp=call-input =granary]
+  ^-  contract-input
+  :+  caller.inp
+    %-  ~(gas by *(map id rice))
+    %+  murn
+      ~(tap in rice.inp)
+    |=  =id
+    ?~  res=(~(get by p.granary) id)  ~
+    ?.  ?=(%& -.u.res)  ~
+    `[id p.u.res]
+  args.inp
+::
+++  exec
+  |=  [us=id cont=hoon args=contract-args bud=@ud]
+  ^-  [(unit result) @ud]
+  =^  res  bud
+    (blue cont args bud)
+  ?~  res  [~ bud]
+  ?:  ?=(%2 -.u.res)
+    [~ bud]
+  =/  out  ;;(output p.u.res)
+  ?:  =(%& -.out)
+    [~ bud]
+  [~ bud]
+  ::  =/  continue  ;;(continuation +.out)
+  ::  =|  [mem=(unit vase) next=(list [to=id town-id=@ud args=contract-args])]
+  ::  =:  mem
+  ::    mem.continue
+  ::  ::
+  ::      next
+  ::    %+  turn
+  ::      next.continue
+  ::    |=  [to=id town-id=@ud args=call-args]
+  ::    :+  to
+  ::      town-id
+  ::    (call-to-contract args our-granary)
+  ::  ==
+  ::  ::?:  =(~ next)
+  ::  ::  [~ bud]
+  ::  =|  result=(unit result)
+  ::  |-
+  ::  ?~  next  [result bud]
+  ::  =/  our-call=call
+  ::    [us to 1 bud town-id args]
+  ::  =/  found=grain  (~(got by p.our-granary) to)
+  ::  ?>  ?=(%| -.found)
+  ::  ?>  ?=(^ contract.p.found)
+  ::  =^  result  bud
+  ::    (exec to u.contract.p.found args bud)
+  ::  ?~  result  [~ bud]
+  ::  $(next t.next)
 ::
 ::  +mill-all: mills all calls in mempool
 ::
@@ -85,7 +146,7 @@
     ?:  ?=(%read -.args.call)
       ::  TODO: run +blue on a read call
       [0 granary]
-    =/  inp  (call-to-contract +.args.call)
+    =/  inp  (call-to-contract +.args.call granary)
     ::  TODO: run +blue on a write call
     =/  op  *output
     ::  why can't we read faces in op???
@@ -99,19 +160,6 @@
     ::=.  granary  (~(uni by p.granary) (~(uni by changed.op) issued.op))
     ::  TODO: run next calls
     [0 granary]
-  ::
-  ++  call-to-contract
-    |=  inp=call-input
-    ^-  contract-input
-    :+  caller.inp
-      %-  ~(gas by *(map id rice))
-      %+  murn
-        ~(tap in rice.inp)
-      |=  =id
-      ?~  res=(~(get by p.granary) id)  ~
-      ?.  ?=(%& -.u.res)  ~
-      `[id p.u.res]
-    args.inp
   ::
   ++  check-changed
     |=  [changed=(map id rice) claimed-lord=id]

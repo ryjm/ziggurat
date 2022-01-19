@@ -17,7 +17,7 @@
 +$  wheat
   $~  [0x0 ~]
   $:  =id
-      contract=(unit contract)
+      contract=(unit hoon)
   ==
 ::
 +$  caller  $@(id user)
@@ -34,10 +34,11 @@
       [%write town-id=@ud from=id output]
   ==
 ::
-+$  output
-  %+  each
-    [changed=(map id rice) issued=(map id grain)]
-  [result=vase next=(list [to=id town-id=@ud args=call-args])]
++$  result
+  [changed=(map id rice) issued=(map id grain)]
++$  continuation
+  [mem=(unit vase) next=(list [to=id town-id=@ud args=call-args])]
++$  output  (each result continuation)
 ::
 +$  contract
   $_  ^&
@@ -73,8 +74,7 @@
       to=id
       rate=@ud
       budget=@ud
-      =town=id
+      town-id=@ud
       args=call-args
-      rice-id=id
   ==
 --
