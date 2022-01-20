@@ -28,9 +28,11 @@
     +.args
   (bock [tiny [%9 2 %10 [6 %1 sam] gat]] bud)
 ::
-++  call-to-contract
-  |=  [inp=call-input =granary]
-  ^-  contract-input
+++  call-args-to-contract
+  |=  [arg=call-args =granary]
+  ^-  contract-args
+  =*  inp  +.arg
+  :-  -.arg
   :+  caller.inp
     %-  ~(gas by *(map id rice))
     %+  murn
@@ -41,45 +43,47 @@
     `[id p.u.res]
   args.inp
 ::
+++  grab-hoon
+  |=  [find=id =granary]
+  ^-  (unit hoon)
+  ?~  found=(~(get by p.granary) find)  ~
+  ?.  ?=(%| -.u.found)  ~
+  +.p.u.found
+::
 ++  exec
-  |=  [us=id cont=hoon args=contract-args bud=@ud]
+  |=  [us=id =call]
   ^-  [(unit result) @ud]
+  =/  bud  budget.call
+  ?~  cont=(grab-hoon to.call our-granary)  [~ bud]
+  =/  args  `contract-args`(call-args-to-contract args.call our-granary)
   =^  res  bud
-    (blue cont args bud)
+    (blue u.cont args bud)
   ?~  res  [~ bud]
   ?:  ?=(%2 -.u.res)
+    ::  output is a stack trace
     [~ bud]
   =/  out  ;;(output p.u.res)
   ?:  =(%& -.out)
+    ::  output is a result
+    ::  [`+.out bud]
+    ::  can't read this result!! WTF!
     [~ bud]
-  [~ bud]
-  ::  =/  continue  ;;(continuation +.out)
-  ::  =|  [mem=(unit vase) next=(list [to=id town-id=@ud args=contract-args])]
-  ::  =:  mem
-  ::    mem.continue
-  ::  ::
-  ::      next
-  ::    %+  turn
-  ::      next.continue
-  ::    |=  [to=id town-id=@ud args=call-args]
-  ::    :+  to
-  ::      town-id
-  ::    (call-to-contract args our-granary)
-  ::  ==
-  ::  ::?:  =(~ next)
-  ::  ::  [~ bud]
-  ::  =|  result=(unit result)
-  ::  |-
-  ::  ?~  next  [result bud]
-  ::  =/  our-call=call
-  ::    [us to 1 bud town-id args]
-  ::  =/  found=grain  (~(got by p.our-granary) to)
-  ::  ?>  ?=(%| -.found)
-  ::  ?>  ?=(^ contract.p.found)
-  ::  =^  result  bud
-  ::    (exec to u.contract.p.found args bud)
-  ::  ?~  result  [~ bud]
-  ::  $(next t.next)
+  ::  output is a continuation, make additional calls
+  =/  continue  ;;(continuation +.out)
+  ::  problem!! never carrying along mem for call...
+  ::  need spot for mem in +blue
+  ::  =/  mem  mem.continue
+  =|  result=(unit result)
+  |-
+  ?~  next.continue
+    ::  continuation w/ no further calls, return nothing
+    [result bud]
+  =/  our-call=^call
+    [us to.i.next.continue 1 bud town-id.i.next.continue args.i.next.continue]
+  =^  result  bud
+    (exec us our-call)
+  ?~  result  [~ bud]
+  $(next.continue t.next.continue)
 ::
 ::  +mill-all: mills all calls in mempool
 ::
@@ -146,7 +150,7 @@
     ?:  ?=(%read -.args.call)
       ::  TODO: run +blue on a read call
       [0 granary]
-    =/  inp  (call-to-contract +.args.call granary)
+    ::=/  inp  (call-args-to-contract args.call granary)
     ::  TODO: run +blue on a write call
     =/  op  *output
     ::  why can't we read faces in op???

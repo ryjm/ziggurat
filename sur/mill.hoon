@@ -4,6 +4,8 @@
 ++  zigs-rice-id  0x1
 ::
 +$  user  [=id nonce=@ud]
++$  caller  $@(id user)
++$  signature  [r=@ux s=@ux type=?(%schnorr %ecdsa)]
 ::
 +$  rice
   $:  =id
@@ -20,25 +22,9 @@
       contract=(unit hoon)
   ==
 ::
-+$  caller  $@(id user)
-::
-+$  contract-args
-  $%([%read contract-input] [%write contract-input])
-+$  contract-input
-  $:  =caller
-      rice=(map id rice)
-      args=(unit noun)
-  ==
-+$  event-args
-  $%  [%read town-id=@ud contract-input]
-      [%write town-id=@ud from=id output]
-  ==
-::
-+$  result
-  [changed=(map id rice) issued=(map id grain)]
-+$  continuation
-  [mem=(unit vase) next=(list [to=id town-id=@ud args=call-args])]
-+$  output  (each result continuation)
++$  grain     (each rice wheat)
++$  granary   (pair (map id grain) (map id @ud))    ::  replace with +merk
++$  town      (map id granary)  ::  "helix"
 ::
 +$  contract
   $_  ^&
@@ -55,11 +41,29 @@
     *output
   --
 ::
-+$  grain     (each rice wheat)
-+$  granary   (pair (map id grain) (map id @ud))    ::  replace with +merk
-+$  town      (map id granary)  ::  "helix"
++$  output  (each result continuation)
++$  result
+  [changed=(map id rice) issued=(map id grain)]
++$  continuation
+  [mem=(unit vase) next=(list [to=id town-id=@ud args=call-args])]
 ::
-+$  signature  [r=@ux s=@ux type=?(%schnorr %ecdsa)]
++$  call
+  $:  from=caller
+      to=id
+      rate=@ud
+      budget=@ud
+      town-id=@ud
+      args=call-args
+  ==
+::
++$  contract-args
+  [?(%read %write) contract-input]
+  ::$%([%read contract-input] [%write contract-input])
++$  contract-input
+  $:  =caller
+      rice=(map id rice)
+      args=(unit noun)
+  ==
 ::
 +$  call-args
   $%([%read call-input] [%write call-input])
@@ -69,12 +73,8 @@
       args=(unit noun)
   ==
 ::
-+$  call
-  $:  from=caller
-      to=id
-      rate=@ud
-      budget=@ud
-      town-id=@ud
-      args=call-args
++$  event-args
+  $%  [%read town-id=@ud contract-input]
+      [%write town-id=@ud from=id output]
   ==
 --
