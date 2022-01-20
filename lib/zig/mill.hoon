@@ -1,6 +1,8 @@
 /-  *mill
 /+  *bink, tiny
 |_  [validator-id=@ux =town now=time]
+::  testing arms
+::
 ++  call-trivial
   |=  trivial-hoon=hoon
   (blue trivial-hoon [%read 0xaa ~ ~] ~ 1.000.000)
@@ -11,7 +13,7 @@
         [0x2 %| 0x2 `(ream .^(@t %cx /(scot %p ~zod)/zig/(scot %da now)/lib/zig/contracts/two/hoon))]
     ==
   (~(gas by *(map id grain)) contracts)^~
-::  +blue:
+::  +blue: run contract formula with arguments and memory, bounded by bud
 ::
 ++  blue
   |=  [for=hoon args=contract-args mem=(unit vase) bud=@ud]
@@ -27,7 +29,9 @@
       +.args
     +.args
   (bock [tiny [%9 2 %10 [6 %1 sam] gat]] bud)
-::
+::  TODO: move the 3 below arms into +mill-all
+::  so they can be run with shared granary
+::  (left outside for testing with fake granary)
 ++  call-args-to-contract
   |=  [arg=call-args =granary]
   ^-  contract-args
@@ -51,9 +55,9 @@
   +.p.u.found
 ::
 ++  exec
-  |=  [us=id =call mem=(unit vase)]
+  |=  [=call mem=(unit vase)]
   ^-  [(unit result) @ud]
-  =/  bud  budget.call
+  =*  bud  budget.call
   ?~  cont=(grab-hoon to.call our-granary)  [~ bud]
   =/  args  `contract-args`(call-args-to-contract args.call our-granary)
   =^  res  bud
@@ -77,10 +81,11 @@
   ?~  next.continue
     ::  continuation w/ no further calls, return nothing
     [result bud]
-  =/  our-call=^call
-    [us to.i.next.continue 1 bud town-id.i.next.continue args.i.next.continue]
+  =/  next-call=^call
+    ::  this call is performed by contract from last call: to.call
+    [to.call to.i.next.continue 1 bud town-id.i.next.continue args.i.next.continue]
   =^  result  bud
-    (exec us our-call mem.continue)
+    (exec next-call mem.continue)
   ?~  result  [~ bud]
   $(next.continue t.next.continue)
 ::
@@ -123,7 +128,7 @@
     ?.  ?=(%& -.zigs)  !!
     =/  data  ;;(zigs-token-data data.p.zigs)
     =.  balances.data
-      %+  ~(jab by (~(jab by balances.data) to.call |=(bal=@ud (add bal fee))))
+      %+  ~(jab by (~(jab by balances.data) validator-id |=(bal=@ud (add bal fee))))
         from.call
       |=(bal=@ud (sub bal fee))
     =.  data.p.zigs  data
@@ -131,35 +136,53 @@
   ::
   ++  main
     ^-  [@ud ^granary]
-    ::  TODO: confirm that from account actually has the amount
+    ::  a caller to main *must* have a nonce
+    ::  only contract callbacks in +exec are sole IDs
+    ?.  ?=(user from.call)  [0 granary]
+    ?~  curr-nonce=(~(get by q.granary) id.from.call)
+      [0 granary]  ::  missing user
+    ?.  =(nonce.from.call +(u.curr-nonce))
+      [0 granary]  ::  bad nonce
+    ::  confirm that from account actually has the amount
     ::  specified in "budget"
     =/  zigs  (~(got by p.granary) zigs-rice-id)
     ?.  ?=(%& -.zigs)  !!
     =/  data  ;;(zigs-token-data data.p.zigs)
-    =/  caller-id
-      ?:  ?=(@ux from.call)
-        from.call
-      id.from.call
-    ?~  bal=(~(get by balances.data) caller-id)
+    ?~  bal=(~(get by balances.data) id.from.call)
       ::  account not found in zigs database
       [0 granary]
     ?:  (gth budget.call u.bal)
       ::  account lacks zigs to spend on gas
       [0 granary]
-    ?:  ?=(%read -.args.call)
-      ::  TODO: run +blue on a read call
-      [0 granary]
-    ::=/  inp  (call-args-to-contract args.call granary)
-    ::  TODO: run +blue on a write call
-    =/  op  *output
-    ::  why can't we read faces in op???
-    ~&  op
-    ::?.  (check-changed changed.op to.call)
-    ::  [0 granary]
-    ::?.  (check-issued issued.op)
-    ::  [0 granary]
-    ::  TODO: check that mutated rice have that grain as their owner
-    [0 granary]
+    ::  run +exec on call and validate results
+    =+  [res leftover]=(exec call ~)
+    =/  fee=@ud  (sub budget.call leftover)
+    ::  if no mutations from call, finish
+    ?~  res  [fee granary]
+    ?:  =(%read -.u.res)
+      ::  %read result, no mods to granary
+      [fee granary]
+    ::  gotta get rid of this somehow
+    =/  write-res  ;;([%write changed=(map id rice) issued=(map id grain)] u.res)
+    ::  otherwise go through changed & issued and perform validation
+    ?.  (check-changed changed.write-res id.from.call)
+      [fee granary]
+    ?.  (check-issued issued.write-res)
+      [fee granary]
+    ::  valid, now
+    ::  TODO: take-fee should probably be folded in here
+    ::  so as to make use of the zigs-rice we've already
+    ::  grabbed from granary, and to minimize granary updates
+    =/  changed=(map id grain)
+      (~(run by changed.write-res) |=(a=rice [%& a]))
+    :-  fee
+        ::  add mutated and issued to granary
+        ::  key collisions: issued overwrites changed which overwrites original
+        ::  validation *should* ensure no issued have collisions with existing
+    :-  %-  ~(uni by p.granary)
+        (~(uni by changed) issued.write-res)
+        ::  update nonce of caller
+        (~(put by q.granary) id.from.call nonce.from.call)
   ::
   ++  check-changed
     |=  [changed=(map id rice) claimed-lord=id]
@@ -176,6 +199,7 @@
   ++  check-issued
     |=  issued=(map id grain)
     ^-  ?
+    ::  probably need further validation of lord here for rice
     %+  levy
       ~(tap in ~(key by issued))
     |=(=id !(~(has by p.granary) id))
