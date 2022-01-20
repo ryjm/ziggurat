@@ -104,20 +104,19 @@
     ^-  *
     ?~  args.inp  ~
     =/  zigs  (~(got by rice.inp) zigs-rice-id)
+    ::  check lord of zigs here, make sure its us
     =/  data  ;;(token-data data.zigs)
     =*  args  +.u.args.inp
     ?+    -.u.args.inp  ~
         %get-balance
       ::  expected args: id
       ?.  ?=(=id args)  ~
-      ?~  res=(~(get by balances.data) id.args)  ~
-      u.res
+      (~(get by balances.data) id.args)
     ::
         %get-allowance
       ::  expected args: owner, sender
       ?.  ?=([owner=id sender=id] args)  ~
-      ?~  res=(~(get by allowances.data) [owner.args sender.args])  ~
-      u.res
+      (~(get by allowances.data) [owner.args sender.args])
     ::
         %get-total
       ::  expected args: none

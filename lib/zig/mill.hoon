@@ -3,7 +3,7 @@
 |_  [validator-id=@ux =town now=time]
 ++  call-trivial
   |=  trivial-hoon=hoon
-  (blue trivial-hoon [%read 0xaa ~ ~] 1.000.000)
+  (blue trivial-hoon [%read 0xaa ~ ~] ~ 1.000.000)
 ++  our-granary
   ^-  granary
   =/  contracts=(list (pair id grain))
@@ -14,12 +14,12 @@
 ::  +blue:
 ::
 ++  blue
-  |=  [for=hoon args=contract-args bud=@ud]
+  |=  [for=hoon args=contract-args mem=(unit vase) bud=@ud]
   ^-  [(unit loon) @ud]
   =.  for
     ?:  ?=(%read -.args)
-      [%tsgr for [%wing ~[%read]]]
-    [%tsgr for [%wing ~[%write]]]
+      [%tsgr for [%limb %read]]
+    [%tsgr for [%limb %write]]
   =/  gat
     q:(~(mint ut -:!>(tiny)) %noun for)
   =/  sam
@@ -51,29 +51,27 @@
   +.p.u.found
 ::
 ++  exec
-  |=  [us=id =call]
+  |=  [us=id =call mem=(unit vase)]
   ^-  [(unit result) @ud]
   =/  bud  budget.call
   ?~  cont=(grab-hoon to.call our-granary)  [~ bud]
   =/  args  `contract-args`(call-args-to-contract args.call our-granary)
   =^  res  bud
-    (blue u.cont args bud)
+    (blue u.cont args mem bud)
   ?~  res  [~ bud]
   ?:  ?=(%2 -.u.res)
     ::  output is a stack trace
     [~ bud]
-  ::  if this was a 'read' call, just return noun result?
-  ::  otherwise parse result for additional calls
-  ::  ?:  ?=(%read -.args)
-  ::    [`+.p.u.res bud]
-  ?:  ?=(%result -.p.u.res)
-    ::  output is a result
-    [`;;(result +.p.u.res) bud]
+  =*  out  p.u.res
+  ?:  ?=(%result -.out)
+    :_  bud
+    ?.  ?|  &(=(%read -.+.out) =(%read -.args))
+            &(=(%write -.+.out) =(%write -.args))
+        ==
+      ~
+    `;;(result +.out)
   ::  output is a continuation, make additional calls
-  =/  continue  ;;(continuation +.p.u.res)
-  ::  problem!! never carrying along mem for call...
-  ::  need spot for mem in +blue
-  ::  =/  mem  mem.continue
+  =/  continue  ;;(continuation +.out)
   =|  result=(unit result)
   |-
   ?~  next.continue
@@ -82,7 +80,7 @@
   =/  our-call=^call
     [us to.i.next.continue 1 bud town-id.i.next.continue args.i.next.continue]
   =^  result  bud
-    (exec us our-call)
+    (exec us our-call mem.continue)
   ?~  result  [~ bud]
   $(next.continue t.next.continue)
 ::

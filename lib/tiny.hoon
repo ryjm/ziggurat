@@ -1055,18 +1055,20 @@
   ::
   ++  read
     |~  contract-input
-    *noun
+    *output
   ++  event
     |~  event-args
     *output
   --
 ::
-+$  output  ::  each result continuation)
-  $%  [%result result]
-      [%continue continuation]
++$  output  ::  (each result continuation)
+  $%  [%result p=result]
+      [%callback p=continuation]
   ==
 +$  result
-  [changed=(map id rice) issued=(map id grain)]
+  $%  [%read =noun]
+      [%write changed=(map id rice) issued=(map id grain)]
+  ==
 +$  continuation
   [mem=(unit vase) next=(list [to=id town-id=@ud args=call-args])]
 ::

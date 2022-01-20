@@ -3,13 +3,13 @@
 ++  write
   |=  inp=contract-input
   ^-  output
-  [%& ~ ~]
+  [%result %write ~ ~]
 ++  read
   |=  inp=contract-input
-  ^-  *
-  1
+  ^-  output
+  [%result %read ~]
 ++  event
   |=  =event-args
   ^-  output
-  [%& ~ ~]
+  [%result %read ~]
 --
