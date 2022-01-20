@@ -35,13 +35,16 @@
   ::
   ++  read
     |~  contract-input
-    *noun  ::  *(unit grain)
+    *noun
   ++  event
     |~  event-args
     *output
   --
 ::
-+$  output  (each result continuation)
++$  output  ::  each result continuation)
+  $%  [%result result]
+      [%continue continuation]
+  ==
 +$  result
   [changed=(map id rice) issued=(map id grain)]
 +$  continuation
@@ -58,7 +61,7 @@
 ::
 +$  contract-args
   [?(%read %write) contract-input]
-  ::$%([%read contract-input] [%write contract-input])
+  ::  $%([%read contract-input] [%write contract-input])
 +$  contract-input
   $:  =caller
       rice=(map id rice)
@@ -66,7 +69,8 @@
   ==
 ::
 +$  call-args
-  $%([%read call-input] [%write call-input])
+  [?(%read %write) call-input]
+  ::  $%([%read call-input] [%write call-input])
 +$  call-input
   $:  =caller
       rice=(set id)

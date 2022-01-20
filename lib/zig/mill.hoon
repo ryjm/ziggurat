@@ -62,14 +62,15 @@
   ?:  ?=(%2 -.u.res)
     ::  output is a stack trace
     [~ bud]
-  =/  out  ;;(output p.u.res)
-  ?:  =(%& -.out)
+  ::  if this was a 'read' call, just return noun result?
+  ::  otherwise parse result for additional calls
+  ::  ?:  ?=(%read -.args)
+  ::    [`+.p.u.res bud]
+  ?:  ?=(%result -.p.u.res)
     ::  output is a result
-    ::  [`+.out bud]
-    ::  can't read this result!! WTF!
-    [~ bud]
+    [`;;(result +.p.u.res) bud]
   ::  output is a continuation, make additional calls
-  =/  continue  ;;(continuation +.out)
+  =/  continue  ;;(continuation +.p.u.res)
   ::  problem!! never carrying along mem for call...
   ::  need spot for mem in +blue
   ::  =/  mem  mem.continue
@@ -160,9 +161,6 @@
     ::?.  (check-issued issued.op)
     ::  [0 granary]
     ::  TODO: check that mutated rice have that grain as their owner
-    ::  add mutated rice and issued grains to granary
-    ::=.  granary  (~(uni by p.granary) (~(uni by changed.op) issued.op))
-    ::  TODO: run next calls
     [0 granary]
   ::
   ++  check-changed
