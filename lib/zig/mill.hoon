@@ -93,12 +93,12 @@
 ::
 ++  mill-all
   |=  [helix-id=@ud =granary mempool=(list call)]
-  ::  'chunk' def
   =/  pending
     %+  sort  mempool
     |=  [a=call b=call]
     (gth rate.a rate.b)
   =|  result=(list [@ux call])
+          ::  'chunk' def
   |-  ^-  [(list [@ux call]) ^granary]
   ?~  pending
     [result granary]

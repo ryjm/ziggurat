@@ -24,11 +24,8 @@
 ::    ==
 ::
 ++  zigs-contract
-  ::  TODO get this to fit the contract type
-  ^-  wheat  :-  zigs-wheat
-  :-  ~
   ^-  contract
-  |%
+  |_  mem=(unit vase)
   ++  write
     |=  inp=contract-input
     ^-  output
@@ -96,12 +93,17 @@
         ?.  ?=([sender=id amount=@ud] args)  data
         data(allowances (~(put by allowances.data) [caller-id sender.args] amount.args))
       ==
-    :+  changed=(malt ~[[zigs-rice-id zigs]])
-      issued=~
-    next=~
+    :*  %result
+        %write
+        changed=(malt ~[[zigs-rice-id zigs]])
+        issued=~
+    ==
+  ::
   ++  read
     |=  inp=contract-input
-    ^-  *
+    ^-  output
+    :+  %result
+      %read
     ?~  args.inp  ~
     =/  zigs  (~(got by rice.inp) zigs-rice-id)
     ::  check lord of zigs here, make sure its us
@@ -122,5 +124,10 @@
       ::  expected args: none
       total.data
     ==
+  ::
+  ++  event
+    |=  inp=event-args
+    ^-  output
+    *output
   --
 --

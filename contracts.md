@@ -34,3 +34,8 @@ ZIGS rice has following additional data:
 
 * inflation-rate: number of tokens granted by coinbase
 * ??
+
+
+nock stuff
+
+[8 [8 [0 1] 9 11 10 [6 7 [0 3] 1 434] 0 2] 9 2 10 [6 7 [0 3] 1 99 88] 0 2]

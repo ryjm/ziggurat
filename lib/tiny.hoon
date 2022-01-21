@@ -1020,7 +1020,7 @@
 ::  exact copy of sur/mill.hoon
 ::
 +$  id  @ux                   ::  pubkey
-++  zigs-wheat    0x0
+++  zigs-wheat-id  0x0
 ++  zigs-rice-id  0x1
 ::
 +$  user  [=id nonce=@ud]
@@ -1044,7 +1044,7 @@
 ::
 +$  grain     (each rice wheat)
 +$  granary   (pair (map id grain) (map id @ud))    ::  replace with +merk
-+$  town      (map id granary)  ::  "helix"
++$  town      (map @ud granary)  ::  "helix"
 ::
 +$  contract
   $_  ^&
