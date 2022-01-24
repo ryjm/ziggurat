@@ -6,6 +6,7 @@
 ++  call-trivial
   |=  trivial-hoon=hoon
   (blue trivial-hoon [%read 0xaa ~ ~] ~ 1.000.000)
+::
 ++  our-granary
   ^-  granary
   =/  contracts=(list (pair id grain))
@@ -16,25 +17,25 @@
 ::  +blue: run contract formula with arguments and memory, bounded by bud
 ::
 ++  blue
-  |=  [for=hoon args=contract-args mem=(unit vase) bud=@ud]
-  ^-  [(unit loon) @ud]
-  =.  for
+  |=  [for=hoon args=contract-args:tiny mem=(unit vase) bud=@ud]
+  ^-  [(unit (each contract-output:tiny (list tank))) @ud]
+  ::  compile step, contract publisher pays for it
+  ::
+  =/  dor=vase  (slap !>(tiny) for)
+  =/  =contract:tiny  !<(contract:tiny dor)
+  ::  run step, transaction sender pays for it
+  ::
+  %+  bull
     ?:  ?=(%read -.args)
-      [%tsgr for [%limb %read]]
-    [%tsgr for [%limb %write]]
-  =/  gat
-    q:(~(mint ut -:!>(tiny)) %noun for)
-  =/  sam
-    ?:  ?=(%read -.args)
-      +.args
-    +.args
-  (bock [tiny [%9 2 %10 [6 %1 sam] gat]] bud)
+      |.((~(read contract mem) +.args))
+    |.((~(write contract mem) +.args))
+  5.000.000
 ::  TODO: move the 3 below arms into +mill-all
 ::  so they can be run with shared granary
 ::  (left outside for testing with fake granary)
 ++  call-args-to-contract
-  |=  [arg=call-args =granary]
-  ^-  contract-args
+  |=  [arg=call-args:tiny =granary]
+  ^-  contract-args:tiny
   =*  inp  +.arg
   :-  -.arg
   :+  caller.inp
@@ -55,51 +56,44 @@
   +.p.u.found
 ::
 ++  exec
-  |=  [=call mem=(unit vase)]
-  ^-  [(unit result) @ud]
-  =*  bud  budget.call
-  ?~  cont=(grab-hoon to.call our-granary)  [~ bud]
-  =/  args  `contract-args`(call-args-to-contract args.call our-granary)
-  =^  res  bud
-    (blue u.cont args mem bud)
+  |=  [=call:tiny mem=(unit vase)]
+  ^-  [(unit result:tiny) @ud]
+  ?~  cont=(grab-hoon to.call our-granary)  [~ budget.call]
+  =/  args  (call-args-to-contract args.call our-granary)
+  =+  [res bud]=(blue u.cont args mem budget.call)
   ?~  res  [~ bud]
-  ?:  ?=(%2 -.u.res)
-    ::  output is a stack trace
+  ?:  ?=(%| -.u.res)
     [~ bud]
-  =*  out  p.u.res
-  ?:  ?=(%result -.out)
+  ?:  ?=(%result -.p.u.res)
     :_  bud
-    ?.  ?|  &(=(%read -.+.out) =(%read -.args))
-            &(=(%write -.+.out) =(%write -.args))
+    ?.  ?|  &(?=(%read -.p.p.u.res) ?=(%read -.args))
+            &(?=(%write -.p.p.u.res) ?=(%write -.args))
         ==
       ~
-    `;;(result +.out)
-  ::  output is a continuation, make additional calls
-  =/  continue  ;;(continuation +.out)
-  =|  result=(unit result)
+    `p.p.u.res
+  =*  fwd  p.p.u.res
+  =|  ult=(unit result:tiny)
   |-
-  ?~  next.continue
-    ::  continuation w/ no further calls, return nothing
-    [result bud]
-  =/  next-call=^call
-    ::  this call is performed by contract from last call: to.call
-    [to.call to.i.next.continue 1 bud town-id.i.next.continue args.i.next.continue]
-  =^  result  bud
-    (exec next-call mem.continue)
-  ?~  result  [~ bud]
-  $(next.continue t.next.continue)
+  ?~  next.fwd
+    [ult bud]
+  =^  ult  bud
+    %+  exec
+      [to.call to.i.next.fwd 1 bud town-id.i.next.fwd args.i.next.fwd]
+    mem.fwd
+  ?~  ult  [~ bud]
+  $(next.fwd t.next.fwd)
 ::
 ::  +mill-all: mills all calls in mempool
 ::
 ++  mill-all
-  |=  [helix-id=@ud =granary mempool=(list call)]
+  |=  [helix-id=@ud =granary mempool=(list call:tiny)]
   =/  pending
     %+  sort  mempool
-    |=  [a=call b=call]
+    |=  [a=call:tiny b=call:tiny]
     (gth rate.a rate.b)
-  =|  result=(list [@ux call])
+  =|  result=(list [@ux call:tiny])
           ::  'chunk' def
-  |-  ^-  [(list [@ux call]) ^granary]
+  |-  ^-  [(list [@ux call:tiny]) ^granary]
   ?~  pending
     [result granary]
   %_  $
@@ -110,7 +104,7 @@
 ::  +mill: processes a single call and returns updated granary
 ::
 ++  mill
-  |=  [town-id=@ud =granary =call]
+  |=  [town-id=@ud =granary =call:tiny]
   ^-  ^granary
   |^
   =^  fee  granary

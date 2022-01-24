@@ -1047,21 +1047,21 @@
 +$  town      (map @ud granary)  ::  "helix"
 ::
 +$  contract
-  $_  ^&
+  $_  ^|
   |_  mem=(unit vase)
   ++  write
     |~  contract-input
-    *output
+    *contract-output
   ::
   ++  read
     |~  contract-input
-    *output
+    *contract-output
   ++  event
     |~  event-args
-    *output
+    *contract-output
   --
 ::
-+$  output  ::  (each result continuation)
++$  contract-output  ::  (each result continuation)
   $%  [%result p=result]
       [%callback p=continuation]
   ==
@@ -1101,6 +1101,6 @@
 ::
 +$  event-args
   $%  [%read town-id=@ud contract-input]
-      [%write town-id=@ud from=id output]
+      [%write town-id=@ud from=id contract-output]
   ==
 --
