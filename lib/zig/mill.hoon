@@ -1,35 +1,26 @@
 /-  *mill
 /+  *bink, tiny
 |_  [validator-id=@ux =town now=time]
-::  testing arms
-::
-++  call-trivial
-  |=  trivial-hoon=hoon
-  (blue trivial-hoon [%read 0xaa ~ ~] ~ 1.000.000)
 ::
 ++  our-granary
   ^-  granary
-  =/  contracts=(list (pair id grain))
-    :~  [0x1 %| 0x1 `(ream .^(@t %cx /(scot %p ~zod)/zig/(scot %da now)/lib/zig/contracts/one/hoon))]
-        [0x2 %| 0x2 `(ream .^(@t %cx /(scot %p ~zod)/zig/(scot %da now)/lib/zig/contracts/two/hoon))]
+  =/  contracts=(list (pair id grain:tiny))
+    :~  [0x1 %| 0x1 `!<(contract:tiny (slap !>(tiny) (ream .^(@t %cx /(scot %p ~zod)/zig/(scot %da now)/lib/zig/contracts/one/hoon))))]
+        [0x2 %| 0x2 `!<(contract:tiny (slap !>(tiny) (ream .^(@t %cx /(scot %p ~zod)/zig/(scot %da now)/lib/zig/contracts/two/hoon))))]
     ==
-  (~(gas by *(map id grain)) contracts)^~
+  (~(gas by *(map id grain:tiny)) contracts)^~
 ::  +blue: run contract formula with arguments and memory, bounded by bud
 ::
 ++  blue
-  |=  [for=hoon args=contract-args:tiny mem=(unit vase) bud=@ud]
+  |=  [=contract:tiny args=contract-args:tiny mem=(unit vase) bud=@ud]
   ^-  [(unit (each contract-output:tiny (list tank))) @ud]
-  ::  compile step, contract publisher pays for it
-  ::
-  =/  dor=vase  (slap !>(tiny) for)
-  =/  =contract:tiny  !<(contract:tiny dor)
-  ::  run step, transaction sender pays for it
-  ::
+  ::=/  dor=vase  (slap !>(tiny) for)
+  ::=/  =contract:tiny  !<(contract:tiny dor)
   %+  bull
     ?:  ?=(%read -.args)
       |.((~(read contract mem) +.args))
     |.((~(write contract mem) +.args))
-  5.000.000
+  bud
 ::  TODO: move the 3 below arms into +mill-all
 ::  so they can be run with shared granary
 ::  (left outside for testing with fake granary)
@@ -39,7 +30,7 @@
   =*  inp  +.arg
   :-  -.arg
   :+  caller.inp
-    %-  ~(gas by *(map id rice))
+    %-  ~(gas by *(map id rice:tiny))
     %+  murn
       ~(tap in rice.inp)
     |=  =id
@@ -50,7 +41,7 @@
 ::
 ++  grab-hoon
   |=  [find=id =granary]
-  ^-  (unit hoon)
+  ^-  (unit contract:tiny)
   ?~  found=(~(get by p.granary) find)  ~
   ?.  ?=(%| -.u.found)  ~
   +.p.u.found
@@ -132,7 +123,7 @@
     ^-  [@ud ^granary]
     ::  a caller to main *must* have a nonce
     ::  only contract callbacks in +exec are sole IDs
-    ?.  ?=(user from.call)  [0 granary]
+    ?.  ?=(user:tiny from.call)  [0 granary]
     ?~  curr-nonce=(~(get by q.granary) id.from.call)
       [0 granary]  ::  missing user
     ?.  =(nonce.from.call +(u.curr-nonce))
@@ -157,7 +148,7 @@
       ::  %read result, no mods to granary
       [fee granary]
     ::  gotta get rid of this somehow
-    =/  write-res  ;;([%write changed=(map id rice) issued=(map id grain)] u.res)
+    =/  write-res  ;;([%write changed=(map id rice:tiny) issued=(map id grain:tiny)] u.res)
     ::  otherwise go through changed & issued and perform validation
     ?.  (check-changed changed.write-res id.from.call)
       [fee granary]
@@ -167,8 +158,8 @@
     ::  TODO: take-fee should probably be folded in here
     ::  so as to make use of the zigs-rice we've already
     ::  grabbed from granary, and to minimize granary updates
-    =/  changed=(map id grain)
-      (~(run by changed.write-res) |=(a=rice [%& a]))
+    =/  changed=(map id grain:tiny)
+      (~(run by changed.write-res) |=(a=rice:tiny [%& a]))
     :-  fee
         ::  add mutated and issued to granary
         ::  key collisions: issued overwrites changed which overwrites original
@@ -179,10 +170,10 @@
         (~(put by q.granary) id.from.call nonce.from.call)
   ::
   ++  check-changed
-    |=  [changed=(map id rice) claimed-lord=id]
+    |=  [changed=(map id rice:tiny) claimed-lord=id]
     ^-  ?
     %-  ~(all in changed)
-    |=  [=id =rice]
+    |=  [=id =rice:tiny]
     ^-  ?
     ?.  =(id id.rice)                      %.n
     ?~  old-rice=(~(get by p.granary) id)  %.n
@@ -191,7 +182,7 @@
     %.y
   ::
   ++  check-issued
-    |=  issued=(map id grain)
+    |=  issued=(map id grain:tiny)
     ^-  ?
     ::  probably need further validation of lord here for rice
     %+  levy

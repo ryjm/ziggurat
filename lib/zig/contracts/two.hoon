@@ -1,15 +1,14 @@
-^-  contract
 |_  mem=(unit vase)
 ++  write
   |=  inp=contract-input
-  ^-  output
-  [%result ~ ~]
+  ^-  contract-output
+  [%result %read ~ ~]
 ++  read
   |=  inp=contract-input
-  ^-  *
-  1
+  ^-  contract-output
+  [%result %read ~ ~]
 ++  event
   |=  =event-args
-  ^-  output
-  [%result ~ ~]
+  ^-  contract-output
+  [%result %read ~ ~]
 --
