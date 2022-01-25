@@ -862,6 +862,41 @@
         ?~  r.a   &
         &((mor p.n.a p.n.r.a) !=(p.n.a p.n.r.a) $(a r.a, r `p.n.a))
     ==
+  ::
+  ++  has                                               ::  key existence check
+    ~/  %has
+    |*  b=*
+    !=(~ (get b))
+  ::
+  ++  jab
+    ~/  %jab
+    |*  [key=_?>(?=(^ a) p.n.a) fun=$-(_?>(?=(^ a) q.n.a) _?>(?=(^ a) q.n.a))]
+    ^+  a
+    ::
+    ?~  a  !!
+    ::
+    ?:  =(key p.n.a)
+      a(q.n (fun q.n.a))
+    ::
+    ?:  (gor key p.n.a)
+      a(l $(a l.a))
+    ::
+    a(r $(a r.a))
+  ::
+  ++  gas                                               ::  concatenate
+    ~/  %gas
+    |*  b=(list [p=* q=*])
+    =>  .(b `(list _?>(?=(^ a) n.a))`b)
+    |-  ^+  a
+    ?~  b
+      a
+    $(b t.b, a (put p.i.b q.i.b))
+  ::
+  ++  val                                               ::  list of vals
+    =+  b=`(list _?>(?=(^ a) q.n.a))`~
+    |-  ^+  b
+    ?~  a   b
+    $(a r.a, b [q.n.a $(a l.a)])
   --
 ::
 ++  on                                                  ::  ordered map

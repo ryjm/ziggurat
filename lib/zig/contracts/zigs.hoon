@@ -1,4 +1,4 @@
-/-  *mill
+/+  *tiny
 =>  |%
     +$  token-data
       $:  total=@ud
@@ -28,26 +28,27 @@
   |_  mem=(unit vase)
   ++  write
     |=  inp=contract-input
-    ^-  output
-    ?~  args.inp  *output
-    =/  zigs  (~(got by rice.inp) zigs-rice-id)
-    =/  data  ;;(token-data data.zigs)
+    ^-  contract-output
+    ?~  args.inp  *contract-output
+    ?~  zigs=(~(get by rice.inp) zigs-rice-id)  *contract-output
+    =/  data  ;;(token-data data.u.zigs)
     =/  caller-id
       ^-  id
       ?:  ?=(@ux caller.inp)
         caller.inp
       id.caller.inp
     =*  args  +.u.args.inp
-    =.  data.zigs
+    =.  data.u.zigs
       ?+    -.u.args.inp  data
           %give
         ::  expected args: id, amount
-        ?.  ?=([=id amount=@ud] args)  data
-        ::  check our balance to make sure we can afford spend
+        ?.  ?=([=id amount=@ud bud=@ud] args)  data
+        ::  check our balance to make sure we can afford spend + fee
         ?~  curr-bal=(~(get by balances.data) id.args)  data
-        ?:  (gth amount.args u.curr-bal)  data
+        ?.  (gth amount.args (add bud.args u.curr-bal))  data
         ::  add to receiver balance, subtract from ours
         =.  balances.data
+          ::  this pattern [52:60] could be a good stdlib function
           ?.  (~(has by balances.data) id.args)
             ::  if receiver's account doesn't have a balance, insert
             %+  ~(jab by (~(put by balances.data) id.args amount.args))
@@ -95,19 +96,19 @@
       ==
     :*  %result
         %write
-        changed=(malt ~[[zigs-rice-id zigs]])
+        changed=(malt ~[[zigs-rice-id u.zigs]])
         issued=~
     ==
   ::
   ++  read
     |=  inp=contract-input
-    ^-  output
+    ^-  contract-output
     :+  %result
       %read
     ?~  args.inp  ~
-    =/  zigs  (~(got by rice.inp) zigs-rice-id)
+    ?~  zigs=(~(get by rice.inp) zigs-rice-id)  ~
     ::  check lord of zigs here, make sure its us
-    =/  data  ;;(token-data data.zigs)
+    =/  data  ;;(token-data data.u.zigs)
     =*  args  +.u.args.inp
     ?+    -.u.args.inp  ~
         %get-balance
@@ -127,7 +128,7 @@
   ::
   ++  event
     |=  inp=event-args
-    ^-  output
-    *output
+    ^-  contract-output
+    *contract-output
   --
 --
