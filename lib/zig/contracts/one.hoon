@@ -2,13 +2,13 @@
 ++  write
   |=  inp=contract-input
   ^-  contract-output
-  [%result %read ~ ~]
+  [%result %read ~]
 ++  read
   |=  inp=contract-input
   ^-  contract-output
-  [%result %read ~ ~]
+  [%result %read ~]
 ++  event
   |=  =event-args
   ^-  contract-output
-  [%result %read ~ ~]
+  [%result %read ~]
 --

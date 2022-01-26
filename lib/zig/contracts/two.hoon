@@ -5,8 +5,8 @@
   [%result %read ~ ~]
 ++  read
   |=  inp=contract-input
-  ^-  contract-output
-  [%result %read ~ ~]
+  ^-  @
+  1
 ++  event
   |=  =event-args
   ^-  contract-output

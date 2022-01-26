@@ -5,8 +5,8 @@
 ++  our-granary
   ^-  granary
   =/  contracts=(list (pair id grain:tiny))
-    :~  [0x1 %| 0x1 `!<(contract:tiny (slap !>(tiny) (ream .^(@t %cx /(scot %p ~zod)/zig/(scot %da now)/lib/zig/contracts/one/hoon))))]
-        [0x2 %| 0x2 `!<(contract:tiny (slap !>(tiny) (ream .^(@t %cx /(scot %p ~zod)/zig/(scot %da now)/lib/zig/contracts/two/hoon))))]
+    :~  [0x1 %| 0x1 `q:(slap !>(tiny) (ream .^(@t %cx /(scot %p ~zod)/zig/(scot %da now)/lib/zig/contracts/one/hoon)))]
+        [0x2 %| 0x2 `q:(slap !>(tiny) (ream .^(@t %cx /(scot %p ~zod)/zig/(scot %da now)/lib/zig/contracts/two/hoon)))]
     ==
   (~(gas by *(map id grain:tiny)) contracts)^~
 ::  +blue: run contract formula with arguments and memory, bounded by bud
@@ -14,12 +14,10 @@
 ++  blue
   |=  [=contract:tiny args=contract-args:tiny mem=(unit vase) bud=@ud]
   ^-  [(unit (each contract-output:tiny (list tank))) @ud]
-  ::=/  dor=vase  (slap !>(tiny) for)
-  ::=/  =contract:tiny  !<(contract:tiny dor)
   %+  bull
     ?:  ?=(%read -.args)
-      |.((~(read contract mem) +.args))
-    |.((~(write contract mem) +.args))
+      |.(;;(contract-output:tiny (~(read contract mem) +.args)))
+    |.(;;(contract-output (~(write contract mem) +.args)))
   bud
 ::  TODO: move the 3 below arms into +mill-all
 ::  so they can be run with shared granary
@@ -44,7 +42,7 @@
   ^-  (unit contract:tiny)
   ?~  found=(~(get by p.granary) find)  ~
   ?.  ?=(%| -.u.found)  ~
-  +.p.u.found
+  `!<(contract:tiny [-:!>(*contract:tiny) (need contract.p.u.found)])
 ::
 ++  exec
   |=  [=call:tiny mem=(unit vase)]

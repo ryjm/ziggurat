@@ -1078,7 +1078,7 @@
 +$  wheat
   $~  [0x0 ~]
   $:  =id
-      contract=(unit contract)
+      contract=(unit *)
   ==
 ::
 +$  grain     (each rice wheat)
