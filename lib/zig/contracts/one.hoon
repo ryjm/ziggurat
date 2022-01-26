@@ -2,7 +2,7 @@
 ++  write
   |=  inp=contract-input
   ^-  contract-output
-  [%result %read ~]
+  [%result %write ~ ~]
 ++  read
   |=  inp=contract-input
   ^-  contract-output

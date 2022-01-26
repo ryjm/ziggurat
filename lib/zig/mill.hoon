@@ -17,7 +17,7 @@
   %+  bull
     ?:  ?=(%read -.args)
       |.(;;(contract-output:tiny (~(read contract mem) +.args)))
-    |.(;;(contract-output (~(write contract mem) +.args)))
+    |.(;;(contract-output:tiny (~(write contract mem) +.args)))
   bud
 ::  TODO: move the 3 below arms into +mill-all
 ::  so they can be run with shared granary
