@@ -1,4 +1,5 @@
 /+  tiny
+^?
 |%
 +$  id  @ux                   ::  pubkey
 ++  zigs-wheat-id  0x0
