@@ -1,3 +1,4 @@
+/+  tiny
 ~%  %bink-lib  ..part  ~
 |%
 ::                                                        ::
@@ -282,7 +283,7 @@
   ++  wits
     ^-  (set @tas)
     %-  ~(gas in *(set @tas))
-    :~  %'a.50'                                           ::  XX tiny top-level
+    :~  %'u.50'                                           ::  XX tiny top-level
         %add    %apt    %bex  %by     %cad
         %can    %cat    %con  %cut    %dec
         %del    %dis    %div  %dor    %dvr
@@ -358,6 +359,20 @@
       ==
     ==
   --
+::
+++  jets  dash
+::
+++  dash
+  =|  jets=(map (list @ud) @ud)
+  ^+  jets
+  =/  tin=vase  !>(tiny)
+  =/  arms=(list term)  (sloe tin)
+  |-
+  ?~  arms  jets
+  =/  arm=term  (head arms)
+  =/  axe=@ud  +<.q:(~(mint ut -.tin) %noun %limb arm)
+  ::  TODO  recurse. do we want to store in +mip or map of list?
+  !!
 ::                                                        ::
 ++  bock                                                  ::  bounded +mock
   |=  [[sub=* fol=*] bud=@ud]
