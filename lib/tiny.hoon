@@ -700,6 +700,39 @@
         ?~(l.a & ?&((mor n.a n.l.a) $(a l.a, l `n.a)))
         ?~(r.a & ?&((mor n.a n.r.a) $(a r.a, r `n.a)))
     ==
+  ::
+  ++  has
+    ~/  %has
+    |*  b=*
+    ^-  ?
+    ::  wrap extracted item type in a unit because bunting fails
+    ::
+    ::    If we used the real item type of _?^(a n.a !!) as the sample type,
+    ::    then hoon would bunt it to create the default sample for the gate.
+    ::
+    ::    However, bunting that expression fails if :a is ~. If we wrap it
+    ::    in a unit, the bunted unit doesn't include the bunted item type.
+    ::
+    ::    This way we can ensure type safety of :b without needing to perform
+    ::    this failing bunt. It's a hack.
+    ::
+    %.  [~ b]
+    |=  b=(unit _?>(?=(^ a) n.a))
+    =>  .(b ?>(?=(^ b) u.b))
+    |-  ^-  ?
+    ?~  a
+      |
+    ?:  =(b n.a)
+      &
+    ?:  (gor b n.a)
+      $(a l.a)
+    $(a r.a)
+  ::
+  ++  wyt                                               ::  size of set
+    =<  $
+    ~%  %wyt  +  ~
+    |.  ^-  @
+    ?~(a 0 +((add $(a l.a) $(a r.a))))
   --
 ::
 ::  Jugs
@@ -1097,7 +1130,7 @@
     |~  contract-input
     *contract-output
   ++  event
-    |~  event-args
+    |~  contract-input
     *contract-output
   --
 ::
@@ -1107,7 +1140,7 @@
   ==
 +$  result
   $%  [%read =noun]
-      [%write changed=(map id rice) issued=(map id grain)]
+      [%write changed=(map id grain) issued=(map id grain)]
   ==
 +$  continuation
   [mem=(unit vase) next=(list [to=id town-id=@ud args=call-args])]
@@ -1122,8 +1155,7 @@
   ==
 ::
 +$  contract-args
-  [?(%read %write) contract-input]
-  ::  $%([%read contract-input] [%write contract-input])
+  [?(%read %write %event) contract-input]
 +$  contract-input
   $:  =caller
       rice=(map id rice)
@@ -1132,15 +1164,9 @@
 ::
 +$  call-args
   [?(%read %write) call-input]
-  ::  $%([%read call-input] [%write call-input])
 +$  call-input
   $:  =caller
       rice=(set id)
       args=(unit noun)
-  ==
-::
-+$  event-args
-  $%  [%read town-id=@ud contract-input]
-      [%write town-id=@ud from=id contract-output]
   ==
 --

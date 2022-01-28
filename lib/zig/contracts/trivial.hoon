@@ -9,7 +9,7 @@
   ^-  contract-output
   [%result %read ~]
 ++  event
-  |=  =event-args
+  |=  =contract-input
   ^-  contract-output
   [%result %read ~]
 --

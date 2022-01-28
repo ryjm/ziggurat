@@ -96,7 +96,7 @@
       ==
     :*  %result
         %write
-        changed=(malt ~[[zigs-rice-id u.zigs]])
+        changed=(malt ~[[zigs-rice-id [%& u.zigs]]])
         issued=~
     ==
   ::
@@ -127,8 +127,53 @@
     ==
   ::
   ++  event
-    |=  inp=event-args
+    |=  inp=contract-input
     ^-  contract-output
-    *contract-output
+    ?~  args.inp  *contract-output
+    ?~  zigs=(~(get by rice.inp) zigs-rice-id)  *contract-output
+    =/  data  ;;(token-data data.u.zigs)
+    =/  caller-id
+      ^-  id
+      ?:  ?=(@ux caller.inp)
+        caller.inp
+      id.caller.inp
+    =*  args  +.u.args.inp
+    ?+    -.u.args.inp  *contract-output
+        %fee
+      ::  expected args: from id, amount
+      ?.  ?=([sender=id amount=@ud] args)  *contract-output
+      =.  balances.data
+        ?.  (~(has by balances.data) caller-id)
+          ::  if receiver's account doesn't have a balance, insert
+          %+  ~(jab by (~(put by balances.data) caller-id amount.args))
+            sender.args
+          |=(bal=@ud (sub bal amount.args))
+        ::  otherwise, add to their existing balance
+        %+  ~(jab by (~(jab by balances.data) caller-id |=(bal=@ud (add bal amount.args))))
+          sender.args
+        |=(bal=@ud (sub bal amount.args))
+      ::=.  data.u.zigs  data
+      :*  %result
+          %write
+          changed=(malt ~[[zigs-rice-id [%& u.zigs(data data)]]])
+          issued=~
+      ==
+    ::
+        %coinbase
+      ::  expected args: hash (of block)
+      ?.  ?=(hash=@ux args)  *contract-output
+      =.  balances.data
+        ?.  (~(has by balances.data) caller-id)
+          ::  if receiver's account doesn't have a balance, insert
+          (~(put by balances.data) caller-id coinbase-rate.data)
+        ::  otherwise, add to their existing balance
+        (~(jab by balances.data) caller-id |=(bal=@ud (add bal coinbase-rate.data)))
+      ::=.  data.u.zigs  data
+      :*  %result
+          %write
+          changed=(malt ~[[zigs-rice-id [%& u.zigs(data data)]]])
+          issued=~
+      ==
+    ==
   --
 --

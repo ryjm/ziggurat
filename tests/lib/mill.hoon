@@ -70,4 +70,24 @@
     (mill 0 fake-granary call)
   ::  updated granary should be same but minus 0xaa's fee
   (expect-eq !>(~) !>(res))
+::
+::  Tests here should cover:
+::  (all calls to exclusively zigs-contract)
+::
+::  * executing a single call with +mill
+::  * executing same call unsuccessfully -- not enough gas
+::  * unsuccessfully -- some constraint in contract unfulfill>
+::  * (test all constraints in contract: balance, gas, +give,>
+::  * executing multiple calls with +mill-all
+::
+::  Tests for contracts on mill in general
+::  (probably good in a separate file / test suite)
+::  These will be more involved, requiring custom contracts w>
+::
+::  * test deploying a contract (successful / unsuccessful du>
+::  * bad: call a contract that issues rice as wheat, vice ve>
+::  * rule breaking: call contracts that break their lord per>
+::    (aka: writing to rice that they don't own, cheating)
+::  * good: call contract that reads things from other contra>
+::
 --
