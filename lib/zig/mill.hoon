@@ -123,7 +123,7 @@
 ::
 ++  exec
   |=  [=call:tiny mem=(unit vase) =granary]
-  ^-  [(unit result:tiny) @ud]
+  ^-  [(unit contract-result:tiny) @ud]
   |^
   ?~  cont=(find-contract to.call)  [~ budget.call]
   =/  args  (call-args-to-contract args.call)
@@ -139,15 +139,16 @@
       ~
     `p.p.u.res
   =*  fwd  p.p.u.res
-  =|  ult=(unit result:tiny)
+  =|  ult=(unit contract-result:tiny)
   |-
   ?~  next.fwd
     [ult bud]
   =^  ult  bud
     %^    exec
         [to.call to.i.next.fwd 1 bud town-id.i.next.fwd args.i.next.fwd]
-      mem.fwd
+      ~
     granary
+  ::  todo: process result of function call in our event arm
   ?~  ult  [~ bud]
   $(next.fwd t.next.fwd)
   ::
