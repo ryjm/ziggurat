@@ -1129,6 +1129,7 @@
   ++  read
     |~  contract-input
     *contract-output
+  ::
   ++  event
     |~  contract-input
     *contract-output

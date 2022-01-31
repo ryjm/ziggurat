@@ -41,7 +41,7 @@
     =.  data.u.zigs
       ?+    -.u.args.inp  data
           %give
-        ::  expected args: id, amount
+        ::  expected args: id, amount, budget
         ?.  ?=([=id amount=@ud bud=@ud] args)  data
         ::  check our balance to make sure we can afford spend + fee
         ?~  curr-bal=(~(get by balances.data) id.args)  data
