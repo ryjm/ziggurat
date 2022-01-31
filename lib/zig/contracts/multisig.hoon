@@ -3,7 +3,6 @@
     +$  multisig-data
       $:  =id
           members=(set id)
-          weights=(map id @ud)
           threshold=@ud
           pending=(map @ux [=call votes=(set id)])
       ==
@@ -21,9 +20,15 @@
       ?:  ?=(@ux caller.inp)
         caller.inp
       id.caller.inp
+    ::  TODO: fix upleasant pattern:
+    ::  should be able to grab a single rice from inp more easily
+    ::  contract needs to either have rice ID or be able to name it or something
+    ::  RELATED: contracts need access to their own ID somehow! i'm using
+    ::  lord.our-rice here which is very ugly.
     =/  our-rice=rice  -:~(val by rice.inp)
     =/  data  ;;(multisig-data data.our-rice)
     =*  args  +.u.args.inp
+    
     ?:  ?=(%approve -.u.args.inp)
       ::  expected args: tx hash
       ::  should emit event triggering actual call
@@ -39,34 +44,37 @@
       ?:  (gth threshold.data ~(wyt in votes.prop))
         =.  data.our-rice  data
         [%result %write (malt ~[[id.our-rice [%& our-rice]]]) ~]
-      [%callback ~ ~[[lord.our-rice town-id.our-rice [%write lord.our-rice (silt ~[id.our-rice]) [~ %execute call.prop]]]]]
+      [%callback ~ ~[[to.call.prop town-id.call.prop args.call.prop]]]
     =.  data.our-rice
       ?+    -.u.args.inp  data
           %submit-tx
-        ::  expected args: tx (call), membersig
-        data
-      ::
-          %approve
-        ::  expected args: tx hash, membersig
-        ?.  ?=([member=id] args)  ~
-        ::  should emit event triggering actual call
-        ::  if this sig pushes it over thresh
-        data
+        ::  expected args: tx (call)
+        ?.  ?=(=call args)  ~
+        ::  validate member in multisig
+        ?.  (~(has in members.data) caller-id)  *contract-output
+        ::  TODO: put hash function in tiny.hoon
+        data(pending (~(put by pending.data) 0x0 [call (silt ~[caller-id])]))
       ::
           %add-member
-        ::  expected args: id, weight (default 1)
+        ::  expected args: id
+        ?.  ?=(=id args)  ~
         ::  this must be sent by contract
-        data
-      ::
-          %change-weight
-        ::  expected args: id, new weight
-        ::  this must be sent by contract
-        data
+        ::  ?.  =(our-id caller-id)  *contract-output
+        data(members (~(put in members.data) id))
       ::
           %remove-member
         ::  expected args: id
+        ?.  ?=(=id args)  ~
         ::  this must be sent by contract
-        data
+        ::  ?.  =(our-id caller-id)  *contract-output
+        data(members (~(del in members.data) id))
+      ::
+          %set-threshold
+        ::  expected args: new-thresh
+        ?.  ?=(new-thresh=@ud args)  ~
+        ::  this must be sent by contract
+        ::  ?.  =(our-id caller-id)  *contract-output
+        data(threshold new-thresh)
       ==
     :*  %result
         %write
@@ -89,7 +97,7 @@
     ::
         %get-member-weight
       ::  expected args: member
-      ?.  ?=([member=id] args)  *contract-output
+      ?.  ?=(member=id args)  *contract-output
       (~(get by weights.data) member.args)
     ::
         %get-threshold
@@ -98,12 +106,12 @@
     ::
         %get-pending
       ::  expected args: tx hash
-      ?.  ?=([id=@ux] args)  *contract-output
+      ?.  ?=(id=@ux args)  *contract-output
       (~(get by pending.data) id.args)
     ==
   ++  event
-    |=  =contract-input
+    |=  inp=contract-input
     ^-  contract-output
-    [%result %read ~]
+    *contract-output
   --
 --
