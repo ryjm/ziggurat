@@ -2,7 +2,7 @@
 =>  |%
     +$  helix-data
       $:  =id
-          validators=(map ship id)
+          validators=(map id ship)
           order=(list ship)
           leader=ship
           epoch=@ud
@@ -36,16 +36,24 @@
       ?:  ?=(@ux caller.inp)
         caller.inp
       id.caller.inp
+    =/  our-rice=rice  -:~(val by rice.inp)
+    =/  data  ;;(helix-data data.our-rice)
     =*  args  +.u.args.inp
     =.  data.u.our-rice
       ?+    -.u.args.inp  data
           %register
-        :: expected args: @p, stake??
-        data
+        ::  expected args: @p. future: stake?
+        ?.  ?=(=ship args)  data
+        ::  must be a star
+        ?.  =((met 3 src.bowl) 2)  data
+        ::  new ship will start in order on next epoch.
+        data(validators (~(put by validators.data) caller-id ship))
       ::
           %exit
         ::  no args needed
-        data
+        ?.  =((met 3 src.bowl) 2)  data
+        ::  exit will be reflected in next epoch
+        data(validators (~(del by validators.data) caller-id))
       ::
           %increment-epoch
         ::  expected args: hash of last block or something
@@ -65,9 +73,26 @@
     :+  %result
       %read
     ?~  args.inp  ~
+    =/  our-rice=rice  -:~(val by rice.inp)
+    =/  data  ;;(helix-data data.our-rice)
     =*  args  +.u.args.inp
     ?+    -.u.args.inp  ~
-
+        %get-validator-ship
+      ::  expected args: id, returns @p
+      ?.  ?=(=id args)  ~
+      (~(get by validators.data) id)
+    ::
+        %get-order
+      ::  expected args: none
+      order.data
+    ::
+        %get-leader
+      ::  expected args: none
+      leader.data
+    ::
+        %get-epoch
+      ::  expected args: none
+      epoch.data
     ==
   ::
   ++  event

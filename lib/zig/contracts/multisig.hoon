@@ -28,7 +28,6 @@
     =/  our-rice=rice  -:~(val by rice.inp)
     =/  data  ;;(multisig-data data.our-rice)
     =*  args  +.u.args.inp
-    
     ?:  ?=(%approve -.u.args.inp)
       ::  expected args: tx hash
       ::  should emit event triggering actual call
