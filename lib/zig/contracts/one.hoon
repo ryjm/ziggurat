@@ -9,7 +9,7 @@
   =/  a  (sub 1.000 500)
   [%result %read `a]
 ++  event
-  |=  =event-args
+  |=  =contract-input
   ^-  contract-output
   [%result %read ~]
 --

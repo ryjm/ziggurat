@@ -13,7 +13,7 @@
   !!
 ::
 ++  event
-  |=  =event-args
+  |=  =contract-input
   ^-  contract-output
   !!
 --

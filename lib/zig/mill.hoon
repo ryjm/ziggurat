@@ -28,24 +28,17 @@
   |^
   =^  fee  granary
     main
-  (take-fee fee)
+  (take-fee from.call fee)
   ::
   ++  take-fee
-    |=  fee=@ud
+    |=  [=caller:tiny fee=@ud]
     ^-  ^granary
-    ::  TODO: run the "take-fee" part of the zig contract
-    ::  to give some money to our validator-id? or are zigs not in a
-    ::  contract?
-    ::
-    ::=/  zigs  (~(got by p.granary) zigs-rice-id)
-    ::?.  ?=(%& -.zigs)  !!
-    ::=/  data  ;;(zigs-token-data data.p.zigs)
-    ::=.  balances.data
-    ::  %+  ~(jab by (~(jab by balances.data) validator-id |=(bal=@ud (add bal fee))))
-    ::    from.call
-    ::  |=(bal=@ud (sub bal fee))
-    ::=.  data.p.zigs  data
-    ::[(~(put by p.granary) zigs-rice-id zigs) q.granary]
+    =/  caller-id
+      ?:  ?=(@ux caller)  caller  id.caller
+    =/  fee-args
+      ^-  call-args:tiny
+      [%write validator-id (silt ~[zigs-rice-id:tiny]) [~ %fee caller-id fee]]
+    ::  TODO: call 'fee' event with fee-args in zigs contract here
     granary
   ::
   ++  main
@@ -69,45 +62,39 @@
     ::  ::  account lacks zigs to spend on gas
     ::  [0 granary]
     ::  run +exec on call and validate results
-    =+  [res leftover]=(exec call ~ granary)
+    =+  [res leftover]=(exec call granary)
     =/  fee=@ud  (sub budget.call leftover)
     ::  if no mutations from call, finish
     ?~  res  [fee granary]
-    ?:  =(%read -.u.res)
+    =/  red=contract-result:tiny  u.res
+    ?:  ?=(%read -.red)
       ::  %read result, no mods to granary
       [fee granary]
-    ::  gotta get rid of this somehow
-    =/  write-res  ;;([%write changed=(map id rice:tiny) issued=(map id grain:tiny)] u.res)
     ::  otherwise go through changed & issued and perform validation
-    ?.  (check-changed changed.write-res id.from.call)
+    ?.  (check-changed changed.red id.from.call)
       [fee granary]
-    ?.  (check-issued issued.write-res)
+    ?.  (check-issued issued.red)
       [fee granary]
     ::  valid, now
-    ::  TODO: take-fee should probably be folded in here
-    ::  so as to make use of the zigs-rice we've already
-    ::  grabbed from granary, and to minimize granary updates
-    =/  changed=(map id grain:tiny)
-      (~(run by changed.write-res) |=(a=rice:tiny [%& a]))
     :+  fee
         ::  add mutated and issued to granary
         ::  key collisions: issued overwrites changed which overwrites original
         ::  validation *should* ensure no issued have collisions with existing
       %-  ~(uni by p.granary)
-      (~(uni by changed) issued.write-res)
+      (~(uni by changed.red) issued.red)
     ::  update nonce of caller
     (~(put by q.granary) id.from.call nonce.from.call)
   ::
   ++  check-changed
-    |=  [changed=(map id rice:tiny) claimed-lord=id]
+    |=  [changed=(map id grain:tiny) claimed-lord=id]
     ^-  ?
     %-  ~(all in changed)
-    |=  [=id =rice:tiny]
+    |=  [=id grain=grain:tiny]
     ^-  ?
-    ?.  =(id id.rice)                      %.n
-    ?~  old-rice=(~(get by p.granary) id)  %.n
-    ?.  ?=(%& -.u.old-rice)                %.n
-    ?.  =(lord.p.u.old-rice claimed-lord)  %.n
+    ?.  =(id id.p.grain)                    %.n
+    ?~  old-grain=(~(get by p.granary) id)  %.n
+    ?.  ?=(%& -.u.old-grain)                %.n
+    ?.  =(lord.p.u.old-grain claimed-lord)  %.n
     %.y
   ::
   ++  check-issued
@@ -122,35 +109,38 @@
 ::  +exec: execute a call to a contract within a wheat
 ::
 ++  exec
-  |=  [=call:tiny mem=(unit vase) =granary]
+  |=  [=call:tiny =granary]
   ^-  [(unit contract-result:tiny) @ud]
   |^
-  ?~  cont=(find-contract to.call)  [~ budget.call]
-  =/  args  (call-args-to-contract args.call)
-  =+  [res bud]=(blue u.cont args mem budget.call)
-  ?~  res  [~ bud]
-  ?:  ?=(%| -.u.res)
-    [~ bud]
-  ?:  ?=(%result -.p.u.res)
-    :_  bud
-    ?.  ?|  &(?=(%read -.p.p.u.res) ?=(%read -.args))
-            &(?=(%write -.p.p.u.res) ?=(%write -.args))
-        ==
-      ~
-    `p.p.u.res
-  =*  fwd  p.p.u.res
-  =|  ult=(unit contract-result:tiny)
-  |-
-  ?~  next.fwd
-    [ult bud]
-  =^  ult  bud
-    %^    exec
-        [to.call to.i.next.fwd 1 bud town-id.i.next.fwd args.i.next.fwd]
-      ~
-    granary
-  ::  todo: process result of function call in our event arm
-  ?~  ult  [~ bud]
-  $(next.fwd t.next.fwd)
+  =/  args  (call-args-to-contract args.call %.n)
+  (exec-mem to.call rate.call budget.call args ~)
+  ::
+  ::  +exec-mem: optionally execute call with memory
+  ::
+  ++  exec-mem
+    |=  [to=id rate=@ud budget=@ud args=contract-args:tiny mem=(unit vase)]
+    ^-  [(unit contract-result:tiny) @ud]
+    ?~  cont=(find-contract to)  [~ budget]
+    =+  [res bud]=(blue u.cont args mem budget)
+    ?~  res  [~ bud]
+    ?:  ?=(%| -.u.res)
+      [~ bud]
+    ?:  ?=(%result -.p.u.res)
+      :_  bud
+      ?.  ?|  &(?=(%read -.p.p.u.res) ?=(%read -.args))
+              &(?=(%write -.p.p.u.res) ?=(%write -.args))
+          ==
+        ~
+      `p.p.u.res
+    =*  fwd  p.p.u.res
+    =|  ult=(unit contract-result:tiny)
+    |-
+    ?~  next.fwd  [ult bud]
+    =/  next-args  (call-args-to-contract args.i.next.fwd %.y)
+    =^  ult  bud
+      (exec-mem to.i.next.fwd rate bud next-args mem.fwd)
+    ?~  ult  [~ bud]
+    $(next.fwd t.next.fwd)
   ::
   ::  +blue: run contract formula with arguments and memory, bounded by bud
   ::
@@ -158,9 +148,14 @@
     |=  [=contract:tiny args=contract-args:tiny mem=(unit vase) bud=@ud]
     ^-  [(unit (each contract-output:tiny (list tank))) @ud]
     %+  bull
-      ?:  ?=(%read -.args)
+      ?-    -.args
+          %read
         |.(;;(contract-output:tiny (~(read contract mem) +.args)))
-      |.(;;(contract-output:tiny (~(write contract mem) +.args)))
+          %write
+        |.(;;(contract-output:tiny (~(write contract mem) +.args)))
+          %event
+        |.(;;(contract-output:tiny (~(event contract mem) +.args)))  
+      ==
     bud
   ::
   ++  find-contract
@@ -172,10 +167,10 @@
     `!<(contract:tiny [-:!>(*contract:tiny) u.contract.p.u.found])
   ::
   ++  call-args-to-contract
-    |=  arg=call-args:tiny
+    |=  [arg=call-args:tiny is-event=?]
     ^-  contract-args:tiny
     =*  inp  +.arg
-    :-  -.arg
+    :-  ?:  is-event  %event  -.arg
     :+  caller.inp
       %-  ~(gas by *(map id rice:tiny))
       %+  murn
@@ -187,4 +182,3 @@
     args.inp
   --
 --
-
