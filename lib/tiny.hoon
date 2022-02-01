@@ -1,7 +1,6 @@
 !.
-=>  %a50
-~%  %a.50  ~  ~
-=>
+=>  %u50
+~%  %u.50  ~  ~
 |%
 ::
 ::  tiny types
@@ -760,9 +759,6 @@
     =+  d=(get b)
     (~(put by a) b (~(put in d) c))
   --
---
-=>
-|%
 ::  types from hoon.hoon
 ::  brought in to contract stdlib for vase access
 ::
@@ -1085,11 +1081,7 @@
               [%12 p=nock q=nock]                       ::  grab data from sky
               [%0 p=@]                                  ::  axis select
           ==
-
---
-|%
 ::  our types
-::  exact copy of sur/mill.hoon
 ::
 +$  id  @ux                   ::  pubkey
 ++  zigs-wheat-id  0x0
@@ -1116,8 +1108,10 @@
   ==
 ::
 +$  grain     (each rice wheat)
+::+$  granary   (map id grain)
 +$  granary   (pair (map id grain) (map id @ud))    ::  replace with +merk
 +$  town      (map @ud granary)  ::  "helix"
+::  +$  land  (map @ud town)
 ::
 +$  contract
   $_  ^|
@@ -1135,17 +1129,6 @@
     *contract-output
   --
 ::
-+$  contract-output  ::  (each result continuation)
-  $%  [%result p=result]
-      [%callback p=continuation]
-  ==
-+$  result
-  $%  [%read =noun]
-      [%write changed=(map id grain) issued=(map id grain)]
-  ==
-+$  continuation
-  [mem=(unit vase) next=(list [to=id town-id=@ud args=call-args])]
-::
 +$  call
   $:  from=caller
       to=id
@@ -1155,14 +1138,6 @@
       args=call-args
   ==
 ::
-+$  contract-args
-  [?(%read %write %event) contract-input]
-+$  contract-input
-  $:  =caller
-      rice=(map id rice)
-      args=(unit noun)
-  ==
-::
 +$  call-args
   [?(%read %write) call-input]
 +$  call-input
@@ -1170,4 +1145,26 @@
       rice=(set id)
       args=(unit noun)
   ==
+::
++$  contract-args
+  [?(%read %write %event) contract-input]
+::
++$  contract-input
+  $:  =caller
+      rice=(map id rice)
+      args=(unit noun)
+  ==
+::
++$  contract-output
+  $%  [%result p=contract-result]
+      [%callback p=continuation]
+  ==
+::
++$  contract-result
+  $%  [%read =noun]
+      [%write changed=(map id grain) issued=(map id grain)]
+  ==
+::
++$  continuation
+  [mem=(unit vase) next=(list [to=id town-id=@ud args=call-args])]
 --

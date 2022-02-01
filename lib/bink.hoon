@@ -367,7 +367,7 @@
   ?~  -.bone  ~
   `(book -.bone)
 ::                                                        ::
-++  brute                                                 ::  bounbed +mure
+++  brute                                                 ::  bounded +mure
   |=  [tap=(trap) bud=@ud]
   ^-  [(unit (each * (list tank))) @ud]
   =+  [ton rem]=(bock [tap %9 2 %0 1] bud)

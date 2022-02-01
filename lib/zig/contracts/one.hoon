@@ -6,7 +6,8 @@
 ++  read
   |=  inp=contract-input
   ^-  contract-output
-  [%result %read ~]
+  =/  a  (sub 1.000 500)
+  [%result %read `a]
 ++  event
   |=  =contract-input
   ^-  contract-output

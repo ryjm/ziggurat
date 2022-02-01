@@ -1,6 +1,5 @@
-/-  *mill
-/+  tiny
-|%
+/+  *zig-mill
+|_  now=time
 ++  our-granary
   ^-  granary
   =/  contracts=(list (pair id grain:tiny))
