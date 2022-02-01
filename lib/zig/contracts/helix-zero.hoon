@@ -39,19 +39,18 @@
     =/  our-rice=rice  -:~(val by rice.inp)
     =/  data  ;;(helix-data data.our-rice)
     =*  args  +.u.args.inp
-    =.  data.u.our-rice
+    =.  data.our-rice
       ?+    -.u.args.inp  data
           %register
         ::  expected args: @p. future: stake?
         ?.  ?=(=ship args)  data
         ::  must be a star
-        ?.  =((met 3 src.bowl) 2)  data
+        ?.  =((met 3 ship.args) 2)  data
         ::  new ship will start in order on next epoch.
-        data(validators (~(put by validators.data) caller-id ship))
+        data(validators (~(put by validators.data) caller-id ship.args))
       ::
           %exit
         ::  no args needed
-        ?.  =((met 3 src.bowl) 2)  data
         ::  exit will be reflected in next epoch
         data(validators (~(del by validators.data) caller-id))
       ::
@@ -63,7 +62,7 @@
       ==
     :*  %result
         %write
-        changed=(malt ~[[0x0 [%& u.our-rice]]])
+        changed=(malt ~[[0x0 [%& our-rice]]])
         issued=~
     ==
   ::
@@ -76,12 +75,14 @@
     =/  our-rice=rice  -:~(val by rice.inp)
     =/  data  ;;(helix-data data.our-rice)
     =*  args  +.u.args.inp
+    :+  %result  %read
+    ^-  *
     ?+    -.u.args.inp  ~
         %get-validator-ship
       ::  expected args: id, returns @p
-      ?.  ?=(=id args)  ~
-      (~(get by validators.data) id)
-    ::
+      ?.  ?=([=id] args)  ~
+      (~(get by validators.data) `@ux`id.args)
+    :: 
         %get-order
       ::  expected args: none
       order.data

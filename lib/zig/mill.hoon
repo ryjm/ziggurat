@@ -62,7 +62,7 @@
     ::  ::  account lacks zigs to spend on gas
     ::  [0 granary]
     ::  run +exec on call and validate results
-    =+  [res leftover]=(exec call ~ granary %.n)
+    =+  [res leftover]=(exec call granary)
     =/  fee=@ud  (sub budget.call leftover)
     ::  if no mutations from call, finish
     ?~  res  [fee granary]
@@ -109,32 +109,38 @@
 ::  +exec: execute a call to a contract within a wheat
 ::
 ++  exec
-  |=  [=call:tiny mem=(unit vase) =granary is-event=?]
+  |=  [=call:tiny =granary]
   ^-  [(unit result:tiny) @ud]
   |^
-  ?~  cont=(find-contract to.call)  [~ budget.call]
-  =/  args  (call-args-to-contract args.call is-event)
-  =+  [res bud]=(blue u.cont args mem budget.call)
-  ?~  res  [~ bud]
-  ?:  ?=(%| -.u.res)
-    [~ bud]
-  ?:  ?=(%result -.p.u.res)
-    :_  bud
-    ?.  ?|  &(?=(%read -.p.p.u.res) ?=(%read -.args))
-            &(?=(%write -.p.p.u.res) ?=(%write -.args))
-        ==
-      ~
-    `p.p.u.res
-  =*  fwd  p.p.u.res
-  =|  ult=(unit result:tiny)
-  |-
-  ?~  next.fwd
-    [ult bud]
-  =^  ult  bud
-    =-  (exec - mem.fwd granary %.y)
-    [to.call to.i.next.fwd rate.call bud town-id.i.next.fwd args.i.next.fwd]
-  ?~  ult  [~ bud]
-  $(next.fwd t.next.fwd)
+  =/  args  (call-args-to-contract args.call %.n)
+  (exec-mem to.call rate.call budget.call args ~)
+  ::
+  ::  +exec-mem: optionally execute call with memory
+  ::
+  ++  exec-mem
+    |=  [to=id rate=@ud budget=@ud args=contract-args:tiny mem=(unit vase)]
+    ^-  [(unit result:tiny) @ud]
+    ?~  cont=(find-contract to)  [~ budget]
+    =+  [res bud]=(blue u.cont args mem budget)
+    ?~  res  [~ bud]
+    ?:  ?=(%| -.u.res)
+      [~ bud]
+    ?:  ?=(%result -.p.u.res)
+      :_  bud
+      ?.  ?|  &(?=(%read -.p.p.u.res) ?=(%read -.args))
+              &(?=(%write -.p.p.u.res) ?=(%write -.args))
+          ==
+        ~
+      `p.p.u.res
+    =*  fwd  p.p.u.res
+    =|  ult=(unit result:tiny)
+    |-
+    ?~  next.fwd  [ult bud]
+    =/  next-args  (call-args-to-contract args.i.next.fwd %.y)
+    =^  ult  bud
+      (exec-mem to.i.next.fwd rate bud next-args mem.fwd)
+    ?~  ult  [~ bud]
+    $(next.fwd t.next.fwd)
   ::
   ::  +blue: run contract formula with arguments and memory, bounded by bud
   ::
