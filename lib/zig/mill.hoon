@@ -66,7 +66,7 @@
     =/  fee=@ud  (sub budget.call leftover)
     ::  if no mutations from call, finish
     ?~  res  [fee granary]
-    =/  red=result:tiny  u.res
+    =/  red=contract-result:tiny  u.res
     ?:  ?=(%read -.red)
       ::  %read result, no mods to granary
       [fee granary]
@@ -110,7 +110,7 @@
 ::
 ++  exec
   |=  [=call:tiny =granary]
-  ^-  [(unit result:tiny) @ud]
+  ^-  [(unit contract-result:tiny) @ud]
   |^
   =/  args  (call-args-to-contract args.call %.n)
   (exec-mem to.call rate.call budget.call args ~)
@@ -119,7 +119,7 @@
   ::
   ++  exec-mem
     |=  [to=id rate=@ud budget=@ud args=contract-args:tiny mem=(unit vase)]
-    ^-  [(unit result:tiny) @ud]
+    ^-  [(unit contract-result:tiny) @ud]
     ?~  cont=(find-contract to)  [~ budget]
     =+  [res bud]=(blue u.cont args mem budget)
     ?~  res  [~ bud]
@@ -133,7 +133,7 @@
         ~
       `p.p.u.res
     =*  fwd  p.p.u.res
-    =|  ult=(unit result:tiny)
+    =|  ult=(unit contract-result:tiny)
     |-
     ?~  next.fwd  [ult bud]
     =/  next-args  (call-args-to-contract args.i.next.fwd %.y)
