@@ -43,24 +43,13 @@
   ::
   ++  main
     ^-  [@ud town:tiny]
-    ::  a caller to main *must* have a nonce
-    ::  only contract callbacks in +exec are sole IDs
     ?.  ?=(user:tiny from.call)  [0 town]
     ?~  curr-nonce=(~(get by q.town) id.from.call)
       [0 town]  ::  missing user
     ?.  =(nonce.from.call +(u.curr-nonce))
       [0 town]  ::  bad nonce
-    ::  confirm that from account actually has the amount
-    ::  specified in "budget"
-    =/  zigs  (~(got by p.town) zigs-rice-id)
-    ?.  ?=(%& -.zigs)  !!
-    ::=/  data  ;;(zigs-token-data data.p.zigs)
-    ::  ?~  bal=(~(get by balances.data) id.from.call)
-    ::    ::  account not found in zigs database
-    ::  [0 granary]
-    ::?:  (gth budget.call u.bal)
-    ::  ::  account lacks zigs to spend on gas
-    ::  [0 granary]
+    ::  TODO: check if account has zigs in its balance equal to or
+    ::  greater than budget
     =+  [gan rem]=(~(work farm p.town) call)
     =/  fee=@ud   (sub budget.call rem)
     :+  fee
