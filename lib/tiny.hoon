@@ -1092,22 +1092,19 @@
 +$  signature  [r=@ux s=@ux type=?(%schnorr %ecdsa)]
 ::
 +$  rice
+  $:  holder=id
+      holds=(set id)
+      data=*
+  ==
+::
++$  wheat  (unit *)
+::
++$  grain
   $:  =id
-      holder=id
       lord=id
       town-id=@ud
-      data=*
-      holds=(set id)
+      germ=(each rice wheat)
   ==
-::
-+$  wheat
-  $~  [0x0 0x0 ~]
-  $:  =id
-      lord=id
-      contract=(unit *)
-  ==
-::
-+$  grain     (each rice wheat)
 ::+$  granary   (map id grain)
 +$  granary   (pair (map id grain) (map id @ud))    ::  replace with +merk
 +$  town      (map @ud granary)  ::  "helix"
@@ -1125,7 +1122,7 @@
     *contract-output
   ::
   ++  event
-    |~  contract-input
+    |~  contract-result
     *contract-output
   --
 ::
@@ -1153,8 +1150,16 @@
 ::
 +$  contract-input
   $:  =caller
-      rice=(map id rice)
       args=(unit noun)
+      rice=contract-input-rice
+  ==
+::
++$  contract-input-rice
+  %+  map  id
+  $:  =id
+      lord=id
+      town-id=@ud
+      germ=[%& rice]
   ==
 ::
 +$  contract-output

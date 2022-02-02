@@ -61,49 +61,9 @@
     ::?:  (gth budget.call u.bal)
     ::  ::  account lacks zigs to spend on gas
     ::  [0 granary]
-    ::  run +exec on call and validate results
-    =+  [res leftover]=(exec call granary)
-    =/  fee=@ud  (sub budget.call leftover)
-    ::  if no mutations from call, finish
-    ?~  res  [fee granary]
-    =/  red=contract-result:tiny  u.res
-    ?:  ?=(%read -.red)
-      ::  %read result, no mods to granary
-      [fee granary]
-    ::  otherwise go through changed & issued and perform validation
-    ?.  (check-changed changed.red id.from.call)
-      [fee granary]
-    ?.  (check-issued issued.red)
-      [fee granary]
-    ::  valid, now
-    :+  fee
-        ::  add mutated and issued to granary
-        ::  key collisions: issued overwrites changed which overwrites original
-        ::  validation *should* ensure no issued have collisions with existing
-      %-  ~(uni by p.granary)
-      (~(uni by changed.red) issued.red)
-    ::  update nonce of caller
-    (~(put by q.granary) id.from.call nonce.from.call)
-  ::
-  ++  check-changed
-    |=  [changed=(map id grain:tiny) claimed-lord=id]
-    ^-  ?
-    %-  ~(all in changed)
-    |=  [=id grain=grain:tiny]
-    ^-  ?
-    ?.  =(id id.p.grain)                    %.n
-    ?~  old-grain=(~(get by p.granary) id)  %.n
-    ?.  ?=(%& -.u.old-grain)                %.n
-    ?.  =(lord.p.u.old-grain claimed-lord)  %.n
-    %.y
-  ::
-  ++  check-issued
-    |=  issued=(map id grain:tiny)
-    ^-  ?
-    ::  probably need further validation of lord here for rice
-    %+  levy
-      ~(tap in ~(key by issued))
-    |=(=id !(~(has by p.granary) id))
+    =+  [gan rem]=(~(work farm granary) call)
+    =/  fee=@ud   (sub budget.call rem)
+    [fee ?~(gan granary u.gan)]
   --
 ::
 ::  +farm: execute a call to a contract within a wheat
@@ -114,19 +74,46 @@
   ++  work
     |=  =call:tiny
     ^-  [(unit ^granary) @ud]
-    (harvest (plant call))
+    =/  pan  (plant call)
+    (harvest -:pan +:pan to.call from.call)
   ::
   ++  plant
     |=  =call:tiny
     ^-  [(unit contract-result:tiny) @ud]
+    |^
     =/  args  (call-args-to-contract args.call %.n)
-    ?~  cont=(find-contract to.call)  (harvest budget.call ~)
-    (grow u.cont to.call args budget.call)
+    ?~  con=(find-contract to.call)  `budget.call
+    (grow u.con args call)
+    ::
+    ++  find-contract
+      |=  find=id
+      ^-  (unit contract=contract:tiny)
+      ?~  gra=(~(get by p.granary) find)  ~
+      ?.  ?=(%| -.germ.u.gra)  ~
+      ?~  p.germ.u.gra  ~
+      `!<(contract:tiny [-:!>(*contract:tiny) u.p.germ.u.gra])
+    ::
+    ++  call-args-to-contract
+      |=  [arg=call-args:tiny is-event=?]
+      ^-  contract-args:tiny
+      =*  inp  +.arg
+      :-  -.arg
+      :+  caller.inp
+        args.inp
+      %-  ~(gas by *contract-input-rice:tiny)
+      %+  murn
+        ~(tap in rice.inp)
+      |=  =id
+      ?~  res=(~(get by p.granary) id)  ~
+      ?.  ?=(%& -.germ.u.res)  ~
+      `[id u.res]
+    --
   ::
   ++  grow
-    |=  [cont=contract:tiny to=@ux args=contract-args:tiny budget=@ud]
+    |=  [cont=contract:tiny args=contract-args:tiny =call:tiny]
     ^-  [(unit contract-result:tiny) @ud]
-    =+  [res bud]=(blue cont args ~ budget)
+    |^
+    =+  [res bud]=(blue cont args ~ budget.call)
     ?~  res             [~ bud]
     ?:  ?=(%| -.u.res)  [~ bud]
     ?:  ?=(%result -.p.u.res)
@@ -139,12 +126,11 @@
     =*  next  next.p.p.u.res
     =*  mem  mem.p.p.u.res
     =^  pan  bud
-      (plant call(from to, to to.next, budget bud, args args.next))
+      (plant call(from to.call, to to.next, budget bud, args args.next))
     ?~  pan  [~ bud]
     =^  gan  bud
-      (harvest `u.pan bud)
+      (harvest `u.pan bud to.call from.call)
     ?~  gan  [~ bud]
-    =.  granary  u.gan
     =^  eve  bud
       (blue cont [%event u.pan] mem bud)
     ?~  eve             [~ bud]
@@ -159,55 +145,53 @@
       next.p.p.u.res  next.p.p.u.eve
       mem.p.p.u.res   mem.p.p.u.eve
     ==
+    ::
+    ::  +blue: run contract formula with arguments and memory, bounded by bud
+    ::
+    ++  blue
+      |=  [=contract:tiny args=contract-args:tiny mem=(unit vase) bud=@ud]
+      ^-  [(unit (each contract-output:tiny (list tank))) @ud]
+      %+  bull
+        ?-    -.args
+            %read
+          |.(;;(contract-output:tiny (~(read contract mem) +.args)))
+            %write
+          |.(;;(contract-output:tiny (~(write contract mem) +.args)))
+            %event
+          |.(;;(contract-output:tiny (~(event contract mem) +.args)))
+        ==
+      bud
+    --
   ::
   ++  harvest
-    |=  [res=(unit contract:result) bud=@ud]
+    |=  [res=(unit contract-result:tiny) bud=@ud lord=id from=caller:tiny]
     ^-  [(unit ^granary) @ud]
     ::  apply results to granary
     :_  bud
     ?~  res  ~
-    ?:  ?=(%read -.u.res)
+    ?:  ?=(%read -.u.res)  `granary
+    ?.  %-  ~(all by changed.u.res)
+        |=  =grain:tiny
+        (~(has by p.granary) id.grain)
       `granary
-    ::  TODO: validate and apply results to granary
-    `granary
-  ::
-  ::  +blue: run contract formula with arguments and memory, bounded by bud
-  ::
-  ++  blue
-    |=  [=contract:tiny args=contract-args:tiny mem=(unit vase) bud=@ud]
-    ^-  [(unit (each contract-output:tiny (list tank))) @ud]
-    %+  bull
-      ?-    -.args
-          %read
-        |.(;;(contract-output:tiny (~(read contract mem) +.args)))
-          %write
-        |.(;;(contract-output:tiny (~(write contract mem) +.args)))
-          %event
-        |.(;;(contract-output:tiny (~(event contract mem) +.args)))
-      ==
-    bud
-  ::
-  ++  find-contract
-    |=  find=id
-    ^-  (unit contract:tiny)
-    ?~  found=(~(get by p.granary) find)  ~
-    ?.  ?=(%| -.u.found)  ~
-    ?~  contract.p.u.found  ~
-    `!<(contract:tiny [-:!>(*contract:tiny) u.contract.p.u.found])
-  ::
-  ++  call-args-to-contract
-    |=  [arg=call-args:tiny is-event=?]
-    ^-  contract-args:tiny
-    =*  inp  +.arg
-    :-  ?:  is-event  %event  -.arg
-    :+  caller.inp
-      %-  ~(gas by *(map id rice:tiny))
-      %+  murn
-        ~(tap in rice.inp)
-      |=  =id
-      ?~  res=(~(get by p.granary) id)  ~
-      ?.  ?=(%& -.u.res)  ~
-      `[id p.u.res]
-    args.inp
+    ?.  %-  ~(all by issued.u.res)
+        |=  =grain:tiny
+        !(~(has by p.granary) id.grain)
+      `granary
+    ?.  %-  ~(all by changed.u.res)
+        |=  =grain:tiny
+        !(~(has by issued.u.res) id.grain)
+      `granary
+    ?.  %-  ~(all in changed.u.res)
+        |=  [=id =grain:tiny]
+        ^-  ?
+        ?.  =(id id.grain)  %.n
+        =/  old  (~(got by p.granary) id)
+        =(lord.old lord)
+      `granary
+    :+    ~
+      (~(uni by p.granary) (~(uni by changed.u.res) issued.u.res))
+    ?@  from  q.granary
+    (~(put by q.granary) id.from nonce.from)
   --
 --
