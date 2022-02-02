@@ -1,4 +1,3 @@
-/-  *mill
 /+  *bink, tiny
 |_  [validator-id=@ux =land:tiny now=time]
 ::
@@ -72,12 +71,12 @@
     |=  =call:tiny
     ^-  [(unit contract-result:tiny) @ud]
     |^
-    =/  args  (call-args-to-contract args.call %.n)
+    =/  args  (call-args-to-contract args.call)
     ?~  con=(find-contract to.call)  `budget.call
     (grow u.con args call)
     ::
     ++  find-contract
-      |=  find=id
+      |=  find=id:tiny
       ^-  (unit contract=contract:tiny)
       ?~  gra=(~(get by granary) find)  ~
       ?.  ?=(%| -.germ.u.gra)  ~
@@ -85,7 +84,7 @@
       `!<(contract:tiny [-:!>(*contract:tiny) u.p.germ.u.gra])
     ::
     ++  call-args-to-contract
-      |=  [arg=call-args:tiny is-event=?]
+      |=  arg=call-args:tiny
       ^-  contract-args:tiny
       =*  inp  +.arg
       :-  -.arg
@@ -94,7 +93,7 @@
       %-  ~(gas by *contract-input-rice:tiny)
       %+  murn
         ~(tap in rice.inp)
-      |=  =id
+      |=  =id:tiny
       ?~  res=(~(get by granary) id)  ~
       ?.  ?=(%& -.germ.u.res)  ~
       `[id u.res]
@@ -122,7 +121,7 @@
     =^  gan  bud
       (harvest `u.pan bud to.call from.call)
     ?~  gan  [~ bud]
-    =.  granary  gan
+    =.  granary  u.gan
     =^  eve  bud
       (blue cont [%event u.pan] mem bud)
     ?~  eve             [~ bud]
@@ -156,7 +155,7 @@
     --
   ::
   ++  harvest
-    |=  [res=(unit contract-result:tiny) bud=@ud lord=id from=caller:tiny]
+    |=  [res=(unit contract-result:tiny) bud=@ud lord=id:tiny from=caller:tiny]
     ^-  [(unit granary:tiny) @ud]
     ::  apply results to granary
     :_  bud
@@ -175,7 +174,7 @@
         !(~(has by issued.u.res) id.grain)
       `granary
     ?.  %-  ~(all in changed.u.res)
-        |=  [=id =grain:tiny]
+        |=  [=id:tiny =grain:tiny]
         ^-  ?
         ?.  =(id id.grain)  %.n
         =/  old  (~(got by granary) id)
