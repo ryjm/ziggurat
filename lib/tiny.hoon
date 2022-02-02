@@ -1105,10 +1105,10 @@
       town-id=@ud
       germ=(each rice wheat)
   ==
-::+$  granary   (map id grain)
-+$  granary   (pair (map id grain) (map id @ud))    ::  replace with +merk
-+$  town      (map @ud granary)  ::  "helix"
-::  +$  land  (map @ud town)
+::
++$  granary  (map id grain)    ::  replace with +merk
++$  town     (pair granary (map id @ud))
++$  land     (map @ud town)
 ::
 +$  contract
   $_  ^|
@@ -1172,6 +1172,5 @@
       [%write changed=(map id grain) issued=(map id grain)]
   ==
 ::
-+$  continuation
-  [mem=(unit vase) next=[to=id town-id=@ud args=call-args]]
++$  continuation  [mem=(unit vase) next=[to=id town-id=@ud args=call-args]]
 --

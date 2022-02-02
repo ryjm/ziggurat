@@ -1,58 +1,58 @@
 /-  *mill
 /+  *bink, tiny
-|_  [validator-id=@ux =town now=time]
+|_  [validator-id=@ux =land:tiny now=time]
 ::
 ::  +mill-all: mills all calls in mempool
 ::
 ++  mill-all
-  |=  [helix-id=@ud =granary mempool=(list call:tiny)]
+  |=  [helix-id=@ud =town:tiny mempool=(list call:tiny)]
   =/  pending
     %+  sort  mempool
     |=  [a=call:tiny b=call:tiny]
     (gth rate.a rate.b)
   =|  result=(list [@ux call:tiny])
           ::  'chunk' def
-  |-  ^-  [(list [@ux call:tiny]) ^granary]
+  |-  ^-  [(list [@ux call:tiny]) town:tiny]
   ?~  pending
-    [result granary]
+    [result town]
   %_  $
     pending  t.pending
     result   [[`@ux`(shax (jam i.pending)) i.pending] result]
-    granary  (mill helix-id granary i.pending)
+    town  (mill helix-id town i.pending)
   ==
 ::  +mill: processes a single call and returns updated granary
 ::
 ++  mill
-  |=  [town-id=@ud =granary =call:tiny]
-  ^-  ^granary
+  |=  [town-id=@ud =town:tiny =call:tiny]
+  ^-  town:tiny
   |^
-  =^  fee  granary
+  =^  fee  town
     main
   (take-fee from.call fee)
   ::
   ++  take-fee
     |=  [=caller:tiny fee=@ud]
-    ^-  ^granary
+    ^-  town:tiny
     =/  caller-id
       ?:  ?=(@ux caller)  caller  id.caller
     =/  fee-args
       ^-  call-args:tiny
       [%write validator-id (silt ~[zigs-rice-id:tiny]) [~ %fee caller-id fee]]
     ::  TODO: call 'fee' event with fee-args in zigs contract here
-    granary
+    town
   ::
   ++  main
-    ^-  [@ud ^granary]
+    ^-  [@ud town:tiny]
     ::  a caller to main *must* have a nonce
     ::  only contract callbacks in +exec are sole IDs
-    ?.  ?=(user:tiny from.call)  [0 granary]
-    ?~  curr-nonce=(~(get by q.granary) id.from.call)
-      [0 granary]  ::  missing user
+    ?.  ?=(user:tiny from.call)  [0 town]
+    ?~  curr-nonce=(~(get by q.town) id.from.call)
+      [0 town]  ::  missing user
     ?.  =(nonce.from.call +(u.curr-nonce))
-      [0 granary]  ::  bad nonce
+      [0 town]  ::  bad nonce
     ::  confirm that from account actually has the amount
     ::  specified in "budget"
-    =/  zigs  (~(got by p.granary) zigs-rice-id)
+    =/  zigs  (~(got by p.town) zigs-rice-id)
     ?.  ?=(%& -.zigs)  !!
     ::=/  data  ;;(zigs-token-data data.p.zigs)
     ::  ?~  bal=(~(get by balances.data) id.from.call)
@@ -61,19 +61,21 @@
     ::?:  (gth budget.call u.bal)
     ::  ::  account lacks zigs to spend on gas
     ::  [0 granary]
-    =+  [gan rem]=(~(work farm granary) call)
+    =+  [gan rem]=(~(work farm p.town) call)
     =/  fee=@ud   (sub budget.call rem)
-    [fee ?~(gan granary u.gan)]
+    :+  fee
+      ?~(gan p.town u.gan)
+    (~(put by q.town) id.from.call nonce.from.call)
   --
 ::
 ::  +farm: execute a call to a contract within a wheat
 ::
 ++  farm
-  |_  =granary
+  |_  =granary:tiny
   ::
   ++  work
     |=  =call:tiny
-    ^-  [(unit ^granary) @ud]
+    ^-  [(unit granary:tiny) @ud]
     =/  pan  (plant call)
     (harvest -:pan +:pan to.call from.call)
   ::
@@ -88,7 +90,7 @@
     ++  find-contract
       |=  find=id
       ^-  (unit contract=contract:tiny)
-      ?~  gra=(~(get by p.granary) find)  ~
+      ?~  gra=(~(get by granary) find)  ~
       ?.  ?=(%| -.germ.u.gra)  ~
       ?~  p.germ.u.gra  ~
       `!<(contract:tiny [-:!>(*contract:tiny) u.p.germ.u.gra])
@@ -104,7 +106,7 @@
       %+  murn
         ~(tap in rice.inp)
       |=  =id
-      ?~  res=(~(get by p.granary) id)  ~
+      ?~  res=(~(get by granary) id)  ~
       ?.  ?=(%& -.germ.u.res)  ~
       `[id u.res]
     --
@@ -165,18 +167,18 @@
   ::
   ++  harvest
     |=  [res=(unit contract-result:tiny) bud=@ud lord=id from=caller:tiny]
-    ^-  [(unit ^granary) @ud]
+    ^-  [(unit granary:tiny) @ud]
     ::  apply results to granary
     :_  bud
     ?~  res  ~
     ?:  ?=(%read -.u.res)  `granary
     ?.  %-  ~(all by changed.u.res)
         |=  =grain:tiny
-        (~(has by p.granary) id.grain)
+        (~(has by granary) id.grain)
       `granary
     ?.  %-  ~(all by issued.u.res)
         |=  =grain:tiny
-        !(~(has by p.granary) id.grain)
+        !(~(has by granary) id.grain)
       `granary
     ?.  %-  ~(all by changed.u.res)
         |=  =grain:tiny
@@ -186,12 +188,9 @@
         |=  [=id =grain:tiny]
         ^-  ?
         ?.  =(id id.grain)  %.n
-        =/  old  (~(got by p.granary) id)
+        =/  old  (~(got by granary) id)
         =(lord.old lord)
       `granary
-    :+    ~
-      (~(uni by p.granary) (~(uni by changed.u.res) issued.u.res))
-    ?@  from  q.granary
-    (~(put by q.granary) id.from nonce.from)
+    `(~(uni by granary) (~(uni by changed.u.res) issued.u.res))
   --
 --
