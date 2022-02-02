@@ -133,6 +133,7 @@
     =^  gan  bud
       (harvest `u.pan bud to.call from.call)
     ?~  gan  [~ bud]
+    =.  granary  gan
     =^  eve  bud
       (blue cont [%event u.pan] mem bud)
     ?~  eve             [~ bud]
