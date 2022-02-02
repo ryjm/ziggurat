@@ -1147,7 +1147,9 @@
   ==
 ::
 +$  contract-args
-  [?(%read %write %event) contract-input]
+  $%  [?(%read %write) contract-input]
+      [%event contract-result]
+  ==
 ::
 +$  contract-input
   $:  =caller
@@ -1166,5 +1168,5 @@
   ==
 ::
 +$  continuation
-  [mem=(unit vase) next=(list [to=id town-id=@ud args=call-args])]
+  [mem=(unit vase) next=[to=id town-id=@ud args=call-args]]
 --
