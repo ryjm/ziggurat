@@ -157,29 +157,34 @@
   ++  harvest
     |=  [res=(unit contract-result:tiny) bud=@ud lord=id:tiny from=caller:tiny]
     ^-  [(unit granary:tiny) @ud]
-    ::  apply results to granary
     :_  bud
     ?~  res  ~
     ?:  ?=(%read -.u.res)  `granary
-    ?.  %-  ~(all by changed.u.res)
-        |=  =grain:tiny
-        (~(has by granary) id.grain)
-      `granary
-    ?.  %-  ~(all by issued.u.res)
-        |=  =grain:tiny
-        !(~(has by granary) id.grain)
-      `granary
-    ?.  %-  ~(all by changed.u.res)
-        |=  =grain:tiny
-        !(~(has by issued.u.res) id.grain)
-      `granary
-    ?.  %-  ~(all in changed.u.res)
-        |=  [=id:tiny =grain:tiny]
-        ^-  ?
-        ?.  =(id id.grain)  %.n
-        =/  old  (~(got by granary) id)
-        =(lord.old lord)
-      `granary
+    ?.  ?|
+          ::  all changed grains must already exist
+            %-  ~(all by changed.u.res)
+            |=  =grain:tiny
+            (~(has by granary) id.grain)
+          ::
+          ::  all newly issued grains must not already exist
+            %-  ~(all by issued.u.res)
+            |=  =grain:tiny
+            !(~(has by granary) id.grain)
+          ::
+          ::  no changed grains may also have been issued at same time
+            %-  ~(all by changed.u.res)
+            |=  =grain:tiny
+            !(~(has by issued.u.res) id.grain)
+          ::
+          ::  only grains that proclaim us lord may be changed
+            %-  ~(all in changed.u.res)
+            |=  [=id:tiny =grain:tiny]
+            ^-  ?
+            ?.  =(id id.grain)  %.n
+            =/  old  (~(got by granary) id)
+            =(lord.old lord)
+        ==
+      ~
     `(~(uni by granary) (~(uni by changed.u.res) issued.u.res))
   --
 --
