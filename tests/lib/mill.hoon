@@ -13,7 +13,8 @@
 |%
 ++  user-balances
   ^-  (map id @ud)
-  %-  ~(gas by *(map id @ud))
+  %-  ~(gas ^by *(map id @ud))
+  :: %-  ~(gas by *(map id @ud))
   :~  [0xaa 1.000]
       [0xbb 1.000]
       [0xcc 500]
@@ -23,7 +24,8 @@
   ==
 ++  user-allowances
   ^-  (map [owner=id sender=id] @ud)
-  %-  ~(gas by *(map [owner=id sender=id] @ud))
+  %-  ~(gas ^by *(map [owner=id sender=id] @ud))
+  :: %-  ~(gas by *(map [owner=id sender=id] @ud))
   :~  [[0xaa 0xbb] 100]
       [[0xee 0xff] 100]
   ==
@@ -57,7 +59,8 @@
     :~  [zigs-wheat-id %| zigs-wheat]
         [zigs-rice-id %& zigs-rice]
     ==
-  :-  (~(gas by *(map id grain)) grains)
+  :-  (~(gas ^by *(map id grain)) grains)
+  :: :-  (~(gas by *(map id grain)) grains)
   (malt ~[[0xaa 0] [0xbb 0] [0xcc 0]])
 ++  test-mill-basic-give
   =/  write
