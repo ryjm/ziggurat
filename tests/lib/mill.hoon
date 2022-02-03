@@ -11,6 +11,8 @@
 /+  *test, *zig-mill, *tiny, *zig-contracts-zigs
 |%
 ++  user-balances
+  ^-  (map id @ud)
+  %-  ~(gas by *(map id @ud))
   :~  [0xaa 1.000]
       [0xbb 1.000]
       [0xcc 500]
@@ -19,13 +21,16 @@
       [0xff 10]
   ==
 ++  user-allowances
+  ^-  (map [owner=id sender=id] @ud)
+  %-  ~(gas by *(map [owner=id sender=id] @ud))
   :~  [[0xaa 0xbb] 100]
       [[0xee 0xff] 100]
   ==
 ++  zigs-rice-data
+  ^-  token-data
   :*  total=3.500
-      balances=(~(gas by *(map id @ud)) user-balances)
-      allowances=(~(gas by *(map [owner=id sender=id] @ud)) user-allowances)
+      balances=user-balances
+      allowances=user-allowances
       coinbase-rate=50  ::  # of tokens granted in +coinbase
   ==
 ++  zigs-rice
@@ -42,6 +47,7 @@
   :-  zigs-wheat-id
   `(ream .^(@t %cx /(scot %p ~zod)/zig/(scot %da now)/lib/zig/contracts/zigs/hoon))
 ++  fake-town
+  ^-  town
   (~(gas by *(map @ud granary)) ~[[0 fake-granary]])
 ++  fake-granary
   ^-  granary
