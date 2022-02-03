@@ -33,7 +33,7 @@
     town  ::  can't afford gas
   =+  [gan rem]=(~(work farm p.town) call)
   =/  fee=@ud   (sub budget.call rem)
-  :-  ?~  gan  p.town
+  :-  ?~  gan  (~(pay tax p.town) id.from.call fee)
       (~(pay tax u.gan) id.from.call fee)
   (~(put by q.town) id.from.call nonce.from.call)
 ::
@@ -87,7 +87,7 @@
   ++  work
     |=  =call:tiny
     ^-  [(unit granary:tiny) @ud]
-    =/  crop  (plant call)
+    =/  crop  (plant call(budget (div budget.call rate.call)))
     :_  +.crop
     ?~  -.crop  ~
     (harvest u.-.crop to.call from.call)
@@ -128,7 +128,7 @@
     |=  [cont=contract:tiny args=contract-args:tiny =call:tiny]
     ^-  [(unit contract-result:tiny) @ud]
     |^
-    =+  [bran rem]=(weed cont args ~ budget.call)
+    =+  [bran rem]=(weed cont to.call args ~ budget.call)
     ?:  ?=(%& -.bran)
       p.bran^rem
     |-
@@ -141,7 +141,7 @@
     ?~  gan  `rem
     =.  granary  u.gan
     =^  eve  rem
-      (weed cont [%event u.crop] mem rem)
+      (weed cont to.call [%event u.crop] mem rem)
     ?:  ?=(%& -.eve)
       p.eve^rem
     %_  $
@@ -150,9 +150,9 @@
     ==
     ::
     ++  weed
-      |=  [cont=contract:tiny args=contract-args:tiny mem=(unit vase) budget=@ud]
+      |=  [cont=contract:tiny to=id:tiny args=contract-args:tiny mem=(unit vase) budget=@ud]
       ^-  [(each (unit contract-result:tiny) continuation:tiny) @ud]
-      =+  [res bud]=(barn cont args ~ budget)
+      =+  [res bud]=(barn cont to args ~ budget)
       ?~  res             [%& ~]^bud
       ?:  ?=(%| -.u.res)  [%& ~]^bud
       ?:  ?=(%result -.p.u.res)
@@ -166,13 +166,13 @@
     ::  +barn: run contract formula with arguments and memory, bounded by bud
     ::
     ++  barn
-      |=  [=contract:tiny args=contract-args:tiny mem=(unit vase) bud=@ud]
+      |=  [=contract:tiny to=id:tiny args=contract-args:tiny mem=(unit vase) bud=@ud]
       ^-  [(unit (each contract-output:tiny (list tank))) @ud]
       %+  bull
         ?-  -.args
-          %read   |.(;;(contract-output:tiny (~(read contract mem) +.args)))
-          %write  |.(;;(contract-output:tiny (~(write contract mem) +.args)))
-          %event  |.(;;(contract-output:tiny (~(event contract mem) +.args)))
+          %read   |.(;;(contract-output:tiny (~(read contract mem to) +.args)))
+          %write  |.(;;(contract-output:tiny (~(write contract mem to) +.args)))
+          %event  |.(;;(contract-output:tiny (~(event contract mem to) +.args)))
         ==
       bud
     --
@@ -201,6 +201,7 @@
         ::  all newly issued grains must not already exist
         ?&  =(id id.grain)
             !(~(has by granary) id.grain)
+            =(lord lord.grain)
     ==  ==
   --
 --

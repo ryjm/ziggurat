@@ -1113,7 +1113,7 @@
 ::
 +$  contract
   $_  ^|
-  |_  mem=(unit vase)
+  |_  [mem=(unit vase) me=id]
   ++  write
     |~  contract-input
     *contract-output
