@@ -25,7 +25,7 @@
 ::
 ++  zigs-contract
   ^-  contract
-  |_  mem=(unit vase)
+  |_  [mem=(unit vase) me=id]
   ++  write
     |=  inp=contract-input
     ^-  contract-output
@@ -45,7 +45,7 @@
         ?.  ?=([=id amount=@ud bud=@ud] args)  data
         ::  check our balance to make sure we can afford spend + fee
         ?~  curr-bal=(~(get by balances.data) id.args)  data
-        ?.  (gth amount.args (add bud.args u.curr-bal))  data
+        ?:  (lth amount.args (add bud.args u.curr-bal))  data
         ::  add to receiver balance, subtract from ours
         =.  balances.data
           ::  this pattern [52:60] could be a good stdlib function
