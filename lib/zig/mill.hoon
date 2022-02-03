@@ -88,7 +88,7 @@
     |=  =call:tiny
     ^-  [(unit granary:tiny) @ud]
     =/  pan  (plant call)
-    (harvest -:pan +:pan to.call from.call)
+    [(harvest -.pan to.call from.call) +.pan]
   ::
   ++  plant
     |=  =call:tiny
@@ -107,8 +107,7 @@
       :+  caller.inp
         args.inp
       %-  ~(gas by *contract-input-rice:tiny)
-      %+  murn
-        ~(tap in rice.inp)
+      %+  murn  ~(tap in rice.inp)
       |=  =id:tiny
       ?~  res=(~(get by granary) id)  ~
       ?.  ?=(%& -.germ.u.res)  ~
@@ -136,8 +135,7 @@
     =^  pan  rem
       (plant call(from to.call, to to.next, budget rem, args args.next))
     ?~  pan  `rem
-    =^  gan  rem
-      (harvest `u.pan rem to.call from.call)
+    =/  gan  (harvest `u.pan to.call from.call)
     ?~  gan  `rem
     =.  granary  u.gan
     =^  eve  rem
@@ -169,21 +167,17 @@
       |=  [=contract:tiny args=contract-args:tiny mem=(unit vase) bud=@ud]
       ^-  [(unit (each contract-output:tiny (list tank))) @ud]
       %+  bull
-        ?-    -.args
-            %read
-          |.(;;(contract-output:tiny (~(read contract mem) +.args)))
-            %write
-          |.(;;(contract-output:tiny (~(write contract mem) +.args)))
-            %event
-          |.(;;(contract-output:tiny (~(event contract mem) +.args)))
+        ?-  -.args
+          %read   |.(;;(contract-output:tiny (~(read contract mem) +.args)))
+          %write  |.(;;(contract-output:tiny (~(write contract mem) +.args)))
+          %event  |.(;;(contract-output:tiny (~(event contract mem) +.args)))
         ==
       bud
     --
   ::
   ++  harvest
-    |=  [res=(unit contract-result:tiny) bud=@ud lord=id:tiny from=caller:tiny]
-    ^-  [(unit granary:tiny) @ud]
-    :_  bud
+    |=  [res=(unit contract-result:tiny) lord=id:tiny from=caller:tiny]
+    ^-  (unit granary:tiny)
     ?~  res  ~
     ?:  ?=(%read -.u.res)  `granary
     ?.  ?|
