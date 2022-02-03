@@ -94,19 +94,12 @@
     |=  =call:tiny
     ^-  [(unit contract-result:tiny) @ud]
     |^
-    =/  args  (call-args-to-contract args.call)
-    ?~  con=(find-contract to.call)  `budget.call
+    =/  args  (fertilize args.call)
+    ?~  con=(germinate to.call)
+      `budget.call
     (grow u.con args call)
     ::
-    ++  find-contract
-      |=  find=id:tiny
-      ^-  (unit contract:tiny)
-      ?~  gra=(~(get by granary) find)  ~
-      ?.  ?=(%| -.germ.u.gra)  ~
-      ?~  p.germ.u.gra  ~
-      `!<(contract:tiny [-:!>(*contract:tiny) u.p.germ.u.gra])
-    ::
-    ++  call-args-to-contract
+    ++  fertilize
       |=  arg=call-args:tiny
       ^-  contract-args:tiny
       =*  inp  +.arg
@@ -120,45 +113,55 @@
       ?~  res=(~(get by granary) id)  ~
       ?.  ?=(%& -.germ.u.res)  ~
       `[id u.res]
+    ::
+    ++  germinate
+      |=  find=id:tiny
+      ^-  (unit contract:tiny)
+      ?~  gra=(~(get by granary) find)  ~
+      ?.  ?=(%| -.germ.u.gra)  ~
+      ?~  p.germ.u.gra  ~
+      `!<(contract:tiny [-:!>(*contract:tiny) u.p.germ.u.gra])
     --
   ::
   ++  grow
     |=  [cont=contract:tiny args=contract-args:tiny =call:tiny]
     ^-  [(unit contract-result:tiny) @ud]
     |^
-    =+  [res bud]=(barn cont args ~ budget.call)
-    ?~  res             [~ bud]
-    ?:  ?=(%| -.u.res)  [~ bud]
-    ?:  ?=(%result -.p.u.res)
-      ?.  ?|  &(?=(%read -.p.p.u.res) ?=(%read -.args))
-              &(?=(%write -.p.p.u.res) ?=(%write -.args))
-          ==
-        [~ bud]
-      [`p.p.u.res bud]
+    =+  [bran rem]=(weed cont args ~ budget.call)
+    ?:  ?=(%& -.bran)
+      p.bran^rem
     |-
-    =*  next  next.p.p.u.res
-    =*  mem  mem.p.p.u.res
-    =^  pan  bud
-      (plant call(from to.call, to to.next, budget bud, args args.next))
-    ?~  pan  [~ bud]
-    =^  gan  bud
-      (harvest `u.pan bud to.call from.call)
-    ?~  gan  [~ bud]
+    =*  next  next.p.bran
+    =*  mem   mem.p.bran
+    =^  pan  rem
+      (plant call(from to.call, to to.next, budget rem, args args.next))
+    ?~  pan  `rem
+    =^  gan  rem
+      (harvest `u.pan rem to.call from.call)
+    ?~  gan  `rem
     =.  granary  u.gan
-    =^  eve  bud
-      (barn cont [%event u.pan] mem bud)
-    ?~  eve             [~ bud]
-    ?:  ?=(%| -.u.eve)  [~ bud]
-    ?:  ?=(%result -.p.u.eve)
-      ?.  ?|  &(?=(%read -.p.p.u.eve) ?=(%read -.args.next))
-              &(?=(%write -.p.p.u.eve) ?=(%write -.args.next))
-          ==
-        [~ bud]
-      [`p.p.u.eve bud]
+    =^  eve  rem
+      (weed cont [%event u.pan] mem rem)
+    ?:  ?=(%& -.eve)
+      p.eve^rem
     %_  $
-      next.p.p.u.res  next.p.p.u.eve
-      mem.p.p.u.res   mem.p.p.u.eve
+      next.p.bran  next.p.eve
+      mem.p.bran   mem.p.eve
     ==
+    ::
+    ++  weed
+      |=  [cont=contract:tiny args=contract-args:tiny mem=(unit vase) budget=@ud]
+      ^-  [(each (unit contract-result:tiny) continuation:tiny) @ud]
+      =+  [res bud]=(barn cont args ~ budget)
+      ?~  res             [%& ~]^bud
+      ?:  ?=(%| -.u.res)  [%& ~]^bud
+      ?:  ?=(%result -.p.u.res)
+        ?.  ?|  &(?=(%read -.p.p.u.res) ?=(%read -.args))
+                &(?=(%write -.p.p.u.res) ?=(%write -.args))
+            ==
+          [%& ~]^bud
+        [%& `p.p.u.res]^bud
+      [%| p.p.u.res]^bud
     ::
     ::  +barn: run contract formula with arguments and memory, bounded by bud
     ::
