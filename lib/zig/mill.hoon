@@ -88,7 +88,9 @@
     |=  =call:tiny
     ^-  [(unit granary:tiny) @ud]
     =/  pan  (plant call)
-    [(harvest -.pan to.call from.call) +.pan]
+    :_  +.pan
+    ?~  -.pan  ~
+    (harvest u.-.pan to.call from.call)
   ::
   ++  plant
     |=  =call:tiny
@@ -135,7 +137,7 @@
     =^  pan  rem
       (plant call(from to.call, to to.next, budget rem, args args.next))
     ?~  pan  `rem
-    =/  gan  (harvest `u.pan to.call from.call)
+    =/  gan  (harvest u.pan to.call from.call)
     ?~  gan  `rem
     =.  granary  u.gan
     =^  eve  rem
@@ -176,35 +178,29 @@
     --
   ::
   ++  harvest
-    |=  [res=(unit contract-result:tiny) lord=id:tiny from=caller:tiny]
+    |=  [res=contract-result:tiny lord=id:tiny from=caller:tiny]
     ^-  (unit granary:tiny)
-    ?~  res  ~
-    ?:  ?=(%read -.u.res)  `granary
-    ?.  ?|
-          ::  all changed grains must already exist
-            %-  ~(all by changed.u.res)
-            |=  =grain:tiny
+    ?:  ?=(%read -.res)  `granary
+    =-  ?.  -  ~
+        `(~(uni by granary) (~(uni by changed.res) issued.res))
+    ?&  %-  ~(all in changed.res)
+        |=  [=id:tiny =grain:tiny]
+        ::  id in changed map must be equal to id in grain AND
+        ::  all changed grains must already exist AND
+        ::  no changed grains may also have been issued at same time AND
+        ::  only grains that proclaim us lord may be changed
+        ?&  =(id id.grain)
             (~(has by granary) id.grain)
-          ::
-          ::  all newly issued grains must not already exist
-            %-  ~(all by issued.u.res)
-            |=  =grain:tiny
-            !(~(has by granary) id.grain)
-          ::
-          ::  no changed grains may also have been issued at same time
-            %-  ~(all by changed.u.res)
-            |=  =grain:tiny
-            !(~(has by issued.u.res) id.grain)
-          ::
-          ::  only grains that proclaim us lord may be changed
-            %-  ~(all in changed.u.res)
-            |=  [=id:tiny =grain:tiny]
-            ^-  ?
-            ?.  =(id id.grain)  %.n
-            =/  old  (~(got by granary) id)
-            =(lord.old lord)
+            !(~(has by issued.res) id.grain)
+            =(lord lord:(~(got by granary) id))
         ==
-      ~
-    `(~(uni by granary) (~(uni by changed.u.res) issued.u.res))
+      ::
+        %-  ~(all in issued.res)
+        |=  [=id:tiny =grain:tiny]
+        ::  id in issued map must be equal to id in grain AND
+        ::  all newly issued grains must not already exist
+        ?&  =(id id.grain)
+            !(~(has by granary) id.grain)
+    ==  ==
   --
 --
