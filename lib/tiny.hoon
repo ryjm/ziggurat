@@ -1140,7 +1140,7 @@
   [?(%read %write) call-input]
 +$  call-input
   $:  =caller
-      rice=(set id)
+      rice-ids=(set id)
       args=(unit noun)
   ==
 ::

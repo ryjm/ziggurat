@@ -109,7 +109,7 @@
       :+  caller.inp
         args.inp
       %-  ~(gas by *contract-input-rice:tiny)
-      %+  murn  ~(tap in rice.inp)
+      %+  murn  ~(tap in rice-ids.inp)
       |=  =id:tiny
       ?~  res=(~(get by granary) id)  ~
       ?.  ?=(%& -.germ.u.res)  ~
