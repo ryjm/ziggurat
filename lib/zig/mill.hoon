@@ -24,36 +24,59 @@
 ++  mill
   |=  [town-id=@ud =town:tiny =call:tiny]
   ^-  town:tiny
-  |^
-  =^  fee  town
-    main
-  (take-fee from.call fee)
-  ::
-  ++  take-fee
-    |=  [=caller:tiny fee=@ud]
-    ^-  town:tiny
-    =/  caller-id
-      ?:  ?=(@ux caller)  caller  id.caller
-    =/  fee-args
-      ^-  call-args:tiny
-      [%write validator-id (silt ~[zigs-rice-id:tiny]) [~ %fee caller-id fee]]
-    ::  TODO: call 'fee' event with fee-args in zigs contract here
-    town
-  ::
-  ++  main
-    ^-  [@ud town:tiny]
-    ?.  ?=(user:tiny from.call)  [0 town]
-    ?~  curr-nonce=(~(get by q.town) id.from.call)
-      [0 town]  ::  missing user
-    ?.  =(nonce.from.call +(u.curr-nonce))
-      [0 town]  ::  bad nonce
-    ::  TODO: check if account has zigs in its balance equal to or
-    ::  greater than budget
-    =+  [gan rem]=(~(work farm p.town) call)
-    =/  fee=@ud   (sub budget.call rem)
-    :+  fee
-      ?~(gan p.town u.gan)
-    (~(put by q.town) id.from.call nonce.from.call)
+  ?.  ?=(user:tiny from.call)  town
+  ?~  curr-nonce=(~(get by q.town) id.from.call)
+    town  ::  missing user
+  ?.  =(nonce.from.call +(u.curr-nonce))
+    town  ::  bad nonce
+  ?.  (~(audit tax p.town) call)
+    town  ::  can't afford gas
+  =+  [gan rem]=(~(work farm p.town) call)
+  =/  fee=@ud   (sub budget.call rem)
+  :-  ?~  gan  p.town
+      (~(pay tax u.gan) id.from.call fee)
+  (~(put by q.town) id.from.call nonce.from.call)
+::
+::  +tax: manage payment for contract execution in zigs
+::
+++  tax
+  |_  =granary:tiny
+  +$  zigs-mold
+    $:  total=@ud
+        balances=(map id:tiny @ud)
+        allowances=(map [owner=id:tiny sender=id:tiny] @ud)
+        coinbase-rate=@ud
+    ==
+  ::  +audit: evaluate whether a caller can afford gas
+  ++  audit
+    |=  =call:tiny
+    ^-  ?
+    ?~  zigs=(~(get by granary) zigs-rice-id:tiny)  %.n
+    ?.  ?=(%& -.germ.u.zigs)                        %.n
+    =/  data  ;;(zigs-mold data.p.germ.u.zigs)
+    ?.  ?=(user:tiny from.call)                     %.n
+    ?~  bal=(~(get by balances.data) id.from.call)  %.n
+    (gth u.bal (mul rate.call budget.call))
+  ::  +pay: extract gas fee from caller's zigs balance
+  ++  pay
+    |=  [payee=id:tiny fee=@ud]
+    ^-  granary:tiny
+    ?~  zigs=(~(get by granary) zigs-rice-id:tiny)  granary
+    ?.  ?=(%& -.germ.u.zigs)                        granary
+    =/  data  ;;(zigs-mold data.p.germ.u.zigs)
+    =.  balances.data
+      %+  %~  jab  by
+          ?.  (~(has by balances.data) validator-id)
+            ::  make account if none in balances
+            (~(put by balances.data) validator-id fee)
+          ::  otherwise add to existing balance
+          %+  ~(jab by balances.data)
+            validator-id
+          |=(bal=@ud (add bal fee))
+        payee
+      |=(bal=@ud (sub bal fee))
+    =.  data.p.germ.u.zigs  data
+    (~(put by granary) zigs-rice-id:tiny u.zigs)
   --
 ::
 ::  +farm: execute a call to a contract within a wheat
