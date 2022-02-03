@@ -87,10 +87,10 @@
   ++  work
     |=  =call:tiny
     ^-  [(unit granary:tiny) @ud]
-    =/  pan  (plant call)
-    :_  +.pan
-    ?~  -.pan  ~
-    (harvest u.-.pan to.call from.call)
+    =/  crp  (plant call)
+    :_  +.crp
+    ?~  -.crp  ~
+    (harvest u.-.crp to.call from.call)
   ::
   ++  plant
     |=  =call:tiny
@@ -134,14 +134,14 @@
     |-
     =*  next  next.p.bran
     =*  mem   mem.p.bran
-    =^  pan  rem
+    =^  crp  rem
       (plant call(from to.call, to to.next, budget rem, args args.next))
-    ?~  pan  `rem
-    =/  gan  (harvest u.pan to.call from.call)
+    ?~  crp  `rem
+    =/  gan  (harvest u.crp to.call from.call)
     ?~  gan  `rem
     =.  granary  u.gan
     =^  eve  rem
-      (weed cont [%event u.pan] mem rem)
+      (weed cont [%event u.crp] mem rem)
     ?:  ?=(%& -.eve)
       p.eve^rem
     %_  $
