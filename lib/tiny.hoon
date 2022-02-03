@@ -1106,9 +1106,10 @@
       germ=(each rice wheat)
   ==
 ::
-+$  granary  (map id grain)    ::  replace with +merk
-+$  town     (pair granary (map id @ud))
-+$  land     (map @ud town)
++$  granary   (map id grain)    ::  replace with +merk
++$  populace  (map id @ud)
++$  town      (pair granary populace)
++$  land      (map @ud town)
 ::
 +$  contract
   $_  ^|

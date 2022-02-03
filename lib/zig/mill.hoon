@@ -19,7 +19,7 @@
     result   [[`@ux`(shax (jam i.pending)) i.pending] result]
     town  (mill helix-id town i.pending)
   ==
-::  +mill: processes a single call and returns updated granary
+::  +mill: processes a single call and returns updated town
 ::
 ++  mill
   |=  [town-id=@ud =town:tiny =call:tiny]
@@ -77,7 +77,7 @@
     ::
     ++  find-contract
       |=  find=id:tiny
-      ^-  (unit contract=contract:tiny)
+      ^-  (unit contract:tiny)
       ?~  gra=(~(get by granary) find)  ~
       ?.  ?=(%| -.germ.u.gra)  ~
       ?~  p.germ.u.gra  ~
@@ -103,7 +103,7 @@
     |=  [cont=contract:tiny args=contract-args:tiny =call:tiny]
     ^-  [(unit contract-result:tiny) @ud]
     |^
-    =+  [res bud]=(blue cont args ~ budget.call)
+    =+  [res bud]=(barn cont args ~ budget.call)
     ?~  res             [~ bud]
     ?:  ?=(%| -.u.res)  [~ bud]
     ?:  ?=(%result -.p.u.res)
@@ -123,7 +123,7 @@
     ?~  gan  [~ bud]
     =.  granary  u.gan
     =^  eve  bud
-      (blue cont [%event u.pan] mem bud)
+      (barn cont [%event u.pan] mem bud)
     ?~  eve             [~ bud]
     ?:  ?=(%| -.u.eve)  [~ bud]
     ?:  ?=(%result -.p.u.eve)
@@ -137,9 +137,9 @@
       mem.p.p.u.res   mem.p.p.u.eve
     ==
     ::
-    ::  +blue: run contract formula with arguments and memory, bounded by bud
+    ::  +barn: run contract formula with arguments and memory, bounded by bud
     ::
-    ++  blue
+    ++  barn
       |=  [=contract:tiny args=contract-args:tiny mem=(unit vase) bud=@ud]
       ^-  [(unit (each contract-output:tiny (list tank))) @ud]
       %+  bull
