@@ -1092,26 +1092,24 @@
 +$  signature  [r=@ux s=@ux type=?(%schnorr %ecdsa)]
 ::
 +$  rice
+  $:  holder=id
+      holds=(set id)
+      data=*
+  ==
+::
++$  wheat  (unit *)
+::
++$  grain
   $:  =id
-      holder=id
       lord=id
       town-id=@ud
-      data=*
-      holds=(set id)
+      germ=(each rice wheat)
   ==
 ::
-+$  wheat
-  $~  [0x0 0x0 ~]
-  $:  =id
-      lord=id
-      contract=(unit *)
-  ==
-::
-+$  grain     (each rice wheat)
-::+$  granary   (map id grain)
-+$  granary   (pair (map id grain) (map id @ud))    ::  replace with +merk
-+$  town      (map @ud granary)  ::  "helix"
-::  +$  land  (map @ud town)
++$  granary   (map id grain)    ::  replace with +merk
++$  populace  (map id @ud)
++$  town      (pair granary populace)
++$  land      (map @ud town)
 ::
 +$  contract
   $_  ^|
@@ -1125,7 +1123,7 @@
     *contract-output
   ::
   ++  event
-    |~  contract-input
+    |~  contract-result
     *contract-output
   --
 ::
@@ -1147,12 +1145,22 @@
   ==
 ::
 +$  contract-args
-  [?(%read %write %event) contract-input]
+  $%  [?(%read %write) contract-input]
+      [%event contract-result]
+  ==
 ::
 +$  contract-input
   $:  =caller
-      rice=(map id rice)
       args=(unit noun)
+      rice=contract-input-rice
+  ==
+::
++$  contract-input-rice
+  %+  map  id
+  $:  =id
+      lord=id
+      town-id=@ud
+      germ=[%& rice]
   ==
 ::
 +$  contract-output
@@ -1165,6 +1173,5 @@
       [%write changed=(map id grain) issued=(map id grain)]
   ==
 ::
-+$  continuation
-  [mem=(unit vase) next=(list [to=id town-id=@ud args=call-args])]
++$  continuation  [mem=(unit vase) next=[to=id town-id=@ud args=call-args]]
 --

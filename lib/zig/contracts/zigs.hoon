@@ -31,14 +31,14 @@
     ^-  contract-output
     ?~  args.inp  *contract-output
     ?~  zigs=(~(get by rice.inp) zigs-rice-id)  *contract-output
-    =/  data  ;;(token-data data.u.zigs)
+    =/  data  ;;(token-data data.germ.u.zigs)
     =/  caller-id
       ^-  id
       ?:  ?=(@ux caller.inp)
         caller.inp
       id.caller.inp
     =*  args  +.u.args.inp
-    =.  data.u.zigs
+    =.  data.germ.u.zigs
       ?+    -.u.args.inp  data
           %give
         ::  expected args: id, amount, budget
@@ -94,11 +94,8 @@
         ?.  ?=([sender=id amount=@ud] args)  data
         data(allowances (~(put by allowances.data) [caller-id sender.args] amount.args))
       ==
-    :*  %result
-        %write
-        changed=(malt ~[[zigs-rice-id [%& u.zigs]]])
-        issued=~
-    ==
+    :-  %result
+    [%write (malt ~[[zigs-rice-id u.zigs]]) ~]
   ::
   ++  read
     |=  inp=contract-input
@@ -108,7 +105,7 @@
     ?~  args.inp  ~
     ?~  zigs=(~(get by rice.inp) zigs-rice-id)  ~
     ::  check lord of zigs here, make sure its us
-    =/  data  ;;(token-data data.u.zigs)
+    =/  data  ;;(token-data data.germ.u.zigs)
     =*  args  +.u.args.inp
     ?+    -.u.args.inp  ~
         %get-balance
@@ -127,53 +124,54 @@
     ==
   ::
   ++  event
-    |=  inp=contract-input
+    |=  inp=contract-result
     ^-  contract-output
-    ?~  args.inp  *contract-output
-    ?~  zigs=(~(get by rice.inp) zigs-rice-id)  *contract-output
-    =/  data  ;;(token-data data.u.zigs)
-    =/  caller-id
-      ^-  id
-      ?:  ?=(@ux caller.inp)
-        caller.inp
-      id.caller.inp
-    =*  args  +.u.args.inp
-    ?+    -.u.args.inp  *contract-output
-        %fee
-      ::  expected args: from id, amount
-      ?.  ?=([sender=id amount=@ud] args)  *contract-output
-      =.  balances.data
-        ?.  (~(has by balances.data) caller-id)
-          ::  if receiver's account doesn't have a balance, insert
-          %+  ~(jab by (~(put by balances.data) caller-id amount.args))
-            sender.args
-          |=(bal=@ud (sub bal amount.args))
-        ::  otherwise, add to their existing balance
-        %+  ~(jab by (~(jab by balances.data) caller-id |=(bal=@ud (add bal amount.args))))
-          sender.args
-        |=(bal=@ud (sub bal amount.args))
-      ::=.  data.u.zigs  data
-      :*  %result
-          %write
-          changed=(malt ~[[zigs-rice-id [%& u.zigs(data data)]]])
-          issued=~
-      ==
-    ::
-        %coinbase
-      ::  expected args: hash (of block)
-      ?.  ?=(hash=@ux args)  *contract-output
-      =.  balances.data
-        ?.  (~(has by balances.data) caller-id)
-          ::  if receiver's account doesn't have a balance, insert
-          (~(put by balances.data) caller-id coinbase-rate.data)
-        ::  otherwise, add to their existing balance
-        (~(jab by balances.data) caller-id |=(bal=@ud (add bal coinbase-rate.data)))
-      ::=.  data.u.zigs  data
-      :*  %result
-          %write
-          changed=(malt ~[[zigs-rice-id [%& u.zigs(data data)]]])
-          issued=~
-      ==
-    ==
+    ::  ?~  args.inp  *contract-output
+    ::  ?~  zigs=(~(get by rice.inp) zigs-rice-id)  *contract-output
+    ::  =/  data  ;;(token-data data.u.zigs)
+    ::  =/  caller-id
+    ::    ^-  id
+    ::    ?:  ?=(@ux caller.inp)
+    ::      caller.inp
+    ::    id.caller.inp
+    ::  =*  args  +.u.args.inp
+    *contract-output
+    ::  ?+    -.u.args.inp  *contract-output
+    ::      %fee
+    ::    ::  expected args: from id, amount
+    ::    ?.  ?=([sender=id amount=@ud] args)  *contract-output
+    ::    =.  balances.data
+    ::      ?.  (~(has by balances.data) caller-id)
+    ::        ::  if receiver's account doesn't have a balance, insert
+    ::        %+  ~(jab by (~(put by balances.data) caller-id amount.args))
+    ::          sender.args
+    ::        |=(bal=@ud (sub bal amount.args))
+    ::      ::  otherwise, add to their existing balance
+    ::      %+  ~(jab by (~(jab by balances.data) caller-id |=(bal=@ud (add bal amount.args))))
+    ::        sender.args
+    ::      |=(bal=@ud (sub bal amount.args))
+    ::    ::=.  data.u.zigs  data
+    ::    :*  %result
+    ::        %write
+    ::        changed=(malt ~[[zigs-rice-id [%& u.zigs(data data)]]])
+    ::        issued=~
+    ::    ==
+    ::  ::
+    ::      %coinbase
+    ::    ::  expected args: hash (of block)
+    ::    ?.  ?=(hash=@ux args)  *contract-output
+    ::    =.  balances.data
+    ::      ?.  (~(has by balances.data) caller-id)
+    ::        ::  if receiver's account doesn't have a balance, insert
+    ::        (~(put by balances.data) caller-id coinbase-rate.data)
+    ::      ::  otherwise, add to their existing balance
+    ::      (~(jab by balances.data) caller-id |=(bal=@ud (add bal coinbase-rate.data)))
+    ::    ::=.  data.u.zigs  data
+    ::    :*  %result
+    ::        %write
+    ::        changed=(malt ~[[zigs-rice-id [%& u.zigs(data data)]]])
+    ::        issued=~
+    ::    ==
+    ::  ==
   --
 --
