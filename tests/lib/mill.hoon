@@ -9,6 +9,7 @@
 ::
 /-  *mill
 /+  *test, *zig-mill, *tiny, *zig-contracts-zigs
+/=  zigs-contract  /lib/zig/contracts/zigs
 |%
 ++  user-balances
   ^-  (map id @ud)
@@ -44,8 +45,9 @@
   ==
 ++  zigs-wheat
   ^-  wheat
-  :-  zigs-wheat-id
-  `(ream .^(@t %cx /(scot %p ~zod)/zig/(scot %da now)/lib/zig/contracts/zigs/hoon))
+  :+  zigs-wheat-id
+    zigs-wheat-id
+  `zigs-contract
 ++  fake-town
   ^-  town
   (~(gas by *(map @ud granary)) ~[[0 fake-granary]])
