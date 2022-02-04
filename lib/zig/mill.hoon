@@ -87,10 +87,10 @@
   ++  work
     |=  =call:tiny
     ^-  [(unit granary:tiny) @ud]
-    =/  pan  (plant call(budget (div budget.call rate.call)))
-    :_  +.pan
-    ?~  -.pan  ~
-    (harvest u.-.pan to.call from.call)
+    =/  crop  (plant call(budget (div budget.call rate.call)))
+    :_  +.crop
+    ?~  -.crop  ~
+    (harvest u.-.crop to.call from.call)
   ::
   ++  plant
     |=  =call:tiny
@@ -109,7 +109,7 @@
       :+  caller.inp
         args.inp
       %-  ~(gas by *contract-input-rice:tiny)
-      %+  murn  ~(tap in rice.inp)
+      %+  murn  ~(tap in rice-ids.inp)
       |=  =id:tiny
       ?~  res=(~(get by granary) id)  ~
       ?.  ?=(%& -.germ.u.res)  ~
@@ -134,14 +134,14 @@
     |-
     =*  next  next.p.bran
     =*  mem   mem.p.bran
-    =^  pan  rem
+    =^  crop  rem
       (plant call(from to.call, to to.next, budget rem, args args.next))
-    ?~  pan  `rem
-    =/  gan  (harvest u.pan to.call from.call)
+    ?~  crop  `rem
+    =/  gan  (harvest u.crop to.call from.call)
     ?~  gan  `rem
     =.  granary  u.gan
     =^  eve  rem
-      (weed cont to.call [%event u.pan] mem rem)
+      (weed cont to.call [%event u.crop] mem rem)
     ?:  ?=(%& -.eve)
       p.eve^rem
     %_  $
