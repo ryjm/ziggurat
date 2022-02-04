@@ -21,15 +21,6 @@
       ?:  ?=(@ux caller.inp)
         caller.inp
       id.caller.inp
-    ::  TODO: fix unpleasant pattern:
-    ::  should be able to grab a single rice from inp more easily
-    ::  contract needs to either have rice ID or be able to name it or something
-    ::  RELATED: contracts need access to their own ID somehow! i'm using
-    ::  lord.our-rice here which is very ugly.
-    ::
-    ::  solution: make a stdlib arm for hashing new issued rice.
-    ::  contracts store these
-    ::  hash default version of rice mold
     ?~  my-grain=(~(get by rice.inp) my-rice-id)  *contract-output
     =/  data  ;;(multisig-data data.germ.u.my-grain)
     =*  args  +.u.args.inp
@@ -48,39 +39,37 @@
       ?:  (gth threshold.data ~(wyt in votes.prop))
         =.  data.germ.u.my-grain  data
         [%result %write changed=(malt ~[[my-rice-id u.my-grain]]) issued=~]
-      ::  [%callback ~ ~[[to.call.prop town-id.call.prop args.call.prop]]]
-      ::  =/  new-inp  args.call.prop
-      ::  $
-      *contract-output
+      =/  new-inp
+        `contract-input`[me args.args.call.prop rice.inp]
+      $(inp new-inp)
     =.  data.germ.u.my-grain
       ?+    -.u.args.inp  data
           %submit-tx
-        ::  expected args: tx (call)
-        =/  submitted  ;;(call args)
         ::  validate member in multisig
         ?.  (~(has in members.data) caller-id)  *contract-output
-        ::  TODO: put hash function in tiny.hoon
-        data(pending (~(put by pending.data) 0x0 [submitted (silt ~[caller-id])]))
+        ::  expected args: tx (call)
+        =/  submitted  ;;(call args)
+        data(pending (~(put by pending.data) (mug submitted) [submitted (silt ~[caller-id])]))
       ::
           %add-member
-        ::  expected args: id
-        ?.  ?=(=id args)  ~
         ::  this must be sent by contract
         ?.  =(me caller-id)  *contract-output
+        ::  expected args: id
+        ?.  ?=(=id args)  ~
         data(members (~(put in members.data) id.args))
       ::
           %remove-member
+        ::  this must be sent by contract
+        ?.  =(me caller-id)  *contract-output
         ::  expected args: id
         ?.  ?=(=id args)  ~
-        ::  this must be sent by contract
-        ::  ?.  =(our-id caller-id)  *contract-output
         data(members (~(del in members.data) id))
       ::
           %set-threshold
+        ::  this must be sent by contract
+        ?.  =(me caller-id)  *contract-output
         ::  expected args: new-thresh
         ?.  ?=(new-thresh=@ud args)  ~
-        ::  this must be sent by contract
-        ::  ?.  =(our-id caller-id)  *contract-output
         data(threshold new-thresh.args)
       ==
     :*  %result
@@ -94,29 +83,23 @@
     :+  %result
       %read
     ?~  args.inp  *contract-output
-    *contract-output
-    :: =/  our-rice=rice  -:~(val by rice.inp)
-    :: =/  data  ;;(multisig-data our-rice)
-    :: =*  args  +.u.args.inp
-    :: ?+    -.u.args.inp  *contract-output
-    ::     %get-members
-    ::   ::  expected args: none
-    ::   members.data
-    :: ::
-    ::     %get-member-weight
-    ::   ::  expected args: member
-    ::   ?.  ?=(member=id args)  *contract-output
-    ::   (~(get by weights.data) member.args)
-    :: ::
-    ::     %get-threshold
-    ::   ::  expected args: none
-    ::   threshold.data
-    :: ::
-    ::     %get-pending
-    ::   ::  expected args: tx hash
-    ::   ?.  ?=(id=@ux args)  *contract-output
-    ::   (~(get by pending.data) id.args)
-    :: ==
+    ?~  my-grain=(~(get by rice.inp) my-rice-id)  *contract-output
+    =/  data  ;;(multisig-data data.germ.u.my-grain)
+    =*  args  +.u.args.inp
+    ?+    -.u.args.inp  *contract-output
+        %get-members
+      ::  expected args: none
+      members.data
+    ::
+        %get-threshold
+      ::  expected args: none
+      threshold.data
+    ::
+        %get-pending
+      ::  expected args: tx hash
+      ?.  ?=(id=@ux args)  *contract-output
+      (~(get by pending.data) id.args)
+    ==
   ++  event
     |=  inp=contract-result
     ^-  contract-output

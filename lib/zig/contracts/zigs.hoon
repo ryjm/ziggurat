@@ -45,7 +45,7 @@
         ?.  ?=([=id amount=@ud bud=@ud] args)  data
         ::  check our balance to make sure we can afford spend + fee
         ?~  curr-bal=(~(get by balances.data) id.args)  data
-        ?:  (lth amount.args (add bud.args u.curr-bal))  data
+        ?:  (lth u.curr-bal (add bud.args amount.args))  data
         ::  add to receiver balance, subtract from ours
         =.  balances.data
           ::  this pattern [52:60] could be a good stdlib function

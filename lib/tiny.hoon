@@ -1081,6 +1081,14 @@
               [%12 p=nock q=nock]                       ::  grab data from sky
               [%0 p=@]                                  ::  axis select
           ==
+::  contract functions
+::
+::  +fry: hash lord+town+germ to make grain pubkey
+::  TODO make sha256 for testnet
+++  fry
+  |=  [lord=id town=@ud =germ]
+  ^-  @ux
+  (mug (cat 3 lord (cat 3 town (mug germ))))
 ::  our types
 ::
 +$  id  @ux                   ::  pubkey
@@ -1090,6 +1098,8 @@
 +$  user  [=id nonce=@ud]
 +$  caller  $@(id user)
 +$  signature  [r=@ux s=@ux type=?(%schnorr %ecdsa)]
+::
++$  germ  (each rice wheat)
 ::
 +$  rice
   $:  holder=id
@@ -1103,7 +1113,7 @@
   $:  =id
       lord=id
       town-id=@ud
-      germ=(each rice wheat)
+      =germ
   ==
 ::
 +$  granary   (map id grain)    ::  replace with +merk
@@ -1140,7 +1150,7 @@
   [?(%read %write) call-input]
 +$  call-input
   $:  =caller
-      rice=(set id)
+      rice-ids=(set id)
       args=(unit noun)
   ==
 ::
