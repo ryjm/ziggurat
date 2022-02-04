@@ -3,19 +3,19 @@
     +$  token-data
       $:  total=@ud
           balances=(map id:tiny @ud)
-          allowances=(map [owner=id sender=id] @ud)
+          allowances=(map [owner=id:tiny sender=id:tiny] @ud)
           coinbase-rate=@ud
       ==
     --
 |%
 ++  test-good-altcoin-contract
   ^-  contract:tiny
-  |_  [mem=(unit vase) me=id]
+  |_  [mem=(unit vase) me=id:tiny]
   ++  write
-    |=  inp=contract-input
+    |=  inp=contract-input:tiny
     ^-  contract-output:tiny
     ?~  args.inp  *contract-output:tiny
-    ?~  tgas=(~(get by rice.inp) tgas-rice-id)  *contract-output:tiny
+    ?~  tgas=(~(get by rice.inp) me)  *contract-output:tiny
     =/  data  ;;(token-data data.germ.u.tgas)
     =/  caller-id=id:tiny
       ?:  ?=(@ux caller.inp)
@@ -26,7 +26,7 @@
       ?+    -.u.args.inp  data
           %give
         ::  expected args: id, amount
-        ?.  ?=([=id amount=@ud] args)  data
+        ?.  ?=([=id:tiny amount=@ud] args)  data
         ::  check our balance to make sure we can afford spend
         ?~  curr-bal=(~(get by balances.data) id.args)  data
         ?:  (gth amount.args u.curr-bal)  data
@@ -45,24 +45,26 @@
       ::
           %take
         ::  expected args: from, to, amount
-        ?.  ?=([from=id to=id amount=@ud] args)  data
+        ?.  ?=([from=id:tiny to=id:tiny amount=@ud] args)  data
         :: TODO: write %take
         data
       ::
           %set-allowance
         ::  expected args: sender, amount
-        ?.  ?=([sender=id amount=@ud] args)  data
+        ?.  ?=([sender=id:tiny amount=@ud] args)  data
         :: TODO: write %set-allowance
         data
       ==
     *contract-output:tiny
   ::
   ++  read
-    |=  inp=contract-input
+    |=  inp=contract-input:tiny
     ^-  contract-output:tiny
     *contract-output:tiny
   ::
   ++  event
-    |=  res=contract-result
+    |=  res=contract-result:tiny
     ^-  contract-output:tiny
     *contract-output:tiny
+  --
+--
