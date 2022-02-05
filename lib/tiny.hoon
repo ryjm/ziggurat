@@ -1147,7 +1147,9 @@
   ==
 ::
 +$  call-args
+  ::  TODO: make a unit so we can send manually
   [?(%read %write) call-input]
+::
 +$  call-input
   $:  =caller
       rice-ids=(set id)
@@ -1170,7 +1172,7 @@
   $:  =id
       lord=id
       town-id=@ud
-      germ=[%& rice]
+      germ=[%& p=rice]
   ==
 ::
 +$  contract-output
@@ -1180,7 +1182,7 @@
 ::
 +$  contract-result
   $%  [%read =noun]
-      [%write changed=(map id grain) issued=(map id grain)]
+      [%write changed=(map id (unit grain)) issued=(map id grain)]
   ==
 ::
 +$  continuation  [mem=(unit vase) next=[to=id town-id=@ud args=call-args]]
