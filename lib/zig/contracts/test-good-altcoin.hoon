@@ -15,7 +15,7 @@
     |=  inp=contract-input:tiny
     ^-  contract-output:tiny
     ?~  args.inp  *contract-output:tiny
-    ?~  tgas=(~(get by rice.inp) me)  *contract-output:tiny
+    ?~  tgas=(~(get by:tiny rice.inp) me)  *contract-output:tiny
     =/  data  ;;(token-data data.germ.u.tgas)
     =/  caller-id=id:tiny
       ?:  ?=(@ux caller.inp)
@@ -28,19 +28,19 @@
         ::  expected args: id, amount
         ?.  ?=([=id:tiny amount=@ud] args)  data
         ::  check our balance to make sure we can afford spend
-        ?~  curr-bal=(~(get by balances.data) id.args)  data
-        ?:  (gth amount.args u.curr-bal)  data
+        ?~  curr-bal=(~(get by:tiny balances.data) id.args)  data
+        ?:  (gth:tiny amount.args u.curr-bal)  data
         ::  add to receiver balance, subtract from ours
         =.  balances.data
           ::  this pattern could be a good stdlib function
-          %+  %~  jab  by
-              ?.  (~(has by balances.data) id.args)
+          %+  %~  jab  by:tiny
+              ?.  (~(has by:tiny balances.data) id.args)
                 ::  if receiver's account doesn't have a balance, insert
-                (~(put by balances.data) id.args amount.args)
+                (~(put by:tiny balances.data) id.args amount.args)
               ::  otherwise, add to their existing balance
-              (~(jab by balances.data) id.args |=(bal=@ud (add bal amount.args)))
+              (~(jab by:tiny balances.data) id.args |=(bal=@ud (add:tiny bal amount.args)))
             caller-id
-          |=(bal=@ud (sub bal amount.args))
+          |=(bal=@ud (sub:tiny bal amount.args))
         data
       ::
           %take
@@ -76,8 +76,12 @@
         ?.  ?=([sender=id:tiny amount=@ud] args)  data
         data(allowances (~(put by:tiny allowances.data) [caller-id sender.args] amount.args))
       ==
-    :-  %result
-    [%write (malt:tiny ~[[me u.tgas]]) ~]
+    :*  %result
+        %write
+        %-  %~  gas by:tiny  *(map:tiny id:tiny grain:tiny)
+        ~[[me u.tgas]]
+        ~
+    ==
   ::
   ++  read
     |=  inp=contract-input:tiny
