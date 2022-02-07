@@ -14,79 +14,8 @@
 ++  zigs
   |%
   ++  user-balances
-    ^-  (map id:tiny @ud)
-    %-  ~(gas by *(map id:tiny @ud))
-    :: ^-  (map:tiny id:tiny @ud)
-    :: %-  ~(gas by:tiny *(map:tiny id:tiny @ud))
-    :~  [0xaa 1.000]
-        [0xbb 1.000]
-        [0xcc 500]
-        [0xdd 500]
-        [0xee 490]
-        [0xff 10]
-    ==
-  ++  user-allowances
-    ^-  (map [owner=id:tiny sender=id:tiny] @ud)
-    %-  ~(gas by *(map [owner=id:tiny sender=id:tiny] @ud))
-    :: ^-  (map:tiny [owner=id:tiny sender=id:tiny] @ud)
-    :: %-  ~(gas by:tiny *(map:tiny [owner=id:tiny sender=id:tiny] @ud))
-    :~  [[0xaa 0xbb] 100]
-        [[0xee 0xff] 100]
-    ==
-  ++  rice-data
-    :*  total=3.500
-        balances=user-balances
-        allowances=user-allowances
-        coinbase-rate=50  ::  # of tokens granted in +coinbase
-    ==
-  ++  rice
-    ^-  rice:tiny
-    :+  zigs-rice-id:tiny   ::  holder
-      ~                     ::  holds
-    rice-data               ::  data
-  ++  rice-grain
-    ^-  grain:tiny
-    :*  zigs-rice-id:tiny   ::  id/holder/lord
-        zigs-rice-id:tiny   ::  lord
-        0                   ::  town-id
-        [%& rice]           ::  germ
-    ==
-  ++  wheat
-    ^-  wheat:tiny
-    `zigs-contract
-  ++  wheat-grain
-    ^-  grain:tiny
-    :*  zigs-wheat-id:tiny  ::  id/holder/lord
-        zigs-wheat-id:tiny  ::  lord
-        0                   ::  town-id
-        [%| wheat]          ::  germ
-    ==
-  ++  fake-land
-    ^-  land:tiny
-    (~(gas by *(map @ud town:tiny)) ~[[0 fake-town]])
-    :: (~(gas by:tiny *(map:tiny @ud town:tiny)) ~[[0 fake-town]])
-  ++  fake-town
-    ^-  town:tiny
-    [fake-granary fake-populace]
-  ++  fake-granary
-    ^-  granary:tiny
-    =/  grains=(list (pair id:tiny grain:tiny))
-      :~  [zigs-wheat-id:tiny wheat-grain]
-          [zigs-rice-id:tiny rice-grain]
-      ==
-    (~(gas by *(map id:tiny grain:tiny)) grains)
-    :: (~(gas by:tiny *(map:tiny id:tiny grain:tiny)) grains)
-  ++  fake-populace
-    ^-  populace:tiny
-    (malt ~[[0xaa 0] [0xbb 0] [0xcc 0]])
-  --
-++  tgas
-  |%
-  ++  user-balances
-    ^-  (map id:tiny @ud)
-    %-  ~(gas by *(map id:tiny @ud))
-    :: ^-  (map:tiny id:tiny @ud)
-    :: %-  ~(gas by:tiny *(map:tiny id:tiny @ud))
+    ^-  (map:tiny id:tiny @ud)
+    %-  ~(gas by:tiny *(map:tiny id:tiny @ud))
     :~  [0xaa 1.000]
         [0xbb 1.000]
         [0xcc 500]
@@ -96,9 +25,9 @@
     ==
   ++  user-allowances
     ^-  (map:tiny [owner=id:tiny sender=id:tiny] @ud)
-    %-  ~(gas by:tiny *(map:tiny [owner=id:tiny sender=id:tiny] @ud))
-    :: ^-  (map [owner=id:tiny sender=id:tiny] @ud)
-    :: %-  ~(gas by *(map [owner=id:tiny sender=id:tiny] @ud))
+    %-
+      %~  gas  by:tiny
+      *(map:tiny [owner=id:tiny sender=id:tiny] @ud)
     :~  [[0xaa 0xbb] 100]
         [[0xee 0xff] 100]
     ==
@@ -115,7 +44,73 @@
     rice-data               ::  data
   ++  rice-grain
     ^-  grain:tiny
-    :*  tgas-rice-id        ::  id/holder/lord
+    :*  zigs-rice-id:tiny   ::  id
+        zigs-rice-id:tiny   ::  lord
+        0                   ::  town-id
+        [%& rice]           ::  germ
+    ==
+  ++  wheat
+    ^-  wheat:tiny
+    `zigs-contract
+  ++  wheat-grain
+    ^-  grain:tiny
+    :*  zigs-wheat-id:tiny  ::  id
+        zigs-wheat-id:tiny  ::  lord
+        0                   ::  town-id
+        [%| wheat]          ::  germ
+    ==
+  ++  fake-land
+    ^-  land:tiny
+    (~(gas by:tiny *(map:tiny @ud town:tiny)) ~[[0 fake-town]])
+  ++  fake-town
+    ^-  town:tiny
+    [fake-granary fake-populace]
+  ++  fake-granary
+    ^-  granary:tiny
+    =/  grains=(list:tiny (pair:tiny id:tiny grain:tiny))
+      :~  [zigs-wheat-id:tiny wheat-grain]
+          [zigs-rice-id:tiny rice-grain]
+      ==
+    (~(gas by:tiny *(map:tiny id:tiny grain:tiny)) grains)
+  ++  fake-populace
+    ^-  populace:tiny
+    %-  %~  gas  by:tiny  *(map:tiny id:tiny @ud)
+    ~[[0xaa 0] [0xbb 0] [0xcc 0]]
+  --
+++  tgas
+  |%
+  ++  user-balances
+    ^-  (map:tiny id:tiny @ud)
+    %-  ~(gas by:tiny *(map:tiny id:tiny @ud))
+    :~  [0xaa 1.000]
+        [0xbb 1.000]
+        [0xcc 500]
+        [0xdd 500]
+        [0xee 490]
+        [0xff 10]
+    ==
+  ++  user-allowances
+    ^-  (map:tiny [owner=id:tiny sender=id:tiny] @ud)
+    %-
+      %~  gas  by:tiny
+      *(map:tiny [owner=id:tiny sender=id:tiny] @ud)
+    :~  [[0xaa 0xbb] 100]
+        [[0xee 0xff] 100]
+    ==
+  ++  rice-data
+    :*  total=3.500
+        balances=user-balances
+        allowances=user-allowances
+        coinbase-rate=50  ::  # of tokens granted in +coinbase
+    ==
+  ++  rice
+    ^-  rice:tiny
+    :+  zigs-rice-id:tiny   ::  holder
+      ~                     ::  holds
+    rice-data               ::  data
+  ++  rice-grain
+    ^-  grain:tiny
+    :*  tgas-rice-id        ::  id
         tgas-rice-id        ::  lord
         0                   ::  town-id
         [%& rice]           ::  germ
@@ -125,31 +120,30 @@
     `tgas-contract
   ++  wheat-grain
     ^-  grain:tiny
-    :*  tgas-wheat-id       ::  id/holder/lord
+    :*  tgas-wheat-id       ::  id
         tgas-wheat-id       ::  lord
         0                   ::  town-id
         [%| wheat]          ::  germ
     ==
   ++  fake-land
     ^-  land:tiny
-    (~(gas by *(map @ud town:tiny)) ~[[0 fake-town]])
-    :: (~(gas by:tiny *(map:tiny @ud town:tiny)) ~[[0 fake-town]])
+    (~(gas by:tiny *(map:tiny @ud town:tiny)) ~[[0 fake-town]])
   ++  fake-town
     ^-  town:tiny
     [fake-granary fake-populace]
   ++  fake-granary
     ^-  granary:tiny
-    =/  grains=(list (pair id:tiny grain:tiny))
+    =/  grains=(list:tiny (pair:tiny id:tiny grain:tiny))
       :~  [zigs-wheat-id:tiny wheat-grain:zigs]
           [zigs-rice-id:tiny rice-grain:zigs]
           [tgas-wheat-id wheat-grain]
           [tgas-rice-id rice-grain]
       ==
-    (~(gas by *(map id:tiny grain:tiny)) grains)
-    :: (~(gas by:tiny *(map:tiny id:tiny grain:tiny)) grains)
+    (~(gas by:tiny *(map:tiny id:tiny grain:tiny)) grains)
   ++  fake-populace
     ^-  populace:tiny
-    (malt ~[[0xaa 0] [0xbb 0] [0xcc 0]])
+    %-  %~  gas  by:tiny  *(map:tiny id:tiny @ud)
+    ~[[0xaa 0] [0xbb 0] [0xcc 0]]
   ++  tgas-wheat-id
     ^-  id:tiny
     0x2
@@ -159,7 +153,12 @@
   --
 ++  test-zigs-basic-give
   =/  write
-     [%write [0xaa 1] (silt ~[zigs-rice-id:tiny]) [~ [%give 0xbb 200 500]]]
+     :*  %write
+         [0xaa 1]
+         %-  %~  gas  in:tiny  *(set:tiny id:tiny)
+         ~[zigs-rice-id:tiny]
+         [~ [%give 0xbb 200 500]]
+     ==
   =/  call
     [[0xaa 1] zigs-wheat-id:tiny rate=1 budget=500 town-id=0 write]
   =/  res=town:tiny
@@ -169,7 +168,12 @@
   (expect-eq !>(~) !>(res))
 ++  test-zigs-failed-give
   =/  write
-     [%write [0xaa 1] (silt ~[zigs-rice-id]) [~ [%give 0xbb 2.000 500]]]
+     :*  %write
+         [0xaa 1]
+         %-  %~  gas  in:tiny  *(set:tiny id:tiny)
+         ~[zigs-rice-id:tiny]
+         [~ [%give 0xbb 2.000 500]]
+     ==
   =/  call
     [[0xaa 1] zigs-wheat-id rate=1 budget=500 town-id=0 write]
   =/  res=town:tiny
@@ -178,7 +182,12 @@
   (expect-eq !>(~) !>(res))
 ++  test-mill-tgas-basic-give
   =/  write
-     [%write [0xaa 1] (silt ~[tgas-rice-id:tgas]) [~ [%give 0xbb 200 500]]]
+     :*  %write
+         [0xaa 1]
+         %-  %~  gas  in:tiny  *(set:tiny id:tiny)
+         ~[tgas-rice-id:tgas]
+         [~ [%give 0xbb 200 500]]
+     ==
   =/  call
     [[0xaa 1] tgas-wheat-id:tgas rate=1 budget=500 town-id=0 write]
   =/  res=town:tiny
