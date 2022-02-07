@@ -47,7 +47,7 @@
       (~(jab by issued) recp |=(x=@ud (add x amt)))
     $(sends t.sends)
     ::
-    $(to t.to)
+    ^$(to t.to)
   ::
   ++  read
     |=  inp=contract-input
