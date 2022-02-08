@@ -16,8 +16,8 @@
   ++  write
     |=  inp=contract-input
     ^-  contract-output
-    ?>  ?=([~ @ *] args.inp)
-    ?>  ?=(%send -.u.args.inp)
+    ?.  ?=([~ @ *] args.inp)    *contract-output
+    ?.  ?=(%send -.u.args.inp)  *contract-output
     =/  to  ~(tap by ;;(transactions +.u.args.inp))
     :^  %result  %write
       ::  build `changed`: delete spent zigs UTXOs/rices
@@ -33,9 +33,13 @@
     =*  sends    ~(tap by q.i.to)
     ::  require sender id be in contract-input AND
     ::  require data be an amount of zigs
-    ?>  ?=(@ud utxo-balance=data.p.germ.(~(got by sender) rice.inp))
+    ?.  ?=  @ud
+        utxo-balance=data.p.germ.(~(got by sender) rice.inp)
+      *contract-output
     ::  require UTXO/rice balance == spend
-    ?>  =(utxo-balance (roll (turn sends |=([recp=id amt=@ud] amt)) add))
+    ?.  .=  utxo-balance
+        (roll (turn sends |=([recp=id amt=@ud] amt)) add)
+      *contract-output
     ::
     |-
     ?~  sends  issued  ::  ?
@@ -52,13 +56,11 @@
   ++  read
     |=  inp=contract-input
     ^-  contract-output
-    !!
-    :: *contract-output
+    *contract-output
   ::
   ++  event
     |=  inp=contract-result
     ^-  contract-output
-    !!
-    :: *contract-output
+    *contract-output
   --
 --
