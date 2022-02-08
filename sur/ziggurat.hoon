@@ -1,4 +1,4 @@
-/-  tx
+/+  tiny
 |%
 ++  epoch-interval    ~s10
 ::
@@ -16,20 +16,20 @@
 ::
 +$  signature  [p=@ux q=ship r=life]
 +$  chunks     (set @)
-+$  chunk      [=helix-id [(list [hash=@ux =tx:tx]) state:tx]]
++$  chunk      [=helix-id [(list [hash=@ux =call:tiny]) town:tiny]]
 ::
 +$  helix-id  @ux
 +$  helices  (map helix-id helix)
 +$  helix
   $:  id=helix-id
-      =state:tx
+      state=town:tiny
       order=(list ship)
       leader=ship
       num=@ud
   ==
 ::
 +$  mempools  (map helix-id mempool)
-+$  mempool   (set tx:tx)
++$  mempool   (set call:tiny)
 ::
 +$  update
   $%  [%epochs-catchup =epochs]
@@ -50,10 +50,10 @@
   ==
 ::
 +$  mempool-action
-  $%  [%receive =helix-id =tx:tx]
-      [%hear =helix-id =tx:tx]
-      [%forward-set =helix-id to=ship txs=(set tx:tx)]
-      [%receive-set =helix-id txs=(set tx:tx)]
+  $%  [%receive =helix-id tx=call:tiny]
+      [%hear =helix-id tx=call:tiny]
+      [%forward-set =helix-id to=ship txs=(set call:tiny)]
+      [%receive-set =helix-id txs=(set call:tiny)]
   ==
 ::
 +$  chunk-action

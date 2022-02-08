@@ -1,5 +1,5 @@
-/-  *ziggurat, tx
-/+  *zig-util, sig=zig-sig, add=zig-add-tx
+/-  *ziggurat
+/+  *zig-util, sig=zig-sig, mill=zig-mill
 =>  |%
     +$  card  card:agent:gall
     --
@@ -12,7 +12,7 @@
   ^-  helix
   ::  some helices can be hardcoded at low ids for convenience?
   =/  order  (shuffle validators eny)
-  [helix-id [0x0 ~] order -.order 0]
+  [helix-id [~ ~] order -.order 0]
 ::
 ++  get-next-leader
   |=  [=helix hash=@uvH]
@@ -33,8 +33,12 @@
     =/  our-sender
       ::  TODO include this in agent state
       ::  validators should be initialized with account/wallet to store rewards
-      [0x1234 nonce=1 feerate=1 pubkey=0x1234 sig=[0xaa 0xbb %schnorr]]
-    [id.helix (txs-to-chunk:add state.helix mempool our-sender)]
+      0x1234
+    ::  run +mill
+    =/  our-chunk
+      ^-  [(list [@ux call:tiny]) town:tiny]
+      (~(mill-all mill our-sender now) `@ud`id.helix state.helix ~(tap in mempool))
+    [id.helix our-chunk]
   ::
   ::  send chunk to everyone in helix to sign
   ::

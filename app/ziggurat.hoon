@@ -1,6 +1,6 @@
 ::  ziggurat [uqbar-dao]
 ::
-/+  *ziggurat, default-agent, dbug, verb
+/+  *ziggurat, default-agent, dbug, verb, tiny
 =,  util
 |%
 +$  card  card:agent:gall
@@ -212,7 +212,7 @@
       ::  used when we pass producer status to a new
       ::  validator, give them existing mempool
       ::  clear mempool for ourselves
-      =/  to-send=(set tx:tx)  (~(gut by mempools) helix-id.act ~)
+      =/  to-send=(set call:tiny)  (~(gut by mempools) helix-id.act ~)
       :_  state(mempools (~(put by mempools) helix-id.act ~))
       :_  ~
       :*  %pass  /mempool-gossip

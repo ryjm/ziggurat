@@ -1,5 +1,5 @@
 /+  *bink, tiny
-|_  [validator-id=@ux =land:tiny now=time]
+|_  [validator-id=@ux now=time]
 ::
 ::  +mill-all: mills all calls in mempool
 ::
