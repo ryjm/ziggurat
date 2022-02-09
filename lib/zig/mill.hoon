@@ -53,7 +53,7 @@
     ^-  ?
     ?~  zigs=(~(get by granary) zigs-rice-id:tiny)  %.n
     ?.  ?=(%& -.germ.u.zigs)                        %.n
-    =/  data  ;;(zigs-mold data.p.germ.u.zigs)
+    =/  data  !<(zigs-mold !>(data.p.germ.u.zigs))
     ?.  ?=(user:tiny from.call)                     %.n
     ?~  bal=(~(get by balances.data) id.from.call)  %.n
     (gth u.bal (mul rate.call budget.call))
@@ -63,7 +63,7 @@
     ^-  granary:tiny
     ?~  zigs=(~(get by granary) zigs-rice-id:tiny)  granary
     ?.  ?=(%& -.germ.u.zigs)                        granary
-    =/  data  ;;(zigs-mold data.p.germ.u.zigs)
+    =/  data  !<(zigs-mold !>(data.p.germ.u.zigs))
     =.  balances.data
       %+  %~  jab  by
           ?.  (~(has by balances.data) validator-id)
@@ -198,9 +198,10 @@
         %-  ~(all in issued.res)
         |=  [=id:tiny =grain:tiny]
         ::  id in issued map must be equal to id in grain AND
-        ::  all newly issued grains must not already exist
+        ::  all newly issued grains must have properly-hashed id AND
+        ::  lord of grain must be contract issuing it
         ?&  =(id id.grain)
-            !(~(has by granary) id.grain)
+            =((fry:tiny lord.grain town-id.grain germ.grain) id.grain)
             =(lord lord.grain)
     ==  ==
   --

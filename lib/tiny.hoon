@@ -1084,7 +1084,7 @@
 ::  contract functions
 ::
 ::  +fry: hash lord+town+germ to make grain pubkey
-::  TODO make sha256 for testnet
+::  TODO make sha256 or w/e for testnet
 ++  fry
   |=  [lord=id town=@ud =germ]
   ^-  @ux
