@@ -1140,10 +1140,16 @@
 +$  call
   $:  from=caller
       to=id
-      rate=@ud
-      budget=@ud
+      =stamp
       town-id=@ud
       args=call-args
+  ==
+::
++$  stamp
+  $:  fee=id
+      change=id
+      rate=@ud
+      budget=@ud
   ==
 ::
 +$  call-args

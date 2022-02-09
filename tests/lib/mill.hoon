@@ -7,7 +7,6 @@
 ::  should manage transactions properly so this is testing
 ::  the arms of that contract as well.
 ::
-/-  *mill
 /+  *test, *zig-mill, *tiny, *zig-contracts-zigs
 |%
 ++  user-balances

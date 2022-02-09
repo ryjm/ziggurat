@@ -11,72 +11,109 @@
     (gth rate.a rate.b)
   =|  result=(list [@ux call:tiny])
           ::  'chunk' def
+  =/  fee-bundle=(unit call-input:tiny)
+    :^  ~  [validator-id +((~(got by q.town) validator-id))]
+      ~
+    [~ %send *(map id (map id @ud))]
   |-  ^-  [(list [@ux call:tiny]) town:tiny]
   ?~  pending
-    [result town]
+    ?~  fee-bundle  [result town]
+    =/  gan  (~(pay tax p.town) u.fee-bundle)
+    :+  [[`@ux`(shax (jam u.fee-bundle)) u.fee-bundle] result]
+      gan
+    (~(put by q.town) validator-id nonce.caller.u.fee-bundle)
   %_  $
     pending  t.pending
     result   [[`@ux`(shax (jam i.pending)) i.pending] result]
-    town  (mill helix-id town i.pending)
+    town     (mill helix-id town i.pending fee-bundle)
   ==
 ::  +mill: processes a single call and returns updated town
 ::
 ++  mill
-  |=  [town-id=@ud =town:tiny =call:tiny]
-  ^-  town:tiny
-  ?.  ?=(user:tiny from.call)  town
+  |=  [town-id=@ud =town:tiny =call:tiny fee-bundle=(unit call-input:tiny)]
+  ^-  [town:tiny (unit call-input:tiny)]
+  ?.  ?=(user:tiny from.call)  [town ~]
   ?~  curr-nonce=(~(get by q.town) id.from.call)
-    town  ::  missing user
+    [town ~]  ::  missing user
   ?.  =(nonce.from.call +(u.curr-nonce))
-    town  ::  bad nonce
+    [town ~]  ::  bad nonce
   ?.  (~(audit tax p.town) call)
-    town  ::  can't afford gas
+    [town ~]  ::  can't afford gas
   =+  [gan rem]=(~(work farm p.town) call)
   =/  fee=@ud   (sub budget.call rem)
-  :-  ?~  gan  (~(pay tax p.town) id.from.call fee)
-      (~(pay tax u.gan) id.from.call fee)
-  (~(put by q.town) id.from.call nonce.from.call)
+  =+  [gan-out fee-bundle-out]=(~(note-or-pay tax gan) call fee fee-bundle)
+  :+  gan-out
+    %-  %~  gas  by  q.town
+    :*  [id.from.call nonce.from.call]
+        ?~  fee-bundle
+          [[id.caller.u.fee-bundle nonce.caller.u.fee-bundle] ~]
+        ~
+    ==
+  fee-bundle-out
 ::
 ::  +tax: manage payment for contract execution in zigs
 ::
 ++  tax
   |_  =granary:tiny
-  +$  zigs-mold
-    $:  total=@ud
-        balances=(map id:tiny @ud)
-        allowances=(map [owner=id:tiny sender=id:tiny] @ud)
-        coinbase-rate=@ud
-    ==
   ::  +audit: evaluate whether a caller can afford gas
   ++  audit
     |=  =call:tiny
     ^-  ?
-    ?~  zigs=(~(get by granary) zigs-rice-id:tiny)  %.n
-    ?.  ?=(%& -.germ.u.zigs)                        %.n
-    =/  data  ;;(zigs-mold data.p.germ.u.zigs)
-    ?.  ?=(user:tiny from.call)                     %.n
-    ?~  bal=(~(get by balances.data) id.from.call)  %.n
-    (gth u.bal (mul rate.call budget.call))
+    =/  rice=contract-input-rice:tiny  (fetch call)
+    =*  fee-rice  (~(get by rice) fee.stamp.call)
+    ?.  ?=(zigs-rice-id:tiny lord.fee-rice)  %.n
+    ?.  ?=(@ud bal=data.p.germ.fee-rice)     %.n
+    (gth balance (mul rate.stamp.call budget.stamp.call))
+  ::  +fetch: get contract-input-rice for fee rice
+  ++  fetch
+    |=  =call:tiny
+    ^-  contract-input-rice:tiny
+    =/  =contract-args:tiny
+      %-  %~  fertilize.plant  farm  granary
+      [%write caller.call (silt ~[fee.stamp.call]) ~]
+    rice.+.contact-args
+  ::  +note-or-pay: notes or pays fee as appropriate
+  ++  note-or-pay
+    |=  [=call:tiny fee=@ud fee-bundle=(unit call-input:tiny)]
+    ^-  [granary:tiny (unit call-input:tiny)]
+    ?~  fee-bundle  [(pay id.from.call fee) ~]
+    [granary (note call fee fee-bundle)]
+  ::  +note: store gas fee for payment in accumulated tx
+  ++  note
+    |=  [=call:tiny fee=@ud fee-bundle=(unit call-input:tiny)]
+    ^-  (unit call-input:tiny)
+    ?~  fee-bundle  ~
+    =/  rice=contract-input-rice:tiny  (fetch call)
+    =/  from=id:tiny
+      ?:  ?=(id:tiny from.call)  from.call
+      id.from.call
+    =/  from-grain  (~(got by rice) from)
+    =*  bal  data.p.germ.from-grain
+    ?.  ?=(@ud bal)  ~
+    ::  bump nonce of fee-bundle if this tx was by validator
+    =.  caller.u.fee-bundle
+    ?.  ?=(id:tiny caller.u.fee-bundle)
+      caller.u.fee-bundle
+    ?.  =(validator-id from)
+      nonce.caller.u.fee-bundle
+    +(nonce.caller.u.fee-bundle)
+    ::  build addition to args
+    =*  transactions  +.u.args.u.fee-bundle
+    ?~  args.u.fee-bundle  ~
+    =.  transactions
+    %+  %~  put  by  transactions  from
+    %-  %~  gas  by
+      ?~  old-tx=(~(get by transactions) from)
+        *(map id @ud)
+      old-tx
+    ~[[validator-id fee] [change.stamp.call (sub bal fee)]]
+    fee-bundle
   ::  +pay: extract gas fee from caller's zigs balance
   ++  pay
-    |=  [payee=id:tiny fee=@ud]
+    |=  fee-bundle=call:tiny
     ^-  granary:tiny
-    ?~  zigs=(~(get by granary) zigs-rice-id:tiny)  granary
-    ?.  ?=(%& -.germ.u.zigs)                        granary
-    =/  data  ;;(zigs-mold data.p.germ.u.zigs)
-    =.  balances.data
-      %+  %~  jab  by
-          ?.  (~(has by balances.data) validator-id)
-            ::  make account if none in balances
-            (~(put by balances.data) validator-id fee)
-          ::  otherwise add to existing balance
-          %+  ~(jab by balances.data)
-            validator-id
-          |=(bal=@ud (add bal fee))
-        payee
-      |=(bal=@ud (sub bal fee))
-    =.  data.p.germ.u.zigs  data
-    (~(put by granary) zigs-rice-id:tiny u.zigs)
+    =+  [gan rem]=(~(work farm granary) fee-bundle)
+    gan
   --
 ::
 ::  +farm: execute a call to a contract within a wheat
@@ -90,7 +127,7 @@
     =/  crop  (plant call(budget (div budget.call rate.call)))
     :_  +.crop
     ?~  -.crop  ~
-    (harvest u.-.crop to.call from.call)
+    (harvest u.-.crop to.call)
   ::
   ++  plant
     |=  =call:tiny
@@ -98,7 +135,7 @@
     |^
     =/  args  (fertilize args.call)
     ?~  con=(germinate to.call)
-      `budget.call
+      `budget.stamp.call
     (grow u.con args call)
     ::
     ++  fertilize
@@ -178,7 +215,7 @@
     --
   ::
   ++  harvest
-    |=  [res=contract-result:tiny lord=id:tiny from=caller:tiny]
+    |=  [res=contract-result:tiny lord=id:tiny]
     ^-  (unit granary:tiny)
     ?:  ?=(%read -.res)  `granary
     =-  ?.  -  ~
