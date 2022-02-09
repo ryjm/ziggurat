@@ -64,7 +64,7 @@
     ?.  ?=(@ux my-grain-id)  !!
     ?~  my-grain=(~(get by rice.inp) my-grain-id)  !!
     ?>  =(lord.u.my-grain me)
-    =/  data  !<(dao-data !>(data.germ.u.my-grain))
+    =/  data  !<(dao-data [-:!>(*dao-data) data.germ.u.my-grain])
     =*  args  +.+.u.args.inp
     ?:  ?=(%vote -.u.args.inp)
       ::  must be sent by owner
@@ -154,7 +154,7 @@
     =*  my-grain-id  -.+.u.args.inp
     ?.  ?=(@ux my-grain-id)  !!
     ?~  my-grain=(~(get by rice.inp) my-grain-id)  !!
-    =/  data  ;;(dao-data data.germ.u.my-grain)
+    =/  data  !<(dao-data [-:!>(*dao-data) data.germ.u.my-grain])
     =*  args  +.+.u.args.inp
     :+  %result  %read
     ^-  *

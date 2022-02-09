@@ -17,7 +17,7 @@
     ?~  args.inp  *contract-output
     ?~  zigs=(~(get by rice.inp) zigs-rice-id)  *contract-output
     ?>  =(lord.u.zigs me)
-    =/  data  !<(token-data !>(data.germ.u.zigs))
+    =/  data  !<(token-data [-:!>(*token-data) data.germ.u.zigs])
     =/  caller-id
       ^-  id
       ?:  ?=(@ux caller.inp)
@@ -91,7 +91,7 @@
     ?~  args.inp  ~
     ?~  zigs=(~(get by rice.inp) zigs-rice-id)  ~
     ?>  =(lord.u.zigs me)
-    =/  data  !<(token-data !>(data.germ.u.zigs))
+    =/  data  !<(token-data [-:!>(*token-data) data.germ.u.zigs])
     =*  args  +.u.args.inp
     ?+    -.u.args.inp  ~
         %get-balance

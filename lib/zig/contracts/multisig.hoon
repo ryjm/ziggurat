@@ -31,7 +31,7 @@
     =*  my-grain-id  -.+.u.args.inp
     ?.  ?=(@ux my-grain-id)  !!
     ?~  my-grain=(~(get by rice.inp) my-grain-id)  !!
-    =/  data  !<(multisig-data !>(data.germ.u.my-grain))
+    =/  data  !<(multisig-data [-:!>(*multisig-data) data.germ.u.my-grain])
     =*  args  +.+.u.args.inp
     ?:  ?=(%vote -.u.args.inp)
       ::  expected args: tx hash
@@ -97,7 +97,7 @@
     =*  my-grain-id  -.+.u.args.inp
     ?.  ?=(@ux my-grain-id)  !!
     ?~  my-grain=(~(get by rice.inp) my-grain-id)  !!
-    =/  data  !<(multisig-data !>(data.germ.u.my-grain))
+    =/  data  !<(multisig-data [-:!>(*multisig-data) data.germ.u.my-grain])
     =*  args  +.+.u.args.inp
     ?+    -.u.args.inp  !!
         %get-members

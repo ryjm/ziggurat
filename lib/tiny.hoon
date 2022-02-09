@@ -1081,7 +1081,16 @@
               [%12 p=nock q=nock]                       ::  grab data from sky
               [%0 p=@]                                  ::  axis select
           ==
+::
 ::  contract functions
+::
+::  +hole: vase-checks your types for you
+::  TODO: make this *not* ask for entire compiler 
+::  starting with +levi...
+::  ++  hole
+::    |*  [typ=mold val=*]
+::    ^-  typ
+::    !<(typ [-:!>(*typ) val])
 ::
 ::  +fry: hash lord+town+germ to make grain pubkey
 ::  TODO make sha256 or w/e for testnet
