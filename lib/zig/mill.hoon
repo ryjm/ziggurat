@@ -18,7 +18,7 @@
   |-  ^-  [(list [@ux call:tiny]) town:tiny]
   ?~  pending
     ?~  fee-bundle  [result town]
-    =/  gan  (~(pay tax p.town) u.fee-bundle)
+    =/  gan  (~(pay tax town) u.fee-bundle)
     :+  [[`@ux`(shax (jam u.fee-bundle)) u.fee-bundle] result]
       gan
     (~(put by q.town) validator-id nonce.caller.u.fee-bundle)
@@ -37,11 +37,11 @@
     [town ~]  ::  missing user
   ?.  =(nonce.from.call +(u.curr-nonce))
     [town ~]  ::  bad nonce
-  ?.  (~(audit tax p.town) call)
+  ?.  (~(audit tax town) call)
     [town ~]  ::  can't afford gas
   =+  [gan rem]=(~(work farm p.town) call)
   =/  fee=@ud   (sub budget.call rem)
-  =+  [gan-out fee-bundle-out]=(~(note-or-pay tax gan) call fee fee-bundle)
+  =+  [gan-out fee-bundle-out]=(~(note-or-pay tax [gan q.town]) call fee fee-bundle)
   :+  gan-out
     %-  %~  gas  by  q.town
     :*  [id.from.call nonce.from.call]
@@ -54,7 +54,7 @@
 ::  +tax: manage payment for contract execution in zigs
 ::
 ++  tax
-  |_  =granary:tiny
+  |_  =town:tiny
   ::  +audit: evaluate whether a caller can afford gas
   ++  audit
     |=  =call:tiny
@@ -69,27 +69,23 @@
     |=  =call:tiny
     ^-  contract-input-rice:tiny
     =/  =contract-args:tiny
-      %-  %~  fertilize.plant  farm  granary
+      %-  %~  fertilize.plant  farm  p.town
       [%write caller.call (silt ~[fee.stamp.call]) ~]
     rice.+.contact-args
   ::  +note-or-pay: notes or pays fee as appropriate
   ++  note-or-pay
     |=  [=call:tiny fee=@ud fee-bundle=(unit call-input:tiny)]
     ^-  [granary:tiny (unit call-input:tiny)]
-    ?~  fee-bundle  [(pay id.from.call fee) ~]
-    [granary (note call fee fee-bundle)]
+    ?~  fee-bundle  [(pay (invoice call fee ~)) ~]
+    [p.town (note call fee fee-bundle)]
   ::  +note: store gas fee for payment in accumulated tx
   ++  note
     |=  [=call:tiny fee=@ud fee-bundle=(unit call-input:tiny)]
     ^-  (unit call-input:tiny)
     ?~  fee-bundle  ~
-    =/  rice=contract-input-rice:tiny  (fetch call)
     =/  from=id:tiny
       ?:  ?=(id:tiny from.call)  from.call
       id.from.call
-    =/  from-grain  (~(got by rice) from)
-    =*  bal  data.p.germ.from-grain
-    ?.  ?=(@ud bal)  ~
     ::  bump nonce of fee-bundle if this tx was by validator
     =.  caller.u.fee-bundle
     ?.  ?=(id:tiny caller.u.fee-bundle)
@@ -97,22 +93,46 @@
     ?.  =(validator-id from)
       nonce.caller.u.fee-bundle
     +(nonce.caller.u.fee-bundle)
-    ::  build addition to args
-    =*  transactions  +.u.args.u.fee-bundle
-    ?~  args.u.fee-bundle  ~
-    =.  transactions
-    %+  %~  put  by  transactions  from
-    %-  %~  gas  by
-      ?~  old-tx=(~(get by transactions) from)
-        *(map id @ud)
-      old-tx
-    ~[[validator-id fee] [change.stamp.call (sub bal fee)]]
-    fee-bundle
+    [~ (invoice call fee fee-bundle)]
+  ::  +invoice: create call for payment of fee
+  ++  invoice
   ::  +pay: extract gas fee from caller's zigs balance
+    |=  [=call:tiny fee=@ud fee-bundle=(unit call-input:tiny)]
+    ^-  call-input:tiny
+    =/  rice=contract-input-rice:tiny  (fetch call)
+    =/  from=id:tiny
+      ?:  ?=(id:tiny from.call)  from.call
+      id.from.call
+    =/  from-grain  (~(got by rice) from)
+    =*  bal  data.p.germ.from-grain
+    ?.  ?=(@ud bal)  ~
+    =/  transactions
+      %+  %~  put  by  *(map id:tiny (map id:tiny @ud))  from
+      %-  %~  gas  by  *(map id:tiny @ud)
+      ~[[validator-id fee] [change.stamp.call (sub bal fee)]]
+    =/  rice-ids  (silt ~[from])
+    ?~  fee-bundle
+      :+  [validator-id +((~(got by q.town) validator-id))]
+        rice-ids
+      [~ %send [~ transactions]]
+    =.  rice-ids.u.fee-bundle
+      ?~  rice-ids.u.fee-bundle  rice-ids
+      (~(uni in rice-ids.u.fee-bundle) rice-ids)
+    ?~  args.u.fee-bundle
+      =.  args.u.fee-bundle  [~ %send transactions]
+      u.fee-bundle
+    =*  old-tx  +.u.args.u.fee-bundle
+    =.  old-tx
+      ?~  (~(get by old-tx) from)
+        (~(uni by old-tx) transactions)
+      %-  %~  put  by  old-tx
+      %-  %~  uni  by  (~(got by old-tx) from)
+      (~(got by transactions) from)
+    u.fee-bundle
   ++  pay
-    |=  fee-bundle=call:tiny
+    |=  fees=call:tiny
     ^-  granary:tiny
-    =+  [gan rem]=(~(work farm granary) fee-bundle)
+    =+  [gan rem]=(~(work farm p.town) fees)
     gan
   --
 ::
