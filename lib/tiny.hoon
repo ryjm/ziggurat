@@ -1085,8 +1085,6 @@
 ::  contract functions
 ::
 ::  +hole: vase-checks your types for you
-::  TODO: make this *not* ask for entire compiler 
-::  starting with +levi...
 ::  ++  hole
 ::    |*  [typ=mold val=*]
 ::    ^-  typ
@@ -1112,7 +1110,7 @@
 ::
 +$  rice
   $:  holder=id
-      holds=(set id)
+      ::  holds=(set id)
       data=*
   ==
 ::
