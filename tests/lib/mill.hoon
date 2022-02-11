@@ -7,69 +7,205 @@
 ::  should manage transactions properly so this is testing
 ::  the arms of that contract as well.
 ::
-/-  *mill
-/+  *test, *zig-mill, *tiny, *zig-contracts-zigs
+/+  *test, *zig-mill, std=zig-sys-std, *zig-contracts-zigs
+/=  zigs-contract  /lib/zig/contracts/zigs
+/=  tgas-contract  /lib/zig/contracts/test-good-altcoin
 |%
-++  user-balances
-  :~  [0xaa 1.000]
-      [0xbb 1.000]
-      [0xcc 500]
-      [0xdd 500]
-      [0xee 490]
-      [0xff 10]
-  ==
-++  user-allowances
-  :~  [[0xaa 0xbb] 100]
-      [[0xee 0xff] 100]
-  ==
-++  zigs-rice-data
-  :*  total=3.500
-      balances=(~(gas by *(map id @ud)) user-balances)
-      allowances=(~(gas by *(map [owner=id sender=id] @ud)) user-allowances)
-      coinbase-rate=50  ::  # of tokens granted in +coinbase
-  ==
-++  zigs-rice
-  ^-  rice
-  :*  zigs-rice-id  ::  id/holder/lord
-      zigs-rice-id
-      zigs-wheat-id
-      0             ::  helix 0
-      zigs-rice-data
-      ~  ::  doesn't hold any other rice
-  ==
-++  zigs-wheat
-  ^-  wheat
-  :-  zigs-wheat-id
-  `(ream .^(@t %cx /(scot %p ~zod)/zig/(scot %da now)/lib/zig/contracts/zigs/hoon))
-++  fake-town
-  (~(gas by *(map @ud granary)) ~[[0 fake-granary]])
-++  fake-granary
-  ^-  granary
-  =/  grains=(list (pair id grain))
-    :~  [zigs-wheat-id %| zigs-wheat]
-        [zigs-rice-id %& zigs-rice]
+++  zigs
+  |%
+  +$  zigs-mold
+    $:  total=@ud
+        balances=(map id:std @ud)
+        allowances=(map:std [owner=id:std sender=id:std] @ud)
+        coinbase-rate=@ud
     ==
-  :-  (~(gas by *(map id grain)) grains)
-  (malt ~[[0xaa 0] [0xbb 0] [0xcc 0]])
-++  test-mill-basic-give
+  ++  user-balances
+    ^-  (map id:std @ud)
+    %-  ~(gas by:std *(map:std id:std @ud))
+    :~  [0xaa 1.000]
+        [0xbb 1.000]
+        [0xcc 500]
+        [0xdd 500]
+        [0xee 490]
+        [0xff 10]
+    ==
+  ++  user-allowances
+    ^-  (map:std [owner=id:std sender=id:std] @ud)
+    %-
+      %~  gas  by:std
+      *(map:std [owner=id:std sender=id:std] @ud)
+    :~  [[0xaa 0xbb] 100]
+        [[0xee 0xff] 100]
+    ==
+  ++  rice-data
+    ^-  zigs-mold
+    :*  total=3.500
+        balances=user-balances
+        allowances=user-allowances
+        coinbase-rate=50  ::  # of tokens granted in +coinbase
+    ==
+  ++  rice
+    ^-  rice:std
+    :+  0xaa                ::  holder
+      ~                     ::  holds
+    rice-data               ::  data
+  ++  rice-grain
+    ^-  grain:std
+    :*  zigs-rice-id:std    ::  id
+        zigs-rice-id:std    ::  lord
+        0                   ::  town-id
+        [%& rice]           ::  germ
+    ==
+  ++  wheat
+    ^-  wheat:std
+    `zigs-contract
+  ++  wheat-grain
+    ^-  grain:std
+    :*  zigs-wheat-id:std   ::  id
+        zigs-wheat-id:std   ::  lord
+        0                   ::  town-id
+        [%| wheat]          ::  germ
+    ==
+  ++  fake-land
+    ^-  land:std
+    (~(gas by:std *(map:std @ud town:std)) ~[[0 fake-town]])
+  ++  fake-town
+    ^-  town:std
+    [fake-granary fake-populace]
+  ++  fake-granary
+    ^-  granary:std
+    =/  grains=(list:std (pair:std id:std grain:std))
+      :~  [zigs-wheat-id:std wheat-grain]
+          [zigs-rice-id:std rice-grain]
+      ==
+    (~(gas by:std *(map:std id:std grain:std)) grains)
+  ++  fake-populace
+    ^-  populace:std
+    %-  %~  gas  by:std  *(map:std id:std @ud)
+    ~[[0xaa 0] [0xbb 0] [0xcc 0]]
+  --
+++  tgas
+  |%
+  ++  user-balances
+    ^-  (map:std id:std @ud)
+    %-  ~(gas by:std *(map:std id:std @ud))
+    :~  [0xaa 1.000]
+        [0xbb 1.000]
+        [0xcc 500]
+        [0xdd 500]
+        [0xee 490]
+        [0xff 10]
+    ==
+  ++  user-allowances
+    ^-  (map:std [owner=id:std sender=id:std] @ud)
+    %-
+      %~  gas  by:std
+      *(map:std [owner=id:std sender=id:std] @ud)
+    :~  [[0xaa 0xbb] 100]
+        [[0xee 0xff] 100]
+    ==
+  ++  rice-data
+    :*  total=3.500
+        balances=user-balances
+        allowances=user-allowances
+        coinbase-rate=50  ::  # of tokens granted in +coinbase
+    ==
+  ++  rice
+    ^-  rice:std
+    :+  zigs-rice-id:std   ::  holder
+      ~                     ::  holds
+    rice-data               ::  data
+  ++  rice-grain
+    ^-  grain:std
+    :*  tgas-rice-id        ::  id
+        tgas-rice-id        ::  lord
+        0                   ::  town-id
+        [%& rice]           ::  germ
+    ==
+  ++  wheat
+    ^-  wheat:std
+    `tgas-contract
+  ++  wheat-grain
+    ^-  grain:std
+    :*  tgas-wheat-id       ::  id
+        tgas-wheat-id       ::  lord
+        0                   ::  town-id
+        [%| wheat]          ::  germ
+    ==
+  ++  fake-land
+    ^-  land:std
+    (~(gas by:std *(map:std @ud town:std)) ~[[0 fake-town]])
+  ++  fake-town
+    ^-  town:std
+    [fake-granary fake-populace]
+  ++  fake-granary
+    ^-  granary:std
+    =/  grains=(list:std (pair:std id:std grain:std))
+      :~  [zigs-wheat-id:std wheat-grain:zigs]
+          [zigs-rice-id:std rice-grain:zigs]
+          [tgas-wheat-id wheat-grain]
+          [tgas-rice-id rice-grain]
+      ==
+    (~(gas by:std *(map:std id:std grain:std)) grains)
+  ++  fake-populace
+    ^-  populace:std
+    %-  %~  gas  by:std  *(map:std id:std @ud)
+    ~[[0xaa 0] [0xbb 0] [0xcc 0]]
+  ++  tgas-wheat-id
+    ^-  id:std
+    0x2
+  ++  tgas-rice-id
+    ^-  id:std
+    0x3
+  --
+++  test-zigs-basic-give
   =/  write
-     [%write [0xaa 1] (silt ~[zigs-rice-id]) [~ [%give 0xbb 200 500]]]
+     :*  %write
+         [0xaa 1]
+         %-  %~  gas  in:std  *(set:std id:std)
+         ~[zigs-rice-id:std]
+         [~ [%give 0xbb 200 500]]
+     ==
   =/  call
-    [[0xaa 1] zigs-wheat-id rate=1 budget=500 town-id=0 write]
-  =/  res=granary
-    (mill 0 fake-granary call)
+    [[0xaa 1] zigs-wheat-id:std rate=1 budget=500 town-id=0 write]
+  ::~&  >>  (~(get by fake-granary:zigs) 0x0)
+  =/  res=town:std
+    (mill 0 fake-town:zigs call)
+  ::~&  >>  res
+  ~&  >  "done milling!"
+  ::~&  >>  res
   ::  what's the best way to create a correct updated granary to check against?
   ::  also need to calculate exact fee to get proper outcome
-  (expect-eq !>(~) !>(res))
-++  test-mill-failed-give
-  =/  write
-     [%write [0xaa 1] (silt ~[zigs-rice-id]) [~ [%give 0xbb 2.000 500]]]
-  =/  call
-    [[0xaa 1] zigs-wheat-id rate=1 budget=500 town-id=0 write]
-  =/  res=granary
-    (mill 0 fake-granary call)
-  ::  updated granary should be same but minus 0xaa's fee
-  (expect-eq !>(~) !>(res))
+  (expect-eq !>(~) !>(~))
+::  ++  test-zigs-failed-give
+::    =/  write
+::       :*  %write
+::           [0xaa 1]
+::           %-  %~  gas  in:std  *(set:std id:std)
+::           ~[zigs-rice-id:std]
+::           [~ [%give 0xbb 2.000 500]]
+::       ==
+::    =/  call
+::      [[0xaa 1] zigs-wheat-id rate=1 budget=500 town-id=0 write]
+::    =/  res=town:std
+::      (mill 0 fake-town:zigs call)
+::    ::  updated granary should be same but minus 0xaa's fee
+::    (expect-eq !>(~) !>(res))
+::  ++  test-mill-tgas-basic-give
+::    =/  write
+::       :*  %write
+::           [0xaa 1]
+::           %-  %~  gas  in:std  *(set:std id:std)
+::           ~[tgas-rice-id:tgas]
+::           [~ [%give 0xbb 200 500]]
+::       ==
+::    =/  call
+::      [[0xaa 1] tgas-wheat-id:tgas rate=1 budget=500 town-id=0 write]
+::    =/  res=town:std
+::      (mill 0 fake-town:tgas call)
+::    ::  what's the best way to create a correct updated granary to check against?
+::    ::  also need to calculate exact fee to get proper outcome
+::    (expect-eq !>(~) !>(res))
 ::
 ::  Tests here should cover:
 ::  (all calls to exclusively zigs-contract)
