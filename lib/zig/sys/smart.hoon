@@ -27,9 +27,8 @@
 +$  germ  (each rice wheat)
 ::
 +$  rice
-  $:  holder=id
-      ::  holds=(set id)
-      ::  format=(unit mold)  ::  optional type info
+  $:  ::  holds=(set id)
+      format=(unit mold)  ::  optional type info
       data=*
   ==
 ::
@@ -38,6 +37,7 @@
 +$  grain
   $:  =id
       lord=id
+      holder=id
       town-id=@ud
       =germ
   ==
@@ -80,16 +80,18 @@
   ==
 +$  yolk
   $:  =caller
-      args=(unit noun)
+      args=[?(%read %write) (unit noun)]
       grain-ids=(set id)
   ==
 +$  scramble
   $:  =caller
-      args=(unit noun)
+      args=[?(%read %write) (unit noun)]
       grains=(map id grain)
   ==
+::  this sucks :(
++$  maybe-hatched  (each scramble male)
 ::
 +$  chick   (each male female)
 +$  male    [changed=(map id grain) issued=(map id grain)]
-+$  female  [mem=(unit vase) next=[to=id town-id=@ud args=call-args]]
++$  female  [mem=(unit vase) next=[to=id town-id=@ud args=yolk]]
 --
