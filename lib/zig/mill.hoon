@@ -170,6 +170,7 @@
       |=  [cont=contract to=id inp=maybe-hatched mem=(unit vase) budget=@ud]
       ^-  [(unit chick) @ud]
       =+  [res bud]=(barn cont inp [mem to block town-id ~] budget)
+      ~&  res
       ?~  res  `bud
       ?:  ?=(%| -.u.res)
         ::  stack trace
@@ -187,31 +188,42 @@
       |=  [=contract inp=maybe-hatched =cart bud=@ud]
       ^-  [(unit (each (each * chick) (list tank))) @ud]
       |^
-      ?:  ?=(%| -.inp)
-        (event p.inp)
       ::  hellaciously ugly
-      ?-  -.args.p.inp
-        %read   (read ;;(path +.args.p.inp))
-        %write  (write p.inp) 
+      ?:  ?=(%| -.inp)
+        =/  res  (event p.inp)
+        ?~  -.res  `+.res
+        ?:  ?=(%& -.u.-.res)
+          [`[%& %| p.u.-.res] +.res]
+        [`[%| p.u.-.res] +.res]
+      ?-    -.args.p.inp
+          %read
+        =/  res  (read ;;(path +.args.p.inp))
+        ?~  -.res  `+.res
+        ?:  ?=(%& -.u.-.res)
+          [`[%& %& p.u.-.res] +.res]
+        [`[%| p.u.-.res] +.res]
+          %write  
+        =/  res  (write p.inp)
+        ?~  -.res  `+.res
+        ?:  ?=(%& -.u.-.res)
+          [`[%& %| p.u.-.res] +.res]
+        [`[%| p.u.-.res] +.res]
       ==
       ++  write
         |=  =^scramble 
-        ^-  [(unit (each (each * chick) (list tank))) @ud]
+        ^-  [(unit (each chick (list tank))) @ud]
         ~&  >  "barn performing %write call"
-        [`[%& [%| *chick]] (sub bud 200)]
-        ::  %+  bull
-        ::    |.(;;(chick (~(write contract cart) scramble)))
-        ::  bud
+        (bull |.(;;(chick (~(write contract cart) scramble))) bud)
       ++  read
         |=  =path
-        ^-  [(unit (each (each * chick) (list tank))) @ud]
-        ::  to be scry
-        [`[%& [%& "noun"]] bud]
+        ^-  [(unit (each * (list tank))) @ud]
+        ~&  >  "barn performing %read call"
+        (bull |.((~(read contract cart) path)) bud)
       ++  event
         |=  =male
-        ^-  [(unit (each (each * chick) (list tank))) @ud]
-        ::  TBD
-        [`[%& [%| *chick]] bud]
+        ^-  [(unit (each chick (list tank))) @ud]
+        ~&  >  "barn performing %event call"
+        (bull |.(;;(chick (~(event contract cart) male))) bud)
       --
     --
   ::

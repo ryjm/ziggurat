@@ -10,6 +10,7 @@
 /+  *test, *zig-mill, std=zig-sys-smart, *zig-contracts-zigs
 /=  zigs-contract  /lib/zig/contracts/zigs
 /=  tgas-contract  /lib/zig/contracts/test-good-altcoin
+/=  trivial        /lib/zig/contracts/trivial
 |%
 ++  zigs
   |%
@@ -22,7 +23,7 @@
   ++  user-balances
     ^-  (map:std id:std @ud)
     %-  ~(gas by:std *(map:std id:std @ud))
-    :~  [0xaa 1.000]
+    :~  [0xaa 10.000.000]
         [0xbb 1.000]
         [0xcc 500]
         [0xdd 500]
@@ -67,6 +68,14 @@
         0                   ::  town-id
         [%| wheat]          ::  germ
     ==
+  ++  trivial-grain
+    ^-  grain:std
+    :*  0x3
+        0x3
+        0x3
+        0
+        [%| `trivial]
+    ==
   ++  fake-land
     ^-  land:std
     (~(gas by:std *(map @ud town:std)) ~[[0 fake-town]])
@@ -78,6 +87,7 @@
     =/  grains=(list:std (pair:std id:std grain:std))
       :~  [zigs-wheat-id:std wheat-grain]
           [zigs-rice-id:std rice-grain]
+          [0x3 trivial-grain]
       ==
     (~(gas by:std *(map:std id:std grain:std)) grains)
   ++  fake-populace
@@ -159,14 +169,14 @@
   ::      ^-  id:std
   ::      0x3
   ::    --
-++  test-zigs-basic-give
+++  test-trivial-write
   =/  yok
      :*  [0xaa 1]
          [%write ~ [%give 0xbb 200 500]]
          (silt [~[zigs-rice-id:std]]) 
      ==
   =/  shel
-    [[0xaa 1] zigs-wheat-id:std rate=1 budget=500 town-id=0]
+    [[0xaa 1] 0x3 rate=1 budget=5.000.000 town-id=0]
   =/  egg
     [shel yok]
   ~&  >  "seeking to mill"
@@ -175,9 +185,43 @@
     (~(mill mill 0xabcd 0) fake-town:zigs egg 100)
   ::~&  >>  res
   ~&  >  "done milling!"
-  ::  what's the best way to create a correct updated granary to check against?
-  ::  also need to calculate exact fee to get proper outcome
   (expect-eq !>(~) !>(~))
+++  test-trivial-read
+  =/  yok
+     :*  [0xaa 1]
+         [%read ~ /some/random/path]
+         ~
+     ==
+  =/  shel
+    [[0xaa 1] 0x3 rate=1 budget=5.000.000 town-id=0]
+  =/  egg
+    [shel yok]
+  ~&  >  "seeking to mill"
+  ~&  egg
+  =/  res
+    (~(mill mill 0xabcd 0) fake-town:zigs egg 100)
+  ::~&  >>  res
+  ~&  >  "done milling!"
+  (expect-eq !>(~) !>(~))
+::  ++  test-zigs-basic-give
+::    =/  yok
+::       :*  [0xaa 1]
+::           [%write ~ [%give 0xbb 200 500]]
+::           (silt [~[zigs-rice-id:std]]) 
+::       ==
+::    =/  shel
+::      [[0xaa 1] zigs-wheat-id:std rate=1 budget=500 town-id=0]
+::    =/  egg
+::      [shel yok]
+::    ~&  >  "seeking to mill"
+::    ~&  egg
+::    =/  res
+::      (~(mill mill 0xabcd 0) fake-town:zigs egg 100)
+::    ::~&  >>  res
+::    ~&  >  "done milling!"
+::    ::  what's the best way to create a correct updated granary to check against?
+::    ::  also need to calculate exact fee to get proper outcome
+::    (expect-eq !>(~) !>(~))
 ::  ++  test-zigs-failed-give
 ::    =/  write
 ::       :*  %write
