@@ -106,16 +106,17 @@
     |^
     ~&  >  "incubateing"
     =/  args  (cook q.egg)
-    ?~  con=(germinate to.p.egg)
+    ?~  stalk=(germinate to.p.egg)
       `budget.p.egg
-    (grow u.con args egg)
+    (grow u.stalk args egg)
     ::  might move these out of farm to be used everywhere
     ::  also TODO fix mixed metaphor here
     ++  cook
       |=  =yolk
       ^-  scramble
       ?.  ?=(user caller.yolk)  !!
-      :+  caller.yolk
+      :^    caller.yolk
+          kind.yolk
         args.yolk
       %-  ~(gas by *(map id grain))
       %+  murn  ~(tap in grain-ids.yolk)
@@ -128,19 +129,19 @@
     ::
     ++  germinate
       |=  find=id
-      ^-  (unit contract)
+      ^-  (unit crop)
       ?~  gra=(~(get by granary) find)  ~
       ?.  ?=(%| -.germ.u.gra)  ~
-      ?~  p.germ.u.gra  ~
-      `(hole contract u.p.germ.u.gra)
+      ?~  cont.p.germ.u.gra  ~
+      `[(hole contract u.cont.p.germ.u.gra) owns.p.germ.u.gra]
     --
   ::
   ++  grow
-    |=  [cont=contract =scramble =egg]
+    |=  [=crop =scramble =egg]
     ^-  [(unit male) @ud]
     ~&  >  "growing"
     |^
-    =+  [chick rem]=(weed cont to.p.egg [%& scramble] ~ budget.p.egg)
+    =+  [chick rem]=(weed crop to.p.egg [%& scramble] ~ budget.p.egg)
     ~&  >  "1st weeding successful"
     ?~  chick  `rem
     ?:  ?=(%& -.u.chick)
@@ -150,14 +151,14 @@
     |-
     =*  next  next.p.u.chick
     =*  mem   mem.p.u.chick
-    =^  crop  rem
+    =^  child  rem
       (incubate egg(from.p to.p.egg, to.p to.next, budget.p rem, q args.next))
-    ?~  crop  `rem
-    =/  gan  (harvest u.crop to.p.egg from.p.egg)
+    ?~  child  `rem
+    =/  gan  (harvest u.child to.p.egg from.p.egg)
     ?~  gan  `rem
     =.  granary  u.gan
     =^  eve  rem
-      (weed cont to.p.egg [%| u.crop] mem rem)
+      (weed crop to.p.egg [%| u.child] mem rem)
     ?~  eve  `rem
     ?:  ?=(%& -.u.eve)
       [`p.u.eve rem]
@@ -167,18 +168,14 @@
     ==
     ::
     ++  weed
-      |=  [cont=contract to=id inp=maybe-hatched mem=(unit vase) budget=@ud]
+      |=  [=^crop to=id inp=maybe-hatched mem=(unit vase) budget=@ud]
       ^-  [(unit chick) @ud]
-      =+  [res bud]=(barn cont inp [mem to block town-id ~] budget)
+      =/  cart  [mem to block town-id owns.crop]
+      =+  [res bud]=(barn contract.crop inp cart budget)
       ~&  res
-      ?~  res  `bud
-      ?:  ?=(%| -.u.res)
-        ::  stack trace
-        `bud
-      ::  read, write, or event result
-      ?:  ?=(%& -.p.u.res)
-        ::  read result
-        `bud
+      ?~  res               `bud
+      ?:  ?=(%| -.u.res)    `bud
+      ?:  ?=(%& -.p.u.res)  `bud
       ::  write or event result
       [`p.p.u.res bud]
     ::
@@ -195,7 +192,7 @@
         ?:  ?=(%& -.u.-.res)
           [`[%& %| p.u.-.res] +.res]
         [`[%| p.u.-.res] +.res]
-      ?-    -.args.p.inp
+      ?-    kind.p.inp
           %read
         =/  res  (read ;;(path +.args.p.inp))
         ?~  -.res  `+.res
@@ -213,6 +210,8 @@
         |=  =^scramble 
         ^-  [(unit (each chick (list tank))) @ud]
         ~&  >  "barn performing %write call"
+        ~&  >>  scramble
+        ~&  >>>  cart
         (bull |.(;;(chick (~(write contract cart) scramble))) bud)
       ++  read
         |=  =path

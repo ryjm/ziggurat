@@ -23,7 +23,7 @@
   ++  user-balances
     ^-  (map:std id:std @ud)
     %-  ~(gas by:std *(map:std id:std @ud))
-    :~  [0xaa 10.000.000]
+    :~  [0xaa 10.000.000.000]
         [0xbb 1.000]
         [0xcc 500]
         [0xdd 500]
@@ -52,14 +52,15 @@
   ++  rice-grain
     ^-  grain:std
     :*  zigs-rice-id:std    ::  id
-        zigs-rice-id:std    ::  lord
-        zigs-rice-id:std    ::  holder
+        zigs-wheat-id:std   ::  lord
+        0xaa    ::  holder
         0                   ::  town-id
         [%& rice]           ::  germ
     ==
   ++  wheat
     ^-  wheat:std
-    `zigs-contract
+    :-  `zigs-contract
+    (silt ~[zigs-rice-id:std])
   ++  wheat-grain
     ^-  grain:std
     :*  zigs-wheat-id:std   ::  id
@@ -74,7 +75,7 @@
         0x3
         0x3
         0
-        [%| `trivial]
+        [%| [`trivial ~]]
     ==
   ++  fake-land
     ^-  land:std
@@ -169,14 +170,49 @@
   ::      ^-  id:std
   ::      0x3
   ::    --
-++  test-trivial-write
+:: ++  test-trivial-write
+::   =/  yok
+::      :*  [0xaa 1]
+::          [%write ~]
+::          ~
+::      ==
+::   =/  shel
+::     [[0xaa 1] 0x3 rate=1 budget=5.000.000 town-id=0]
+::   =/  egg
+::     [shel yok]
+::   ~&  >  "seeking to mill"
+::   ~&  egg
+::   =/  res
+::     (~(mill mill 0xabcd 0) fake-town:zigs egg 100)
+::   ::~&  >>  res
+::   ~&  >  "done milling!"
+::   (expect-eq !>(~) !>(~))
+:: ++  test-trivial-read
+::   =/  yok
+::      :*  [0xaa 1]
+::          [%read /some/random/path]
+::          ~
+::      ==
+::   =/  shel
+::     [[0xaa 1] 0x3 rate=1 budget=5.000.000 town-id=0]
+::   =/  egg
+::     [shel yok]
+::   ~&  >  "seeking to mill"
+::   ~&  egg
+::   =/  res
+::     (~(mill mill 0xabcd 0) fake-town:zigs egg 100)
+::   ::~&  >>  res
+::   ~&  >  "done milling!"
+::   (expect-eq !>(~) !>(~))
+++  test-zigs-basic-give
   =/  yok
      :*  [0xaa 1]
-         [%write ~ [%give 0xbb 200 500]]
+         %write
+         `[%give 0xbb 200 5.000.000.000]
          (silt [~[zigs-rice-id:std]]) 
      ==
   =/  shel
-    [[0xaa 1] 0x3 rate=1 budget=5.000.000 town-id=0]
+    [[0xaa 1] zigs-wheat-id:std rate=1 budget=5.000.000.000 town-id=0]
   =/  egg
     [shel yok]
   ~&  >  "seeking to mill"
@@ -185,43 +221,9 @@
     (~(mill mill 0xabcd 0) fake-town:zigs egg 100)
   ::~&  >>  res
   ~&  >  "done milling!"
+  ::  what's the best way to create a correct updated granary to check against?
+  ::  also need to calculate exact fee to get proper outcome
   (expect-eq !>(~) !>(~))
-++  test-trivial-read
-  =/  yok
-     :*  [0xaa 1]
-         [%read ~ /some/random/path]
-         ~
-     ==
-  =/  shel
-    [[0xaa 1] 0x3 rate=1 budget=5.000.000 town-id=0]
-  =/  egg
-    [shel yok]
-  ~&  >  "seeking to mill"
-  ~&  egg
-  =/  res
-    (~(mill mill 0xabcd 0) fake-town:zigs egg 100)
-  ::~&  >>  res
-  ~&  >  "done milling!"
-  (expect-eq !>(~) !>(~))
-::  ++  test-zigs-basic-give
-::    =/  yok
-::       :*  [0xaa 1]
-::           [%write ~ [%give 0xbb 200 500]]
-::           (silt [~[zigs-rice-id:std]]) 
-::       ==
-::    =/  shel
-::      [[0xaa 1] zigs-wheat-id:std rate=1 budget=500 town-id=0]
-::    =/  egg
-::      [shel yok]
-::    ~&  >  "seeking to mill"
-::    ~&  egg
-::    =/  res
-::      (~(mill mill 0xabcd 0) fake-town:zigs egg 100)
-::    ::~&  >>  res
-::    ~&  >  "done milling!"
-::    ::  what's the best way to create a correct updated granary to check against?
-::    ::  also need to calculate exact fee to get proper outcome
-::    (expect-eq !>(~) !>(~))
 ::  ++  test-zigs-failed-give
 ::    =/  write
 ::       :*  %write

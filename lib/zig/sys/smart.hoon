@@ -24,15 +24,10 @@
 +$  caller  $@(id user)
 +$  signature  [r=@ux s=@ux type=?(%schnorr %ecdsa)]
 ::
-+$  germ  (each rice wheat)
-::
-+$  rice
-  $:  ::  holds=(set id)
-      format=(unit mold)  ::  optional type info
-      data=*
-  ==
-::
-+$  wheat  (unit *)
++$  germ   (each rice wheat)
++$  rice   [format=(unit mold) data=*]
++$  wheat  [cont=(unit *) owns=(set id)]
++$  crop   [=contract owns=(set id)]
 ::
 +$  grain
   $:  =id
@@ -80,12 +75,14 @@
   ==
 +$  yolk
   $:  =caller
-      args=[?(%read %write) (unit noun)]
+      kind=?(%read %write)
+      args=(unit *)
       grain-ids=(set id)
   ==
 +$  scramble
   $:  =caller
-      args=[?(%read %write) (unit noun)]
+      kind=?(%read %write)
+      args=(unit *)
       grains=(map id grain)
   ==
 ::  this sucks :(
