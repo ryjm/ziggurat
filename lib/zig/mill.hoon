@@ -1,10 +1,10 @@
 /+  *bink, *zig-sys-smart
-|_  [validator-id=@ux =land now=time]
+|_  [validator-id=@ux town-id=@ud] :: now=time]
 ::
 ::  +mill-all: mills all calls in mempool
 ::
 ++  mill-all
-  |=  [town-id=@ud =town mempool=(list egg)]
+  |=  [=town mempool=(list egg) blocknum=@ud] 
   =/  pending
     %+  sort  mempool
     |=  [a=egg b=egg]
@@ -17,13 +17,14 @@
   %_  $
     pending  t.pending
     result   [[`@ux`(shax (jam i.pending)) i.pending] result]
-    town  (mill town-id town i.pending)
+    town  (mill town i.pending blocknum)
   ==
 ::  +mill: processes a single call and returns updated town
 ::
 ++  mill
-  |=  [town-id=@ud =town =egg]
+  |=  [=town =egg blocknum=@ud]
   ^-  ^town
+  ~&  >  "in the mill"
   ?.  ?=(user from.p.egg)  town
   ?~  curr-nonce=(~(get by q.town) id.from.p.egg)
     town  ::  missing user
@@ -31,13 +32,11 @@
     town  ::  bad nonce
   ?.  (~(audit tax p.town) egg)
     town  ::  can't afford gas
-  ~&  >  "finished audit"
-  =+  [gan rem]=(~(work farm p.town) egg)
-  ~&  >  "finished work"
+  ~&  >  "passed audit"
+  =+  [gan rem]=(~(work farm p.town blocknum) egg)
   =/  fee=@ud   (sub budget.p.egg rem)
   :-  ?~  gan  (~(pay tax p.town) id.from.p.egg fee)
       (~(pay tax u.gan) id.from.p.egg fee)
-  ~&  >  "done paying taxes"
   (~(put by q.town) id.from.p.egg nonce.from.p.egg)
 ::
 ::  +tax: manage payment for contract execution in zigs
@@ -45,8 +44,7 @@
 ++  tax
   |_  =granary
   +$  zigs-mold
-    $:  ~
-        total=@ud
+    $:  total=@ud
         balances=(map id @ud)
         allowances=(map [owner=id sender=id] @ud)
         coinbase-rate=@ud
@@ -55,6 +53,7 @@
   ++  audit
     |=  =egg
     ^-  ?
+    ~&  >  "auditing"
     ?~  zigs=(~(get by granary) zigs-rice-id)        %.n
     ?.  ?=(%& -.germ.u.zigs)                         %.n
     =/  data  (hole zigs-mold data.p.germ.u.zigs)
@@ -89,25 +88,23 @@
 ::  +farm: execute a call to a contract within a wheat
 ::
 ++  farm
-  |_  =granary
+  |_  [=granary block=@ud]
   ::
   ++  work
     |=  =egg
     ^-  [(unit ^granary) @ud]
-    ~&  >  "work-ing"
+    ~&  >  "working"
     =/  crop  (incubate egg(budget.p (div budget.p.egg rate.p.egg)))
-    ~&  >  crop
-    ~&  >  "loch4?"
+    ~&  >>  crop
     :_  +.crop
     ?~  -.crop  ~
-    ~&  >  "loch5?"
     (harvest u.-.crop to.p.egg from.p.egg)
   ::
   ++  incubate
     |=  =egg
     ^-  [(unit male) @ud]
     |^
-    ~&  >  "incubate-ing"
+    ~&  >  "incubateing"
     =/  args  (cook q.egg)
     ?~  con=(germinate to.p.egg)
       `budget.p.egg
@@ -135,13 +132,13 @@
       ?~  gra=(~(get by granary) find)  ~
       ?.  ?=(%| -.germ.u.gra)  ~
       ?~  p.germ.u.gra  ~
-      `!<(contract [-:!>(*contract) u.p.germ.u.gra])
+      `(hole contract u.p.germ.u.gra)
     --
   ::
   ++  grow
     |=  [cont=contract =scramble =egg]
     ^-  [(unit male) @ud]
-    ~&  >  "grow-ing"
+    ~&  >  "growing"
     |^
     =+  [chick rem]=(weed cont to.p.egg [%& scramble] ~ budget.p.egg)
     ~&  >  "1st weeding successful"
@@ -154,11 +151,9 @@
     =*  next  next.p.u.chick
     =*  mem   mem.p.u.chick
     =^  crop  rem
-      ~&  >  "loch2"
       (incubate egg(from.p to.p.egg, to.p to.next, budget.p rem, q args.next))
     ?~  crop  `rem
     =/  gan  (harvest u.crop to.p.egg from.p.egg)
-    ~&  >  "loch3"
     ?~  gan  `rem
     =.  granary  u.gan
     =^  eve  rem
@@ -174,9 +169,7 @@
     ++  weed
       |=  [cont=contract to=id inp=maybe-hatched mem=(unit vase) budget=@ud]
       ^-  [(unit chick) @ud]
-      =/  fake-cart  :: TODO make real
-        [~ to 333.333 0 ~]
-      =+  [res bud]=(barn cont to inp fake-cart budget)
+      =+  [res bud]=(barn cont inp [mem to block town-id ~] budget)
       ?~  res  `bud
       ?:  ?=(%| -.u.res)
         ::  stack trace
@@ -191,7 +184,7 @@
     ::  +barn: run contract formula with arguments and memory, bounded by bud
     ::  (takes yolk and runs write)
     ++  barn
-      |=  [=contract to=id inp=maybe-hatched =cart bud=@ud]
+      |=  [=contract inp=maybe-hatched =cart bud=@ud]
       ^-  [(unit (each (each * chick) (list tank))) @ud]
       |^
       ?:  ?=(%| -.inp)
@@ -204,7 +197,8 @@
       ++  write
         |=  =^scramble 
         ^-  [(unit (each (each * chick) (list tank))) @ud]
-        [`[%& [%| *chick]] bud]
+        ~&  >  "barn performing %write call"
+        [`[%& [%| *chick]] (sub bud 200)]
         ::  %+  bull
         ::    |.(;;(chick (~(write contract cart) scramble)))
         ::  bud
@@ -224,8 +218,9 @@
   ++  harvest
     |=  [res=male lord=id from=caller]
     ^-  (unit ^granary)
-    ~&  >  "harvest-ing"
+    ~&  >  "harvesting"
     =-  ?.  -  ~
+        ~&  >  "passed harvest checks"
         `(~(uni by granary) (~(uni by changed.res) issued.res))
     ?&  %-  ~(all in changed.res)
         |=  [=id =grain]
