@@ -78,11 +78,12 @@
     |=  =call:tiny
     ^-  contract-input-rice:tiny
     =/  =contract-args:tiny
-      :: %-  %~  fertilize.plant  farm  p.town
+      %-  %~  fertilize  farm  p.town
+      [%write from.call (silt ~[fee.stamp.call]) ~]
+      :: %-  fertilize.farm(granary p.town)
       :: [%write caller.call (silt ~[fee.stamp.call]) ~]
-      %-  fertilize.plant:farm(granary p.town)
-      [%write caller.call (silt ~[fee.stamp.call]) ~]
-    rice.+.contact-args
+    ?>  ?=(%write -.contract-args)
+    rice.+.contract-args
   ::  +note-or-pay: notes or pays fee as appropriate
   ++  note-or-pay
     |=  [=call:tiny fee=@ud town-id=@ud fee-bundle=(unit call-input:tiny)]
@@ -90,7 +91,7 @@
     ?~  fee-bundle
       =/  fee-call=call:tiny
         (invoice town-id (tally call fee ~))
-      [(pay fee-call) fee-call]
+      [(pay fee-call) fee-bundle]
     [p.town (note call fee fee-bundle)]
   ::  +note: store gas fee for payment in accumulated tx
   ++  note
@@ -127,9 +128,9 @@
     =/  from=id:tiny
       ?:  ?=(id:tiny from.call)  from.call
       id.from.call
-    =/  from-grain=grain:tiny  (~(got by rice) from)
+    =/  from-grain  (~(got by rice) from)
     =*  bal  data.p.germ.from-grain
-    ?.  ?=(@ud bal)  ~
+    ?>  ?=(@ud bal)
     =/  transactions=(map id:tiny (map id:tiny @ud))
       %+  %~  put  by  *(map id:tiny (map id:tiny @ud))  from
       %-  %~  gas  by  *(map id:tiny @ud)
@@ -140,19 +141,20 @@
         rice-ids
       [~ %send transactions]
     =.  rice-ids.u.fee-bundle
-      ?~  rice-ids.u.fee-bundle  rice-ids
       (~(uni in rice-ids.u.fee-bundle) rice-ids)
-    ?~  args.u.fee-bundle
-      =.  args.u.fee-bundle  [~ %send transactions]
-      u.fee-bundle
-    =*  old-tx  +.u.args.u.fee-bundle
-    =.  old-tx
-      ?~  (~(get by old-tx) from)
-        (~(uni by old-tx) transactions)
-      %-  %~  put  by  old-tx
-      %-  %~  uni  by  (~(got by old-tx) from)
-      (~(got by transactions) from)
-    u.fee-bundle
+    :*  caller.u.fee-bundle
+        rice-ids.u.fee-bundle
+        ~
+        %send
+        ?~  args.u.fee-bundle  transactions
+        =/  old-tx
+          ;;((map id:tiny (map id:tiny @ud)) +.u.args.u.fee-bundle)
+        ?~  (~(get by old-tx) from)
+          (~(uni by old-tx) transactions)
+        %+  %~  put  by  old-tx  from
+        %-  %~  uni  by  (~(got by old-tx) from)
+        (~(got by transactions) from)
+    ==
   ::  +pay: extract gas fee from caller's zigs balance
   ++  pay
     |=  fees=call:tiny
@@ -184,20 +186,6 @@
       `budget.stamp.call
     (grow u.con args call)
     ::
-    ++  fertilize
-      |=  arg=call-args:tiny
-      ^-  contract-args:tiny
-      =*  inp  +.arg
-      :-  -.arg
-      :+  caller.inp
-        args.inp
-      %-  ~(gas by *contract-input-rice:tiny)
-      %+  murn  ~(tap in rice-ids.inp)
-      |=  =id:tiny
-      ?~  res=(~(get by granary) id)  ~
-      ?.  ?=(%& -.germ.u.res)  ~
-      `[id u.res]
-    ::
     ++  germinate
       |=  find=id:tiny
       ^-  (unit contract:tiny)
@@ -206,6 +194,20 @@
       ?~  p.germ.u.gra  ~
       `!<(contract:tiny [-:!>(*contract:tiny) u.p.germ.u.gra])
     --
+  ::
+  ++  fertilize
+    |=  arg=call-args:tiny
+    ^-  contract-args:tiny
+    =*  inp  +.arg
+    :-  -.arg
+    :+  caller.inp
+      args.inp
+    %-  ~(gas by *contract-input-rice:tiny)
+    %+  murn  ~(tap in rice-ids.inp)
+    |=  =id:tiny
+    ?~  res=(~(get by granary) id)  ~
+    ?.  ?=(%& -.germ.u.res)  ~
+    `[id u.res]
   ::
   ++  grow
     |=  [cont=contract:tiny args=contract-args:tiny =call:tiny]
