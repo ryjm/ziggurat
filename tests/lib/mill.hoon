@@ -10,7 +10,7 @@
 /+  *test, *zig-mill, std=zig-sys-smart, *zig-contracts-zigs
 /=  zigs-contract  /lib/zig/contracts/zigs
 /=  tgas-contract  /lib/zig/contracts/test-good-altcoin
-/=  trivial        /lib/zig/contracts/trivial
+/=  multisig-contract  /lib/zig/contracts/multisig
 |%
 ++  zigs
   |%
@@ -51,11 +51,11 @@
     rice-data               ::  data
   ++  rice-grain
     ^-  grain:std
-    :*  zigs-rice-id:std    ::  id
-        zigs-wheat-id:std   ::  lord
-        zigs-wheat-id:std   ::  holder
-        0                   ::  town-id
-        [%& rice]           ::  germ
+    :*  zigs-rice-id:std   ::  id
+        zigs-wheat-id:std  ::  lord
+        zigs-wheat-id:std  ::  holders
+        0                  ::  town-id
+        [%& rice]          ::  germ
     ==
   ++  wheat
     ^-  wheat:std
@@ -63,19 +63,19 @@
     (silt ~[zigs-rice-id:std])
   ++  wheat-grain
     ^-  grain:std
-    :*  zigs-wheat-id:std   ::  id
-        zigs-wheat-id:std   ::  lord
-        zigs-wheat-id:std   ::  holder
-        0                   ::  town-id
-        [%| wheat]          ::  germ
+    :*  zigs-wheat-id:std  ::  id
+        zigs-wheat-id:std  ::  lord
+        zigs-wheat-id:std  ::  holders
+        0                  ::  town-id
+        [%| wheat]         ::  germ
     ==
-  ++  trivial-grain
+  ++  multisig-grain
     ^-  grain:std
     :*  0x3
         0x3
         0x3
         0
-        [%| [`trivial ~]]
+        [%| [`multisig-contract ~]]
     ==
   ++  fake-land
     ^-  land:std
@@ -88,7 +88,7 @@
     =/  grains=(list:std (pair:std id:std grain:std))
       :~  [zigs-wheat-id:std wheat-grain]
           [zigs-rice-id:std rice-grain]
-          [0x3 trivial-grain]
+          [0x3 multisig-grain]
       ==
     (~(gas by:std *(map:std id:std grain:std)) grains)
   ++  fake-populace
@@ -196,6 +196,19 @@
 ++  test-zigs-failed-give
   =/  yok
     [[0xaa 1] `[%give 0xbb 1.200 500] ~]
+  =/  shel
+    [[0xaa 1] zigs-wheat-id:std rate=1 budget=500 town-id=0]
+  =/  egg  [shel yok]
+  =/  res  (~(mill mill 0xabcd 0) fake-town:zigs egg 100)
+  =/  loach
+    ;;(zigs-mold:zigs +.+.germ:(~(got by p.res) zigs-rice-id:std))
+  =/  squid  rice-data:zigs
+  =.  balances.squid
+    (~(put by balances.squid) [0xabcd 0])
+  (expect-eq !>(squid) !>(loach))
+++  test-zigs-failed-give-over-budget
+  =/  yok
+    [[0xaa 1] `[%give 0xbb 500 501] ~]
   =/  shel
     [[0xaa 1] zigs-wheat-id:std rate=1 budget=500 town-id=0]
   =/  egg  [shel yok]

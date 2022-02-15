@@ -118,7 +118,7 @@
       ?~  res=(~(get by granary) id)  ~
       ?.  ?=(%& -.germ.u.res)  ~
       ::  check that caller holds all input grain
-      ?.  =(id.caller.yolk holder.u.res)  ~
+      ?.  =(holder.u.res id.caller.yolk)  ~
       `[id u.res]
     ::
     ++  germinate
@@ -167,8 +167,8 @@
         %-  ~(gas by *(map id grain))
         %+  murn  ~(tap in owns.crop)
         |=  =id
-        ?~  res=(~(get by granary) id)  ~
-        ?.  =(to holder.u.res)          ~
+        ?~  res=(~(get by granary) id)   ~
+        ?.  =(holder.u.res to)  ~
         `[id u.res]
       =/  cart  [mem to block town-id -]
       =+  [res bud]=(barn contract.crop inp cart budget)
