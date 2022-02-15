@@ -6,21 +6,21 @@
           allowances=(map [owner=id sender=id] @ud)
           coinbase-rate=@ud
       ==
+    ++  zigs-rice-id  0x1
     --
 |_  =cart
 ++  write
   |=  inp=scramble
   ^-  chick
-  ?~  zigs=(~(get by grains.inp) 0x1)  *chick
-  ?.  =(lord.u.zigs me.cart)  *chick
-  ?.  ?=(%& -.germ.u.zigs)  *chick
+  ?~  zigs=(~(get by owned.cart) zigs-rice-id)  !!
+  ?.  ?=(%& -.germ.u.zigs)  !!
   =/  data  (hole token-data data.p.germ.u.zigs)
   =/  caller-id
     ^-  id
     ?:  ?=(@ux caller.inp)
       caller.inp
     id.caller.inp
-  ?~  args.inp  *chick
+  ?~  args.inp  !!
   =*  args  +.u.args.inp
   =.  data.p.germ.u.zigs
     ?+    -.u.args.inp  data

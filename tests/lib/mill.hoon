@@ -53,7 +53,7 @@
     ^-  grain:std
     :*  zigs-rice-id:std    ::  id
         zigs-wheat-id:std   ::  lord
-        0xaa    ::  holder
+        zigs-wheat-id:std   ::  holder
         0                   ::  town-id
         [%& rice]           ::  germ
     ==
@@ -172,7 +172,7 @@
   ::    --
 ++  test-zigs-basic-give
   =/  yok
-    [[0xaa 1] `[%give 0xbb 69 500] (silt [~[zigs-rice-id:std]])]
+    [[0xaa 1] `[%give 0xbb 69 500] ~]
   =/  shel
     [[0xaa 1] zigs-wheat-id:std rate=1 budget=500 town-id=0]
   =/  egg  [shel yok]
@@ -195,7 +195,7 @@
   (expect-eq !>(squid) !>(loach))
 ++  test-zigs-failed-give
   =/  yok
-    [[0xaa 1] `[%give 0xbb 1.200 500] (silt [~[zigs-rice-id:std]])]
+    [[0xaa 1] `[%give 0xbb 1.200 500] ~]
   =/  shel
     [[0xaa 1] zigs-wheat-id:std rate=1 budget=500 town-id=0]
   =/  egg  [shel yok]

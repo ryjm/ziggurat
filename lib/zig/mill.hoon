@@ -163,7 +163,14 @@
     ++  weed
       |=  [=^crop to=id inp=maybe-hatched mem=(unit vase) budget=@ud]
       ^-  [(unit chick) @ud]
-      =/  cart  [mem to block town-id owns.crop]
+      =/  owned
+        %-  ~(gas by *(map id grain))
+        %+  murn  ~(tap in owns.crop)
+        |=  =id
+        ?~  res=(~(get by granary) id)  ~
+        ?.  =(to holder.u.res)          ~
+        `[id u.res]
+      =/  cart  [mem to block town-id -]
       =+  [res bud]=(barn contract.crop inp cart budget)
       ?~  res               `bud
       ?:  ?=(%| -.u.res)    `bud
@@ -208,7 +215,6 @@
         |=  =^scramble
         ^-  [(unit (each chick (list tank))) @ud]
         ~&  >  "barn performing %write call"
-        ~&  >>>  cart
         :_  bud
         `(mule |.(;;(chick (~(write contract cart) scramble))))
       ++  read

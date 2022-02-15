@@ -47,7 +47,7 @@
       me=id
       block=@ud
       town-id=@ud
-      owned-rice=(set id)
+      owned=(map id grain)
   ==
 +$  contract
   $_  ^|
@@ -83,7 +83,7 @@
       args=(unit *)
       grains=(map id grain)
   ==
-::  this sucks :(
+::
 +$  maybe-hatched  (each scramble male)
 ::
 +$  chick   (each male female)
