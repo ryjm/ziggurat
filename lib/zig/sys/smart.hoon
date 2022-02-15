@@ -75,13 +75,11 @@
   ==
 +$  yolk
   $:  =caller
-      kind=?(%read %write)
       args=(unit *)
       grain-ids=(set id)
   ==
 +$  scramble
   $:  =caller
-      kind=?(%read %write)
       args=(unit *)
       grains=(map id grain)
   ==

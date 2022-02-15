@@ -4,7 +4,7 @@
 ::  +mill-all: mills all calls in mempool
 ::
 ++  mill-all
-  |=  [=town mempool=(list egg) blocknum=@ud] 
+  |=  [=town mempool=(list egg) blocknum=@ud]
   =/  pending
     %+  sort  mempool
     |=  [a=egg b=egg]
@@ -24,7 +24,6 @@
 ++  mill
   |=  [=town =egg blocknum=@ud]
   ^-  ^town
-  ~&  >  "in the mill"
   ?.  ?=(user from.p.egg)  town
   ?~  curr-nonce=(~(get by q.town) id.from.p.egg)
     town  ::  missing user
@@ -32,7 +31,6 @@
     town  ::  bad nonce
   ?.  (~(audit tax p.town) egg)
     town  ::  can't afford gas
-  ~&  >  "passed audit"
   =+  [gan rem]=(~(work farm p.town blocknum) egg)
   =/  fee=@ud   (sub budget.p.egg rem)
   :-  ?~  gan  (~(pay tax p.town) id.from.p.egg fee)
@@ -93,9 +91,7 @@
   ++  work
     |=  =egg
     ^-  [(unit ^granary) @ud]
-    ~&  >  "working"
     =/  crop  (incubate egg(budget.p (div budget.p.egg rate.p.egg)))
-    ~&  >>  crop
     :_  +.crop
     ?~  -.crop  ~
     (harvest u.-.crop to.p.egg from.p.egg)
@@ -104,7 +100,6 @@
     |=  =egg
     ^-  [(unit male) @ud]
     |^
-    ~&  >  "incubateing"
     =/  args  (cook q.egg)
     ?~  stalk=(germinate to.p.egg)
       `budget.p.egg
@@ -115,8 +110,7 @@
       |=  =yolk
       ^-  scramble
       ?.  ?=(user caller.yolk)  !!
-      :^    caller.yolk
-          kind.yolk
+      :+  caller.yolk
         args.yolk
       %-  ~(gas by *(map id grain))
       %+  murn  ~(tap in grain-ids.yolk)
@@ -139,7 +133,6 @@
   ++  grow
     |=  [=crop =scramble =egg]
     ^-  [(unit male) @ud]
-    ~&  >  "growing"
     |^
     =+  [chick rem]=(weed crop to.p.egg [%& scramble] ~ budget.p.egg)
     ~&  >  "1st weeding successful"
@@ -172,7 +165,6 @@
       ^-  [(unit chick) @ud]
       =/  cart  [mem to block town-id owns.crop]
       =+  [res bud]=(barn contract.crop inp cart budget)
-      ~&  res
       ?~  res               `bud
       ?:  ?=(%| -.u.res)    `bud
       ?:  ?=(%& -.p.u.res)  `bud
@@ -187,32 +179,38 @@
       |^
       ::  hellaciously ugly
       ?:  ?=(%| -.inp)
+        ::  event
         =/  res  (event p.inp)
         ?~  -.res  `+.res
         ?:  ?=(%& -.u.-.res)
           [`[%& %| p.u.-.res] +.res]
         [`[%| p.u.-.res] +.res]
-      ?-    kind.p.inp
-          %read
-        =/  res  (read ;;(path +.args.p.inp))
-        ?~  -.res  `+.res
-        ?:  ?=(%& -.u.-.res)
-          [`[%& %& p.u.-.res] +.res]
-        [`[%| p.u.-.res] +.res]
-          %write  
-        =/  res  (write p.inp)
-        ?~  -.res  `+.res
-        ?:  ?=(%& -.u.-.res)
-          [`[%& %| p.u.-.res] +.res]
-        [`[%| p.u.-.res] +.res]
-      ==
+      ::  write
+      =/  res  (write p.inp)
+      ?~  -.res  `+.res
+      ?:  ?=(%& -.u.-.res)
+        [`[%& %| p.u.-.res] +.res]
+      [`[%| p.u.-.res] +.res]
+      ::  TODO read (scry)
+      ::  =/  res  (read ;;(path +.args.p.inp))
+      ::  ?~  -.res  `+.res
+      ::  ?:  ?=(%& -.u.-.res)
+      ::    [`[%& %& p.u.-.res] +.res]
+      ::  [`[%| p.u.-.res] +.res]
+      ::
+      ::  note:  i believe the way we're using ;; here destroys
+      ::  any trace data we may get out of the contract. the
+      ::  output trace ends up resolving at the ;; rather than
+      ::  wherever in the contract caused a stack trace.
+      ::
+      ::  using +mule here and charging no gas until jet dashboard for +bink
       ++  write
-        |=  =^scramble 
+        |=  =^scramble
         ^-  [(unit (each chick (list tank))) @ud]
         ~&  >  "barn performing %write call"
-        ~&  >>  scramble
         ~&  >>>  cart
-        (bull |.(;;(chick (~(write contract cart) scramble))) bud)
+        :_  bud
+        `(mule |.(;;(chick (~(write contract cart) scramble))))
       ++  read
         |=  =path
         ^-  [(unit (each * (list tank))) @ud]
@@ -229,7 +227,6 @@
   ++  harvest
     |=  [res=male lord=id from=caller]
     ^-  (unit ^granary)
-    ~&  >  "harvesting"
     =-  ?.  -  ~
         ~&  >  "passed harvest checks"
         `(~(uni by granary) (~(uni by changed.res) issued.res))
