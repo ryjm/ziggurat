@@ -234,6 +234,7 @@
 ::     0x3
 ::   --
 ++  test-zigs-utxo-basic-give
+  ::  set up and run mill
   =|  =stamp:std
   =|  =shell:std
   =|  =yolk:std
@@ -257,9 +258,45 @@
         ~[[0xd.ead0] [0xdea.dfee]]
   ==
   =/  =egg:std  [shell yolk]
-  =/  [res=town:std fee-bundle=(unit yolk:std)]
+  =/  [resulting-town=town:std fee-bundle=(unit yolk:std)]
     (mill fake-town:zigs-utxo egg block:zigs-utxo ~)
-  (expect-eq !>(~) !>(res))
+  =*  granary   p.resulting-town
+  =*  populace  q.resulting-town
+  ::  set up expected outputs
+  =/  dead-nonce=@ud          1
+  =/  beef1-germ=germ:std     [%& `@ud 100]
+  =/  deadcae0-germ=germ:std  [%& `@ud 900]
+  =/  deadcae1-germ=germ:std  [%& `@ud 500]
+  ::  compare
+  ;:  weld
+  %+  expect-eq
+    !>  dead-nonce
+    !>  (~(got by populace) 0xdead)
+  %+  expect-eq
+    !>  ~
+    !>  (~(get by granary) 0xdea.dfee)
+  %+  expect-eq
+    !>  ~
+    !>  (~(get by granary) 0xd.ead0)
+  %+  expect-eq
+    !>  beef1-germ
+    !>
+      ?~  beef1-grain=(~(get by granary) 0xb.eef1)
+        ~
+      germ.u.beef1-grain
+  %+  expect-eq
+    !>  deadcae0-germ
+    !>
+      ?~  deadcae0-grain=(~(get by granary) 0xdead.cae0)
+        ~
+      germ.u.deadcae0-grain
+  %+  expect-eq
+    !>  deadcae1-germ
+    !>
+      ?~  deadcae1-grain=(~(get by granary) 0xdead.cae1)
+        ~
+      germ.u.deadcae1-grain
+  ==
 ::
 :: ++  test-zigs-basic-give
 ::   =/  yok
