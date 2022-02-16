@@ -13,16 +13,16 @@
           ::  'chunk' def
   =/  fee-bundle=(unit yolk)
     :^  ~  [validator-id +((~(got by q.town) validator-id))]
-      *(set id)
-    [~ %send *(map id (map id @ud))]
+      [~ %send *(map id (map id @ud))]
+    *(set id)
   =/  town-and-fee-bundle  [town fee-bundle]
   |-  ^-  [(list [@ux egg]) ^town]
   ?~  pending
     =.  town        -.town-and-fee-bundle
     =.  fee-bundle  +.town-and-fee-bundle
     ?~  fee-bundle  [result town]
-    =/  fee-egg=egg  (~(invoice tax town) town-id u.fee-bundle)
-    =/  gan=granary  (~(pay tax town) fee-egg)
+    =/  fee-egg=egg  (~(invoice tax town block) town-id u.fee-bundle)
+    =/  gan=granary  (~(pay tax town block) fee-egg)
     :+  [[`@ux`(shax (jam fee-egg)) fee-egg] result]
       gan
     ?:  ?=(id caller.u.fee-bundle)  q.town
@@ -42,13 +42,13 @@
     [town ~]  ::  missing user
   ?.  =(nonce.from.p.egg +(u.curr-nonce))
     [town ~]  ::  bad nonce
-  ?.  (~(audit tax town) egg)
+  ?.  (~(audit tax town block) egg)
     [town ~]  ::  can't afford gas
   =+  [gan rem]=(~(work farm p.town block) egg)
   =/  fee=@ud   (sub budget.stamp.p.egg rem)
   ?~  gan  [town ~]
   =.  q.town  (~(put by q.town) id.from.p.egg nonce.from.p.egg)
-  =+  [gan-out fee-bundle-out]=(~(note-or-pay tax [u.gan q.town]) egg fee town-id fee-bundle)
+  =+  [gan-out fee-bundle-out]=(~(note-or-pay tax [u.gan q.town] block) egg fee town-id fee-bundle)
   :-  :-  gan-out
     ?~  fee-bundle
       ?~  fee-bundle-out  q.town
@@ -62,7 +62,7 @@
 ::  +tax: manage payment for contract execution in zigs
 ::
 ++  tax
-  |_  =town
+  |_  [=town block=@ud]
   ::  +audit: evaluate whether a caller can afford gas
   ++  audit
     |=  =egg
@@ -81,19 +81,20 @@
     |=  =egg
     ^-  (map id grain)
     =|  =yolk
+    ?.  ?=(user from.p.egg)  *(map id grain)
     =:  caller.yolk     from.p.egg
         args.yolk       ~
-        grain-ids.yolk  (silt ~[fee.stamp.p.egg])
+        grain-ids.yolk  (silt ~[fee.stamp.p.egg change.stamp.p.egg])
     ==
     =/  =scramble
-      (~(fertilize farm p.town) yolk)
+      (~(cook farm p.town block) yolk)
     grains.scramble
   ::  +note-or-pay: notes or pays fee as appropriate
   ++  note-or-pay
     |=  [=egg fee=@ud town-id=@ud fee-bundle=(unit yolk)]
     ^-  [granary (unit yolk)]
     ?~  fee-bundle
-      =/  fee-egg=egg
+      =/  fee-egg=^egg
         (invoice town-id (tally egg fee ~))
       [(pay fee-egg) fee-bundle]
     [p.town (note egg fee fee-bundle)]
@@ -160,9 +161,9 @@
   ::  +pay: extract gas fee from caller's zigs balance
   ++  pay
     |=  fees=egg
-    ^-  ^granary
+    ^-  granary
     ~&  >  "paying taxes"
-    =+  [gan rem]=(~(work farm p.town) fees)
+    =+  [gan rem]=(~(work farm p.town block) fees)
     ?~  gan  !!
     u.gan
   --
@@ -218,7 +219,7 @@
     |=  [=crop =scramble =egg]
     ^-  [(unit male) @ud]
     |^
-    =+  [chick rem]=(weed crop to.p.egg [%& scramble] ~ budget.p.egg)
+    =+  [chick rem]=(weed crop to.p.egg [%& scramble] ~ budget.stamp.p.egg)
     ~&  >  "1st weeding successful"
     ?~  chick  `rem
     ?:  ?=(%& -.u.chick)
