@@ -65,12 +65,18 @@
     *chick
   --
 ::
++$  stamp
+  $:  fee=id
+      change=id
+      rate=@ud
+      budget=@ud
+  ==
+::
 +$  egg  (pair shell yolk)
 +$  shell
   $:  from=caller
       to=id
-      rate=@ud
-      budget=@ud
+      =stamp
       town-id=@ud
   ==
 +$  yolk
@@ -87,6 +93,6 @@
 +$  maybe-hatched  (each scramble male)
 ::
 +$  chick   (each male female)
-+$  male    [changed=(map id grain) issued=(map id grain)]
++$  male    [changed=(map id (unit grain)) issued=(map id grain)]
 +$  female  [mem=(unit vase) next=[to=id town-id=@ud args=yolk]]
 --
