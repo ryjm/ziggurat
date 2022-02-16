@@ -23,12 +23,12 @@
     ::  (each following arg is a member id, terminated by ~)
     ?.  ?=([thresh=@ud members=*] args)  !!
     =/  members  ;;((set id) members.args)
-    =/  data  [members thresh.args ~]
-    =/  new-sig-germ  [%& ~ data]
+    =/  new-sig-germ  [%& ~ [members thresh.args ~]]
     =/  new-sig-id  (fry caller-id 0 new-sig-germ) 
     =-  [%& ~ (malt ~[[new-sig-id -]])]
     [new-sig-id me.cart me.cart town-id.cart new-sig-germ]
-  =/  my-grain=grain  -:~(val by grains.inp)
+  =/  my-grain=grain  -:~(val by owned.cart)
+  ?>  =(lord.my-grain me.cart)
   ?>  ?=(%& -.germ.my-grain)
   =/  data  (hole multisig-data data.p.germ.my-grain)
   ?:  ?=(%vote -.u.args.inp)

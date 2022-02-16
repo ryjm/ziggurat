@@ -1,15 +1,25 @@
-/+  *tiny
+/+  *zig-sys-smart
 =>  |%
     +$  badge  @tas
     +$  role
       [=badge desc=@t param=@tas]
     +$  daoist
       [=ship roles=(map badge role)]
+    +$  action
+      $%  [%add-owner =id]
+          [%remove-owner =id]        
+          [%edit-threshold new=@ud]
+          [%spawn =id subdao=dao-data]  ::  generate new subDAO
+          [%jettison =id]               ::  remove subDAO
+          [%join =id =daoist]           ::  add new member
+          [%exit =id]                   ::  remove member
+          [%edit =id =daoist]           ::  alter member roleset
+      ==
     +$  dao-data
       $:  name=@t
           owners=(set id)          ::  merklized
           threshold=@ud
-          proposals=(map @ux [=call votes=(set id)])
+          proposals=(map @ux [act=action votes=(set id)])
           daoists=(map id daoist)  ::  merklized
           ::  set of rice that hold subDAO info. these
           ::  rice must also fit the mold of $dao-data
@@ -21,175 +31,116 @@
 ::
 ::  Provides the entire on-chain backend for an EScape DAO.
 ::  Holds a recording of members along with their roles. This
-::  contract should be owned by a multisig contract, which
-::  serves as the final source of truth for the DAO.
+::  contract can serve unlimited DAOs, who simply store their
+::  structure as rice owned by this contract on-chain.
 ::
-::  owner-multisig is lord of this contract
-::  owners set here should match that multisig
-::  if this contract is to be mutable. otherwise
-::  can set lord to 0x0 or whatever to make immutable
-::
-|%
-++  dao-contract
-  ^-  contract
-  |_  [mem=(unit vase) me=id]
-  ++  write
-    |=  inp=contract-input
-    ^-  contract-output
-    ?~  args.inp  !!
-    =/  caller-id
-      ^-  id
-      ?:  ?=(@ux caller.inp)
-        caller.inp
-      id.caller.inp
-    ?:  ?=(%create-dao -.u.args.inp)
-      ::  start a new 'root cell' for a new DAO
-      ::  expected args: name, initial owner set,
-      ::  initial threshold, initial daoist set
-      ::  TODO no good way to have list-args yet
-      =/  new-dao-germ  [%& [caller-id ~ ['newDAO']]]
-      =/  new-dao-id  (fry caller-id 0 new-dao-germ)
-      [%result %write ~ issued=(malt ~[[new-dao-id [new-dao-id caller-id 0 new-dao-germ]]])]
-    ::  TODO! Contracts should deal with any rice,
-    ::  not just those hardcoded by pubkey. We want
-    ::  people to be able to deploy their own rice
-    ::  that matches the contract's types and use
-    ::  the function bundle in the contract to edit
-    ::  their rice. This would let a single dao-contract
-    ::  work for a TON of DAOs...
-    ::
-    ::  Possible solution: include ID of your rice as
-    ::  an argument in your call. Doing this below:
-    =*  my-grain-id  -.+.u.args.inp
-    ?.  ?=(@ux my-grain-id)  !!
-    ?~  my-grain=(~(get by rice.inp) my-grain-id)  !!
-    ?>  =(lord.u.my-grain me)
-    =/  data  !<(dao-data [-:!>(*dao-data) data.germ.u.my-grain])
-    =*  args  +.+.u.args.inp
-    ?:  ?=(%vote -.u.args.inp)
-      ::  must be sent by owner
-      ?.  (~(has in owners.data) caller-id)  !!
-      ::  expected args: hash of proposal
-      ?.  ?=(id=@ux args)  !!
-      ?~  prop=(~(get by proposals.data) id.args)  !!
-      =.  u.prop  u.prop(votes (~(put in votes.u.prop) caller-id))
-      ?:  (gth threshold.data ~(wyt in votes.u.prop))
-        =.  data.germ.u.my-grain  data
-        [%result %write changed=(malt ~[[my-grain-id u.my-grain]]) ~]
-      =.  data.germ.u.my-grain
-        data(proposals (~(del by proposals.data) id.args))
-      =/  next
-        `contract-input`[me args.args.call.u.prop rice.inp]
-      $(inp next)
-    =.  data
-      ?+    -.u.args.inp  !!
-          %add-owner
-        ::  this must be sent by contract
-        ?.  =(me caller-id)  !!
-        ::  expected args: id
-        ?.  ?=(=id args)  !!
-        data(owners (~(put in owners.data) id.args))
-      ::
-          %remove-owner
-        ?.  =(me caller-id)  !!
-        ::  expected args: id
-        ?.  ?=(=id args)  !!
-        data(owners (~(del in owners.data) id.args))
-      ::
-          %edit-threshold
-        ?.  =(me caller-id)  !!
-        ::  expected args: id
-        ?.  ?=(new=@ud args)  !!
-        ?:  (gth new.args ~(wyt in owners.data))  data
-        data(threshold new.args)
-      ::
-          %spawn  ::  add a 'subDAO' cell
-        ?.  =(me caller-id)  !!
-        ::  expected args: id
-        ?.  ?=(=id args)  !!
-        data(subdaos (~(put in subdaos.data) id.args))
-      ::
-          %jettison  ::  remove a 'subDAO' cell
-        ?.  =(me caller-id)  !!
-        ::  expected args: id
-        ?.  ?=(=id args)  !!
-        data(subdaos (~(del in subdaos.data) id.args))
-      ::
-          %join
-        ?.  =(me caller-id)  !!
-        ::  expected args: id, ship, role
-        ?.  ?=([=id =ship =role] args)  !!
-        =/  new-daoist
-          [ship.args (malt ~[[badge.role.args role.args]])]
-        data(daoists (~(put by daoists.data) id.args new-daoist))
-      ::
-          %exit
-        ?.  =(me caller-id)  !!
-        ::  expected args: id
-        ?.  ?=(=id args)  !!
-        data(daoists (~(del by daoists.data) id.args))
-      ::
-          %edit
-        ?.  =(me caller-id)  !!
-        ::  expected args: id, ship, role
-        ::  TODO: change to set of roles once we can
-        ?.  ?=([=id =ship =role] args)  !!
-        =/  new-daoist
-          [ship.args (malt ~[[badge.role.args role.args]])]
-        data(daoists (~(put by daoists.data) id.args new-daoist))
-      ::
-      ==
-    :*  %result
-        %write
-        changed=(malt ~[[id.u.my-grain u.my-grain]])
-        issued=~
-    ==
+|_  =cart
+++  write
+  |=  inp=scramble
+  ^-  chick
+  ?~  args.inp  !!
+  =*  args  +.u.args.inp
+  ::  make this a stdlib function, every contract uses it
+  =/  caller-id
+    ^-  id
+    ?:  ?=(@ux caller.inp)
+      caller.inp
+    id.caller.inp
   ::
-  ++  read
-    |=  inp=contract-input
-    ^-  contract-output
-    :+  %result
-      %read
-    ?~  args.inp  ~
-    =*  my-grain-id  -.+.u.args.inp
-    ?.  ?=(@ux my-grain-id)  !!
-    ?~  my-grain=(~(get by rice.inp) my-grain-id)  !!
-    =/  data  !<(dao-data [-:!>(*dao-data) data.germ.u.my-grain])
-    =*  args  +.+.u.args.inp
-    :+  %result  %read
-    ^-  *
-    ?+    -.u.args.inp  !!
-        %get-daoist
-      ::  expected args: id
-      ?.  ?=(=id args)  !!
-      (~(get by daoists.data) id.args)
+  ::  create a brand-new DAO
+  ::
+  ?:  ?=(%create-dao -.u.args.inp)
+    ::  start a new 'root cell' for a new DAO
+    ::  expected args: name, initial owner set,
+    ::  initial threshold
+    ?.  ?=([name=@t thresh=@ud owners=*] args)  !!
+    =/  owners  ;;((set id) owners.args)
+    =/  new-dao-germ  [%& ~ [name.args owners thresh.args ~ ~ ~]]
+    =/  new-dao-id  (fry caller-id 0 new-dao-germ)
+    =-  [%& ~ (malt ~[[new-dao-id -]])]
+    [new-dao-id me.cart me.cart town-id.cart new-dao-germ]  
+  ::
+  =/  my-grain=grain  -:~(val by owned.cart)
+  ?>  =(lord.my-grain me.cart)
+  ?>  ?=(%& -.germ.my-grain)
+  =/  data  (hole dao-data data.p.germ.my-grain)
+  ::
+  ::  vote on a proposal
+  ::
+  ?:  ?=(%vote -.u.args.inp)
+    ::  must be sent by owner
+    ?.  (~(has in owners.data) caller-id)  !!
+    ::  expected args: hash of proposal
+    ?.  ?=(id=@ux args)  !!
+    =/  prop  (~(got by proposals.data) id.args)
+    =.  prop  prop(votes (~(put in votes.prop) caller-id))
+    ?:  (gth threshold.data ~(wyt in votes.prop))
+      ::  if threshold is higher than current # of votes,
+      ::  just register vote and update rice
+      [%& (malt ~[[id.my-grain my-grain(data.p.germ data)]]) ~]
+    ::  otherwise execute proposal and remove from rice
+    =.  data.p.germ.my-grain
+      data(proposals (~(del by proposals.data) id.args))
+    $(inp [me.cart `act.prop grains.inp])
+  ::
+  ::  create a proposal
+  ::
+  ?:  ?=(%propose -.u.args.inp)
+    ::  must be sent by owner
+    ?.  (~(has in owners.data) caller-id)  !!
+    ::  expected args: action
+    =/  act  ;;(action args)
+    =.  proposals.data
+      %+  ~(put by proposals.data)
+        (mug act)
+      [act (silt ~[caller-id])]
+    [%& (malt ~[[id.my-grain my-grain(data.p.germ data)]]) ~]
+  ::
+  ::  execute a proposal (called only by this contract)
+  ::
+  ?>  =(me.cart caller-id)
+  =/  act  ;;(action (need args.inp))
+  =.  data
+    ?-    -.act
+        %add-owner
+      data(owners (~(put in owners.data) id.act))
     ::
-        %get-roles
-      ::  expected args: id
-      ?.  ?=(=id args)  !!
-      ?~  ist=(~(get by daoists.data) id.args)  !!
-      roles.u.ist
+        %remove-owner
+      data(owners (~(del in owners.data) id.act))
     ::
-        %get-role
-      ::  expected args: id, badge (@tas)
-      ?.  ?=([=id =badge] args)  !!
-      ?~  ist=(~(get by daoists.data) id.args)  !!
-      (~(get by roles.u.ist) badge.args)
+        %edit-threshold
+      ?:  (gth new.act ~(wyt in owners.data))  !!
+      data(threshold new.act)
     ::
-        %get-ship
-      ::  expected args: id
-      ?.  ?=(=id args)  !!
-      ?~  ist=(~(get by daoists.data) id.args)  !!
-      ship.u.ist
+        %spawn
+      ::  actually need to issue rices here
+      data(subdaos (~(put in subdaos.data) id.act))
+    ::
+        %jettison
+      data(subdaos (~(del in subdaos.data) id.act))
+    ::
+        %join
+      data(daoists (~(put by daoists.data) id.act daoist.act))
+    ::
+        %exit
+      data(daoists (~(del by daoists.data) id.act))
+    ::
+        %edit
+      data(daoists (~(put by daoists.data) id.act daoist.act))
     ::
     ==
-  ::
-  ++  event
-    |=  inp=contract-result
-    ^-  contract-output
-    ::  
-    ::  TBD
-    ::  
-    *contract-output
-  --
+  [%& (malt ~[[id.my-grain my-grain(data.p.germ data)]]) ~]
+::
+++  read
+  |=  inp=path
+  ^-  *
+  "TBD"
+::
+++  event
+  |=  inp=male
+  ^-  chick
+  ::  
+  ::  TBD
+  ::  
+  *chick
 --
