@@ -25,8 +25,8 @@
       ^=  t  |-
       ?~  rices  ~
       ::  TODO: how does a contract know what helix it's in?
-      ::  might need to pass this in somewhere, using 0
-      ::  micmic is not optimal here
+      ::  need to pass this in somewhere, using 0 for now
+      ::  micmic is necessary here, I think
       =/  me  [contract-id 0 [%& ;;(rice -.rices)]]
       =/  my-id  (fry me)
       :-  i=[my-id [my-id me]]
