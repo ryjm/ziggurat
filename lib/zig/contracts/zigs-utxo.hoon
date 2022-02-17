@@ -38,10 +38,10 @@
     (roll (turn sends |=([recp=id:std amt=@ud] amt)) add)
   %_  $
     to  t.to
-    issued  (update-issued sends issued)
+    issued  (update-issued-for-sender sends issued)
   ==
   ::
-  ++  update-issued
+  ++  update-issued-for-sender
     |=  [sends=(list [id:std @ud]) issued=(map id:std grain:std)]
     ^-  (map id:std grain:std)
     |-  ^-  (map id:std grain:std)
@@ -51,23 +51,33 @@
     %_  $
       sends  t.sends
       issued
+        =/  data=@ud
+          ?.  (~(has by issued) recp)
+            amt
+          =/  old  (~(got by issued) recp)
+          ?>  ?=(%& -.germ.old)
+          ?>  ?=(@ud data.p.germ.old)
+          (add `@ud`data.p.germ.old amt)
         =|  r=rice:std
+        =:  format.r  `@ud
+            data.r    data
+        ==
+        =/  =germ:std  [%& r]
+        =/  =id:std
+          (fry:std zigs-wheat-id:std town-id:cart germ)
         =|  g=grain:std
-        =:  data.r
-              ?.  (~(has by issued) recp)
-                amt
-              =/  old  (~(got by issued) recp)
-              ?>  ?=(%& -.germ.old)
-              ?>  ?=(@ud data.p.germ.old)
-              (add `@ud`data.p.germ.old amt)
-            format.r   `@ud
-            id.g       recp  ::  TODO: wrong? Seems like this should be a hash
+        =:
+            id.g       id
             lord.g     zigs-wheat-id:std
             holder.g   recp
             town-id.g  town-id.cart
-            germ.g     [%& r]
+            germ.g     germ
         ==
-        (~(put by issued) recp g)
+        ~&  >>>  germ
+        ~&  >>>  g
+        ~&  >  (mug germ)
+        ~&  >  (mug (cat 3 lord.g (cat 3 town-id.g 0xdead.beef)))
+        (~(put by issued) id g)
     ==
   --
 ::

@@ -21,39 +21,64 @@
   ++  block
     ^-  @ud
     0
+  ++  dead0
+    ^-  grain:std
+    (rice-grain 0xdead 1.000)
+  ++  deadfee
+    ^-  grain:std
+    (rice-grain 0xdead 999)
+  ++  beef0
+    ^-  grain:std
+    (rice-grain 0xbeef 200)
   ++  zigs-rice-grains
     ^-  (list (pair id:std grain:std))
-    :~  [0xd.ead0 (rice-grain 0xd.ead0 0xdead 1.000)]
-        [0xdea.dfee (rice-grain 0xdea.dfee 0xdead 1.000)]
-        [0xb.eef0 (rice-grain 0xb.eef0 0xbeef 200)]
-        [0xbee.ffee (rice-grain 0xbee.ffee 0xbeef 100)]
+    =/  dead0=grain:std    dead0
+    =/  deadfee=grain:std  deadfee
+    =/  beef0=grain:std    beef0
+    :~  [id.dead0 dead0]
+        [id.deadfee deadfee]
+        [id.beef0 beef0]
     ==
   ++  rice-data
     |=  amount=@ud
     `@ud`amount
   ++  rice
-    |=  [amount=@ud]
+    |=  amount=@ud
     ^-  rice:std
     [`@ud (rice-data amount)]
+  ++  rice-germ
+    |=  amount=@ud
+    ^-  germ:std
+    [%& (rice amount)]
+  ++  rice-grain-id
+    |=  amount=@ud
+    ^-  id:std
+    (fry:std zigs-wheat-id:std town-id (rice-germ amount))
   ++  rice-grain
-    |=  [=id:std holder=id:std amount=@ud]
+    |=  [holder=id:std amount=@ud]
     ^-  grain:std
-    :*  id=id
+    :*  id=(rice-grain-id amount)
         lord=zigs-wheat-id:std
         holder=holder
         town-id=town-id
-        germ=[%& (rice amount)]
+        germ=(rice-germ amount)
     ==
   ++  zigs-wheat
     ^-  wheat:std
     [`zigs-contract *(set id:std)]
+  ++  zigs-wheat-germ
+    ^-  germ:std
+    [%| zigs-wheat]
+  :: ++  zigs-wheat-grain-id
+  ::   ^-  id:std
+  ::   (fry:std zigs-wheat-id:std town-id zigs-wheat-germ)
   ++  zigs-wheat-grain
     ^-  grain:std
     :*  id=zigs-wheat-id:std
         lord=zigs-wheat-id:std
         holder=zigs-wheat-id:std
         town-id=town-id
-        germ=[%| zigs-wheat]
+        germ=zigs-wheat-germ
     ==
   ++  fake-land
     ^-  land:std
@@ -236,12 +261,14 @@
 ++  test-zigs-utxo-basic-give
   ::  set up and run mill
   =|  =stamp:std
-  =|  =shell:std
-  =|  =yolk:std
-  =:  fee.stamp      0xdea.dfee
-      change.stamp   0xdead.cae1
+  =:  fee.stamp      id:deadfee:zigs-utxo  ::  0xdea.dfee
+      change.stamp   0xdead  ::  (rice-grain-id 0xdead (sub data.deadfee.zigs-rice-grains 500))      ::  0xdead.cae1
       rate.stamp     1
       budget.stamp   500
+  ==
+  =|  =shell:std
+  =|  =yolk:std
+  =:
       from.shell     [0xdead 1]
       to.shell       zigs-wheat-id:std
       stamp.shell    stamp
@@ -250,12 +277,13 @@
       args.yolk
         %-  some  :-  %send
         %-  %~  gas  by  *(map id:std (map id:std @ud))
-        :~  :-  0xd.ead0
-                (~(gas by *(map id:std @ud)) ~[[0xb.eef1 100] [0xdead.cae0 900]])
+        :~  :-  id:dead0:zigs-utxo
+            (~(gas by *(map id:std @ud)) ~[[0xbeef 100] [0xdead 900]])
         ==
       grain-ids.yolk
         %-  %~  gas  in  *(set id:std)
-        ~[[0xd.ead0] [0xdea.dfee]]
+        ~[[id:dead0:zigs-utxo]]
+        :: ~[[id:dead0:zigs-utxo] [id:deadfee:zigs-utxo]]
   ==
   =/  =egg:std  [shell yolk]
   =/  [resulting-town=town:std fee-bundle=(unit yolk:std)]
@@ -265,8 +293,8 @@
   ::  set up expected outputs
   =/  dead-nonce=@ud          1
   =/  beef1-germ=germ:std     [%& `@ud 100]
-  =/  deadcae0-germ=germ:std  [%& `@ud 900]
-  =/  deadcae1-germ=germ:std  [%& `@ud 500]
+  =/  dead-change0-germ=germ:std  [%& `@ud 900]
+  =/  dead-change1-germ=germ:std  [%& `@ud 499]
   ::  compare
   ;:  weld
   %+  expect-eq
@@ -274,28 +302,28 @@
     !>  (~(got by populace) 0xdead)
   %+  expect-eq
     !>  ~
-    !>  (~(get by granary) 0xdea.dfee)
+    !>  (~(get by granary) id:deadfee:zigs-utxo)
   %+  expect-eq
     !>  ~
-    !>  (~(get by granary) 0xd.ead0)
+    !>  (~(get by granary) id:dead0:zigs-utxo)
   %+  expect-eq
     !>  beef1-germ
     !>
-      ?~  beef1-grain=(~(get by granary) 0xb.eef1)
+      ?~  beef1-grain=(~(get by granary) (fry:std zigs-wheat-id:std town-id:zigs-utxo beef1-germ))  :: not good
         ~
       germ.u.beef1-grain
-  %+  expect-eq
-    !>  deadcae0-germ
-    !>
-      ?~  deadcae0-grain=(~(get by granary) 0xdead.cae0)
-        ~
-      germ.u.deadcae0-grain
-  %+  expect-eq
-    !>  deadcae1-germ
-    !>
-      ?~  deadcae1-grain=(~(get by granary) 0xdead.cae1)
-        ~
-      germ.u.deadcae1-grain
+  :: %+  expect-eq
+  ::   !>  deadcae0-germ
+  ::   !>
+  ::     ?~  deadcae0-grain=(~(get by granary) 0xdead.cae0)
+  ::       ~
+  ::     germ.u.deadcae0-grain
+  :: %+  expect-eq
+  ::   !>  deadcae1-germ
+  ::   !>
+  ::     ?~  deadcae1-grain=(~(get by granary) 0xdead.cae1)
+  ::       ~
+  ::     germ.u.deadcae1-grain
   ==
 ::
 :: ++  test-zigs-basic-give

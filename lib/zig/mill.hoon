@@ -67,8 +67,8 @@
   ++  audit
     |=  =egg
     ^-  ?
-    =/  grains=(map id grain)  (fetch egg)
     ~&  >  "auditing"
+    =/  grains=(map id grain)  (fetch egg)
     ?~  fee-rice=(~(get by grains) fee.stamp.p.egg)  %.n
     ?.  ?=(%& -.germ.u.fee-rice)                     %.n
     ?.  =(zigs-wheat-id lord.u.fee-rice)             %.n
@@ -257,6 +257,7 @@
         `[id u.res]
       =/  cart  [mem to block town-id -]
       =+  [res bud]=(barn contract.crop inp cart budget)
+      ~&  >>  inp
       ?~  res               `bud
       ?:  ?=(%| -.u.res)    `bud
       ?:  ?=(%& -.p.u.res)  `bud
@@ -318,21 +319,29 @@
   ++  harvest
     |=  [res=male lord=id]
     ^-  (unit ^granary)
-    ::  null (unit grain)s in changed.res are removed
-    ::  from granary; others are modified
-    =/  changed  ~(tap by changed.res)
-    =|  modified=(map id grain)
-    =.  modified
-    |-  ^-  (map id grain)
-    ?~  changed  modified
-    =*  id     p.i.changed
-    =*  grain  q.i.changed
-    ?~  grain
-      =.  granary  (~(del by granary) id)  ::  TODO: will del happen on harvest check fail? If yes: fix
-      $(changed t.changed)
-    $(modified (~(put by modified) id u.grain), changed t.changed)
-    =-  ?.  -  ~
+    ~&  >>  "lord: {<lord>}"
+    ~&  >>  "wheat ids: {<(wheat-ids-in-granary granary)>}"
+    ~&  >>  res
+    ~&  >>  (rices-in-granary granary)
+    =-  ?.  -  ~&  >  "failed harvest checks"  ~
+    :: =-  ?.  -  ~
         ~&  >  "passed harvest checks"
+        ::  null (unit grain)s in changed.res are removed
+        ::  from granary; others are modified
+        =/  changed  ~(tap by changed.res)
+        =|  modified=(map id grain)
+        =.  modified
+          |-  ^-  (map id grain)
+          ?~  changed  modified
+          =*  id     p.i.changed
+          =*  grain  q.i.changed
+          ?~  grain
+            ~&  >  "remove {<id>}"
+            =.  granary  (~(del by granary) id)
+            $(changed t.changed)
+          $(modified (~(put by modified) id u.grain), changed t.changed)
+        ~&  >>  res
+        ~&  >>  modified
         `(~(uni by granary) (~(uni by modified) issued.res))
     ?&  %-  ~(all in changed.res)
         |=  [=id grain=(unit grain)]
@@ -351,9 +360,32 @@
         ::  id in issued map must be equal to id in grain AND
         ::  all newly issued grains must have properly-hashed id AND
         ::  lord of grain must be contract issuing it
+        ~&  >>  germ.grain
+        ~&  >>  id
+        ~&  >>  grain
+        ~&  >>  (fry lord.grain town-id.grain germ.grain)
+        ~&  >  (mug germ.grain)
+        ~&  >  (mug (cat 3 lord.grain (cat 3 town-id.grain 0xdead.beef)))
+        ?.  ?=(%& -.germ.grain)  %.n
+        ~&  >  (mug germ.grain)
         ?&  =(id id.grain)
-            =((fry lord.grain town-id.grain germ.grain) id.grain)
+            =((fry lord.grain town-id.grain germ.grain) id)
             =(lord lord.grain)
     ==  ==
   --
+::
+++  rices-in-granary
+  |=  =granary
+  ^-  ^granary
+  %-  %~  gas  by  *^granary
+  %+  murn  ~(tap by granary)
+  |=  [=id =grain]
+  ?.  -.germ.grain  ~  `[id grain]
+::
+++  wheat-ids-in-granary
+  |=  =granary
+  ^-  (list id)
+  %+  murn  ~(tap by granary)
+  |=  [=id =grain]
+  ?:  -.germ.grain  ~  `id
 --
