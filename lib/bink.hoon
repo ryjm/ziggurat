@@ -1,19 +1,11 @@
 ~%  %bink-lib  ..part  ~
 |%
-::                                                        ::
-+$  lone  $%  [%0 product=*]                              ::  +tone without scry
-              [%2 trace=(list [@ta *])]
-          ==
-::                                                        ::
-+$  loon  $%  [%0 p=*]                                    ::  +toon without scry
-              [%2 p=(list tank)]
-          ==
-::                                                        ::
-+$  bone  [$@(~ lone) rem=@ud]                            ::  bounded +lone
++$  bone  [$@(~ tone) rem=@ud]                            ::  bounded +tone
 ::                                                        ::
 ++  bink                                                  ::  bounded +mink
   ~/  %bink
   |=  $:  [subject=* formula=*]
+          scry=$-(^ (unit (unit)))
           bud=@ud                                         ::  gas budget
       ==
   ::  ~>  %bout                                           ::  XX remove: timing
@@ -223,7 +215,25 @@
   ::
   ::  [%11 tag=@ next=*]
   ::
-  ::  [%12 ref=* path=*]
+      [%12 ref=* path=*]
+    =^  ref  bud
+      $(formula ref.formula)
+    ?~  ref  [~ bud]
+    ?.  ?=(%0 -.ref)  ref^bud
+    =^  path  bud
+      $(formula path.formula)
+    ?~  path  [~ bud]
+    ?.  ?=(%0 -.path)  path^bud
+    =*  cos  1
+    ?:  (gth cos bud)
+      [~ bud]
+    =.  bud  (sub bud cos)
+    =/  result  (scry product.ref product.path)
+    ?~  result
+      [%1 product.path]^bud
+    ?~  u.result
+      [%2 [%hunk product.ref product.path] trace]^bud
+    [%0 u.u.result]^bud
   ::
   ==
   ::
@@ -300,8 +310,8 @@
   --
 ::                                                        ::
 ++  book                                                  ::  bounded +mook
-  |=  ton=lone
-  ^-  loon
+  |=  ton=tone
+  ^-  toon
   ?.  ?=([%2 *] ton)
     ton
   |^  [%2 (turn skip rend)]
@@ -360,22 +370,26 @@
   --
 ::                                                        ::
 ++  bock                                                  ::  bounded +mock
-  |=  [[sub=* fol=*] bud=@ud]
-  ^-  [(unit loon) @ud]
-  =/  =bone  (bink [sub fol] bud)
+  |=  [[sub=* fol=*] gul=$-(^ (unit (unit))) bud=@ud]
+  ^-  [(unit toon) @ud]
+  =/  =bone  (bink [sub fol] gul bud)
   :_  rem.bone
   ?~  -.bone  ~
   `(book -.bone)
 ::                                                        ::
-++  brute                                                 ::  bounded +mure
-  |=  [tap=(trap) bud=@ud]
+++  brute                                                 ::  bounded +mute
+  |=  [tap=(trap) scry=$-(^ (unit (unit))) bud=@ud]
   ^-  [(unit (each * (list tank))) @ud]
-  =+  [ton rem]=(bock [tap %9 2 %0 1] bud)
+  =+  [ton rem]=(bock [tap %9 2 %0 1] scry bud)
   :_  rem
   ?~  ton  ~
   :-  ~
   ?-  -.u.ton
     %0  [%& p.u.ton]
+  ::
+    %1  =/  sof=(unit path)  ((soft path) p.u.ton)
+        [%| ?~(sof leaf+"brute.hunk" (smyt u.sof)) ~]
+  ::
     %2  [%| p.u.ton]
   ==
 ::                                                        ::
