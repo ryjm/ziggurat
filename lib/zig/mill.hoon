@@ -102,7 +102,7 @@
     ?~  fee-bundle
       =/  fee-egg=^egg
         (invoice town-id (tally egg fee ~))
-      [(pay fee-egg) fee-bundle]
+      [(pay fee-egg) [~ q.fee-egg]]
     [p.town (note egg fee fee-bundle)]
   ::  +note: store gas fee for payment in accumulated tx
   ++  note
