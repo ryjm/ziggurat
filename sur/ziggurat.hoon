@@ -1,4 +1,4 @@
-/+  tiny
+/+  smart=zig-sys-smart
 |%
 ++  epoch-interval    ~s10
 ::
@@ -16,20 +16,20 @@
 ::
 +$  signature  [p=@ux q=ship r=life]
 +$  chunks     (set @)
-+$  chunk      [=helix-id [(list [hash=@ux =call:tiny]) town:tiny]]
++$  chunk      [=helix-id [(list [hash=@ux =egg:smart]) town:smart]]
 ::
 +$  helix-id  @ux
 +$  helices  (map helix-id helix)
 +$  helix
   $:  id=helix-id
-      state=town:tiny
+      state=town:smart
       order=(list ship)
       leader=ship
       num=@ud
   ==
 ::
 +$  mempools  (map helix-id mempool)
-+$  mempool   (set call:tiny)
++$  mempool   (set egg:smart)
 ::
 +$  update
   $%  [%epochs-catchup =epochs]
@@ -50,10 +50,10 @@
   ==
 ::
 +$  mempool-action
-  $%  [%receive =helix-id tx=call:tiny]
-      [%hear =helix-id tx=call:tiny]
-      [%forward-set =helix-id to=ship txs=(set call:tiny)]
-      [%receive-set =helix-id txs=(set call:tiny)]
+  $%  [%receive =helix-id tx=egg:smart]
+      [%hear =helix-id tx=egg:smart]
+      [%forward-set =helix-id to=ship txs=(set egg:smart)]
+      [%receive-set =helix-id txs=(set egg:smart)]
   ==
 ::
 +$  chunk-action

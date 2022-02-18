@@ -1,5 +1,5 @@
 /-  *ziggurat
-/+  *zig-util, sig=zig-sig, mill=zig-mill
+/+  *zig-util, sig=zig-sig, mill=zig-mill, smart=zig-sys-smart
 =>  |%
     +$  card  card:agent:gall
     --
@@ -36,8 +36,8 @@
       0x1234
     ::  run +mill
     =/  our-chunk
-      ^-  [(list [@ux call:tiny]) town:tiny]
-      (~(mill-all mill our-sender now) `@ud`id.helix state.helix ~(tap in mempool))
+      ^-  [(list [@ux egg:smart]) town:smart]
+      (~(mill-all mill our-sender `@ud`id.helix) state.helix ~(tap in mempool) 100)
     [id.helix our-chunk]
   ::
   ::  send chunk to everyone in helix to sign
