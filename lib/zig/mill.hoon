@@ -26,8 +26,6 @@
     :+  [[`@ux`(shax (jam fee-egg)) fee-egg] result]
       gan
     ?:  ?=(id caller.u.fee-bundle)  q.town
-    ~&  >  "resulting chunk:"
-    ~&  >>  result
     (~(put by q.town) validator-id nonce.caller.u.fee-bundle)
   %_  $
     pending              t.pending
@@ -40,8 +38,8 @@
   |=  [=town =egg block=@ud fee-bundle=(unit yolk)]
   ^-  [^town (unit yolk)]
   ~&  >  "start mill. rices in granary and egg:"
-  ~&  >  (rices-in-granary p.town)
-  ~&  >  egg
+  ~&  >>  (rices-in-granary p.town)
+  ~&  >>  egg
   ?.  ?=(user from.p.egg)  [town ~]
   ?~  curr-nonce=(~(get by q.town) id.from.p.egg)
     [town ~]  ::  missing user
@@ -59,7 +57,7 @@
   :-  :-  gan-out
     ?~  fee-bundle
       ?~  fee-bundle-out  q.town
-      ?:  ?=(id caller.u.fee-bundle-out)  q.town
+      ?.  ?=(user caller.u.fee-bundle-out)  q.town
       %+  %~  put  by  q.town
         id.caller.u.fee-bundle-out
       nonce.caller.u.fee-bundle-out
@@ -74,7 +72,6 @@
   ++  audit
     |=  =egg
     ^-  ?
-    ~&  >  "auditing"
     =/  grains=(map id grain)  (fetch egg)
     ?~  fee-rice=(~(get by grains) fee.stamp.p.egg)  %.n
     ?.  ?=(%& -.germ.u.fee-rice)                     %.n
@@ -332,8 +329,7 @@
   ++  harvest
     |=  [res=male lord=id]
     ^-  (unit ^granary)
-    =-  ?.  -  ~&  >  "failed harvest checks"  ~
-    :: =-  ?.  -  ~
+    =-  ?.  -  ~
         ~&  >  "passed harvest checks"
         ::  null (unit grain)s in changed.res are removed
         ::  from granary; others are modified

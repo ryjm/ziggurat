@@ -361,6 +361,8 @@
     ~[egg0 egg1]
   =/  [chunk=(list [id:std egg:std]) resulting-town=town:std]
     (~(mill-all mill validator-id:zigs-utxo town-id:zigs-utxo) fake-town:zigs-utxo eggs block:zigs-utxo)
+  ~&  >  "resulting chunk:"
+  ~&  >>  chunk
   =*  granary   p.resulting-town
   =*  populace  q.resulting-town
   ::  set up expected outputs
