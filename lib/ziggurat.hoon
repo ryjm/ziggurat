@@ -1,8 +1,9 @@
 /-  *ziggurat
-/+  zig-epo, zig-util
+/+  zig-epo, zig-sig, zig-util, zig-helix
 =>  |%
-    ++  epo   epo:zig-epo
-    ++  util  zig-util
+    ++  epo     epo:zig-epo
+    ++  util    zig-util
+    ++  lix     lix:zig-helix
     --
 |%
 ::
