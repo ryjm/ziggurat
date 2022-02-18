@@ -12,9 +12,9 @@
   |=  inp=scramble:std
   |^
   ^-  chick:std
-  ?.  ?=([~ @ *] args.inp)    *chick:std
-  ?.  ?=(%send -.u.args.inp)  *chick:std
-  =/  to=(list [id:std (map id:std @ud)])
+  ?>  ?=([~ @ *] args.inp)
+  ?>  ?=(%send -.u.args.inp)
+  =/  txs=(list [id:std (map id:std @ud)])
     ~(tap by ;;(transactions +.u.args.inp))
   :+  %&
     ::  build `changed`: delete spent zigs UTXOs/rices
@@ -24,20 +24,20 @@
   ::  build `issued`: recipient zigs UTXOs/rices
   =|  issued=(map id:std grain:std)
   |-  ^-  (map id:std grain:std)
-  ?~  to  issued
-  =*  sender  -.i.to
-  =/  sends=(list [id:std @ud])  ~(tap by +.i.to)
-  ::  require sender id be in contract-input-rice AND
+  ?~  txs  issued
+  =*  sender  -.i.txs
+  =/  sends=(list [id:std @ud])  ~(tap by +.i.txs)
+  ::  require sender id be in grains AND
   ::  require data be an amount of zigs
-  =/  utxo-rice     (~(got by grains.inp) sender)
-  ?>  ?=(%& -.germ.utxo-rice)
-  =/  utxo-balance  data.p.germ.utxo-rice
-  ?>  ?=(@ud utxo-balance)
-  ::  require UTXO/rice balance == spend
-  ?>  .=  utxo-balance
+  =/  sender-grain  (~(got by grains.inp) sender)
+  ?>  ?=(%& -.germ.sender-grain)
+  =/  balance  data.p.germ.sender-grain
+  ?>  ?=(@ud balance)
+  ::  require entire balance be spent
+  ?>  .=  balance
     (roll (turn sends |=([recp=id:std amt=@ud] amt)) add)
   %_  $
-    to  t.to
+    txs     t.txs
     issued  (update-issued-for-sender sends issued)
   ==
   ::
@@ -58,23 +58,23 @@
           ?>  ?=(%& -.germ.old)
           ?>  ?=(@ud data.p.germ.old)
           (add `@ud`data.p.germ.old amt)
-        =|  r=rice:std
-        =:  format.r  `@ud
-            data.r    data
+        =|  =rice:std
+        =:  format.rice  `@ud
+            data.rice    data
         ==
-        =/  =germ:std  [%& r]
+        =/  =germ:std  [%& rice]
         =/  =id:std
           (fry:std zigs-wheat-id:std town-id:cart germ)
-        =|  g=grain:std
+        =|  =grain:std
         =:
-            id.g       id
-            lord.g     zigs-wheat-id:std
-            holder.g   recp
-            town-id.g  town-id.cart
-            germ.g     germ
+            id.grain       id
+            lord.grain     zigs-wheat-id:std
+            holder.grain   recp
+            town-id.grain  town-id.cart
+            germ.grain     germ
         ==
         :: ~&  >  "fry (zigs-utxo): {<(fry:std zigs-wheat-id:std town-id:cart germ)>}"
-        (~(put by issued) id g)
+        (~(put by issued) id grain)
     ==
   --
 ::
