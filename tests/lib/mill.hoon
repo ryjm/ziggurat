@@ -69,9 +69,6 @@
   ++  zigs-wheat-germ
     ^-  germ:std
     [%| zigs-wheat]
-  :: ++  zigs-wheat-grain-id
-  ::   ^-  id:std
-  ::   (fry:std zigs-wheat-id:std town-id zigs-wheat-germ)
   ++  zigs-wheat-grain
     ^-  grain:std
     :*  id=zigs-wheat-id:std
@@ -96,6 +93,7 @@
     %-  ~(gas by *(map id:std @ud))
     :~  [0xdead 0]
         [0xbeef 0]
+        [0xcafe 0]
     ==
   --
 ::
@@ -260,9 +258,9 @@
 ::   --
 ++  test-zigs-utxo-basic-give
   ::  set up and run mill
+  =/  validator-id=id:std  0xcafe
   =|  =stamp:std
-  =:  fee.stamp      id:deadfee:zigs-utxo  ::  0xdea.dfee
-      change.stamp   0xdead  ::  (rice-grain-id 0xdead (sub data.deadfee.zigs-rice-grains 500))      ::  0xdead.cae1
+  =:  fee.stamp      id:deadfee:zigs-utxo
       rate.stamp     1
       budget.stamp   500
   ==
@@ -287,16 +285,24 @@
   ==
   =/  =egg:std  [shell yolk]
   =/  [resulting-town=town:std fee-bundle=(unit yolk:std)]
-    (mill fake-town:zigs-utxo egg block:zigs-utxo ~)
+    (~(mill mill validator-id town-id:zigs-utxo) fake-town:zigs-utxo egg block:zigs-utxo ~)
   =*  granary   p.resulting-town
   =*  populace  q.resulting-town
   ::  set up expected outputs
-  =/  dead-nonce=@ud          1
-  =/  beef1-germ=germ:std     [%& `@ud 100]
+  =/  beef-nonce=@ud              0
+  =/  cafe-nonce=@ud              1
+  =/  dead-nonce=@ud              1
+  =/  beef1-germ=germ:std         [%& `@ud 100]
   =/  dead-change0-germ=germ:std  [%& `@ud 900]
-  =/  dead-change1-germ=germ:std  [%& `@ud 499]
+  =/  dead-change1-germ=germ:std  [%& `@ud 998]
   ::  compare
   ;:  weld
+  %+  expect-eq
+    !>  beef-nonce
+    !>  (~(got by populace) 0xbeef)
+  %+  expect-eq
+    !>  cafe-nonce
+    !>  (~(got by populace) 0xcafe)
   %+  expect-eq
     !>  dead-nonce
     !>  (~(got by populace) 0xdead)
@@ -309,21 +315,9 @@
   %+  expect-eq
     !>  beef1-germ
     !>
-      ?~  beef1-grain=(~(get by granary) (fry:std zigs-wheat-id:std town-id:zigs-utxo beef1-germ))  :: not good
+      ?~  beef1-grain=(~(get by granary) (fry:std zigs-wheat-id:std town-id:zigs-utxo beef1-germ))
         ~
       germ.u.beef1-grain
-  :: %+  expect-eq
-  ::   !>  deadcae0-germ
-  ::   !>
-  ::     ?~  deadcae0-grain=(~(get by granary) 0xdead.cae0)
-  ::       ~
-  ::     germ.u.deadcae0-grain
-  :: %+  expect-eq
-  ::   !>  deadcae1-germ
-  ::   !>
-  ::     ?~  deadcae1-grain=(~(get by granary) 0xdead.cae1)
-  ::       ~
-  ::     germ.u.deadcae1-grain
   ==
 ::
 :: ++  test-zigs-basic-give

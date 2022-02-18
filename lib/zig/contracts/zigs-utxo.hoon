@@ -73,10 +73,7 @@
             town-id.g  town-id.cart
             germ.g     germ
         ==
-        ~&  >>>  germ
-        ~&  >>>  g
-        ~&  >  (mug germ)
-        ~&  >  (mug (cat 3 lord.g (cat 3 town-id.g 0xdead.beef)))
+        :: ~&  >  "fry (zigs-utxo): {<(fry:std zigs-wheat-id:std town-id:cart germ)>}"
         (~(put by issued) id g)
     ==
   --

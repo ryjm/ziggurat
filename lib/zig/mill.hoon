@@ -37,6 +37,9 @@
 ++  mill
   |=  [=town =egg block=@ud fee-bundle=(unit yolk)]
   ^-  [^town (unit yolk)]
+  ~&  >  "start mill. rices in granary and egg:"
+  ~&  >  (rices-in-granary p.town)
+  ~&  >  egg
   ?.  ?=(user from.p.egg)  [town ~]
   ?~  curr-nonce=(~(get by q.town) id.from.p.egg)
     [town ~]  ::  missing user
@@ -44,11 +47,13 @@
     [town ~]  ::  bad nonce
   ?.  (~(audit tax town block) egg)
     [town ~]  ::  can't afford gas
-  =+  [gan rem]=(~(work farm p.town block) egg)
+  =+  [gan rem]=(~(work farm p.town block) egg %.n)
   =/  fee=@ud   (sub budget.stamp.p.egg rem)
   ?~  gan  [town ~]
   =.  q.town  (~(put by q.town) id.from.p.egg nonce.from.p.egg)
   =+  [gan-out fee-bundle-out]=(~(note-or-pay tax [u.gan q.town] block) egg fee town-id fee-bundle)
+  ~&  >  "ending mill. rices in granary:"
+  ~&  >  (rices-in-granary gan-out)
   :-  :-  gan-out
     ?~  fee-bundle
       ?~  fee-bundle-out  q.town
@@ -74,7 +79,6 @@
     ?.  =(zigs-wheat-id lord.u.fee-rice)             %.n
     =*  bal  data.p.germ.u.fee-rice
     ?.  ?=(@ud bal)                                  %.n
-    ~&  >>  bal
     (gth bal (mul rate.stamp.p.egg budget.stamp.p.egg))
   ::  +fetch: get grains for fee rice
   ++  fetch
@@ -84,10 +88,10 @@
     ?.  ?=(user from.p.egg)  *(map id grain)
     =:  caller.yolk     from.p.egg
         args.yolk       ~
-        grain-ids.yolk  (silt ~[fee.stamp.p.egg change.stamp.p.egg])
+        grain-ids.yolk  (silt ~[fee.stamp.p.egg id.from.p.egg])
     ==
     =/  =scramble
-      (~(cook farm p.town block) yolk)
+      (~(cook farm p.town block) yolk %.y)
     grains.scramble
   ::  +note-or-pay: notes or pays fee as appropriate
   ++  note-or-pay
@@ -122,7 +126,7 @@
     =|  =shell
     =:  from.shell     caller.fee-bundle
         to.shell       zigs-wheat-id
-        stamp.shell    *stamp  ::  unused placeholder
+        stamp.shell    [*id *@ud 100.000]  ::  TODO: pay taxes less hackily
         town-id.shell  town-id
     ==
     [p=shell q=fee-bundle]
@@ -131,17 +135,16 @@
     |=  [=egg fee=@ud fee-bundle=(unit yolk)]
     ^-  yolk
     =/  grains=(map id grain)  (fetch egg)
-    =/  from=id
-      ?:  ?=(id from.p.egg)  from.p.egg
-      id.from.p.egg
+    =/  from=id  fee.stamp.p.egg
     =/  from-grain  (~(got by grains) from)
     ?>  ?=(%& -.germ.from-grain)
     =*  bal  data.p.germ.from-grain
     ?>  ?=(@ud bal)
+    ?>  ?=(user from.p.egg)
     =/  transactions=(map id (map id @ud))
       %+  %~  put  by  *(map id (map id @ud))  from
       %-  %~  gas  by  *(map id @ud)
-      ~[[validator-id fee] [change.stamp.p.egg (sub bal fee)]]
+      ~[[validator-id fee] [id.from.p.egg (sub bal fee)]]
     =/  grain-ids=(set id)  (silt ~[from])
     ?~  fee-bundle
       :+  [validator-id +((~(got by q.town) validator-id))]
@@ -163,7 +166,7 @@
     |=  fees=egg
     ^-  granary
     ~&  >  "paying taxes"
-    =+  [gan rem]=(~(work farm p.town block) fees)
+    =+  [gan rem]=(~(work farm p.town block) fees %.y)
     ?~  gan  !!
     u.gan
   --
@@ -174,21 +177,23 @@
   |_  [=granary block=@ud]
   ::
   ++  work
-    |=  =egg
+    |=  [=egg is-tax=?]
     ^-  [(unit ^granary) @ud]
-    =/  crop  (incubate egg(budget.stamp.p (div budget.stamp.p.egg rate.stamp.p.egg)))
+    =/  crop  (incubate egg is-tax)  :: TODO: budget & rate used inconsistently throughout
+    :: =/  crop  (incubate egg(budget.stamp.p (div budget.stamp.p.egg rate.stamp.p.egg)))
     :_  +.crop
     ?~  -.crop  ~
     (harvest u.-.crop to.p.egg)
   ::
   ++  incubate
-    |=  =egg
+    |=  [=egg is-tax=?]
+    :: |=  =egg
     ^-  [(unit male) @ud]
     |^
-    =/  args  (cook q.egg)
+    =/  args  (cook q.egg is-tax)
     ?~  stalk=(germinate to.p.egg)
       `budget.stamp.p.egg
-    (grow u.stalk args egg)
+    (grow u.stalk args egg is-tax)
     ::  might move these out of farm to be used everywhere
     ::  also TODO fix mixed metaphor here
     ++  germinate
@@ -201,7 +206,7 @@
     --
   ::
   ++  cook
-    |=  =yolk
+    |=  [=yolk is-tax=?]
     ^-  scramble
     ?.  ?=(user caller.yolk)  !!
     :+  caller.yolk
@@ -212,11 +217,13 @@
     ?~  grain=(~(get by granary) id)  ~
     ?.  ?=(%& -.germ.u.grain)  ~
     ::  check that caller holds all input grain
-    ?.  =(holder.u.grain id.caller.yolk)  ~
+    ?.  |(is-tax =(holder.u.grain id.caller.yolk))
+      ~&  >>>  "mill: user {<id.caller.yolk>} does not hold grain {<id.u.grain>}"
+      ~
     `[id u.grain]
   ::
   ++  grow
-    |=  [=crop =scramble =egg]
+    |=  [=crop =scramble =egg is-tax=?]
     ^-  [(unit male) @ud]
     |^
     =+  [chick rem]=(weed crop to.p.egg [%& scramble] ~ budget.stamp.p.egg)
@@ -230,7 +237,7 @@
     =*  next  next.p.u.chick
     =*  mem   mem.p.u.chick
     =^  child  rem
-      (incubate egg(from.p to.p.egg, to.p to.next, budget.stamp.p rem, q args.next))
+      (incubate egg(from.p to.p.egg, to.p to.next, budget.stamp.p rem, q args.next) is-tax)
     ?~  child  `rem
     =/  gan  (harvest u.child to.p.egg)
     ?~  gan  `rem
@@ -257,7 +264,6 @@
         `[id u.res]
       =/  cart  [mem to block town-id -]
       =+  [res bud]=(barn contract.crop inp cart budget)
-      ~&  >>  inp
       ?~  res               `bud
       ?:  ?=(%| -.u.res)    `bud
       ?:  ?=(%& -.p.u.res)  `bud
@@ -296,12 +302,12 @@
       ::  output trace ends up resolving at the ;; rather than
       ::  wherever in the contract caused a stack trace.
       ::
-      ::  using +mule here and charging no gas until jet dashboard for +bink
+      ::  using +mule here and charging 1 gas until jet dashboard for +bink
       ++  write
         |=  =^scramble
         ^-  [(unit (each chick (list tank))) @ud]
         ~&  >  "barn performing %write call"
-        :_  bud
+        :_  (sub bud 1)
         `(mule |.(;;(chick (~(write contract cart) scramble))))
       ++  read
         |=  =path
@@ -319,10 +325,6 @@
   ++  harvest
     |=  [res=male lord=id]
     ^-  (unit ^granary)
-    ~&  >>  "lord: {<lord>}"
-    ~&  >>  "wheat ids: {<(wheat-ids-in-granary granary)>}"
-    ~&  >>  res
-    ~&  >>  (rices-in-granary granary)
     =-  ?.  -  ~&  >  "failed harvest checks"  ~
     :: =-  ?.  -  ~
         ~&  >  "passed harvest checks"
@@ -330,18 +332,15 @@
         ::  from granary; others are modified
         =/  changed  ~(tap by changed.res)
         =|  modified=(map id grain)
-        =.  modified
-          |-  ^-  (map id grain)
-          ?~  changed  modified
+        =^  modified  granary
+          |-  ^-  [(map id grain) ^granary]
+          ?~  changed  [modified granary]
           =*  id     p.i.changed
           =*  grain  q.i.changed
           ?~  grain
-            ~&  >  "remove {<id>}"
             =.  granary  (~(del by granary) id)
             $(changed t.changed)
           $(modified (~(put by modified) id u.grain), changed t.changed)
-        ~&  >>  res
-        ~&  >>  modified
         `(~(uni by granary) (~(uni by modified) issued.res))
     ?&  %-  ~(all in changed.res)
         |=  [=id grain=(unit grain)]
@@ -360,16 +359,16 @@
         ::  id in issued map must be equal to id in grain AND
         ::  all newly issued grains must have properly-hashed id AND
         ::  lord of grain must be contract issuing it
-        ~&  >>  germ.grain
-        ~&  >>  id
-        ~&  >>  grain
-        ~&  >>  (fry lord.grain town-id.grain germ.grain)
-        ~&  >  (mug germ.grain)
-        ~&  >  (mug (cat 3 lord.grain (cat 3 town-id.grain 0xdead.beef)))
-        ?.  ?=(%& -.germ.grain)  %.n
-        ~&  >  (mug germ.grain)
+        :: ~&  >  "fry: {<(fry lord.grain town-id.grain germ.grain)>}"
+        :: ?>  ?=(%& -.germ.grain)
+        :: ~&  >>  format.p.germ.grain
+        :: ~&  >  `@ux`(mug format.p.germ.grain)
+        :: ~&  >  `@ux`(mug data.p.germ.grain)
         ?&  =(id id.grain)
-            =((fry lord.grain town-id.grain germ.grain) id)
+            :: =((fry lord.grain town-id.grain germ.grain) id)
+            :: TODO: fix fry. Problem is subject of format.rice
+            :: can change, leading to different hashes when hash
+            :: is computed in different places
             =(lord lord.grain)
     ==  ==
   --

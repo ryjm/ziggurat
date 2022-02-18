@@ -14,6 +14,7 @@
   |=  [lord=id town=@ud =germ]
   ^-  @ux
   (mug (cat 3 lord (cat 3 town (mug germ))))
+
 ::  our types
 ::
 +$  id  @ux                   ::  pubkey
@@ -67,7 +68,6 @@
 ::
 +$  stamp
   $:  fee=id
-      change=id
       rate=@ud
       budget=@ud
   ==
