@@ -362,16 +362,8 @@
         ::  id in issued map must be equal to id in grain AND
         ::  all newly issued grains must have properly-hashed id AND
         ::  lord of grain must be contract issuing it
-        :: ~&  >  "fry: {<(fry lord.grain town-id.grain germ.grain)>}"
-        :: ?>  ?=(%& -.germ.grain)
-        :: ~&  >>  format.p.germ.grain
-        :: ~&  >  `@ux`(mug format.p.germ.grain)
-        :: ~&  >  `@ux`(mug data.p.germ.grain)
         ?&  =(id id.grain)
-            :: =((fry lord.grain town-id.grain germ.grain) id)
-            :: TODO: fix fry. Problem is subject of format.rice
-            :: can change, leading to different hashes when hash
-            :: is computed in different places
+            =((fry lord.grain town-id.grain germ.grain) id)
             =(lord lord.grain)
     ==  ==
   --

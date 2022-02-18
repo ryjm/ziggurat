@@ -13,7 +13,11 @@
 ++  fry
   |=  [lord=id town=@ud =germ]
   ^-  @ux
-  (mug (cat 3 lord (cat 3 town (mug germ))))
+  ?.  ?=(%& -.germ)
+    (mug (cat 3 lord (cat 3 town (mug germ))))
+  ::  `format.p.germ`s subject can differ by context
+  ::  so do not include it in the hash
+  (mug (cat 3 lord (cat 3 town (mug data.p.germ))))
 
 ::  our types
 ::
