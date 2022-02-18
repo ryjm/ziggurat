@@ -17,15 +17,17 @@
     *(set id)
   =/  town-and-fee-bundle  [town fee-bundle]
   |-  ^-  [(list [@ux egg]) ^town]
+  =.  town        -.town-and-fee-bundle
+  =.  fee-bundle  +.town-and-fee-bundle
   ?~  pending
-    =.  town        -.town-and-fee-bundle
-    =.  fee-bundle  +.town-and-fee-bundle
     ?~  fee-bundle  [result town]
     =/  fee-egg=egg  (~(invoice tax town block) town-id u.fee-bundle)
     =/  gan=granary  (~(pay tax town block) fee-egg)
     :+  [[`@ux`(shax (jam fee-egg)) fee-egg] result]
       gan
     ?:  ?=(id caller.u.fee-bundle)  q.town
+    ~&  >  "resulting chunk:"
+    ~&  >>  result
     (~(put by q.town) validator-id nonce.caller.u.fee-bundle)
   %_  $
     pending              t.pending
@@ -53,7 +55,7 @@
   =.  q.town  (~(put by q.town) id.from.p.egg nonce.from.p.egg)
   =+  [gan-out fee-bundle-out]=(~(note-or-pay tax [u.gan q.town] block) egg fee town-id fee-bundle)
   ~&  >  "ending mill. rices in granary:"
-  ~&  >  (rices-in-granary gan-out)
+  ~&  >>  (rices-in-granary gan-out)
   :-  :-  gan-out
     ?~  fee-bundle
       ?~  fee-bundle-out  q.town
@@ -191,6 +193,11 @@
     ^-  [(unit male) @ud]
     |^
     =/  args  (cook q.egg is-tax)
+    ~&  >  "egg, u.args.q.egg, scramble:"
+    ~&  >>  egg
+    ?>  ?=([~ *] args.q.egg)
+    ~&  >>  ;;([%send (map id (map id @ud))] u.args.q.egg)
+    ~&  >>  args
     ?~  stalk=(germinate to.p.egg)
       `budget.stamp.p.egg
     (grow u.stalk args egg is-tax)

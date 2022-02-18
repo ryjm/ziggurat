@@ -15,6 +15,9 @@
 |%
 ++  zigs-utxo
   |%
+  ++  validator-id
+    ^-  id:std
+    0xcafe
   ++  town-id
     ^-  @ud
     0
@@ -30,14 +33,19 @@
   ++  beef0
     ^-  grain:std
     (rice-grain 0xbeef 200)
+  ++  beeffee
+    ^-  grain:std
+    (rice-grain 0xbeef 501)
   ++  zigs-rice-grains
     ^-  (list (pair id:std grain:std))
     =/  dead0=grain:std    dead0
     =/  deadfee=grain:std  deadfee
     =/  beef0=grain:std    beef0
+    =/  beeffee=grain:std  beeffee
     :~  [id.dead0 dead0]
         [id.deadfee deadfee]
         [id.beef0 beef0]
+        [id.beeffee beeffee]
     ==
   ++  rice-data
     |=  amount=@ud
@@ -256,36 +264,58 @@
 ::     ^-  id:tiny
 ::     0x3
 ::   --
-++  test-zigs-utxo-basic-give
-  ::  set up and run mill
-  =/  validator-id=id:std  0xcafe
+++  setup-zigs-utxo-basic-give-egg
+  |=  [from=user:std fee=id:std sender=id:std txs=(list (pair id:std @ud))]
+  ^-  egg:std
   =|  =stamp:std
-  =:  fee.stamp      id:deadfee:zigs-utxo
+  =:  fee.stamp      fee
       rate.stamp     1
       budget.stamp   500
   ==
   =|  =shell:std
   =|  =yolk:std
   =:
-      from.shell     [0xdead 1]
+      from.shell     from
       to.shell       zigs-wheat-id:std
       stamp.shell    stamp
       town-id.shell  town-id:zigs-utxo
-      caller.yolk    [0xdead 1]
+      caller.yolk    from
       args.yolk
         %-  some  :-  %send
         %-  %~  gas  by  *(map id:std (map id:std @ud))
-        :~  :-  id:dead0:zigs-utxo
-            (~(gas by *(map id:std @ud)) ~[[0xbeef 100] [0xdead 900]])
+        :~  :-  sender
+            (~(gas by *(map id:std @ud)) txs)
         ==
       grain-ids.yolk
         %-  %~  gas  in  *(set id:std)
-        ~[[id:dead0:zigs-utxo]]
-        :: ~[[id:dead0:zigs-utxo] [id:deadfee:zigs-utxo]]
+        ~[[sender]]
   ==
   =/  =egg:std  [shell yolk]
+  egg
+::
+++  setup-zigs-utxo-basic-give-egg0
+  ^-  egg:std
+  %:  setup-zigs-utxo-basic-give-egg
+      [0xdead 1]
+      id:deadfee:zigs-utxo
+      id:dead0:zigs-utxo
+      ~[[0xbeef 100] [0xdead 900]]
+  ==
+::
+++  setup-zigs-utxo-basic-give-egg1
+  ^-  egg:std
+  %:  setup-zigs-utxo-basic-give-egg
+      [0xbeef 1]
+      id:beeffee:zigs-utxo
+      id:beef0:zigs-utxo
+      ~[[0xdead 101] [0xbeef 99]]
+  ==
+::
+++  test-zigs-utxo-basic-give
+  ::  set up and run mill
+  =/  =egg:std  setup-zigs-utxo-basic-give-egg0
   =/  [resulting-town=town:std fee-bundle=(unit yolk:std)]
-    (~(mill mill validator-id town-id:zigs-utxo) fake-town:zigs-utxo egg block:zigs-utxo ~)
+    (~(mill mill validator-id:zigs-utxo town-id:zigs-utxo) fake-town:zigs-utxo egg block:zigs-utxo ~)
   =*  granary   p.resulting-town
   =*  populace  q.resulting-town
   ::  set up expected outputs
@@ -318,6 +348,54 @@
       ?~  beef1-grain=(~(get by granary) (fry:std zigs-wheat-id:std town-id:zigs-utxo beef1-germ))
         ~
       germ.u.beef1-grain
+  ::  TODO: add more confirmation of funds in proper accounts
+  ==
+++  test-zigs-utxo-basic-gives
+  ::  set up and run mill
+  =/  eggs=(list egg:std)
+    ~[setup-zigs-utxo-basic-give-egg0 setup-zigs-utxo-basic-give-egg1]
+  =/  [chunk=(list (pair id:std egg:std)) resulting-town=town:std]
+    (~(mill-all mill validator-id:zigs-utxo town-id:zigs-utxo) fake-town:zigs-utxo eggs block:zigs-utxo)
+  =*  granary   p.resulting-town
+  =*  populace  q.resulting-town
+  ::  set up expected outputs
+  =/  beef-nonce=@ud              1
+  =/  cafe-nonce=@ud              1
+  =/  dead-nonce=@ud              1
+  =/  beef1-germ=germ:std         [%& `@ud 100]
+  =/  dead-change0-germ=germ:std  [%& `@ud 900]
+  =/  dead-change1-germ=germ:std  [%& `@ud 998]
+  ::  compare
+  ;:  weld
+  %+  expect-eq
+    !>  beef-nonce
+    !>  (~(got by populace) 0xbeef)
+  %+  expect-eq
+    !>  cafe-nonce
+    !>  (~(got by populace) 0xcafe)
+  %+  expect-eq
+    !>  dead-nonce
+    !>  (~(got by populace) 0xdead)
+  %+  expect-eq
+    !>  ~
+    !>  (~(get by granary) id:deadfee:zigs-utxo)
+  %+  expect-eq
+    !>  ~
+    !>  (~(get by granary) id:dead0:zigs-utxo)
+  %+  expect-eq
+    !>  ~
+    !>  (~(get by granary) id:beeffee:zigs-utxo)
+  %+  expect-eq
+    !>  ~
+    !>  (~(get by granary) id:beef0:zigs-utxo)
+  %+  expect-eq
+    !>  beef1-germ
+    !>
+      ?~  beef1-grain=(~(get by granary) (fry:std zigs-wheat-id:std town-id:zigs-utxo beef1-germ))
+        ~
+      germ.u.beef1-grain
+  ::  TODO: add more confirmation of funds in proper accounts
+  ::  TODO: add checks on chunk
   ==
 ::
 :: ++  test-zigs-basic-give
