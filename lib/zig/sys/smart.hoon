@@ -14,20 +14,27 @@
   |=  [lord=id town=@ud =germ]
   ^-  @ux
   (mug (cat 3 lord (cat 3 town (mug germ))))
+::
+::  +pin: get ID from caller
+++  pin
+  |=  =caller
+  ^-  id
+  ?:  ?=(@ux caller)
+    caller
+  id.caller
 ::  our types
 ::
 +$  id  @ux                   ::  pubkey
 ++  zigs-wheat-id  0x0
-++  zigs-rice-id  0x1
 ::
-+$  user  [=id nonce=@ud]
-+$  caller  $@(id user)
++$  account  [=id nonce=@ud zigs=id]
++$  caller  $@(id account)
 +$  signature  [r=@ux s=@ux type=?(%schnorr %ecdsa)]
 ::
 +$  germ   (each rice wheat)
-+$  rice   [format=(unit mold) data=*]
++$  rice   data=*
 +$  wheat  [cont=(unit *) owns=(set id)]
-+$  crop   [=contract owns=(set id)]
++$  crop   [=contract owns=(map id grain)]
 ::
 +$  grain
   $:  =id
@@ -47,13 +54,13 @@
       me=id
       block=@ud
       town-id=@ud
-      owned=(map id grain)
+      owns=(map id grain)
   ==
 +$  contract
   $_  ^|
   |_  cart
   ++  write
-    |~  scramble
+    |~  zygote
     *chick
   ::
   ++  read
@@ -61,7 +68,7 @@
     *noun
   ::
   ++  event
-    |~  male
+    |~  rooster
     *chick
   --
 ::
@@ -76,17 +83,18 @@
 +$  yolk
   $:  =caller
       args=(unit *)
-      grain-ids=(set id)
+      my-grains=(set id)
+      cont-grains=(set id)
   ==
-+$  scramble
++$  zygote
   $:  =caller
       args=(unit *)
       grains=(map id grain)
   ==
 ::
-+$  maybe-hatched  (each scramble male)
++$  embryo  (each zygote rooster)
 ::
-+$  chick   (each male female)
-+$  male    [changed=(map id grain) issued=(map id grain)]
-+$  female  [mem=(unit vase) next=[to=id town-id=@ud args=yolk]]
++$  chick   (each rooster hen)
++$  rooster    [changed=(map id grain) issued=(map id grain)]
++$  hen  [mem=(unit vase) next=[to=id town-id=@ud args=yolk]]
 --

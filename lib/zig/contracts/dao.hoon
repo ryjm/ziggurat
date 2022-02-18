@@ -36,7 +36,7 @@
 ::
 |_  =cart
 ++  write
-  |=  inp=scramble
+  |=  inp=zygote
   ^-  chick
   ?~  args.inp  !!
   =*  args  +.u.args.inp
@@ -60,7 +60,7 @@
     =-  [%& ~ (malt ~[[new-dao-id -]])]
     [new-dao-id me.cart me.cart town-id.cart new-dao-germ]  
   ::
-  =/  my-grain=grain  -:~(val by owned.cart)
+  =/  my-grain=grain  -:~(val by owns.cart)
   ?>  =(lord.my-grain me.cart)
   ?>  ?=(%& -.germ.my-grain)
   =/  data  (hole dao-data data.p.germ.my-grain)
@@ -137,7 +137,7 @@
   "TBD"
 ::
 ++  event
-  |=  inp=male
+  |=  inp=rooster
   ^-  chick
   ::  
   ::  TBD

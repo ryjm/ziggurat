@@ -8,7 +8,7 @@
     --
 |_  =cart
 ++  write
-  |=  inp=scramble
+  |=  inp=zygote
   ^-  chick
   ?~  args.inp  !!
   =/  caller-id
@@ -27,7 +27,7 @@
     =/  new-sig-id  (fry caller-id 0 new-sig-germ) 
     =-  [%& ~ (malt ~[[new-sig-id -]])]
     [new-sig-id me.cart me.cart town-id.cart new-sig-germ]
-  =/  my-grain=grain  -:~(val by owned.cart)
+  =/  my-grain=grain  -:~(val by owns.cart)
   ?>  =(lord.my-grain me.cart)
   ?>  ?=(%& -.germ.my-grain)
   =/  data  (hole multisig-data data.p.germ.my-grain)
@@ -50,7 +50,7 @@
       data(pending (~(del by pending.data) hash.args))
     ::  if the pending egg is a multisig action, just
     ::  recurse with $
-    ::  otherwise issue a female chick with the call.
+    ::  otherwise issue a hen chick with the call.
     *chick
   =.  data.p.germ.my-grain
     ?+    -.u.args.inp  !!
@@ -89,7 +89,7 @@
   ::  TODO scrys
   69
 ++  event
-  |=  inp=male
+  |=  inp=rooster
   ^-  chick
   *chick
 --
