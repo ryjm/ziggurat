@@ -327,6 +327,7 @@
   =/  dead-change1-germ=germ:std  [%& `@ud 998]
   ::  compare
   ;:  weld
+  ::  populace
   %+  expect-eq
     !>  beef-nonce
     !>  (~(got by populace) 0xbeef)
@@ -336,12 +337,14 @@
   %+  expect-eq
     !>  dead-nonce
     !>  (~(got by populace) 0xdead)
+  ::  old `rice`s cleaned up
   %+  expect-eq
     !>  ~
     !>  (~(get by granary) id:deadfee:zigs-utxo)
   %+  expect-eq
     !>  ~
     !>  (~(get by granary) id:dead0:zigs-utxo)
+  ::  new `rice`s as expected
   %+  expect-eq
     !>  beef1-germ
     !>
@@ -352,9 +355,11 @@
   ==
 ++  test-zigs-utxo-basic-gives
   ::  set up and run mill
+  =/  egg0=egg:std  setup-zigs-utxo-basic-give-egg0
+  =/  egg1=egg:std  setup-zigs-utxo-basic-give-egg1
   =/  eggs=(list egg:std)
-    ~[setup-zigs-utxo-basic-give-egg0 setup-zigs-utxo-basic-give-egg1]
-  =/  [chunk=(list (pair id:std egg:std)) resulting-town=town:std]
+    ~[egg0 egg1]
+  =/  [chunk=(list [id:std egg:std]) resulting-town=town:std]
     (~(mill-all mill validator-id:zigs-utxo town-id:zigs-utxo) fake-town:zigs-utxo eggs block:zigs-utxo)
   =*  granary   p.resulting-town
   =*  populace  q.resulting-town
@@ -367,6 +372,7 @@
   =/  dead-change1-germ=germ:std  [%& `@ud 998]
   ::  compare
   ;:  weld
+  ::  populace
   %+  expect-eq
     !>  beef-nonce
     !>  (~(got by populace) 0xbeef)
@@ -376,6 +382,15 @@
   %+  expect-eq
     !>  dead-nonce
     !>  (~(got by populace) 0xdead)
+  ::  chunk
+  %+  expect-eq
+    !>  (add 1 (lent eggs))  ::  fees tx + submitted txs
+    !>  (lent chunk)
+  %-  expect
+    !>  ?!  ?=(~ (find ~[[`@ux`(shax (jam egg0)) egg0]] `(list [id:std egg:std])`chunk))
+  %-  expect
+    !>  ?!  ?=(~ (find ~[[`@ux`(shax (jam egg1)) egg1]] `(list [id:std egg:std])`chunk))
+  ::  old `rice`s cleaned up
   %+  expect-eq
     !>  ~
     !>  (~(get by granary) id:deadfee:zigs-utxo)
@@ -388,6 +403,7 @@
   %+  expect-eq
     !>  ~
     !>  (~(get by granary) id:beef0:zigs-utxo)
+  ::  new `rice`s as expected
   %+  expect-eq
     !>  beef1-germ
     !>
@@ -395,7 +411,6 @@
         ~
       germ.u.beef1-grain
   ::  TODO: add more confirmation of funds in proper accounts
-  ::  TODO: add checks on chunk
   ==
 ::
 :: ++  test-zigs-basic-give
