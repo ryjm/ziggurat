@@ -13,7 +13,11 @@
 ++  fry
   |=  [lord=id town=@ud =germ]
   ^-  @ux
-  (mug (cat 3 lord (cat 3 town (mug germ))))
+  =-  (mug (cat 3 lord (cat 3 town -)))
+  ?.  ?=(%| -.germ)
+    (mug germ)
+  ::  fry ignores owns.wheat in hash
+  (mug cont.p.germ)
 ::
 ::  +pin: get ID from caller
 ++  pin
