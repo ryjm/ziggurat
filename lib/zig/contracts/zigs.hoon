@@ -18,7 +18,7 @@
     ?.  ?=([to=id amount=@ud budget=@ud] args)  !!
     =/  giv=grain  -:~(val by grains.inp)
     =/  rec=grain  -:~(val by owns.cart)
-    ?>  =(holder.giv caller-id)
+    ?>  &(=(holder.giv caller-id) =(holder.rec to.args))
     ?>  &(=(lord.giv me.cart) =(lord.rec me.cart))
     ?>  &(?=(%& -.germ.giv) ?=(%& -.germ.rec))
     =/  giver  (hole account data.p.germ.giv)

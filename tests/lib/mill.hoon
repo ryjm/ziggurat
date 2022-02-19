@@ -159,4 +159,50 @@
 ++  test-zigs-failed-give-cant-afford-gas
   ::  stub: can't test this until we integrate +bull
   (expect-eq !>(%.y) !>(%.y))
+++  test-zigs-failed-give-mismatching-receiver
+  =/  bud  500
+  =/  now  *@da
+  =/  yok
+    [[0xbeef 1 0x1.beef] `[%give 0xb00b 690 bud] (silt ~[0x1.beef]) (silt ~[0x1.cafe])]
+  =/  shel
+    [[0xbeef 1 0x1.beef] zigs-wheat-id:smart 1 bud town-id]
+  =/  egg  [shel yok]
+  =/  res  
+    %+  ~(mill mill [0xdead 1 0x1.dead] town-id 1 now)
+      fake-town:zigs
+    egg
+  =/  beef-account
+    (hole:smart account-mold:zigs +.germ:(~(got by p.-.res) 0x1.beef))
+  =/  cafe-account
+    (hole:smart account-mold:zigs +.germ:(~(got by p.-.res) 0x1.cafe))
+  =/  correct-beef-account
+    `account-mold:zigs`[(sub 1.000.000 set-fee:zigs) ~]
+  =/  correct-cafe-account
+    `account-mold:zigs`[100.000 ~]
+  %+  expect-eq
+    !>([beef-account cafe-account])
+  !>([correct-beef-account correct-cafe-account])
+++  test-zigs-failed-give-nonexistent-receiver
+  =/  bud  500
+  =/  now  *@da
+  =/  yok
+    [[0xbeef 1 0x1.beef] `[%give 0xb00b 690 bud] (silt ~[0x1.beef]) (silt ~[0x1.b00b])]
+  =/  shel
+    [[0xbeef 1 0x1.beef] zigs-wheat-id:smart 1 bud town-id]
+  =/  egg  [shel yok]
+  =/  res  
+    %+  ~(mill mill [0xdead 1 0x1.dead] town-id 1 now)
+      fake-town:zigs
+    egg
+  =/  beef-account
+    (hole:smart account-mold:zigs +.germ:(~(got by p.-.res) 0x1.beef))
+  =/  cafe-account
+    (hole:smart account-mold:zigs +.germ:(~(got by p.-.res) 0x1.cafe))
+  =/  correct-beef-account
+    `account-mold:zigs`[(sub 1.000.000 set-fee:zigs) ~]
+  =/  correct-cafe-account
+    `account-mold:zigs`[100.000 ~]
+  %+  expect-eq
+    !>([beef-account cafe-account])
+  !>([correct-beef-account correct-cafe-account])
 --
