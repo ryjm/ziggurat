@@ -7,7 +7,7 @@
 +$  epochs  ((mop @ud epoch) gth)
 ++  poc     ((on @ud epoch) gth)
 ::
-+$  block         (pair signature chunks)
++$  block         (pair signature chunk)
 +$  block-header  [num=@ud prev-header-hash=@uvH data-hash=@uvH]
 +$  slot          (pair block-header (unit block))
 ::
@@ -15,20 +15,8 @@
 ++  sot    ((on @ud slot) gth)
 ::
 +$  signature  [p=@ux q=ship r=life]
-+$  chunks     (set @)
-+$  chunk      [=helix-id [(list [hash=@ux =egg:smart]) town:smart]]
++$  chunk      [=town-id (list [hash=@ux =egg:smart]) town:smart]
 ::
-+$  helix-id  @ux
-+$  helices  (map helix-id helix)
-+$  helix
-  $:  id=helix-id
-      state=town:smart
-      order=(list ship)
-      leader=ship
-      num=@ud
-  ==
-::
-+$  mempools  (map helix-id mempool)
 +$  mempool   (set egg:smart)
 ::
 +$  update
@@ -44,21 +32,17 @@
   $%  [%start mode=?(%fisherman %validator) history=epochs validators=(set ship)]
       [%stop ~]
       [%new-epoch ~]
-      ::  who gets to form a new helix? vote/sigs from the existing relay set?
-      ::  what helices are hard-coded into the relay chain?
-      ::  [%new-helix validators=(set ship)]
   ==
 ::
 +$  mempool-action
-  $%  [%receive =helix-id tx=egg:smart]
-      [%hear =helix-id tx=egg:smart]
-      [%forward-set =helix-id to=ship txs=(set egg:smart)]
-      [%receive-set =helix-id txs=(set egg:smart)]
+  $%  [%receive tx=egg:smart]
+      [%hear tx=egg:smart]
+      [%forward-set to=ship txs=(set egg:smart)]
+      [%receive-set txs=(set egg:smart)]
   ==
 ::
-+$  chunk-action
-  $%  [%hear =chunk]
-      [%signed =helix-id =signature hash=@ux]
-      [%submit sigs=(set signature) =chunk]
++$  chain-action
+  $%  [%submit slotnum=@ud =block]
+      [%receive-state =grain]
   ==
 --
