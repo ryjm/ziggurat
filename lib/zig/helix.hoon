@@ -33,11 +33,11 @@
     =/  our-sender
       ::  TODO include this in agent state
       ::  validators should be initialized with account/wallet to store rewards
-      0x1234
+      [0xdead 0 0x1.dead]
     ::  run +mill
     =/  our-chunk
       ^-  [(list [@ux egg:smart]) town:smart]
-      (~(mill-all mill our-sender `@ud`id.helix) state.helix ~(tap in mempool) 100)
+      (~(mill-all mill our-sender 1 `@ud`id.helix now) state.helix ~(tap in mempool))
     [id.helix our-chunk]
   ::
   ::  send chunk to everyone in helix to sign

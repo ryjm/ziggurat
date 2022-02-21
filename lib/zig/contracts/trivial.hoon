@@ -1,7 +1,7 @@
 /+  *zig-sys-smart
 |_  =cart
 ++  write
-  |=  inp=scramble
+  |=  inp=zygote
   ^-  chick
   [%& ~ ~]
 ++  read
@@ -9,7 +9,7 @@
   ^-  noun
   (add 69 420)
 ++  event
-  |=  inp=male
+  |=  inp=rooster
   ^-  chick
   [%& ~ ~]
 --
