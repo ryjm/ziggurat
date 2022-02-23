@@ -334,8 +334,8 @@
   ==
 ::                                                        ::
 ++  bull                                                  ::  bounded +mule
-  |*  [tap=(trap) bud=@ud]
-  =+  [mud rem]=(brute tap bud)
+  |*  [tap=(trap) scry=brie bud=@ud]
+  =+  [mud rem]=(brute tap scry bud)
   :_  rem
   ?~  mud  ~
   ?:  =(%| -.u.mud)
