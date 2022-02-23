@@ -1,11 +1,13 @@
 ~%  %bink-lib  ..part  ~
 |%
-+$  bone  [$@(~ tone) rem=@ud]                            ::  bounded +tone
++$  bone  [$@(~ tone) rem=@ud]                            ::  bounded $tone
+::                                                        ::
++$  brie  $-([^ @ud] [(unit (unit (unit))) @ud])          ::  bounded scry
 ::                                                        ::
 ++  bink                                                  ::  bounded +mink
   ~/  %bink
   |=  $:  [subject=* formula=*]
-          scry=$-(^ (unit (unit)))
+          scry=brie
           bud=@ud                                         ::  gas budget
       ==
   ::  ~>  %bout                                           ::  XX remove: timing
@@ -224,16 +226,14 @@
       $(formula path.formula)
     ?~  path  [~ bud]
     ?.  ?=(%0 -.path)  path^bud
-    =*  cos  1
-    ?:  (gth cos bud)
-      [~ bud]
-    =.  bud  (sub bud cos)
-    =/  result  (scry product.ref product.path)
-    ?~  result
-      [%1 product.path]^bud
+    =^  result  bud
+      (scry [product.ref product.path] bud)
+    ?~  result  [~ bud]
     ?~  u.result
+      [%1 product.path]^bud
+    ?~  u.u.result
       [%2 [%hunk product.ref product.path] trace]^bud
-    [%0 u.u.result]^bud
+    [%0 u.u.u.result]^bud
   ::
   ==
   ::
@@ -309,76 +309,16 @@
     (~(gas in *(set @tas)) ~[%fast %mean %spot])
   --
 ::                                                        ::
-++  book                                                  ::  bounded +mook
-  |=  ton=tone
-  ^-  toon
-  ?.  ?=([%2 *] ton)
-    ton
-  |^  [%2 (turn skip rend)]
-  ::
-  ::  TODO: run +bink on a read call
-  ++  skip
-    ^+  trace.ton
-    =/  yel  (lent trace.ton)
-    ?.  (gth yel 1.024)  trace.ton
-    %+  weld
-      (scag 512 trace.ton)
-    ^+  trace.ton
-    :_  (slag (sub yel 512) trace.ton)
-    :-  %lose
-    (crip "[skipped {(scow %ud (sub yel 1.024))} frames]")
-  ::
-  ++  rend
-    |=  [tag=@ta dat=*]
-    ^-  tank
-    ?+    tag
-    ::
-      leaf+"mook.{(rip 3 tag)}"
-    ::
-        %hunk
-      ?@  dat  leaf+"mook.hunk"
-      =/  sof=(unit path)  ((soft path) +.dat)
-      ?~  sof  leaf+"mook.hunk"
-      (smyt u.sof)
-    ::
-        %lose
-      ?^  dat  leaf+"mook.lose"
-      leaf+(rip 3 dat)
-    ::
-        %hand
-      leaf+(scow %p (mug dat))
-    ::
-        %mean
-      ?@  dat  leaf+(rip 3 dat)
-      =/  mac  (mack dat -.dat)
-      ?~  mac  leaf+"####"
-      =/  sof  ((soft tank) u.mac)
-      ?~  sof  leaf+"mook.mean"
-      u.sof
-    ::
-        %spot
-      =/  sof=(unit spot)  ((soft spot) dat)
-      ?~  sof  leaf+"mook.spot"
-      :+  %rose  [":" ~ ~]
-      :~  (smyt p.u.sof)
-          =*  l   p.q.u.sof
-          =*  r   q.q.u.sof
-          =/  ud  |=(a=@u (scow %ud a))
-          leaf+"<[{(ud p.l)} {(ud q.l)}].[{(ud p.r)} {(ud q.r)}]>"
-      ==
-    ==
-  --
-::                                                        ::
 ++  bock                                                  ::  bounded +mock
-  |=  [[sub=* fol=*] gul=$-(^ (unit (unit))) bud=@ud]
+  |=  [[sub=* fol=*] gul=brie bud=@ud]
   ^-  [(unit toon) @ud]
   =/  =bone  (bink [sub fol] gul bud)
   :_  rem.bone
   ?~  -.bone  ~
-  `(book -.bone)
+  `(mook -.bone)
 ::                                                        ::
 ++  brute                                                 ::  bounded +mute
-  |=  [tap=(trap) scry=$-(^ (unit (unit))) bud=@ud]
+  |=  [tap=(trap) scry=brie bud=@ud]
   ^-  [(unit (each * (list tank))) @ud]
   =+  [ton rem]=(bock [tap %9 2 %0 1] scry bud)
   :_  rem
