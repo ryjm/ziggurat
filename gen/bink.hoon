@@ -5,13 +5,13 @@
 =/  read
   |.
   %i-was-read
-=/  scry=brie
+=/  scry=(brie *)
   |=  [[ref=* path=*] @ud]
   ^-  [(unit (unit (unit *))) @ud]
   ?:  =(0 bud)
     [~ bud]
   =.  bud  (dec bud)
-  =^  res=(unit (each * (list tank)))  bud
+  =^  res=(unit (each @tas (list tank)))  bud
     (bull read ..$ bud)
   ?~  res  [~ bud]
   :_  bud

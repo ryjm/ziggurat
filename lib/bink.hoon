@@ -2,12 +2,13 @@
 |%
 +$  bone  [$@(~ tone) rem=@ud]                            ::  bounded $tone
 ::                                                        ::
-+$  brie  $-([^ @ud] [(unit (unit (unit))) @ud])          ::  bounded scry
-::                                                        ::
+++  brie                                                  ::  bounded scry
+  |$  [q]  $-([^ @ud] [(unit (unit (unit q))) @ud])
+::
 ++  bink                                                  ::  bounded +mink
   ~/  %bink
   |=  $:  [subject=* formula=*]
-          scry=brie
+          scry=(brie *)
           bud=@ud                                         ::  gas budget
       ==
   ::  ~>  %bout                                           ::  XX remove: timing
@@ -310,7 +311,7 @@
   --
 ::                                                        ::
 ++  bock                                                  ::  bounded +mock
-  |=  [[sub=* fol=*] gul=brie bud=@ud]
+  |=  [[sub=* fol=*] gul=(brie *) bud=@ud]
   ^-  [(unit toon) @ud]
   =/  =bone  (bink [sub fol] gul bud)
   :_  rem.bone
@@ -318,7 +319,7 @@
   `(mook -.bone)
 ::                                                        ::
 ++  brute                                                 ::  bounded +mute
-  |=  [tap=(trap) scry=brie bud=@ud]
+  |=  [tap=(trap) scry=(brie *) bud=@ud]
   ^-  [(unit (each * (list tank))) @ud]
   =+  [ton rem]=(bock [tap %9 2 %0 1] scry bud)
   :_  rem
@@ -334,7 +335,7 @@
   ==
 ::                                                        ::
 ++  bull                                                  ::  bounded +mule
-  |*  [tap=(trap) scry=brie bud=@ud]
+  |*  [tap=(trap) scry=(brie *) bud=@ud]
   =+  [mud rem]=(brute tap scry bud)
   :_  rem
   ?~  mud  ~
