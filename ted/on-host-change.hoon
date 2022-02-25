@@ -55,7 +55,7 @@
     !>([action rid])
   ::
   ++  add-graphs
-    |=  [old=resource:res new=resource:res as=(list (pair md-resource:met association:met))]
+    |=  [our=ship as=(list (pair md-resource:met association:met))]
     =/  m  (strand ,~)
     ^-  form:m
     =*  loop  $
@@ -67,7 +67,7 @@
     ?.  ?=(%add-graph -.q.update)
       ~&  >>>  "add-graphs: scry returns non %add-graph for {<resource.mdr>}: {<update>}"
       loop(as t.as)  ::  TODO: can we do better here?
-    =.  entity.resource.q.update  entity.new
+    =.  entity.resource.q.update  our
     ::
     ;<  ~  bind:m
       (raw-poke-our %graph-store %graph-update-3 !>(update))
@@ -77,23 +77,20 @@
     loop(as t.as)
   ::
   ++  remove-graphs
-    |=  [old=resource:res as=(list (pair md-resource:met association:met))]
+    |=  [now=@da as=(list (pair md-resource:met association:met))]
     =/  m  (strand ,~)
     ^-  form:m
     =*  loop  $
     ?~  as  (pure:m ~)
     =*  mdr  p.i.as
-    ?.  =(old entity.resource.mdr)
-      loop(as t.as)
     ?.  ?=(%graph app-name.mdr)
       loop(as t.as)
     ::
     ;<  ~  bind:m
       (raw-poke-our %graph-pull-hook (rem-pull-hook resource.mdr))
     ::
-    ;<  =bowl:spider  bind:m  get-bowl:strandio
     =/  =update:gra
-      :+  now.bowl
+      :+  now
         %remove-graph
       resource.mdr
     ;<  ~  bind:m
@@ -108,7 +105,7 @@
       %+  raw-poke-our
         %group-store
       :-  %group-action
-      !>([%add-group new *policy:group %.y])  ::  TODO: copy policy
+      !>([%add-group new *policy:group %.n])  ::  TODO: copy policy
     ::
     ;<  ~  bind:m
       (raw-poke-our %metadata-push-hook (add-push-hook new))
@@ -117,14 +114,13 @@
     (raw-poke-our %group-push-hook (add-push-hook new))
   ::
   ++  remove-group
-    |=  old=resource:res
+    |=  [our=ship old=resource:res]
     =/  m  (strand ,~)
     ^-  form:m
-    ;<  =bowl:spider  bind:m  get-bowl:strandio
     ;<  ~  bind:m
       %+  raw-poke
         [entity.old %group-push-hook]
-      [%group-action !>([%remove-members old (silt ~[our.bowl])])]
+      [%group-action !>([%remove-members old (silt ~[our])])]
     ;<  ~  bind:m
       %+  raw-poke-our
         %group-store
@@ -169,17 +165,19 @@
 =*  new  q.u.args
 ;<  groups=(set resource:res)  bind:m  scry-groups
 ?.  (~(has in groups) old)  (pure:m !>(~))
+;<  =bowl:spider  bind:m  get-bowl:strandio
 ~&  >  "getting group metadata..."
 ;<  =associations:met  bind:m  (scry-group-metadata old)
-=/  as  ~(tap by associations)
+=/  as=(list (pair md-resource:met association:met))
+  ~(tap by associations)
 ~&  >  "adding new graphs..."
-;<  ~  bind:m  (add-graphs old new as)
+;<  ~  bind:m  (add-graphs our.bowl as)
 ~&  >  "adding equivalent group..."
 ;<  ~  bind:m  (add-group new)
 ~&  >  "removing existing graphs..."
-;<  ~  bind:m  (remove-graphs old as)
+;<  ~  bind:m  (remove-graphs now.bowl as)
 ~&  >  "removing existing group..."
-;<  ~  bind:m  (remove-group old)
+;<  ~  bind:m  (remove-group our.bowl old)
 ~&  >  "updating metadata-store..."
 ;<  ~  bind:m  (update-metadata-store new as)
 ~&  >  "done"
