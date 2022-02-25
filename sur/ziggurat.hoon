@@ -1,13 +1,13 @@
 /+  smart=zig-sys-smart
 |%
-++  epoch-interval    ~s10
+++  epoch-interval  ~s10
 ::
 +$  epoch   [num=@ud =start=time order=(list ship) =slots]
 ::
 +$  epochs  ((mop @ud epoch) gth)
 ++  poc     ((on @ud epoch) gth)
 ::
-+$  block         (pair signature chunk)
++$  block         (pair signature @)
 +$  block-header  [num=@ud prev-header-hash=@uvH data-hash=@uvH]
 +$  slot          (pair block-header (unit block))
 ::
@@ -15,9 +15,17 @@
 ++  sot    ((on @ud slot) gth)
 ::
 +$  signature  [p=@ux q=ship r=life]
-+$  chunk      [=town-id (list [hash=@ux =egg:smart]) town:smart]
++$  chunk      [town-id=@ud (list [hash=@ux =egg:smart]) town:smart]
 ::
-+$  mempool   (set egg:smart)
++$  basket   (set egg:smart)  ::  mempool
+::
++$  hall  ::  runs a town
+  $:  id=@ud
+      blocknum=@ud
+      council=(set ship)
+      order=(list ship)
+      chair=@ud  :: position of leader in order
+  ==
 ::
 +$  update
   $%  [%epochs-catchup =epochs]
@@ -34,15 +42,15 @@
       [%new-epoch ~]
   ==
 ::
-+$  mempool-action
-  $%  [%receive tx=egg:smart]
-      [%hear tx=egg:smart]
-      [%forward-set to=ship txs=(set egg:smart)]
-      [%receive-set txs=(set egg:smart)]
++$  basket-action
+  $%  [%receive egg=egg:smart]
+      [%hear egg=egg:smart]
+      [%forward-set to=ship eggs=(set egg:smart)]
+      [%receive-set eggs=(set egg:smart)]
   ==
 ::
 +$  chain-action
   $%  [%submit slotnum=@ud =block]
-      [%receive-state =grain]
+      [%receive-state =grain:smart]
   ==
 --

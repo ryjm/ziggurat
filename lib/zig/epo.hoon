@@ -10,7 +10,7 @@
   ::  +our-block: produce a block during our slot
   ::
   ++  our-block
-    |=  data=chunks
+    |=  data=@
     ^-  (quip card epoch)
     :: TODO: check time and if necessary skip our own block
     :: (lth now.bowl (deadline:epo start-time.cur slot-num))
@@ -75,9 +75,9 @@
     ~|  "each ship must take their own turn"
     ?>  =(src (snag num.hed order.cur))
     ~|  "transmitted blocks must have data or have been skipped!"
-    ?>  ?|  ?=(~ blk)
-            ?=(^ q.u.blk)
-        ==
+    ::  ?>  ?|  ?=(~ blk)
+    ::          ?=(^ q.u.blk)
+    ::      ==
     ~|  "their data hash must be valid!"
     ?>  ?&  =(?~(blk (sham ~) (sham q.u.blk)) data-hash.hed)
             ?|(?=(~ blk) !=(data-hash.hed (sham ~)))

@@ -1,8 +1,8 @@
 /-  *ziggurat
-|_  m-act=mempool-action
+|_  m-act=basket-action
 ++  grab
   |%
-  ++  noun  mempool-action
+  ++  noun  basket-action
   --
 ++  grow
   |%

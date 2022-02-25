@@ -1,12 +1,12 @@
 /+  *bink, *zig-sys-smart
 |_  [miller=account town-id=@ud blocknum=@ud now=time]
 ::
-::  +mill-all: mills all eggs in mempool
+::  +mill-all: mills all eggs in basket
 ::
 ++  mill-all
-  |=  [=town mempool=(list egg)]
+  |=  [=town basket=(list egg)]
   =/  pending
-    %+  sort  mempool
+    %+  sort  basket
     |=  [a=egg b=egg]
     (gth rate.p.a rate.p.b)
   =|  [processed=(list [@ux egg]) reward=@ud]      
