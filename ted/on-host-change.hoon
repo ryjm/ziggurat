@@ -33,15 +33,26 @@
       /gx/graph-store/graph/(scot %p entity.rid)/[name.rid]/noun
     (pure:m update)
   ::
-  ++  make-add-push-hook
+  ++  add-push-hook
     |=  rid=resource:res
-    ^-  cage
-    [%push-hook-action !>([%add rid])]
+    (add-rem-pull-push-hook rid %push %add)
   ::
-  ++  make-rem-push-hook
+  ++  rem-push-hook
     |=  rid=resource:res
+    (add-rem-pull-push-hook rid %push %rem)
+  ::
+  ++  rem-pull-hook
+    |=  rid=resource:res
+    (add-rem-pull-push-hook rid %pull %add)
+  ::
+  ++  add-rem-pull-push-hook
+    |=  [rid=resource:res direction=?(%pull %push) action=?(%add %rem)]
     ^-  cage
-    [%push-hook-action !>([%rem rid])]
+    :-
+      ?:  ?=(%pull direction)
+        %pull-hook-action
+      %push-hook-action
+    !>([action rid])
   ::
   ++  add-graphs
     |=  [old=resource:res new=resource:res as=(list (pair md-resource:met association:met))]
@@ -54,16 +65,15 @@
       loop(as t.as)
     ;<  =update:gra  bind:m  (scry-graph resource.mdr)
     ?.  ?=(%add-graph -.q.update)
-      ~&  >  "add-graphs: scry returns non %add-graph: {<update>}"
-      (pure:m ~)  ::  TODO: make work
-    ?.  =(old resource.q.update)
-      ~&  >  "add-graphs: scry returns non old graph: {<update>}"
-      (pure:m ~)  ::  TODO: make work
+      ~&  >>>  "add-graphs: scry returns non %add-graph for {<resource.mdr>}: {<update>}"
+      loop(as t.as)  ::  TODO: can we do better here?
     =.  entity.resource.q.update  entity.new
+    ::
     ;<  ~  bind:m
       (raw-poke-our %graph-store %graph-update-3 !>(update))
+    ::
     ;<  ~  bind:m
-      (raw-poke-our %graph-push-hook (make-add-push-hook resource.q.update))
+      (raw-poke-our %graph-push-hook (add-push-hook resource.q.update))
     loop(as t.as)
   ::
   ++  remove-graphs
@@ -77,18 +87,56 @@
       loop(as t.as)
     ?.  ?=(%graph app-name.mdr)
       loop(as t.as)
+    ::
+    ;<  ~  bind:m
+      (raw-poke-our %graph-pull-hook (rem-pull-hook resource.mdr))
+    ::
     ;<  =bowl:spider  bind:m  get-bowl:strandio
     =/  =update:gra
       :+  now.bowl
         %remove-graph
       resource.mdr
     ;<  ~  bind:m
-      (raw-poke-our %graph-pull-hook (make-rem-push-hook resource.mdr))
-    ;<  ~  bind:m
       (raw-poke-our %graph-store %graph-update-3 !>(update))
     loop(as t.as)
   ::
-  ++  update-metadata
+  ++  add-group
+    |=  new=resource:res
+    =/  m  (strand ,~)
+    ^-  form:m
+    ;<  ~  bind:m
+      %+  raw-poke-our
+        %group-store
+      :-  %group-action
+      !>([%add-group new *policy:group %.y])  ::  TODO: copy policy
+    ::
+    ;<  ~  bind:m
+      (raw-poke-our %metadata-push-hook (add-push-hook new))
+    ;<  ~  bind:m
+      (raw-poke-our %contact-push-hook (add-push-hook new))
+    (raw-poke-our %group-push-hook (add-push-hook new))
+  ::
+  ++  remove-group
+    |=  old=resource:res
+    =/  m  (strand ,~)
+    ^-  form:m
+    ;<  =bowl:spider  bind:m  get-bowl:strandio
+    ;<  ~  bind:m
+      %+  raw-poke
+        [entity.old %group-push-hook]
+      [%group-action !>([%remove-members old (silt ~[our.bowl])])]
+    ;<  ~  bind:m
+      %+  raw-poke-our
+        %group-store
+      [%group-action !>([%remove-group old ~])]
+    ::
+    ;<  ~  bind:m
+      (raw-poke-our %metadata-pull-hook (rem-pull-hook old))
+    ;<  ~  bind:m
+      (raw-poke-our %contact-pull-hook (rem-pull-hook old))
+    (raw-poke-our %group-pull-hook (rem-pull-hook old))
+  ::
+  ++  update-metadata-store
     |=  [new=resource:res as=(list (pair md-resource:met association:met))]
     =/  m  (strand ,~)
     ^-  form:m
@@ -96,20 +144,18 @@
     ?~  as  (pure:m ~)
     =*  mdr  p.i.as
     =*  a    q.i.as
+    ::
     =/  remove=cage
       [%metadata-update-2 !>([%remove group.a mdr])]
     ;<  ~  bind:m  (raw-poke-our %metadata-store remove)
-    ;<  ~  bind:m
-      (raw-poke-our %metadata-push-hook (make-rem-push-hook group.a))
+    ::
     =/  add-update=update:met
       :^    %add
           new
         mdr(entity.resource entity.new)
-      metadatum.a  ::  TODO: do we need to update config?
+      metadatum.a  ::  TODO: do we need to update config? E.g. for group feed
     =/  add=cage  [%metadata-update-2 !>(add-update)]
     ;<  ~  bind:m  (raw-poke-our %metadata-store add)
-    ;<  ~  bind:m
-      (raw-poke-our %metadata-push-hook (make-add-push-hook new))
     loop(as t.as)
   --
 ::
@@ -129,22 +175,12 @@
 ~&  >  "adding new graphs..."
 ;<  ~  bind:m  (add-graphs old new as)
 ~&  >  "adding equivalent group..."
-;<  ~  bind:m
-  %+  raw-poke-our
-    %group-store
-  :-  %group-action
-  !>([%add-group new *policy:group %.y])  ::  TODO: copy policy
-~&  >  "hitting group push hook..."
-;<  ~  bind:m
-  (raw-poke-our %group-push-hook (make-add-push-hook new))
+;<  ~  bind:m  (add-group new)
 ~&  >  "removing existing graphs..."
 ;<  ~  bind:m  (remove-graphs old as)
 ~&  >  "removing existing group..."
-;<  ~  bind:m
-  %+  raw-poke-our
-    %group-store
-  [%group-action !>([%remove-group old ~])]
-~&  >  "updating metadata..."
-;<  ~  bind:m  (update-metadata new as)
+;<  ~  bind:m  (remove-group old)
+~&  >  "updating metadata-store..."
+;<  ~  bind:m  (update-metadata-store new as)
 ~&  >  "done"
 (pure:m !>(~))
