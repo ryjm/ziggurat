@@ -51,6 +51,7 @@
 ::
 +$  chain-action
   $%  [%submit slotnum=@ud =block]
+      [%init-town id=@ud]
       [%receive-state =grain:smart]
   ==
 --

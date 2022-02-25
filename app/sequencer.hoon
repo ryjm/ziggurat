@@ -5,8 +5,8 @@
 ::
 ::  calls out to ziggurat agent and gets timer for block submission
 ::
-/+  default-agent, dbug, verb, smart=zig-sys-smart
 /-  ziggurat
+/+  default-agent, dbug, verb, smart=zig-sys-smart
 |%
 +$  card  card:agent:gall
 +$  state-0
@@ -49,17 +49,17 @@
   ?+    mark  !!
       %zig-basket-action
     =^  cards  state
-      (poke-basket-action !<(basket-action vase))
+      (poke-basket-action !<(basket-action:ziggurat vase))
     [cards this]
   ::
       %zig-chain-action
     =^  cards  state
-      (poke-chain-action !<(chain-action vase))
+      (poke-chain-action !<(chain-action:ziggurat vase))
     [cards this]
   ==
   ::
   ++  poke-basket-action
-    |=  act=basket-action
+    |=  act=basket-action:ziggurat
     ^-  (quip card _state)
     ?>  (lte (met 3 src.bowl) 4)
     ?~  hall.state
@@ -74,7 +74,7 @@
       :_  state
       :_  ~
       :*  %pass  /basket-gossip
-          %agent  [chair.u.hall.state %ziggurat]  %poke
+          %agent  [(snag chair.u.hall.state order.u.hall.state) %sequencer]  %poke
           %zig-basket-action  !>([%hear egg.act])
       ==
     ::
@@ -82,7 +82,7 @@
       ::  should only accept from other validators
       ?>  (~(has in council.u.hall.state) src.bowl)
       ~&  >  "received a gossiped egg from {<src.bowl>}: {<egg.act>}"
-      `state(basket (~(put in basket) egg.act)
+      `state(basket (~(put in basket) egg.act))
     ::
         %forward-set
       ?>  =(src.bowl our.bowl)
@@ -94,7 +94,7 @@
       :_  state(basket ~)
       :_  ~
       :*  %pass  /basket-gossip
-          %agent  [to.act %ziggurat]  %poke
+          %agent  [to.act %sequencer]  %poke
           %zig-basket-action  !>([%receive-set basket.state])
       ==
     ::
@@ -102,18 +102,29 @@
       ::  integrate a set of eggs into our basket
       ::  should only accept from other validators
       ?>  (~(has in council.u.hall.state) src.bowl)
-      `state(basket (~(uni in basket) eggs.act)
+      `state(basket (~(uni in basket) eggs.act))
     ==
   ::
   ++  poke-chain-action
-    |=  act=chain-action
+    |=  act=chain-action:ziggurat
     ^-  (quip card _state)
     ?>  (lte (met 3 src.bowl) 4)
-    ?~  hall.state
-      ~&  >>  "ignoring poke, we're not active in a council"
-      [~ state]
     ?-    -.act
+        %submit
+      ::  TODO
+      !!
+    ::
+        %init-town
+      ?>  =(src.bowl our.bowl)
+      ?^  hall.state
+        ~&  >>  "ignoring request, already active in a council"
+        [~ state]
+      `state(hall `[id.act 0 (silt ~[our.bowl]) ~[our.bowl] 0])
+    ::
         %receive-state
+      ?~  hall.state
+        ~&  >>  "ignoring poke, we're not active in a council"
+        [~ state]
       ::  TODO only let main chain ships give this to you
       ::  add grain to our town
       `state(p.town (~(put in p.town) id.grain.act grain.act))
@@ -142,26 +153,7 @@
     |=  [epoch-num=@ud slot-num=@ud]
     ^-  (quip card _state)
     ::  TODO make this create a block
-    =/  cur=epoch  +:(need (pry:poc epochs))
-    ?.  =(num.cur epoch-num)
-      `state
-    =/  next-slot-num
-      ?~(p=(bind (pry:sot slots.cur) head) 0 +(u.p))
-    =/  =ship  (snag slot-num order.cur)
-    ?.  =(next-slot-num slot-num)
-      ?.  =(ship our.bowl)  `state
-      ~|("we can only produce the next block, not past or future blocks" !!)
-    =/  prev-hash
-      (got-hed-hash slot-num epochs cur)
-    ?:  =(ship our.bowl)
-      =^  cards  cur
-        (~(our-block epo cur prev-hash [our now src]:bowl) eny.bowl^~)
-      [cards state(epochs (put:poc epochs num.cur cur))]
-    =/  cur=epoch  +:(need (pry:poc epochs))
-    =^  cards  cur
-      ~(skip-block epo cur prev-hash [our now src]:bowl)
-    ~&  skip-block+[num.cur slot-num]
-    [cards state(epochs (put:poc epochs num.cur cur))]
+    !!
   --
 ::
 ++  on-peek
@@ -173,7 +165,28 @@
   ::  if wheat,
   ::  call read arm here based on path
   ::  args stored in path
-  ~
+  ?.  =(%x -.path)  ~
+  ?+    +.path  (on-peek:def path)
+      [%rice @ ~]
+    =/  id  (slav %ux i.t.t.path)
+    ?~  res=(~(get by p.town.state) id)
+      [~ ~]
+    ?.  ?=(%& -.germ.u.res)
+      [~ ~]
+    ``noun+!>(`rice:smart`p.germ.u.res)
+  ::
+      [%wheat @ @ta ~]
+    ::  call read arm of contract
+    =/  id  (slav %ux i.t.t.path)
+    =/  arg=^path  [i.t.t.t.path ~]
+    ?~  res=(~(get by p.town.state) id)
+      [~ ~]
+    ?.  ?=(%| -.germ.u.res)
+      [~ ~]
+    =/  cont  (hole:smart contract:smart p.germ.u.res)
+    =/  cart  *cart:smart  ::  TODO need this
+    ``noun+!>(`noun`(~(read cont cart) arg))
+  ==
 ::
 ++  on-leave  on-leave:def
 ++  on-fail   on-fail:def
