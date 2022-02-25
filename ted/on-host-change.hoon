@@ -73,7 +73,7 @@
     =*  loop  $
     ?~  as  (pure:m ~)
     =*  mdr  p.i.as
-    ?.  ?=(old entity.resource.mdr)
+    ?.  =(old entity.resource.mdr)
       loop(as t.as)
     ?.  ?=(%graph app-name.mdr)
       loop(as t.as)
@@ -104,8 +104,7 @@
     =/  add-update=update:met
       :^    %add
           new
-        =.  entity.resource.mdr  entity.new
-        mdr
+        mdr(entity.resource entity.new)
       metadatum.a  ::  TODO: do we need to update config?
     =/  add=cage  [%metadata-update-2 !>(add-update)]
     ;<  ~  bind:m  (raw-poke-our %metadata-store add)
