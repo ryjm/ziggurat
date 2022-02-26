@@ -43,7 +43,7 @@
   ::
   ++  rem-pull-hook
     |=  rid=resource:res
-    (add-rem-pull-push-hook rid %pull %add)
+    (add-rem-pull-push-hook rid %pull %rem)
   ::
   ++  add-rem-pull-push-hook
     |=  [rid=resource:res direction=?(%pull %push) action=?(%add %rem)]
