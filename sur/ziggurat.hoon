@@ -15,7 +15,7 @@
 ++  sot    ((on @ud slot) gth)
 ::
 +$  signature  [p=@ux q=ship r=life]
-+$  chunks     (set @)
++$  chunks     (set chunk)
 +$  chunk      [town-id=@ud (list [hash=@ux =egg:smart]) town:smart]
 ::
 +$  basket   (set egg:smart)  ::  mempool

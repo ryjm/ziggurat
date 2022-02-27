@@ -8,6 +8,7 @@
   $:  %0
       mode=?(%fisherman %validator %none)
       =epochs
+      =chunks
       current-producer=(unit ship)
   ==
 ++  new-epoch-timers
@@ -38,7 +39,7 @@
 +*  this  .
     def   ~(. (default-agent this %|) bowl)
 ::
-++  on-init  `this(state [%0 %none ~ ~])
+++  on-init  `this(state [%0 %none ~ ~ ~])
 ::
 ++  on-save  !>(state)
 ++  on-load
@@ -93,6 +94,11 @@
       %zig-action
     =^  cards  state
       (poke-zig-action !<(action vase))
+    [cards this]
+    ::
+      %zig-chunk-action
+    =^  cards  state
+      (poke-chunk-action !<(chunk-action vase))
     [cards this]
     ::
       %noun
@@ -154,6 +160,18 @@
       %+  weld
         (watch-updates (silt (murn order.new-epoch filter-by-wex)))
       (new-epoch-timers new-epoch our.bowl)
+    ==
+  ::
+  ++  poke-chunk-action
+    |=  act=chunk-action
+    ^-  (quip card _state)
+    ?-    -.act
+        %receive
+      ::  need to keep registry of active towns
+      ::  and who can submit from them
+      ::  reject if not current producer
+      ?>  =(current-producer.state our.bowl)
+      `state(chunks (~(put in chunks) chunk.act))
     ==
   ::
   ++  filter-by-wex
@@ -342,9 +360,14 @@
       ~|("we can only produce the next block, not past or future blocks" !!)
     =/  prev-hash
       (got-hed-hash slot-num epochs cur)
+    ::  TODO temporary
+    =.  chunks.state  (silt ~[*chunk])
     ?:  =(ship our.bowl)
+      ::  our turn to produce a block
       =^  cards  cur
-        (~(our-block epo cur prev-hash [our now src]:bowl) (silt ~[eny.bowl]))
+        ?~  chunks.state
+          ~(skip-block epo cur prev-hash [our now src]:bowl)
+        (~(our-block epo cur prev-hash [our now src]:bowl) chunks.state)
       [cards state(epochs (put:poc epochs num.cur cur), current-producer `ship)]
     =/  cur=epoch  +:(need (pry:poc epochs))
     =^  cards  cur

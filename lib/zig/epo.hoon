@@ -10,7 +10,7 @@
   ::  +our-block: produce a block during our slot
   ::
   ++  our-block
-    |=  data=chunks
+    |=  =chunks
     ^-  (quip card epoch)
     :: TODO: check time and if necessary skip our own block
     :: (lth now.bowl (deadline:epo start-time.cur slot-num))
@@ -26,10 +26,10 @@
     =/  prev-hed-hash
       ?~  last-slot  prev-hash
       (sham p.u.last-slot)
-    =/  data-hash  (sham data)
+    =/  block-hash  (sham chunks)
     =/  =slot
-      =/  hed=block-header  [next-num prev-hed-hash data-hash]
-      [hed `[(sign:sig our now (sham hed)) data]]
+      =/  hed=block-header  [next-num prev-hed-hash block-hash]
+      [hed `[(sign:sig our now (sham hed)) chunks]]
     :_  cur(slots (put:sot slots.cur next-num slot))
     :-  (give-on-updates [%new-block num.cur p.slot (need q.slot)])
     ?.  =((lent order.cur) +(next-num))  ~
@@ -75,9 +75,9 @@
     ~|  "each ship must take their own turn"
     ?>  =(src (snag num.hed order.cur))
     ~|  "transmitted blocks must have data or have been skipped!"
-    ::  ?>  ?|  ?=(~ blk)
-    ::          ?=(^ q.u.blk)
-    ::      ==
+    ?>  ?|  ?=(~ blk)
+            ?=(^ q.u.blk)
+        ==
     ~|  "their data hash must be valid!"
     ?>  ?&  =(?~(blk (sham ~) (sham q.u.blk)) data-hash.hed)
             ?|(?=(~ blk) !=(data-hash.hed (sham ~)))
