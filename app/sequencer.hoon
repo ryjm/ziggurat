@@ -5,16 +5,15 @@
 ::
 ::  calls out to ziggurat agent and gets timer for block submission
 ::
-/-  ziggurat
-/+  default-agent, dbug, verb, smart=zig-sys-smart
+/+  default-agent, dbug, verb, smart=zig-sys-smart, *ziggurat
 |%
 +$  card  card:agent:gall
 +$  state-0
   $:  %0
       me=(unit account:smart)
       =town:smart
-      hall=(unit hall:ziggurat)
-      =basket:ziggurat
+      hall=(unit hall)
+      =basket
   ==
 --
 ::
@@ -49,17 +48,17 @@
   ?+    mark  !!
       %zig-basket-action
     =^  cards  state
-      (poke-basket-action !<(basket-action:ziggurat vase))
+      (poke-basket-action !<(basket-action vase))
     [cards this]
   ::
       %zig-chain-action
     =^  cards  state
-      (poke-chain-action !<(chain-action:ziggurat vase))
+      (poke-chain-action !<(chain-action vase))
     [cards this]
   ==
   ::
   ++  poke-basket-action
-    |=  act=basket-action:ziggurat
+    |=  act=basket-action
     ^-  (quip card _state)
     ?>  (lte (met 3 src.bowl) 4)
     ?~  hall.state
@@ -106,20 +105,35 @@
     ==
   ::
   ++  poke-chain-action
-    |=  act=chain-action:ziggurat
+    |=  act=chain-action
     ^-  (quip card _state)
     ?>  (lte (met 3 src.bowl) 4)
     ?-    -.act
         %submit
       ::  TODO
-      !!
+      ::  find current block producer from ziggurat
+      =/  producer  .^(@p %gx /(scot %p our.bowl)/ziggurat/(scot %da now.bowl)/producer/noun)
+      ::  create and send our chunk to them
+      =/  our-chunk=chunk  (~(produce assemble (need hall.state) [our now src]:bowl) town.state basket.state (need me.state))
+      :_  state(basket ~)
+      :_  ~
+      :*  %pass  /chunk-gossip
+          %agent  [producer %ziggurat]  %poke
+          %zig-chunk-action  !>([%receive our-chunk])
+      ==
     ::
         %init-town
       ?>  =(src.bowl our.bowl)
+      ::  assert that we're active in main chain
+      ?.  .^(? %gx /(scot %p our.bowl)/ziggurat/(scot %da now.bowl)/active/noun)
+        ~|("can't run a town, ziggurat not active" !!)
       ?^  hall.state
-        ~&  >>  "ignoring request, already active in a council"
-        [~ state]
+        ~|("can't init a town, already active in one" !!)
       `state(hall `[id.act 0 (silt ~[our.bowl]) ~[our.bowl] 0])
+    ::
+        %leave-town
+      ?>  =(src.bowl our.bowl)
+      `state(hall ~, town [~ ~], basket ~)
     ::
         %receive-state
       ?~  hall.state
@@ -165,6 +179,7 @@
   ::  if wheat,
   ::  call read arm here based on path
   ::  args stored in path
+  ?~  hall.state    ~
   ?.  =(%x -.path)  ~
   ?+    +.path  (on-peek:def path)
       [%rice @ ~]
@@ -184,7 +199,15 @@
     ?.  ?=(%| -.germ.u.res)
       [~ ~]
     =/  cont  (hole:smart contract:smart p.germ.u.res)
-    =/  cart  *cart:smart  ::  TODO need this
+    =/  owns
+      %-  ~(gas by *(map:smart id:smart grain:smart))
+      %+  murn  ~(tap in owns.p.germ.u.res)
+      |=  find=id:smart
+      ?~  found=(~(get by p.town.state) find)  ~
+      ?.  ?=(%& -.germ.u.found)                ~
+      ?.  =(lord.u.found id)                   ~
+      `[find u.res]
+    =/  cart  [~ id blocknum.u.hall.state id.u.hall.state owns]
     ``noun+!>(`noun`(~(read cont cart) arg))
   ==
 ::

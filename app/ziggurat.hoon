@@ -8,6 +8,7 @@
   $:  %0
       mode=?(%fisherman %validator %none)
       =epochs
+      current-producer=(unit ship)
   ==
 ++  new-epoch-timers
   |=  [=epoch our=ship]
@@ -37,7 +38,7 @@
 +*  this  .
     def   ~(. (default-agent this %|) bowl)
 ::
-++  on-init  `this(state [%0 %none ~])
+++  on-init  `this(state [%0 %none ~ ~])
 ::
 ++  on-save  !>(state)
 ++  on-load
@@ -337,25 +338,47 @@
       ?~(p=(bind (pry:sot slots.cur) head) 0 +(u.p))
     =/  =ship  (snag slot-num order.cur)
     ?.  =(next-slot-num slot-num)
-      ?.  =(ship our.bowl)  `state
+      ?.  =(ship our.bowl)  `state(current-producer `ship)
       ~|("we can only produce the next block, not past or future blocks" !!)
     =/  prev-hash
       (got-hed-hash slot-num epochs cur)
     ?:  =(ship our.bowl)
       =^  cards  cur
-        (~(our-block epo cur prev-hash [our now src]:bowl) eny.bowl)
-      [cards state(epochs (put:poc epochs num.cur cur))]
+        (~(our-block epo cur prev-hash [our now src]:bowl) (silt ~[eny.bowl]))
+      [cards state(epochs (put:poc epochs num.cur cur), current-producer `ship)]
     =/  cur=epoch  +:(need (pry:poc epochs))
     =^  cards  cur
       ~(skip-block epo cur prev-hash [our now src]:bowl)
     ~&  skip-block+[num.cur slot-num]
-    [cards state(epochs (put:poc epochs num.cur cur))]
+    [cards state(epochs (put:poc epochs num.cur cur), current-producer `ship)]
   --
 ::
 ++  on-peek
   |=  =path
   ^-  (unit (unit cage))
-  ~
+  ::  handle scries from sequencer agent
+  ?.  =(%x -.path)  ~
+  ?+    +.path  (on-peek:def path)
+      [%active ~]
+    ``noun+!>(`?`=(%validator mode.state))
+  ::
+      [%producer ~]
+    ?~  cur=current-producer.state
+      [~ ~]
+    ``noun+!>(`@p`u.cur)
+  ::
+      [%epoch ~]
+    =/  cur=epoch  +:(need (pry:poc epochs)) 
+    ``noun+!>(`@ud`num.cur)
+  ::
+      [%blocknum ~]
+    ::  TODO
+    ``noun+!>(`@ud`1)
+  ::
+      [%timer ~]
+    ::  TODO
+    !!
+  ==
 ::
 ++  on-leave  on-leave:def
 ++  on-fail   on-fail:def

@@ -201,12 +201,6 @@
       ?:  ?=(%& -.u.-.res)
         [`[%& %| p.u.-.res] +.res]
       [`[%| p.u.-.res] +.res]
-      ::  TODO read (scry)
-      ::  =/  res  (read ;;(path +.args.p.inp))
-      ::  ?~  -.res  `+.res
-      ::  ?:  ?=(%& -.u.-.res)
-      ::    [`[%& %& p.u.-.res] +.res]
-      ::  [`[%| p.u.-.res] +.res]
       ::
       ::  note:  i believe the way we're using ;; here destroys
       ::  any trace data we may get out of the contract. the
@@ -222,11 +216,6 @@
         ~&  >>>  cart
         :_  (sub bud 7)
         `(mule |.(;;(chick (~(write contract cart) zygote))))
-      ++  read
-        |=  =path
-        ^-  [(unit (each * (list tank))) @ud]
-        ~&  >  "barn performing %read call"
-        (bull |.((~(read contract cart) path)) bud)
       ++  event
         |=  =rooster
         ^-  [(unit (each chick (list tank))) @ud]

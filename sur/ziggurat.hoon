@@ -7,7 +7,7 @@
 +$  epochs  ((mop @ud epoch) gth)
 ++  poc     ((on @ud epoch) gth)
 ::
-+$  block         (pair signature @)
++$  block         (pair signature chunks)
 +$  block-header  [num=@ud prev-header-hash=@uvH data-hash=@uvH]
 +$  slot          (pair block-header (unit block))
 ::
@@ -15,6 +15,7 @@
 ++  sot    ((on @ud slot) gth)
 ::
 +$  signature  [p=@ux q=ship r=life]
++$  chunks     (set @)
 +$  chunk      [town-id=@ud (list [hash=@ux =egg:smart]) town:smart]
 ::
 +$  basket   (set egg:smart)  ::  mempool
@@ -52,6 +53,10 @@
 +$  chain-action
   $%  [%submit slotnum=@ud =block]
       [%init-town id=@ud]
+      [%leave-town ~]
       [%receive-state =grain:smart]
+  ==
++$  chunk-action
+  $%  [%receive =chunk]
   ==
 --
