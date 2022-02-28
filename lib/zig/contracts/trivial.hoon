@@ -1,15 +1,15 @@
-^-  contract
-|_  mem=(unit vase)
+/+  *zig-sys-smart
+|_  =cart
 ++  write
-  |=  inp=contract-input
-  ^-  contract-output
-  [%result %write ~ ~]
+  |=  inp=zygote
+  ^-  chick
+  [%& ~ ~]
 ++  read
-  |=  inp=contract-input
-  ^-  contract-output
-  [%result %read ~]
+  |=  inp=path
+  ^-  noun
+  (add 69 420)
 ++  event
-  |=  =contract-input
-  ^-  contract-output
-  [%result %read ~]
+  |=  inp=rooster
+  ^-  chick
+  [%& ~ ~]
 --
