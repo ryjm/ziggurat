@@ -10,8 +10,9 @@
   ::  +our-block: produce a block during our slot
   ::
   ++  our-block
-    |=  =chunks
+    |=  data=chunks
     ^-  (quip card epoch)
+    ~&  >  "creating block"  ::  printout
     :: TODO: check time and if necessary skip our own block
     :: (lth now.bowl (deadline:epo start-time.cur slot-num))
     =/  [last-num=@ud last-slot=(unit slot)]
@@ -26,10 +27,10 @@
     =/  prev-hed-hash
       ?~  last-slot  prev-hash
       (sham p.u.last-slot)
-    =/  block-hash  (sham chunks)
+    =/  data-hash  (sham data)
     =/  =slot
-      =/  hed=block-header  [next-num prev-hed-hash block-hash]
-      [hed `[(sign:sig our now (sham hed)) chunks]]
+      =/  hed=block-header  [next-num prev-hed-hash data-hash]
+      [hed `[(sign:sig our now (sham hed)) data]]
     :_  cur(slots (put:sot slots.cur next-num slot))
     :-  (give-on-updates [%new-block num.cur p.slot (need q.slot)])
     ?.  =((lent order.cur) +(next-num))  ~
@@ -60,6 +61,7 @@
   ++  their-block
     |=  [hed=block-header blk=(unit block)]
     ^-  (quip card epoch)
+    ~&  >  "it's {<src>}'s block"  ::  printout
     =/  [last-num=@ud last-slot=(unit slot)]
       (get-last-slot slots.cur)
     ::~&  num.hed^[last-num last-slot]
@@ -115,4 +117,3 @@
     (start-epoch-catchup src num.cur)^~
   --
 --
-

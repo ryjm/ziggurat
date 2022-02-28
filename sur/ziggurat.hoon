@@ -1,6 +1,5 @@
-/+  smart=zig-sys-smart
 |%
-++  epoch-interval  ~s10
+++  epoch-interval    ~s10
 ::
 +$  epoch   [num=@ud =start=time order=(list ship) =slots]
 ::
@@ -15,18 +14,8 @@
 ++  sot    ((on @ud slot) gth)
 ::
 +$  signature  [p=@ux q=ship r=life]
-+$  chunks     (set chunk)
-+$  chunk      [town-id=@ud (list [hash=@ux =egg:smart]) town:smart]
-::
-+$  basket   (set egg:smart)  ::  mempool
-::
-+$  hall  ::  runs a town
-  $:  id=@ud
-      blocknum=@ud
-      council=(set ship)
-      order=(list ship)
-      chair=@ud  :: position of leader in order
-  ==
++$  chunks     (list chunk)
++$  chunk      @
 ::
 +$  update
   $%  [%epochs-catchup =epochs]
@@ -43,19 +32,6 @@
       [%new-epoch ~]
   ==
 ::
-+$  basket-action
-  $%  [%receive egg=egg:smart]
-      [%hear egg=egg:smart]
-      [%forward-set to=ship eggs=(set egg:smart)]
-      [%receive-set eggs=(set egg:smart)]
-  ==
-::
-+$  chain-action
-  $%  [%submit slotnum=@ud =block]
-      [%init-town id=@ud]
-      [%leave-town ~]
-      [%receive-state =grain:smart]
-  ==
 +$  chunk-action
   $%  [%receive =chunk]
   ==

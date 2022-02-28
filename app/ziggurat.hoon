@@ -1,6 +1,6 @@
 ::  ziggurat [uqbar-dao]
 ::
-/+  *ziggurat, default-agent, dbug, verb, smart=zig-sys-smart
+/+  *ziggurat, default-agent, dbug, verb
 =,  util
 |%
 +$  card  card:agent:gall
@@ -8,8 +8,6 @@
   $:  %0
       mode=?(%fisherman %validator %none)
       =epochs
-      =chunks
-      current-producer=(unit ship)
   ==
 ++  new-epoch-timers
   |=  [=epoch our=ship]
@@ -39,7 +37,7 @@
 +*  this  .
     def   ~(. (default-agent this %|) bowl)
 ::
-++  on-init  `this(state [%0 %none ~ ~ ~])
+++  on-init  `this(state [%0 %none ~])
 ::
 ++  on-save  !>(state)
 ++  on-load
@@ -95,12 +93,6 @@
     =^  cards  state
       (poke-zig-action !<(action vase))
     [cards this]
-    ::
-      %zig-chunk-action
-    =^  cards  state
-      (poke-chunk-action !<(chunk-action vase))
-    [cards this]
-    ::
       %noun
     ?>  (validate-history our.bowl epochs)
     `this
@@ -160,18 +152,6 @@
       %+  weld
         (watch-updates (silt (murn order.new-epoch filter-by-wex)))
       (new-epoch-timers new-epoch our.bowl)
-    ==
-  ::
-  ++  poke-chunk-action
-    |=  act=chunk-action
-    ^-  (quip card _state)
-    ?-    -.act
-        %receive
-      ::  need to keep registry of active towns
-      ::  and who can submit from them
-      ::  reject if not current producer
-      ?>  =(current-producer.state our.bowl)
-      `state(chunks (~(put in chunks) chunk.act))
     ==
   ::
   ++  filter-by-wex
@@ -267,6 +247,7 @@
   ++  update-fact
     |=  =update
     ^-  (quip card _state)
+    ~&  >  update  ::  printout
     =/  cur=epoch  +:(need (pry:poc epochs))
     =/  next-slot-num
       ?~(p=(bind (pry:sot slots.cur) head) 0 +(u.p))
@@ -277,7 +258,9 @@
       ?<  (lth epoch-num.update num.cur)
       ?:  (gth epoch-num.update num.cur)
         =/  validators=(list ship)
-          ~(tap in (~(del in (~(del in (silt order.cur)) our.bowl)) src.bowl))
+          ::  bugged: in a 2-ship testnet, this results in empty validator set -> crash
+          ~(tap in (~(del in (silt order.cur)) our.bowl))
+          ::  ~(tap in (~(del in (~(del in (silt order.cur)) our.bowl)) src.bowl))
         ?>  ?=(^ validators)
         :_  state
         (start-epoch-catchup i.validators num.cur)^~
@@ -349,6 +332,7 @@
   ++  slot-timer
     |=  [epoch-num=@ud slot-num=@ud]
     ^-  (quip card _state)
+    ~&  >  "timer for slot #{<slot-num>} in epoch #{<epoch-num>} popped"
     =/  cur=epoch  +:(need (pry:poc epochs))
     ?.  =(num.cur epoch-num)
       `state
@@ -356,24 +340,19 @@
       ?~(p=(bind (pry:sot slots.cur) head) 0 +(u.p))
     =/  =ship  (snag slot-num order.cur)
     ?.  =(next-slot-num slot-num)
-      ?.  =(ship our.bowl)  `state(current-producer `ship)
+      ?.  =(ship our.bowl)  `state
       ~|("we can only produce the next block, not past or future blocks" !!)
     =/  prev-hash
       (got-hed-hash slot-num epochs cur)
-    ::  TODO temporary
-    =.  chunks.state  (silt ~[*chunk])
     ?:  =(ship our.bowl)
-      ::  our turn to produce a block
       =^  cards  cur
-        ?~  chunks.state
-          ~(skip-block epo cur prev-hash [our now src]:bowl)
-        (~(our-block epo cur prev-hash [our now src]:bowl) chunks.state)
-      [cards state(epochs (put:poc epochs num.cur cur), current-producer `ship)]
+        (~(our-block epo cur prev-hash [our now src]:bowl) 0xabcd^~)
+      [cards state(epochs (put:poc epochs num.cur cur))]
     =/  cur=epoch  +:(need (pry:poc epochs))
     =^  cards  cur
       ~(skip-block epo cur prev-hash [our now src]:bowl)
     ~&  skip-block+[num.cur slot-num]
-    [cards state(epochs (put:poc epochs num.cur cur), current-producer `ship)]
+    [cards state(epochs (put:poc epochs num.cur cur))]
   --
 ::
 ++  on-peek
@@ -386,9 +365,10 @@
     ``noun+!>(`?`=(%validator mode.state))
   ::
       [%producer ~]
-    ?~  cur=current-producer.state
-      [~ ~]
-    ``noun+!>(`@p`u.cur)
+    !!
+    ::  ?~  cur=current-producer.state
+    ::    [~ ~]
+    ::  ``noun+!>(`@p`u.cur)
   ::
       [%epoch ~]
     =/  cur=epoch  +:(need (pry:poc epochs)) 

@@ -35,6 +35,7 @@
 ++  start-epoch-catchup
   |=  [src=ship epoch-num=@ud]
   ^-  card
+  ~&  >  "starting epoch catchup"  ::  printout
   =/  =wire  /validator/epoch-catchup/(scot %ud epoch-num)
   [%pass (snoc wire (scot %p src)) %agent [src %ziggurat] %watch wire]
 ::

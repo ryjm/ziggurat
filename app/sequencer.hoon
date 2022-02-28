@@ -5,7 +5,8 @@
 ::
 ::  calls out to ziggurat agent and gets timer for block submission
 ::
-/+  default-agent, dbug, verb, smart=zig-sys-smart, *ziggurat
+/-  *sequencer, ziggurat
+/+  default-agent, dbug, verb, smart=zig-sys-smart
 |%
 +$  card  card:agent:gall
 +$  state-0
@@ -114,7 +115,8 @@
       ::  find current block producer from ziggurat
       =/  producer  .^(@p %gx /(scot %p our.bowl)/ziggurat/(scot %da now.bowl)/producer/noun)
       ::  create and send our chunk to them
-      =/  our-chunk=chunk  (~(produce assemble (need hall.state) [our now src]:bowl) town.state basket.state (need me.state))
+      =/  our-chunk  *chunk:ziggurat
+      ::(~(produce assemble (need hall.state) [our now src]:bowl) town.state basket.state (need me.state))
       :_  state(basket ~)
       :_  ~
       :*  %pass  /chunk-gossip
