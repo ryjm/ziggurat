@@ -8,6 +8,8 @@
   $:  %0
       mode=?(%fisherman %validator %none)
       =epochs
+      producer=(unit ship)
+      =chunks
   ==
 ++  new-epoch-timers
   |=  [=epoch our=ship]
@@ -37,7 +39,7 @@
 +*  this  .
     def   ~(. (default-agent this %|) bowl)
 ::
-++  on-init  `this(state [%0 %none ~])
+++  on-init  `this(state [%0 %none ~ ~ ~])
 ::
 ++  on-save  !>(state)
 ++  on-load
@@ -145,13 +147,32 @@
               %+  lth  start-time.new-epoch
               (sub now.bowl (mul +((lent order.new-epoch)) epoch-interval))
           ==
+        ::  there are other validators, and we're behind them, must catch up
         :_  state
         (start-epoch-catchup i.validators num.cur)^~
+      ::  either on-time to start epoch, or solo validator -- go ahead
       ~&  num.new-epoch^(sham epochs)
-      :_  state(epochs (put:poc epochs num.new-epoch new-epoch))
+      ~&  >>>  `-.order.new-epoch
+      :_  state(epochs (put:poc epochs num.new-epoch new-epoch), producer `-.order.new-epoch)
       %+  weld
         (watch-updates (silt (murn order.new-epoch filter-by-wex)))
       (new-epoch-timers new-epoch our.bowl)
+    ::
+        %receive-chunk
+      ::  TODO make this town-running-stars only once that info is known
+      ?>  (lte (met 3 src.bowl) 2)
+      ?:  =(our.bowl producer.state)
+        ::  store for ourselves
+        `state(chunks chunk.action^chunks)
+      ::  forward to other
+      ?~  to=producer.state
+        ~|("can't accept chunk, no known block producer" !!)
+      :_  state
+      :_  ~
+      :*  %pass  /chunk-gossip/(scot %ud num:`epoch`+:(need (pry:poc epochs)))
+          %agent  [u.to %ziggurat]  %poke
+          %zig-action  !>([%receive-chunk chunk.action])
+      ==
     ==
   ::
   ++  filter-by-wex
@@ -247,7 +268,6 @@
   ++  update-fact
     |=  =update
     ^-  (quip card _state)
-    ~&  >  update  ::  printout
     =/  cur=epoch  +:(need (pry:poc epochs))
     =/  next-slot-num
       ?~(p=(bind (pry:sot slots.cur) head) 0 +(u.p))
@@ -257,6 +277,8 @@
       ~|  "new blocks cannot be applied to past epochs"
       ?<  (lth epoch-num.update num.cur)
       ?:  (gth epoch-num.update num.cur)
+        ::  the new block is from an epoch beyond what we have as current,
+        ::  determine who and whether to try and catch up
         =/  validators=(list ship)
           ::  bugged: in a 2-ship testnet, this results in empty validator set -> crash
           ~(tap in (~(del in (silt order.cur)) our.bowl))
@@ -264,10 +286,14 @@
         ?>  ?=(^ validators)
         :_  state
         (start-epoch-catchup i.validators num.cur)^~
+      ::  incorporate new-block into our epoch
+      =/  next-producer
+        ?:  (gte +(next-slot-num) (lent order.cur))  ~
+        `(snag +(next-slot-num) order.cur)
       =^  cards  cur
         %-  ~(their-block epo cur prev-hash [our now src]:bowl)
         [header `block]:update
-      [cards state(epochs (put:poc epochs num.cur cur))]
+      [cards state(epochs (put:poc epochs num.cur cur), producer next-producer)]
     ?.  ?=(%saw-block -.update)  !!
     :_  state
     %+  ~(see-block epo cur prev-hash [our now src]:bowl)
@@ -335,19 +361,28 @@
     ~&  >  "timer for slot #{<slot-num>} in epoch #{<epoch-num>} popped"
     =/  cur=epoch  +:(need (pry:poc epochs))
     ?.  =(num.cur epoch-num)
+      ::  timer is from an epoch that we don't view as current, ignore
       `state
     =/  next-slot-num
       ?~(p=(bind (pry:sot slots.cur) head) 0 +(u.p))
+    ::  see which ship is responsible for this slot
     =/  =ship  (snag slot-num order.cur)
     ?.  =(next-slot-num slot-num)
+      ::  timer does not match slot we view as currently open, ignore
       ?.  =(ship our.bowl)  `state
       ~|("we can only produce the next block, not past or future blocks" !!)
     =/  prev-hash
       (got-hed-hash slot-num epochs cur)
     ?:  =(ship our.bowl)
+      ::  we are responsible for producing a block in this slot
+      =/  next-producer
+        ?:  (gte +(slot-num) (lent order.cur))  ~
+        `(snag +(slot-num) order.cur)
       =^  cards  cur
-        (~(our-block epo cur prev-hash [our now src]:bowl) 0xabcd^~)
-      [cards state(epochs (put:poc epochs num.cur cur))]
+        (~(our-block epo cur prev-hash [our now src]:bowl) eny.bowl^~)
+      [cards state(epochs (put:poc epochs num.cur cur), producer next-producer)]
+    ::  someone else is responsible for producing this block,
+    ::  but they have not done so
     =/  cur=epoch  +:(need (pry:poc epochs))
     =^  cards  cur
       ~(skip-block epo cur prev-hash [our now src]:bowl)
@@ -365,21 +400,20 @@
     ``noun+!>(`?`=(%validator mode.state))
   ::
       [%producer ~]
-    !!
-    ::  ?~  cur=current-producer.state
-    ::    [~ ~]
-    ::  ``noun+!>(`@p`u.cur)
+    ?~  cur=producer.state
+      [~ ~]
+    ``noun+!>(`@p`u.cur)
   ::
       [%epoch ~]
     =/  cur=epoch  +:(need (pry:poc epochs)) 
     ``noun+!>(`@ud`num.cur)
   ::
       [%blocknum ~]
-    ::  TODO
-    ``noun+!>(`@ud`1)
+    =/  cur=epoch  +:(need (pry:poc epochs))
+    ``noun+!>(`@ud`?~(p=(bind (pry:sot slots.cur) head) 0 +(u.p)))
   ::
       [%timer ~]
-    ::  TODO
+    ::  TODO, but give deadline of next block
     !!
   ==
 ::

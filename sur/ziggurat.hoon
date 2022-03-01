@@ -30,9 +30,6 @@
   $%  [%start mode=?(%fisherman %validator) history=epochs validators=(set ship)]
       [%stop ~]
       [%new-epoch ~]
-  ==
-::
-+$  chunk-action
-  $%  [%receive =chunk]
+      [%receive-chunk =chunk]
   ==
 --

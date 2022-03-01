@@ -11,6 +11,7 @@
   ::
   ++  our-block
     |=  data=chunks
+    ~>  %bout
     ^-  (quip card epoch)
     ~&  >  "creating block"  ::  printout
     :: TODO: check time and if necessary skip our own block
