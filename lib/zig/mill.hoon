@@ -53,35 +53,29 @@
   ++  audit
     |=  =egg
     ^-  ?
-    ~&  >  "auditing"
     ?.  ?=(account from.p.egg)                    %.n
     ?~  zigs=(~(get by granary) zigs.from.p.egg)  %.n
     ?.  ?=(%& -.germ.u.zigs)                      %.n
     =/  acc  (hole account-mold data.p.germ.u.zigs)
-    ~&  >>  balance.acc
     (gth balance.acc budget.p.egg)
   ::  +charge: extract gas fee from caller's zigs balance
   ++  charge
     |=  [payee=account fee=@ud]
-    ^-  ^granary
-    ~&  >  "charging gas fee"
+    ^-  ^granary 
     ?~  zigs=(~(get by granary) zigs.payee)  granary
     ?.  ?=(%& -.germ.u.zigs)                 granary
     =/  acc  (hole account-mold data.p.germ.u.zigs)
     =.  balance.acc  (sub balance.acc fee)
-    ~&  >>  balance.acc
     =.  data.p.germ.u.zigs  acc
     (~(put by granary) zigs.payee u.zigs)
   ::  +pay: give fees from eggs to miller
   ++  pay
     |=  total=@ud
     ^-  ^granary
-    ~&  >  "giving taxes to miller"
     ?~  zigs=(~(get by granary) zigs.miller)  granary
     ?.  ?=(%& -.germ.u.zigs)                  granary
     =/  acc  (hole account-mold data.p.germ.u.zigs)
     =.  balance.acc  (add balance.acc total)
-    ~&  >>  balance.acc
     =.  data.p.germ.u.zigs  acc
     (~(put by granary) zigs.miller u.zigs)
   --
@@ -145,7 +139,6 @@
     ^-  [(unit rooster) @ud]
     |^
     =+  [chick rem]=(weed crop to.p.egg [%& zygote] ~ budget.p.egg)
-    ~&  >  "1st weeding successful"
     ?~  chick  `rem
     ?:  ?=(%& -.u.chick)
       ::  rooster result, finished growing
@@ -182,12 +175,11 @@
       [`p.p.u.res bud]
     ::
     ::  +barn: run contract formula with arguments and memory, bounded by bud
-    ::  (takes yolk and runs write)
+    ::  [note: contract reads are scrys performed in sequencer]
     ++  barn
       |=  [=contract inp=embryo =cart bud=@ud]
       ^-  [(unit (each (each * chick) (list tank))) @ud]
       |^
-      ::  hellaciously ugly
       ?:  ?=(%| -.inp)
         ::  event
         =/  res  (event p.inp)
@@ -201,12 +193,6 @@
       ?:  ?=(%& -.u.-.res)
         [`[%& %| p.u.-.res] +.res]
       [`[%| p.u.-.res] +.res]
-      ::  TODO read (scry)
-      ::  =/  res  (read ;;(path +.args.p.inp))
-      ::  ?~  -.res  `+.res
-      ::  ?:  ?=(%& -.u.-.res)
-      ::    [`[%& %& p.u.-.res] +.res]
-      ::  [`[%| p.u.-.res] +.res]
       ::
       ::  note:  i believe the way we're using ;; here destroys
       ::  any trace data we may get out of the contract. the
@@ -217,21 +203,13 @@
       ++  write
         |=  =^zygote
         ^-  [(unit (each chick (list tank))) @ud]
-        ~&  >  "barn performing %write call"
-        ~&  >>  zygote
-        ~&  >>>  cart
         :_  (sub bud 7)
         `(mule |.(;;(chick (~(write contract cart) zygote))))
-      ++  read
-        |=  =path
-        ^-  [(unit (each * (list tank))) @ud]
-        ~&  >  "barn performing %read call"
-        (bull |.((~(read contract cart) path)) bud)
       ++  event
         |=  =rooster
         ^-  [(unit (each chick (list tank))) @ud]
-        ~&  >  "barn performing %event call"
-        (bull |.(;;(chick (~(event contract cart) rooster))) bud)
+        :_  (sub bud 8)
+        `(mule |.(;;(chick (~(event contract cart) rooster))))
       --
     --
   ::
@@ -239,7 +217,6 @@
     |=  [res=rooster lord=id from=caller]
     ^-  (unit ^granary)
     =-  ?.  -  ~
-        ~&  >  "passed harvest checks"
         `(~(uni by granary) (~(uni by changed.res) issued.res))
     ?&  %-  ~(all in changed.res)
         |=  [=id =grain]

@@ -1,6 +1,6 @@
 |%
 ::
-::  contract functions
+::  smart contract functions
 ::
 ::  +hole: vase-checks your types for you
 ++  hole
@@ -26,10 +26,11 @@
   ?:  ?=(@ux caller)
     caller
   id.caller
-::  our types
 ::
-+$  id  @ux                   ::  pubkey
-++  zigs-wheat-id  0x0
+::  smart contract types
+::
++$  id  @ux             ::  pubkey
+++  zigs-wheat-id  0x0  ::  hardcoded "native" token contract
 ::
 +$  account  [=id nonce=@ud zigs=id]
 +$  caller  $@(id account)
@@ -48,10 +49,11 @@
       =germ
   ==
 ::
-+$  granary   (map id grain)    ::  replace with +merk
++$  granary   (map id grain)  ::  TODO: replace with +merk
 +$  populace  (map id @ud)
 +$  town      (pair granary populace)
 +$  land      (map @ud town)
+::  state accessible by contract
 ::
 +$  cart
   $:  mem=(unit vase)
@@ -60,6 +62,8 @@
       town-id=@ud
       owns=(map id grain)
   ==
+::  contract definition
+::
 +$  contract
   $_  ^|
   |_  cart
@@ -75,6 +79,7 @@
     |~  rooster
     *chick
   --
+::  transaction types, fed into contract
 ::
 +$  egg  (pair shell yolk)
 +$  shell
@@ -96,9 +101,9 @@
       grains=(map id grain)
   ==
 ::
-+$  embryo  (each zygote rooster)
++$  embryo   (each zygote rooster)
 ::
-+$  chick   (each rooster hen)
-+$  rooster    [changed=(map id grain) issued=(map id grain)]
-+$  hen  [mem=(unit vase) next=[to=id town-id=@ud args=yolk]]
++$  chick    (each rooster hen)
++$  rooster  [changed=(map id grain) issued=(map id grain)]
++$  hen      [mem=(unit vase) next=[to=id town-id=@ud args=yolk]]
 --

@@ -12,7 +12,7 @@
       ==
     --
 ::
-::  Helix runner contract
+::  Helix runner contract [outdated draft; incompatible]
 ::
 ::  A helix runner contract can be deployed for each helix on
 ::  Uqbar. The contract is responsible for validator registration
