@@ -1,11 +1,15 @@
-^-  contract
-|%
+/+  *zig-sys-smart
+|_  =cart
 ++  write
-  |=  inp=contract-input
-  ^-  output
-  [~ ~ ~]
+  |=  inp=zygote
+  ^-  chick
+  [%& ~ ~]
 ++  read
-  |=  inp=contract-input
-  ^-  *
-  1
+  |=  inp=path
+  ^-  noun
+  (add 69 420)
+++  event
+  |=  inp=rooster
+  ^-  chick
+  [%& ~ ~]
 --

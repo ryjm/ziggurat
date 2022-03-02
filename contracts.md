@@ -13,7 +13,7 @@ A basic token rice (data) contains:
 A token grain (contract) has methods:
 
 WRITE:
-* +give: send X tokens to Y id
+* +give: send X tokens to Y id (also includes budget argument -- unique to zigs, since zigs balance must cover gas fee + send amount)
 * +set-allow: make an entry in allowances letting Y id spend X tokens
 * +take: use an allowance to spend X tokens to Y id from Z id (not that of caller)
 

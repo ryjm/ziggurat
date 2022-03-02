@@ -1,3 +1,4 @@
+/+  smart=zig-sys-smart
 |%
 ++  epoch-interval    ~s10
 ::
@@ -14,8 +15,21 @@
 ++  sot    ((on @ud slot) gth)
 ::
 +$  signature  [p=@ux q=ship r=life]
-+$  chunks     (list chunk)
-+$  chunk      @
++$  chunks     (set @)
++$  chunk      [=helix-id [(list [hash=@ux =egg:smart]) town:smart]]
+::
++$  helix-id  @ux
++$  helices  (map helix-id helix)
++$  helix
+  $:  id=helix-id
+      state=town:smart
+      order=(list ship)
+      leader=ship
+      num=@ud
+  ==
+::
++$  mempools  (map helix-id mempool)
++$  mempool   (set egg:smart)
 ::
 +$  update
   $%  [%epochs-catchup =epochs]
@@ -30,5 +44,21 @@
   $%  [%start mode=?(%fisherman %validator) history=epochs validators=(set ship)]
       [%stop ~]
       [%new-epoch ~]
+      ::  who gets to form a new helix? vote/sigs from the existing relay set?
+      ::  what helices are hard-coded into the relay chain?
+      ::  [%new-helix validators=(set ship)]
+  ==
+::
++$  mempool-action
+  $%  [%receive =helix-id tx=egg:smart]
+      [%hear =helix-id tx=egg:smart]
+      [%forward-set =helix-id to=ship txs=(set egg:smart)]
+      [%receive-set =helix-id txs=(set egg:smart)]
+  ==
+::
++$  chunk-action
+  $%  [%hear =chunk]
+      [%signed =helix-id =signature hash=@ux]
+      [%submit sigs=(set signature) =chunk]
   ==
 --

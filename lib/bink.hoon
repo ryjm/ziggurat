@@ -367,7 +367,7 @@
   ?~  -.bone  ~
   `(book -.bone)
 ::                                                        ::
-++  brute                                                 ::  bounbed +mure
+++  brute                                                 ::  bounded +mure
   |=  [tap=(trap) bud=@ud]
   ^-  [(unit (each * (list tank))) @ud]
   =+  [ton rem]=(bock [tap %9 2 %0 1] bud)
@@ -381,12 +381,14 @@
 ::                                                        ::
 ++  bull                                                  ::  bounded +mule
   |*  [tap=(trap) bud=@ud]
-  ::^-  [(unit (each $:tap (list tank))) @ud]
   =+  [mud rem]=(brute tap bud)
   :_  rem
   ?~  mud  ~
-  ?-  -.u.mud
-    %&  [%& p=$:tap]
-    %|  [%| p=p.u.mud]
-  ==
+  ?:  =(%| -.u.mud)
+    ?>  ?=(%| -.u.mud)
+    `[%| p=p.u.mud]
+  =/  res  $:tap
+  ^-  (unit (each _res (list tank)))
+  ?>  ?=(%& -.u.mud)
+  `[%& res]
 --
