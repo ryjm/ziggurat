@@ -6,7 +6,7 @@
 ::  calls out to ziggurat agent and gets timer for block submission
 ::
 /-  *sequencer, ziggurat
-/+  default-agent, dbug, verb, smart=zig-sys-smart
+/+  default-agent, dbug, verb, smart=zig-sys-smart, *zig-mill
 |%
 +$  card  card:agent:gall
 +$  state-0
@@ -40,7 +40,7 @@
 ++  on-watch
   |=  =path
   ^-  (quip card _this)
-  !!
+  (on-watch:def path)
 ::
 ++  on-poke
   |=  [=mark =vase]
@@ -111,27 +111,34 @@
     ?>  (lte (met 3 src.bowl) 4)
     ?-    -.act
         %submit
-      ::  TODO
+      ?>  =(src.bowl our.bowl)
       ::  find current block producer from ziggurat
       =/  producer  .^(@p %gx /(scot %p our.bowl)/ziggurat/(scot %da now.bowl)/producer/noun)
       ::  create and send our chunk to them
-      =/  our-chunk  *chunk:ziggurat
-      ::(~(produce assemble (need hall.state) [our now src]:bowl) town.state basket.state (need me.state))
+      =/  our-chunk  ::  *chunk:ziggurat
+        %+  ~(mill-all mill (need me.state) id:(need hall.state) 1 now)
+          town.state
+        ~(tap in basket.state)
       :_  state(basket ~)
       :_  ~
       :*  %pass  /chunk-gossip
           %agent  [producer %ziggurat]  %poke
-          %zig-chunk-action  !>([%receive our-chunk])
+          %zig-action  !>([%receive-chunk (jam our-chunk)])
       ==
     ::
-        %init-town
+        %init
       ?>  =(src.bowl our.bowl)
       ::  assert that we're active in main chain
       ?.  .^(? %gx /(scot %p our.bowl)/ziggurat/(scot %da now.bowl)/active/noun)
         ~|("can't run a town, ziggurat not active" !!)
       ?^  hall.state
         ~|("can't init a town, already active in one" !!)
-      `state(hall `[id.act 0 (silt ~[our.bowl]) ~[our.bowl] 0])
+      :-  ~
+      %=  state
+          hall  `[town-id.act 0 (silt ~[our.bowl]) ~[our.bowl] 0]
+          me    `me.act
+          town  starting-state.act
+      ==
     ::
         %leave-town
       ?>  =(src.bowl our.bowl)
@@ -150,7 +157,7 @@
 ++  on-agent
   |=  [=wire =sign:agent:gall]
   ^-  (quip card _this)
-  !!
+  (on-agent:def wire sign)
 ::
 ++  on-arvo
   |=  [=wire =sign-arvo:agent:gall]

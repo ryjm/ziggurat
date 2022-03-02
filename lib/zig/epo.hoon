@@ -10,7 +10,7 @@
   ::  +our-block: produce a block during our slot
   ::
   ++  our-block
-    |=  data=chunks
+    |=  data=(list *)
     ~>  %bout
     ^-  (quip card epoch)
     ~&  >  "creating block"  ::  printout
@@ -28,10 +28,15 @@
     =/  prev-hed-hash
       ?~  last-slot  prev-hash
       (sham p.u.last-slot)
-    =/  data-hash  (sham data)
+    ::  TODO temporary: make a fake block if no data, just so as to not skip all
+    =?  data  ?=(~ data)  `(list @)`"fake-data"
+    =/  jammed-data
+      %+  turn  data
+      |=([chunk=*] (jam chunk))
+    =/  data-hash  (sham jammed-data)
     =/  =slot
       =/  hed=block-header  [next-num prev-hed-hash data-hash]
-      [hed `[(sign:sig our now (sham hed)) data]]
+      [hed `[(sign:sig our now (sham hed)) jammed-data]]
     :_  cur(slots (put:sot slots.cur next-num slot))
     :-  (give-on-updates [%new-block num.cur p.slot (need q.slot)])
     ?.  =((lent order.cur) +(next-num))  ~

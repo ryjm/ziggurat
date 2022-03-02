@@ -18,8 +18,8 @@
   ==
 ::
 +$  chain-action
-  $%  [%submit slotnum=@ud chunk=@]
-      [%init-town id=@ud]
+  $%  [%submit ~]
+      [%init town-id=@ud me=account:smart starting-state=town:smart]
       [%leave-town ~]
       [%receive-state =grain:smart]
   ==

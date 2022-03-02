@@ -161,12 +161,16 @@
         %receive-chunk
       ::  TODO make this town-running-stars only once that info is known
       ?>  (lte (met 3 src.bowl) 2)
-      ?:  =(our.bowl producer.state)
-        ::  store for ourselves
-        `state(chunks chunk.action^chunks)
-      ::  forward to other
+      ~&  >  "src: {<src.bowl>}, our: {<our.bowl>}, producer: {<producer.state>}"
+      ~&  >>  "chunk received"
       ?~  to=producer.state
         ~|("can't accept chunk, no known block producer" !!)
+      ?:  =(our.bowl u.to)
+        ::  store for ourselves
+        ~&  >>  "chunk stored"
+        `state(chunks chunk.action^chunks)
+      ::  forward to other
+      ~&  >>  "chunk forwarded"
       :_  state
       :_  ~
       :*  %pass  /chunk-gossip/(scot %ud num:`epoch`+:(need (pry:poc epochs)))
@@ -378,12 +382,18 @@
       =/  next-producer
         ?:  (gte +(slot-num) (lent order.cur))  ~
         `(snag +(slot-num) order.cur)
+      ?~  chunks.state
+        ::  we have no data to put in a block, just skip
+        =^  cards  cur
+          ~(skip-block epo cur prev-hash [our now src]:bowl)
+        ~&  skip-block-no-data+[num.cur slot-num]
+        [cards state(epochs (put:poc epochs num.cur cur))]
+      ::  produce block
       =^  cards  cur
-        (~(our-block epo cur prev-hash [our now src]:bowl) eny.bowl^~)
+        (~(our-block epo cur prev-hash [our now src]:bowl) chunks.state)
       [cards state(epochs (put:poc epochs num.cur cur), producer next-producer)]
     ::  someone else is responsible for producing this block,
     ::  but they have not done so
-    =/  cur=epoch  +:(need (pry:poc epochs))
     =^  cards  cur
       ~(skip-block epo cur prev-hash [our now src]:bowl)
     ~&  skip-block+[num.cur slot-num]
