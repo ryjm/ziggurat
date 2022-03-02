@@ -103,7 +103,7 @@
       ::  should only accept from other validators
       ?>  (~(has in council.u.hall.state) src.bowl)
       `state(basket (~(uni in basket) eggs.act))
-    ==
+    == 
   ::
   ++  poke-chain-action
     |=  act=chain-action
@@ -119,7 +119,7 @@
         %+  ~(mill-all mill (need me.state) id:(need hall.state) 1 now)
           town.state
         ~(tap in basket.state)
-      :_  state(basket ~)
+      :_  state(basket ~, town +.our-chunk)
       :_  ~
       :*  %pass  /chunk-gossip
           %agent  [producer %ziggurat]  %poke

@@ -152,7 +152,6 @@
         (start-epoch-catchup i.validators num.cur)^~
       ::  either on-time to start epoch, or solo validator -- go ahead
       ~&  num.new-epoch^(sham epochs)
-      ~&  >>>  `-.order.new-epoch
       :_  state(epochs (put:poc epochs num.new-epoch new-epoch), producer `-.order.new-epoch)
       %+  weld
         (watch-updates (silt (murn order.new-epoch filter-by-wex)))
@@ -160,16 +159,16 @@
     ::
         %receive-chunk
       ::  TODO make this town-running-stars only once that info is known
+      ::  TODO handle poke-ack for the case where two validators
+      ::  each think the other is producer, and are sending a chunk
+      ::  back and forth to each other.
       ?>  (lte (met 3 src.bowl) 2)
-      ~&  >  "src: {<src.bowl>}, our: {<our.bowl>}, producer: {<producer.state>}"
       ~&  >>  "chunk received"
       ?~  to=producer.state
         ~|("can't accept chunk, no known block producer" !!)
       ?:  =(our.bowl u.to)
-        ::  store for ourselves
         ~&  >>  "chunk stored"
         `state(chunks chunk.action^chunks)
-      ::  forward to other
       ~&  >>  "chunk forwarded"
       :_  state
       :_  ~
@@ -362,7 +361,6 @@
   ++  slot-timer
     |=  [epoch-num=@ud slot-num=@ud]
     ^-  (quip card _state)
-    ~&  >  "timer for slot #{<slot-num>} in epoch #{<epoch-num>} popped"
     =/  cur=epoch  +:(need (pry:poc epochs))
     ?.  =(num.cur epoch-num)
       ::  timer is from an epoch that we don't view as current, ignore
@@ -382,12 +380,12 @@
       =/  next-producer
         ?:  (gte +(slot-num) (lent order.cur))  ~
         `(snag +(slot-num) order.cur)
-      ?~  chunks.state
-        ::  we have no data to put in a block, just skip
-        =^  cards  cur
-          ~(skip-block epo cur prev-hash [our now src]:bowl)
-        ~&  skip-block-no-data+[num.cur slot-num]
-        [cards state(epochs (put:poc epochs num.cur cur))]
+      ::  ?~  chunks.state
+      ::    ::  we have no data to put in a block, just skip
+      ::    =^  cards  cur
+      ::      ~(skip-block epo cur prev-hash [our now src]:bowl)
+      ::    ~&  skip-block-no-data+[num.cur slot-num]
+      ::    [cards state(epochs (put:poc epochs num.cur cur))]
       ::  produce block
       =^  cards  cur
         (~(our-block epo cur prev-hash [our now src]:bowl) chunks.state)
