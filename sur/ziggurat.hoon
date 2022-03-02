@@ -1,3 +1,4 @@
+/+  smart=zig-sys-smart
 |%
 ++  epoch-interval    ~s10
 ::
@@ -15,7 +16,7 @@
 ::
 +$  signature  [p=@ux q=ship r=life]
 +$  chunks     (list chunk)
-+$  chunk      @
++$  chunk      [txs=(list [@ux egg:smart]) =town:smart]
 ::
 +$  update
   $%  [%epochs-catchup =epochs]

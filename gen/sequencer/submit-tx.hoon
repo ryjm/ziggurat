@@ -4,7 +4,8 @@
 |=  [[now=@da eny=@uvJ bek=beak] [town-id=@ud nonce=@ud ~] ~]
 :-  %zig-basket-action
 ^-  basket-action
-:-  %receive
+:-  %forward
+%-  silt  :_  ~
 :-  [[0xbeef nonce 0x1.beef] 0x0 1 500 town-id] 
 :^    [0xbeef nonce 0x1.beef]
     `[%give 0xcafe 10 500]

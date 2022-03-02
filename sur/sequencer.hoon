@@ -11,10 +11,8 @@
   ==
 ::
 +$  basket-action
-  $%  [%receive egg=egg:smart]
-      [%hear egg=egg:smart]
-      [%forward-set to=ship eggs=(set egg:smart)]
-      [%receive-set eggs=(set egg:smart)]
+  $%  [%forward eggs=(set egg:smart)]
+      [%receive eggs=(set egg:smart)]
   ==
 ::
 +$  chain-action

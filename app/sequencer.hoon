@@ -66,43 +66,36 @@
       ~&  >>  "ignoring tx, we're not active in a council"
       [~ state]
     ?-    -.act
-        %receive
-      ::  getting an egg from user
+        %forward
+      ::  getting an egg from user / eggs from fellow sequencer
       ::  add to our basket
-      ~&  >  "received an egg: {<egg.act>}"
-      ~&  >>  "adding egg to basket"
-      :_  state
-      :_  ~
-      :*  %pass  /basket-gossip
-          %agent  [(snag chair.u.hall.state order.u.hall.state) %sequencer]  %poke
-          %zig-basket-action  !>([%hear egg.act])
-      ==
-    ::
-        %hear
-      ::  should only accept from other validators
-      ?>  (~(has in council.u.hall.state) src.bowl)
-      ~&  >  "received a gossiped egg from {<src.bowl>}: {<egg.act>}"
-      `state(basket (~(put in basket) egg.act))
-    ::
-        %forward-set
-      ?>  =(src.bowl our.bowl)
-      ?>  (~(has in council.u.hall.state) to.act)
-      ::  forward our basket to another validator
-      ::  used when we pass producer status to a new
-      ::  validator, give them existing basket
-      ::  clear basket for ourselves
+      ~&  >  "received eggs: {<eggs.act>}"
+      =/  current-producer  (snag chair.u.hall.state order.u.hall.state)
+      ?:  =(current-producer our.bowl)
+        ~&  >>  "adding eggs to basket"
+        `state(basket (~(uni in basket) eggs.act))
+      ~&  >>  "forwarding eggs"
       :_  state(basket ~)
       :_  ~
       :*  %pass  /basket-gossip
-          %agent  [to.act %sequencer]  %poke
-          %zig-basket-action  !>([%receive-set basket.state])
+          %agent  [current-producer %sequencer]  %poke
+          %zig-basket-action  !>([%receive (~(uni in eggs.act) basket.state)])
       ==
     ::
-        %receive-set
-      ::  integrate a set of eggs into our basket
+        %receive
       ::  should only accept from other validators
       ?>  (~(has in council.u.hall.state) src.bowl)
-      `state(basket (~(uni in basket) eggs.act))
+      =/  current-producer  (snag chair.u.hall.state order.u.hall.state)
+      ?:  =(current-producer our.bowl)
+        ~&  >  "received gossiped eggs from {<src.bowl>}: {<eggs.act>}"
+        `state(basket (~(uni in basket) eggs.act))
+      ~&  >>  "forwarding eggs"
+      :_  state(basket ~)
+      :_  ~
+      :*  %pass  /basket-gossip
+          %agent  [current-producer %sequencer]  %poke
+          %zig-basket-action  !>([%receive (~(uni in eggs.act) basket.state)])
+      ==
     == 
   ::
   ++  poke-chain-action
@@ -115,7 +108,7 @@
       ::  find current block producer from ziggurat
       =/  producer  .^(@p %gx /(scot %p our.bowl)/ziggurat/(scot %da now.bowl)/producer/noun)
       ::  create and send our chunk to them
-      =/  our-chunk  ::  *chunk:ziggurat
+      =/  our-chunk=chunk:ziggurat
         %+  ~(mill-all mill (need me.state) id:(need hall.state) 1 now)
           town.state
         ~(tap in basket.state)
@@ -123,7 +116,7 @@
       :_  ~
       :*  %pass  /chunk-gossip
           %agent  [producer %ziggurat]  %poke
-          %zig-action  !>([%receive-chunk (jam our-chunk)])
+          %zig-action  !>([%receive-chunk our-chunk])
       ==
     ::
         %init
