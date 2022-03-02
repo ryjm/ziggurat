@@ -1,9 +1,9 @@
 /-  group, spider, grp=group-store, gra=graph-store, met=metadata-store
 /+  push-hook, strandio, res=resource::, dao=zig-contracts-dao
 ::
-=*  strand    strand:spider
-=*  raw-poke  raw-poke:strandio
-=*  raw-poke-our  raw-poke-our:strandio
+=*  strand  strand:spider
+=*  poke  poke:strandio
+=*  poke-our  poke-our:strandio
 =*  scry  scry:strandio
 =>
   |%
@@ -14,6 +14,15 @@
       %+  scry  (set resource:res)
       /gy/group-store/groups
     (pure:m resources)
+  ::
+  ++  scry-group
+    |=  rid=resource:res
+    =/  m  (strand ,(unit group:group))
+    ^-  form:m
+    ;<  g=(unit group:group)  bind:m
+      %+  scry  (unit group:group)
+      /gx/group-store/groups/ship/(scot %p entity.rid)/[name.rid]/noun
+    (pure:m g)
   ::
   ++  scry-group-metadata
     |=  rid=resource:res
@@ -34,30 +43,10 @@
       /gx/graph-store/graph/(scot %p entity.rid)/[name.rid]/noun
     (pure:m update)
   ::
-  ++  add-push-hook
-    |=  rid=resource:res
-    (add-rem-pull-push-hook rid %push %add)
-  ::
-  ++  rem-push-hook
-    |=  rid=resource:res
-    (add-rem-pull-push-hook rid %push %remove)
-  ::
-  ++  add-pull-hook
-    |=  rid=resource:res
-    (add-rem-pull-push-hook rid %pull %add)
-  ::
   ++  rem-pull-hook
     |=  rid=resource:res
-    (add-rem-pull-push-hook rid %pull %remove)
-  ::
-  ++  add-rem-pull-push-hook
-    |=  [rid=resource:res direction=?(%pull %push) action=?(%add %remove)]
     ^-  cage
-    :-
-      ?:  ?=(%pull direction)
-        %pull-hook-action
-      %push-hook-action
-    !>([action rid])
+    [%pull-hook-action !>([%remove rid])]
   ::
   ++  update-metadata-store
     |=  [new-group=resource:res as=(list (pair md-resource:met association:met))]
@@ -70,7 +59,7 @@
     ::
     =/  remove=cage
       [%metadata-update-2 !>([%remove group.a mdr])]
-    ;<  ~  bind:m  (raw-poke-our %metadata-store remove)
+    ;<  ~  bind:m  (poke-our %metadata-store remove)
     ::
     =/  add-update=update:met
       :^    %add
@@ -78,21 +67,30 @@
         mdr(entity.resource entity.new-group)
       metadatum.a  ::  TODO: do we need to update config? E.g. for group feed
     =/  add=cage  [%metadata-update-2 !>(add-update)]
-    ;<  ~  bind:m  (raw-poke-our %metadata-store add)
+    ;<  ~  bind:m  (poke-our %metadata-store add)
     loop(as t.as)
   ::
   ++  update-host
     |_  [old-group=resource:res new-group=resource:res =bowl:spider]
+    ::
     ++  update-hook
       |=  [app-hook-pfix=@tas action=?(%add %remove) rid=resource:res]
-      =/  action=@tas  %add
+      =/  action  %add
       =/  hook-direction=@tas
         ?:(=(our.bowl entity.new-group) %push-hook %pull-hook)
       =/  app-hook=@tas
         (slav %tas (rap 3 app-hook-pfix '-' hook-direction ~))
-      =/  hook-action=@tas
-        (slav %tas (rap 3 hook-direction '-action' ~))
-      (raw-poke-our app-hook hook-action !>([action rid]))
+      |^
+      ?:  =(our.bowl entity.new-group)
+        update-hook-push
+      update-hook-pull
+      ::
+      ++  update-hook-pull
+        (poke-our app-hook %pull-hook-action !>([action entity.new-group rid]))
+      ::
+      ++  update-hook-push
+        (poke-our app-hook %push-hook-action !>([action rid]))
+      --
     ::
     ++  add-graphs
       |=  [as=(list (pair md-resource:met association:met))]
@@ -105,12 +103,13 @@
         loop(as t.as)
       ;<  =update:gra  bind:m  (scry-graph resource.mdr)
       ?.  ?=(%add-graph -.q.update)
-        ~&  >>>  "add-graphs: scry returns non %add-graph for {<resource.mdr>}: {<update>}"
+        ~&  >>>  "on-host-change +add-graphs: +scry-graph returns non %add-graph for {<resource.mdr>}: {<update>}"
         loop(as t.as)  ::  TODO: can we do better here?
+      =.  p.update  now.bowl
       =.  entity.resource.q.update  entity.new-group
       ::
       ;<  ~  bind:m
-        (raw-poke-our %graph-store %graph-update-3 !>(update))
+        (poke-our %graph-store %graph-update-3 !>(update))
       ::
       ;<  ~  bind:m
         (update-hook %graph %add resource.q.update)
@@ -127,24 +126,28 @@
         loop(as t.as)
       ::
       ;<  ~  bind:m
-        (raw-poke-our %graph-pull-hook (rem-pull-hook resource.mdr))
+        (poke-our %graph-pull-hook (rem-pull-hook resource.mdr))
       ::
       =/  =update:gra
         :+  now.bowl
           %remove-graph
         resource.mdr
       ;<  ~  bind:m
-        (raw-poke-our %graph-store %graph-update-3 !>(update))
+        (poke-our %graph-store %graph-update-3 !>(update))
       loop(as t.as)
     ::
     ++  add-group
       =/  m  (strand ,~)
       ^-  form:m
+      ;<  g=(unit group:group)  bind:m  (scry-group old-group)
+      ?~  g
+        ~&  >>>  "on-host-change +add-group: +scry-group returns ~ for {<old-group>}"
+        (pure:m ~)
       ;<  ~  bind:m
-        %+  raw-poke-our
+        %+  poke-our
           %group-store
         :-  %group-action
-        !>([%add-group new-group *policy:group %.n])  ::  TODO: copy policy
+        !>([%add-group new-group policy.u.g %.n])  ::  TODO: copy policy
       ::
       ;<  ~  bind:m
         (update-hook %metadata %add new-group)
@@ -156,19 +159,19 @@
       =/  m  (strand ,~)
       ^-  form:m
       ;<  ~  bind:m
-        %+  raw-poke
-          [entity.old-group %group-push-hook]
-        [%group-action !>([%remove-members old-group (silt ~[our.bowl])])]
+        %+  poke-our  %group-push-hook
+        :-  %group-update-0
+        !>([%remove-members old-group (silt ~[our.bowl])])
       ;<  ~  bind:m
-        %+  raw-poke-our
+        %+  poke-our
           %group-store
         [%group-action !>([%remove-group old-group ~])]
       ::
       ;<  ~  bind:m
-        (raw-poke-our %metadata-pull-hook (rem-pull-hook old-group))
+        (poke-our %metadata-pull-hook (rem-pull-hook old-group))
       ;<  ~  bind:m
-        (raw-poke-our %contact-pull-hook (rem-pull-hook old-group))  ::  TODO: needed?
-      (raw-poke-our %group-pull-hook (rem-pull-hook old-group))
+        (poke-our %contact-pull-hook (rem-pull-hook old-group))  ::  TODO: needed?
+      (poke-our %group-pull-hook (rem-pull-hook old-group))
     --
   --
 ::
