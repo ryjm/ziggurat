@@ -88,7 +88,13 @@
             ?=(^ q.u.blk)
         ==
     ~|  "their data hash must be valid!"
-    ?>  ?&  =(?~(blk (sham ~) (sham q.u.blk)) data-hash.hed)
+    =/  blk-hash
+      ::  temporary: only hashing tx data, as un-merklized town is huge time sink
+      ?~  blk  (sham ~)
+      %-  sham
+      %+  turn  q.u.blk
+      |=([=chunk] (mug txs.chunk))
+    ?>  ?&  =(blk-hash data-hash.hed)
             ?|(?=(~ blk) !=(data-hash.hed (sham ~)))
         ==
     ::  TODO: replace with pubkeys in a helix
