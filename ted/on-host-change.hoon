@@ -109,10 +109,10 @@
       =.  entity.resource.q.update  entity.new-group
       ::
       ;<  ~  bind:m
-        (poke-our %graph-store %graph-update-3 !>(update))
+        (update-hook %graph %add resource.q.update)
       ::
       ;<  ~  bind:m
-        (update-hook %graph %add resource.q.update)
+        (poke-our %graph-store %graph-update-3 !>(update))
       loop(as t.as)
     ::
     ++  remove-graphs
@@ -125,15 +125,15 @@
       ?.  ?=(%graph app-name.mdr)
         loop(as t.as)
       ::
-      ;<  ~  bind:m
-        (poke-our %graph-pull-hook (rem-pull-hook resource.mdr))
-      ::
       =/  =update:gra
         :+  now.bowl
           %remove-graph
         resource.mdr
       ;<  ~  bind:m
         (poke-our %graph-store %graph-update-3 !>(update))
+      ::
+      ;<  ~  bind:m
+        (poke-our %graph-pull-hook (rem-pull-hook resource.mdr))
       loop(as t.as)
     ::
     ++  add-group
@@ -147,21 +147,25 @@
         %+  poke-our
           %group-store
         :-  %group-action
-        !>([%add-group new-group policy.u.g %.n])  ::  TODO: copy policy
+        !>([%add-group new-group policy.u.g %.n])
       ::
       ;<  ~  bind:m
         (update-hook %metadata %add new-group)
       ;<  ~  bind:m
-        (update-hook %contact %add new-group)  ::  TODO: needed?
-      (update-hook %group %add new-group)
+        (update-hook %contact %add new-group)
+      ;<  ~  bind:m
+        (update-hook %group %add new-group)
+      (pure:m ~)
     ::
     ++  remove-group
       =/  m  (strand ,~)
       ^-  form:m
-      ;<  ~  bind:m
-        %+  poke-our  %group-push-hook
-        :-  %group-update-0
-        !>([%remove-members old-group (silt ~[our.bowl])])
+      ::  TODO: remove?
+      :: ;<  ~  bind:m
+      ::   %+  poke-our  %group-push-hook
+      ::   :: %+  poke  [entity.old-group %group-push-hook]
+      ::   :-  %group-update-0
+      ::   !>([%remove-members old-group (silt ~[our.bowl])])
       ;<  ~  bind:m
         %+  poke-our
           %group-store
@@ -170,8 +174,10 @@
       ;<  ~  bind:m
         (poke-our %metadata-pull-hook (rem-pull-hook old-group))
       ;<  ~  bind:m
-        (poke-our %contact-pull-hook (rem-pull-hook old-group))  ::  TODO: needed?
-      (poke-our %group-pull-hook (rem-pull-hook old-group))
+        (poke-our %contact-pull-hook (rem-pull-hook old-group))
+      ;<  ~  bind:m
+        (poke-our %group-pull-hook (rem-pull-hook old-group))
+      (pure:m ~)
     --
   --
 ::
@@ -193,12 +199,16 @@
 ~&  >  "adding new graphs..."
 ;<  ~  bind:m
   (~(add-graphs update-host old-group new-group bowl) as)
-~&  >  "adding equivalent group..."
-;<  ~  bind:m
-  ~(add-group update-host old-group new-group bowl)
 ~&  >  "removing existing graphs..."
 ;<  ~  bind:m
   (~(remove-graphs update-host old-group new-group bowl) as)
+~&  >  "adding equivalent group..."
+;<  ~  bind:m
+  ~(add-group update-host old-group new-group bowl)
+::  Get error scroll removing group pull hooks if no time
+::  has passed since removal of graphs in those groups.
+::  TODO: do this less hackily.
+;<  ~  bind:m  (sleep:strandio ~s5)
 ~&  >  "removing existing group..."
 ;<  ~  bind:m
   ~(remove-group update-host old-group new-group bowl)
