@@ -150,6 +150,12 @@
         !>([%add-group new-group policy.u.g %.n])
       ::
       ;<  ~  bind:m
+        %+  poke-our
+          %group-store
+        :-  %group-action
+        !>([%add-members new-group members.u.g])
+      ::
+      ;<  ~  bind:m
         (update-hook %metadata %add new-group)
       ;<  ~  bind:m
         (update-hook %contact %add new-group)
@@ -196,19 +202,19 @@
 ;<  =associations:met  bind:m  (scry-group-metadata old-group)
 =/  as=(list (pair md-resource:met association:met))
   ~(tap by associations)
+~&  >  "adding equivalent group..."
+;<  ~  bind:m
+  ~(add-group update-host old-group new-group bowl)
+;<  ~  bind:m  (sleep:strandio ~s5)  ::  TODO: better synchronization
 ~&  >  "adding new graphs..."
 ;<  ~  bind:m
   (~(add-graphs update-host old-group new-group bowl) as)
 ~&  >  "removing existing graphs..."
 ;<  ~  bind:m
   (~(remove-graphs update-host old-group new-group bowl) as)
-~&  >  "adding equivalent group..."
-;<  ~  bind:m
-  ~(add-group update-host old-group new-group bowl)
 ::  Get error scroll removing group pull hooks if no time
 ::  has passed since removal of graphs in those groups.
-::  TODO: do this less hackily.
-;<  ~  bind:m  (sleep:strandio ~s5)
+;<  ~  bind:m  (sleep:strandio ~s5)  ::  TODO: better synchronization
 ~&  >  "removing existing group..."
 ;<  ~  bind:m
   ~(remove-group update-host old-group new-group bowl)
