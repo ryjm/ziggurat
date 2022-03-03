@@ -196,21 +196,21 @@
     ::  call read arm of contract
     =/  id  (slav %ux i.t.t.path)
     =/  arg=^path  [i.t.t.t.path ~]
-    ?~  res=(~(get by p.town.state) id)
-      [~ ~]
-    ?.  ?=(%| -.germ.u.res)
-      [~ ~]
-    =/  cont  (hole:smart contract:smart p.germ.u.res)
-    =/  owns
-      %-  ~(gas by *(map:smart id:smart grain:smart))
-      %+  murn  ~(tap in owns.p.germ.u.res)
-      |=  find=id:smart
-      ?~  found=(~(get by p.town.state) find)  ~
-      ?.  ?=(%& -.germ.u.found)                ~
-      ?.  =(lord.u.found id)                   ~
-      `[find u.res]
-    =/  cart  [~ id blocknum.u.hall.state id.u.hall.state owns]
-    ``noun+!>(`noun`(~(read cont cart) arg))
+    ?~  res=(~(get by p.town.state) id)  [~ ~]
+    ?.  ?=(%| -.germ.u.res)              [~ ~]
+    ?~  cont.p.germ.u.res                [~ ~]
+    ::  TODO make way for reads to get some rice input
+    ::  =/  owns
+    ::    %-  ~(gas by *(map:smart id:smart grain:smart))
+    ::    %+  murn  ~(tap in owns.p.germ.u.res)
+    ::    |=  find=id:smart
+    ::    ?~  found=(~(get by p.town.state) find)  ~
+    ::    ?.  ?=(%& -.germ.u.found)                ~
+    ::    ?.  =(lord.u.found id)                   ~
+    ::    `[find u.res]
+    =/  cont  (hole contract.smart u.cont.p.germ.u.res)
+    =/  cart  [~ id blocknum.u.hall.state id.u.hall.state ~]
+    ``noun+!>((~(read cont cart) path))
   ==
 ::
 ++  on-leave  on-leave:def
