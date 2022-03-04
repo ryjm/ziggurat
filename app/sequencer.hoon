@@ -105,6 +105,7 @@
     ?-    -.act
         %submit
       ?>  =(src.bowl our.bowl)
+      ?<  ?=(~ hall.state)
       ::  find current block producer from ziggurat
       =/  producer  .^(@p %gx /(scot %p our.bowl)/ziggurat/(scot %da now.bowl)/producer/noun)
       ::  create and send our chunk to them
@@ -112,11 +113,22 @@
         %+  ~(mill-all mill (need me.state) id:(need hall.state) 1 now)
           town.state
         ~(tap in basket.state)
-      :_  state(basket ~, town +.our-chunk)
-      :_  ~
-      :*  %pass  /chunk-gossip
-          %agent  [producer %ziggurat]  %poke
-          %zig-action  !>([%receive-chunk our-chunk])
+      ::  currently clearing mempool with every chunk, but
+      ::  this is not necessary: we forward our basket
+      :_  %=  state
+              basket           ~
+              town             +.our-chunk
+              blocknum.u.hall  +(blocknum.u.hall.state)
+              chair.u.hall     +(chair.u.hall.state)
+          ==
+      :~  :*  %pass  /chunk-gossip
+              %agent  [producer %ziggurat]  %poke
+              %zig-action  !>([%receive-chunk our-chunk])
+          ==
+          :*  %pass  /basket-gossip
+              %agent  [our.bowl %sequencer]  %poke
+              %zig-action  !>([%forward ~])
+          ==
       ==
     ::
         %init
@@ -133,7 +145,12 @@
       =/  existing-town
         .^  (unit chain-hall:ziggurat)
             %gx
-            /(scot %p our.bowl)/ziggurat/(scot %da now.bowl)/get-hall//noun
+            (scot %p our.bowl)
+            %ziggurat
+            (scot %da now.bowl)
+            %get-hall
+            (scot %ud town-id.act)
+            noun
         ==
       ?~  existing-town
         ::  new hall
@@ -174,8 +191,16 @@
           %poke  %zig-action  !>([%remove-from-hall id.u.hall.state])
       ==
     ::
-        %receive-state
-      ?>  =(src.bowl our.bowl)  ::  we'll get these from our ziggurat agent
+        %hall-update  ::  we'll get these from our ziggurat agent
+      ?>  =(src.bowl our.bowl)
+      ?~  hall.state
+        ~&  >>  "ignoring poke, we're not active in a council"
+        [~ state]
+      ::  TODO maybe don't accept these uncritically?
+      `state(council.u.hall council.act)
+    ::
+        %receive-state  ::  we'll get these from our ziggurat agent
+      ?>  =(src.bowl our.bowl)  
       ?~  hall.state
         ~&  >>  "ignoring poke, we're not active in a council"
         [~ state]
@@ -220,6 +245,9 @@
   ?~  hall.state    ~
   ?.  =(%x -.path)  ~
   ?+    +.path  (on-peek:def path)
+      [%active ~]
+    ``noun+!>(`?`!=(~ hall.state))
+  ::
       [%rice @ ~]
     =/  id  (slav %ux i.t.t.path)
     ?~  res=(~(get by p.town.state) id)

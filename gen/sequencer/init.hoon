@@ -56,7 +56,9 @@
   ~[[0xbeef 0] [0xdead 0] [0xcafe 0]]
 :-  %zig-chain-action
 ^-  chain-action
-:^    %init
+:*  %init
     town-id
-  [0xbeef 0 0x1.beef]
-[fake-granary fake-populace]
+    [0xbeef 0 0x1.beef]
+    `[fake-granary fake-populace]
+    %.y
+==

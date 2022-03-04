@@ -23,6 +23,7 @@
   $%  [%epochs-catchup =epochs]
       [%blocks-catchup epoch-num=@ud =slots]
       [%new-block epoch-num=@ud header=block-header =block]
+      [%hall-update id=@ud =chain-hall]
       :: todo: add data availability data
       ::
       [%saw-block epoch-num=@ud header=block-header]

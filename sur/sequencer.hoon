@@ -1,5 +1,7 @@
 /+  smart=zig-sys-smart
 |%
+::  bug: multiple transactions in the same basket must
+::  be ordered by nonce if submitted by same user!!
 +$  basket   (set egg:smart)  ::  mempool
 ::
 +$  hall  ::  runs a town
@@ -20,6 +22,7 @@
   $%  [%submit ~]
       [%leave-hall ~]
       [%receive-state =grain:smart]
+      [%hall-update council=(set ship)]
       $:  %init
           town-id=@ud
           me=account:smart

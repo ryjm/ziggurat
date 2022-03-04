@@ -11,6 +11,7 @@
       producer=(unit ship)
       =chunks
       known-halls=(map @ud =chain-hall)
+      updated-halls=(set @ud)
   ==
 ++  new-epoch-timers
   |=  [=epoch our=ship]
@@ -40,7 +41,7 @@
 +*  this  .
     def   ~(. (default-agent this %|) bowl)
 ::
-++  on-init  `this(state [%0 %none ~ ~ ~ ~])
+++  on-init  `this(state [%0 %none ~ ~ ~ ~ ~])
 ::
 ++  on-save  !>(state)
 ++  on-load
@@ -153,7 +154,13 @@
         (start-epoch-catchup i.validators num.cur)^~
       ::  either on-time to start epoch, or solo validator -- go ahead
       ~&  num.new-epoch^(sham epochs)
-      :_  state(epochs (put:poc epochs num.new-epoch new-epoch), producer `-.order.new-epoch)
+      :_  %=  state
+              epochs        (put:poc epochs num.new-epoch new-epoch)
+              producer      `-.order.new-epoch
+              updated-halls  ~
+          ==
+      %+  weld
+        hall-updates
       %+  weld
         (watch-updates (silt (murn order.new-epoch filter-by-wex)))
       (new-epoch-timers new-epoch our.bowl)
@@ -181,18 +188,36 @@
         %new-hall
       ?>  =(src.bowl our.bowl)
       ?:  (~(has by known-halls.state) id.action)  !!
-      `state(known-halls (~(put by known-halls) id.action chain-hall.action))
+      :-  ~
+      %=  state
+          updated-halls  (~(put in updated-halls) id.action)
+          known-halls    %+  ~(put by known-halls)
+                           id.action
+                         chain-hall.action
+      ==
     ::
         %add-to-hall
       ?>  =(src.bowl our.bowl)
       =/  hall=chain-hall  (~(got by known-halls.state) id.action)
       ?.  is-open.hall  !!
-      `state(known-halls (~(put by known-halls) id.action hall(council (~(put in council.hall) src.bowl))))
+      :-  ~
+      %=  state
+          updated-halls  (~(put in updated-halls) id.action)
+          known-halls    %+  ~(put by known-halls)
+                           id.action
+                         hall(council (~(put in council.hall) src.bowl))
+      ==
     ::
         %remove-from-hall
       ?>  =(src.bowl our.bowl)
       =/  hall=chain-hall  (~(got by known-halls.state) id.action)
-      `state(known-halls (~(put by known-halls) id.action hall(council (~(del in council.hall) src.bowl))))
+      :-  ~
+      %=  state
+          updated-halls  (~(put in updated-halls) id.action)
+          known-halls    %+  ~(put by known-halls)
+                           id.action
+                         hall(council (~(del in council.hall) src.bowl))
+      ==
     ==
   ::
   ++  filter-by-wex
@@ -212,6 +237,17 @@
     ^-  card
     =/  =^wire  /validator/updates/(scot %p s)
     [%pass wire %agent [s %ziggurat] %watch /validator/updates]
+  ::
+  ::  +hall-updates: give subscribers updated halls we've been poked with
+  ::
+  ++  hall-updates
+    ^-  (list card)
+    %+  turn  ~(tap in updated-halls.state)
+    |=  n=@ud
+    ^-  card
+    =/  new-hall=chain-hall  (~(got by known-halls.state) n)
+    =-  [%give %fact - %zig-update !>([%hall-update n new-hall])]
+    ~[/validator/updates /fisherman/updates]
   ::
   ++  cleanup-validator
     ^-  (list card)
@@ -293,7 +329,8 @@
       ?~(p=(bind (pry:sot slots.cur) head) 0 +(u.p))
     =/  prev-hash
       (got-hed-hash next-slot-num epochs cur)
-    ?:  ?=(%new-block -.update)
+    ?+    -.update  !!
+        %new-block
       ~|  "new blocks cannot be applied to past epochs"
       ?<  (lth epoch-num.update num.cur)
       ?:  (gth epoch-num.update num.cur)
@@ -314,11 +351,16 @@
         %-  ~(their-block epo cur prev-hash [our now src]:bowl)
         [header `block]:update
       [cards state(epochs (put:poc epochs num.cur cur), producer next-producer)]
-    ?.  ?=(%saw-block -.update)  !!
-    :_  state
-    %+  ~(see-block epo cur prev-hash [our now src]:bowl)
-      epoch-num.update
-    header.update
+    ::
+        %saw-block
+      :_  state
+      %+  ~(see-block epo cur prev-hash [our now src]:bowl)
+        epoch-num.update
+      header.update
+    ::
+        %hall-update
+      `state(known-halls (~(put by known-halls.state) id.update chain-hall.update))
+    ==
   ::
   ++  epoch-catchup
     |=  =update
@@ -437,9 +479,9 @@
     =/  cur=epoch  +:(need (pry:poc epochs))
     ``noun+!>(`@ud`?~(p=(bind (pry:sot slots.cur) head) 0 +(u.p)))
   ::
-      [%get-hall @ ~]   
-    =-  ``noun+!>(`(unit chain-hall)`-)
-    (~(get by known-halls.state) (slav %ud i.t.t.path))
+      [%get-hall @ ~]
+    =/  res  (~(get by known-halls.state) (slav %ud i.t.t.path))
+    ``noun+!>(`(unit chain-hall)`res)
   ==
 ::
 ++  on-leave  on-leave:def
