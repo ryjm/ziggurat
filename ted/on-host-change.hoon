@@ -74,22 +74,32 @@
     |_  [old-group=resource:res new-group=resource:res =bowl:spider]
     ::
     ++  update-hook
-      |=  [app-hook-pfix=@tas action=?(%add %remove) rid=resource:res]
-      =/  action  %add
-      =/  hook-direction=@tas
+      |=  [app-hook-pfix=@tas rid=resource:res]
+      =/  add-hook-direction=@tas
         ?:(=(our.bowl entity.new-group) %push-hook %pull-hook)
-      =/  app-hook=@tas
-        (slav %tas (rap 3 app-hook-pfix '-' hook-direction ~))
+      =/  app-add-hook=@tas
+        (slav %tas (rap 3 app-hook-pfix '-' add-hook-direction ~))
+      =/  hook-action=@tas
+        (slav %tas (rap 3 add-hook-direction '-action' ~))
       |^
+      ?:  =(our.bowl entity.old-group)
+        =/  m  (strand ,~)
+        ;<  ~  bind:m
+          (remove-hook %push-hook-action [entity.old-group name.rid])
+        add-pull-hook
       ?:  =(our.bowl entity.new-group)
-        update-hook-push
-      update-hook-pull
+        add-hook
+      add-pull-hook
       ::
-      ++  update-hook-pull
-        (poke-our app-hook %pull-hook-action !>([action entity.new-group rid]))
+      ++  add-pull-hook
+        (poke-our app-add-hook %pull-hook-action !>([%add entity.new-group rid]))
       ::
-      ++  update-hook-push
-        (poke-our app-hook %push-hook-action !>([action rid]))
+      ++  add-hook
+        (poke-our app-add-hook hook-action !>([%add rid]))
+      ::
+      ++  remove-hook
+        |=  [rem-hook-action=@tas rem-rid=resource:res]
+        (poke-our (slav %tas (rap 3 app-hook-pfix '-' %push-hook ~)) rem-hook-action !>([%remove rem-rid]))
       --
     ::
     ++  add-graphs
@@ -109,7 +119,7 @@
       =.  entity.resource.q.update  entity.new-group
       ::
       ;<  ~  bind:m
-        (update-hook %graph %add resource.q.update)
+        (update-hook %graph resource.q.update)
       ::
       ;<  ~  bind:m
         (poke-our %graph-store %graph-update-3 !>(update))
@@ -156,22 +166,16 @@
         !>([%add-members new-group members.u.g])
       ::
       ;<  ~  bind:m
-        (update-hook %metadata %add new-group)
+        (update-hook %metadata new-group)
       ;<  ~  bind:m
-        (update-hook %contact %add new-group)
+        (update-hook %contact new-group)
       ;<  ~  bind:m
-        (update-hook %group %add new-group)
+        (update-hook %group new-group)
       (pure:m ~)
     ::
     ++  remove-group
       =/  m  (strand ,~)
       ^-  form:m
-      ::  TODO: remove?
-      :: ;<  ~  bind:m
-      ::   %+  poke-our  %group-push-hook
-      ::   :: %+  poke  [entity.old-group %group-push-hook]
-      ::   :-  %group-update-0
-      ::   !>([%remove-members old-group (silt ~[our.bowl])])
       ;<  ~  bind:m
         %+  poke-our
           %group-store
