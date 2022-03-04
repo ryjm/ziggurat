@@ -8,6 +8,7 @@
       council=(set ship)
       order=(list ship)
       chair=@ud  :: position of leader in order
+      is-open=?
   ==
 ::
 +$  basket-action
@@ -17,8 +18,14 @@
 ::
 +$  chain-action
   $%  [%submit ~]
-      [%init town-id=@ud me=account:smart starting-state=town:smart]
-      [%leave-town ~]
+      [%leave-hall ~]
       [%receive-state =grain:smart]
+      $:  %init
+          town-id=@ud
+          me=account:smart
+          ::  will probably remove starting-state for persistent testnet
+          starting-state=(unit town:smart)
+          is-open=?
+      ==
   ==
 --

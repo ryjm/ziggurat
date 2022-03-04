@@ -10,6 +10,7 @@
       =epochs
       producer=(unit ship)
       =chunks
+      known-halls=(map @ud =chain-hall)
   ==
 ++  new-epoch-timers
   |=  [=epoch our=ship]
@@ -39,7 +40,7 @@
 +*  this  .
     def   ~(. (default-agent this %|) bowl)
 ::
-++  on-init  `this(state [%0 %none ~ ~ ~])
+++  on-init  `this(state [%0 %none ~ ~ ~ ~])
 ::
 ++  on-save  !>(state)
 ++  on-load
@@ -176,6 +177,22 @@
           %agent  [u.to %ziggurat]  %poke
           %zig-action  !>([%receive-chunk chunk.action])
       ==
+    ::
+        %new-hall
+      ?>  =(src.bowl our.bowl)
+      ?:  (~(has by known-halls.state) id.action)  !!
+      `state(known-halls (~(put by known-halls) id.action chain-hall.action))
+    ::
+        %add-to-hall
+      ?>  =(src.bowl our.bowl)
+      =/  hall=chain-hall  (~(got by known-halls.state) id.action)
+      ?.  is-open.hall  !!
+      `state(known-halls (~(put by known-halls) id.action hall(council (~(put in council.hall) src.bowl))))
+    ::
+        %remove-from-hall
+      ?>  =(src.bowl our.bowl)
+      =/  hall=chain-hall  (~(got by known-halls.state) id.action)
+      `state(known-halls (~(put by known-halls) id.action hall(council (~(del in council.hall) src.bowl))))
     ==
   ::
   ++  filter-by-wex
@@ -416,15 +433,15 @@
     =/  cur=epoch  +:(need (pry:poc epochs)) 
     ``noun+!>(`@ud`num.cur)
   ::
-      [%blocknum ~]
+      [%slot ~]
     =/  cur=epoch  +:(need (pry:poc epochs))
     ``noun+!>(`@ud`?~(p=(bind (pry:sot slots.cur) head) 0 +(u.p)))
   ::
-      [%timer ~]
-    ::  TODO, but give deadline of next block
-    !!
+      [%get-hall @ ~]   
+    =-  ``noun+!>(`(unit chain-hall)`-)
+    (~(get by known-halls.state) (slav %ud i.t.t.path))
   ==
 ::
 ++  on-leave  on-leave:def
 ++  on-fail   on-fail:def
---
+-- 

@@ -124,25 +124,61 @@
       ::  assert that we're active in main chain
       ?.  .^(? %gx /(scot %p our.bowl)/ziggurat/(scot %da now.bowl)/active/noun)
         ~|("can't run a town, ziggurat not active" !!)
+      ::  assert we're not already running a town
       ?^  hall.state
         ~|("can't init a town, already active in one" !!)
-      :-  ~
-      %=  state
-          hall  `[town-id.act 0 (silt ~[our.bowl]) ~[our.bowl] 0]
+      ::  check main chain for existence of that town,
+      ::  join if we can, fail if we can't, make new town
+      ::  if it doesn't exist
+      =/  existing-town
+        .^  (unit chain-hall:ziggurat)
+            %gx
+            /(scot %p our.bowl)/ziggurat/(scot %da now.bowl)/get-hall//noun
+        ==
+      ?~  existing-town
+        ::  new hall
+        =/  council  (silt ~[our.bowl])
+        :-  :_  ~
+            :*  %pass  /hall-modify
+                %agent  [our.bowl %ziggurat]
+                %poke  %zig-action  !>([%new-hall town-id.act council is-open.act])
+            ==
+        %=  state
+            hall  `[town-id.act 0 council ~[our.bowl] 0 is-open.act]
+            me    `me.act
+            town  ?~(starting-state.act [~ ~] u.starting-state.act)
+        ==
+      ?:  is-open.u.existing-town
+        ::  it is open, join it
+        :-  :_  ~
+            :*  %pass  /hall-modify
+                %agent  [our.bowl %ziggurat]
+                %poke  %zig-action  !>([%add-to-hall town-id.act])
+            ==
+        %=  state
+          ::  will get real town state and order at beginning of next epoch
+          hall  `[town-id.act 0 (~(put in council.u.existing-town) our.bowl) ~ 0 is-open.u.existing-town]
           me    `me.act
-          town  starting-state.act
+          town  [~ ~]
+        ==
+      ::  it is closed, fail
+      ~|("that town is closed to you!" !!)
+    ::
+        %leave-hall
+      ?>  =(src.bowl our.bowl)
+      ?<  ?=(~ hall.state)
+      :_  state(hall ~, town [~ ~], basket ~)
+      :_  ~
+      :*  %pass  /hall-modify
+          %agent  [our.bowl %ziggurat]
+          %poke  %zig-action  !>([%remove-from-hall id.u.hall.state])
       ==
     ::
-        %leave-town
-      ?>  =(src.bowl our.bowl)
-      `state(hall ~, town [~ ~], basket ~)
-    ::
         %receive-state
+      ?>  =(src.bowl our.bowl)  ::  we'll get these from our ziggurat agent
       ?~  hall.state
         ~&  >>  "ignoring poke, we're not active in a council"
         [~ state]
-      ::  TODO only let main chain ships give this to you
-      ::  add grain to our town
       `state(p.town (~(put in p.town) id.grain.act grain.act))
     ==
   --

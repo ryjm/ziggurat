@@ -14,9 +14,10 @@
 +$  slots  ((mop @ud slot) gth)
 ++  sot    ((on @ud slot) gth)
 ::
-+$  signature  [p=@ux q=ship r=life]
-+$  chunks     (list chunk)
-+$  chunk      [txs=(list [@ux egg:smart]) =town:smart]
++$  signature   [p=@ux q=ship r=life]
++$  chunks      (list chunk)
++$  chunk       [txs=(list [@ux egg:smart]) =town:smart]
++$  chain-hall  [council=(set ship) is-open=?]
 ::
 +$  update
   $%  [%epochs-catchup =epochs]
@@ -32,5 +33,8 @@
       [%stop ~]
       [%new-epoch ~]
       [%receive-chunk =chunk]
+      [%new-hall id=@ud =chain-hall]
+      [%add-to-hall id=@ud]
+      [%remove-from-hall id=@ud]
   ==
 --
