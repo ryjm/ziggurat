@@ -1,10 +1,12 @@
 /-  group, spider, grp=group-store, gra=graph-store, met=metadata-store
 /+  push-hook, strandio, res=resource::, dao=zig-contracts-dao
 ::
-=*  strand  strand:spider
-=*  poke  poke:strandio
-=*  poke-our  poke-our:strandio
-=*  scry  scry:strandio
+=*  strand     strand:spider
+=*  leave      leave:strandio
+=*  poke-our   poke-our:strandio
+=*  scry       scry:strandio
+=*  take-fact  take-fact:strandio
+=*  watch      watch:strandio
 =>
   |%
   ++  scry-groups
@@ -129,11 +131,22 @@
       |=  [as=(list (pair md-resource:met association:met))]
       =/  m  (strand ,~)
       ^-  form:m
+      |-
       =*  loop  $
       ?~  as  (pure:m ~)
       =*  mdr  p.i.as
       ?.  ?=(%graph app-name.mdr)
         loop(as t.as)
+      =/  =wire
+        /on-host-change/remove-graphs/(scot %da now.bowl)
+      =/  =path
+        ;:  weld
+          /resource/ver
+          (en-path:res resource.mdr)
+          /(scot %ud 3)
+        ==
+      ;<  ~  bind:m
+        (watch wire [entity.resource.mdr %graph-push-hook] path)
       ::
       =/  =update:gra
         :+  now.bowl
@@ -144,6 +157,21 @@
       ::
       ;<  ~  bind:m
         (poke-our %graph-pull-hook (rem-pull-hook resource.mdr))
+      ::
+      ;<  =cage  bind:m  (take-fact wire)
+      ;<  ~  bind:m  (leave wire [entity.old-group %graph-push-hook])
+      ?.  ?=(%graph-update-3 -.cage)
+        ~&  >>>  "on-host-change remove-graphs: expected %graph-update-3; instead got:"
+        ~&  >>>  cage
+        !!  :: TODO: what should happen here?
+      =/  rem-update=update:gra  !<(update:gra +.cage)
+      ?.  ?&
+            ?=(%add-graph -.q.rem-update)
+            =(resource.mdr resource.q.rem-update)
+          ==
+        ~&  >>>  "on-host-change remove-graphs: expected %add-graph and same resource; instead got:"
+        ~&  >>>  rem-update
+        !!  :: TODO: what should happen here?
       loop(as t.as)
     ::
     ++  add-group
@@ -209,16 +237,12 @@
 ~&  >  "adding equivalent group..."
 ;<  ~  bind:m
   ~(add-group update-host old-group new-group bowl)
-;<  ~  bind:m  (sleep:strandio ~s5)  ::  TODO: better synchronization
 ~&  >  "adding new graphs..."
 ;<  ~  bind:m
   (~(add-graphs update-host old-group new-group bowl) as)
 ~&  >  "removing existing graphs..."
 ;<  ~  bind:m
   (~(remove-graphs update-host old-group new-group bowl) as)
-::  Get error scroll removing group pull hooks if no time
-::  has passed since removal of graphs in those groups.
-;<  ~  bind:m  (sleep:strandio ~s5)  ::  TODO: better synchronization
 ~&  >  "removing existing group..."
 ;<  ~  bind:m
   ~(remove-group update-host old-group new-group bowl)
