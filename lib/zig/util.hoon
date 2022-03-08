@@ -9,6 +9,14 @@
   =-  [%give %fact - %zig-update !>(update)]
   ~[/validator/updates /fisherman/updates]
 ::
+++  notify-sequencer
+  |=  our=ship
+  ^-  card
+  :*  %pass  /submit-alert
+      %agent  [our %sequencer]  %poke
+      %zig-chain-action  !>([%submit ~])
+  ==
+::
 ::  +wait: create %behn timer cards for a given epoch-slot
 ::
 ++  wait

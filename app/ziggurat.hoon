@@ -98,6 +98,7 @@
       (poke-zig-action !<(action vase))
     [cards this]
       %noun
+    ::  TODO this poke should be gated by something, right?
     ?>  (validate-history our.bowl epochs)
     `this
   ==
@@ -160,7 +161,7 @@
               updated-halls  ~
           ==
       %+  weld
-        hall-updates
+        (notify-sequencer our.bowl)^hall-updates
       %+  weld
         (watch-updates (silt (murn order.new-epoch filter-by-wex)))
       (new-epoch-timers new-epoch our.bowl)
@@ -337,9 +338,10 @@
         ::  the new block is from an epoch beyond what we have as current,
         ::  determine who and whether to try and catch up
         =/  validators=(list ship)
-          ::  bugged: in a 2-ship testnet, this results in empty validator set -> crash
+          ?:  (gth 2 (lent order.cur))
+            ::  in a 2-ship testnet, this results in empty validator set -> crash
+            ~(tap in (~(del in (~(del in (silt order.cur)) our.bowl)) src.bowl))
           ~(tap in (~(del in (silt order.cur)) our.bowl))
-          ::  ~(tap in (~(del in (~(del in (silt order.cur)) our.bowl)) src.bowl))
         ?>  ?=(^ validators)
         :_  state
         (start-epoch-catchup i.validators num.cur)^~
@@ -467,12 +469,10 @@
     ``noun+!>(`?`=(%validator mode.state))
   ::
       [%producer ~]
-    ?~  cur=producer.state
-      [~ ~]
-    ``noun+!>(`@p`u.cur)
+    ``noun+!>(`@p`(need producer.state))
   ::
       [%epoch ~]
-    =/  cur=epoch  +:(need (pry:poc epochs)) 
+    =/  cur=epoch  +:(need (pry:poc epochs))
     ``noun+!>(`@ud`num.cur)
   ::
       [%slot ~]
@@ -486,4 +486,4 @@
 ::
 ++  on-leave  on-leave:def
 ++  on-fail   on-fail:def
--- 
+--

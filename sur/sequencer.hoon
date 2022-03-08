@@ -15,7 +15,7 @@
 ::
 +$  basket-action
   $%  [%forward eggs=(set egg:smart)]
-      [%receive eggs=(set egg:smart)]
+      [%receive eggs=(set egg:smart) blocknum=@ud chair=@ud]
   ==
 ::
 +$  chain-action

@@ -11,7 +11,7 @@
     (gth rate.p.a rate.p.b)
   =|  [processed=(list [@ux egg]) reward=@ud]
   |-
-  ::  'chunk' def 
+  ::  'chunk' def
   ^-  [(list [@ux egg]) ^town]
   ?~  pending
     [processed town(p (~(pay tax p.town) reward))]
@@ -61,7 +61,7 @@
   ::  +charge: extract gas fee from caller's zigs balance
   ++  charge
     |=  [payee=account fee=@ud]
-    ^-  ^granary 
+    ^-  ^granary
     ?~  zigs=(~(get by granary) zigs.payee)  granary
     ?.  ?=(%& -.germ.u.zigs)                 granary
     =/  acc  (hole account-mold data.p.germ.u.zigs)

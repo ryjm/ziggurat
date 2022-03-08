@@ -40,7 +40,8 @@
       [hed `[(sign:sig our now (sham hed)) data]]
     :_  cur(slots (put:sot slots.cur next-num slot))
     :-  (give-on-updates [%new-block num.cur p.slot (need q.slot)])
-    ?.  =((lent order.cur) +(next-num))  ~
+    ?.  =((lent order.cur) +(next-num))
+      (notify-sequencer our)^~
     ::  start new epoch
     ::
     (poke-new-epoch our +(num.cur))^~
@@ -108,7 +109,8 @@
     :-  ::  send block header to others
         ::
         (give-on-updates [%saw-block num.cur hed])
-    ?.  =((lent order.cur) +(next-num))  ~
+    ?.  =((lent order.cur) +(next-num))
+      (notify-sequencer our)^~
     ::  start new epoch
     ::
     (poke-new-epoch our +(num.cur))^~
@@ -121,12 +123,10 @@
     ^-  (list card)
     ?:  (gth epoch-num num.cur)
       (start-epoch-catchup src epoch-num)^~
-    ?:  (lth epoch-num num.cur)
-      ~
     =/  slot=(unit slot)  (get:sot slots.cur num.hed)
-    ?~  slot  ~
-    ?:  =(p.u.slot hed)
-      ~
+    ?:  (lth epoch-num num.cur)  ~
+    ?~  slot                     ~
+    ?:  =(p.u.slot hed)          ~
     (start-epoch-catchup src num.cur)^~
   --
 --

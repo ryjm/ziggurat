@@ -65,12 +65,13 @@
     ?~  hall.state
       ~&  >>  "ignoring tx, we're not active in a council"
       [~ state]
+    =*  hall  u.hall.state
     ?-    -.act
         %forward
       ::  getting an egg from user / eggs from fellow sequencer
       ::  add to our basket
       ~&  >  "received eggs: {<eggs.act>}"
-      =/  current-producer  (snag chair.u.hall.state order.u.hall.state)
+      =/  current-producer  (snag chair.hall order.hall)
       ?:  =(current-producer our.bowl)
         ~&  >>  "adding eggs to basket"
         `state(basket (~(uni in basket) eggs.act))
@@ -78,25 +79,22 @@
       :_  state(basket ~)
       :_  ~
       :*  %pass  /basket-gossip
-          %agent  [current-producer %sequencer]  %poke
-          %zig-basket-action  !>([%receive (~(uni in eggs.act) basket.state)])
+          %agent  [current-producer %sequencer]
+          %poke  %zig-basket-action
+          !>([%receive (~(uni in eggs.act) basket.state) blocknum.hall chair.hall])
       ==
     ::
         %receive
       ::  should only accept from other validators
-      ?>  (~(has in council.u.hall.state) src.bowl)
-      =/  current-producer  (snag chair.u.hall.state order.u.hall.state)
-      ?:  =(current-producer our.bowl)
-        ~&  >  "received gossiped eggs from {<src.bowl>}: {<eggs.act>}"
-        `state(basket (~(uni in basket) eggs.act))
-      ~&  >>  "forwarding eggs"
-      :_  state(basket ~)
-      :_  ~
-      :*  %pass  /basket-gossip
-          %agent  [current-producer %sequencer]  %poke
-          %zig-basket-action  !>([%receive (~(uni in eggs.act) basket.state)])
+      ?>  (~(has in council.hall) src.bowl)
+      ~&  >  "received gossiped eggs from {<src.bowl>}: {<eggs.act>}"
+      :-  ~
+      %=  state
+        basket           (~(uni in basket) eggs.act)
+        blocknum.u.hall  blocknum.act
+        chair.u.hall     chair.act
       ==
-    == 
+    ==
   ::
   ++  poke-chain-action
     |=  act=chain-action
@@ -104,22 +102,35 @@
     ?>  (lte (met 3 src.bowl) 4)
     ?-    -.act
         %submit
+      ~&  >>  "received request to submit chunk from {<src.bowl>}"
       ?>  =(src.bowl our.bowl)
-      ?<  ?=(~ hall.state)
-      ::  find current block producer from ziggurat
       =/  producer  .^(@p %gx /(scot %p our.bowl)/ziggurat/(scot %da now.bowl)/producer/noun)
+      ?:  ?|  ?=(~ hall.state)
+              ?=(~ me.state)
+              !=(our.bowl (snag chair.u.hall.state order.u.hall.state))
+          ==
+        ~&  >>  "ignoring request"
+        `state
+      =*  hall  u.hall.state
+      ~&  >>  "submitting chunk to producer {<producer>}"
       ::  create and send our chunk to them
       =/  our-chunk=chunk:ziggurat
-        %+  ~(mill-all mill (need me.state) id:(need hall.state) 1 now)
+        %+  ~(mill-all mill u.me.state id.hall blocknum.hall now)
           town.state
         ~(tap in basket.state)
+      ::  find who will be next in town to produce chunk
+      =/  next-chair=@ud
+        ?:  (gte +(chair.hall) ~(wyt in council.hall))
+          0
+        +(chair.hall)
+      ~&  >>  "the next sequencer to make a chunk is {<next-chair>}, {<(snag next-chair order.hall)>}"
       ::  currently clearing mempool with every chunk, but
       ::  this is not necessary: we forward our basket
       :_  %=  state
               basket           ~
               town             +.our-chunk
-              blocknum.u.hall  +(blocknum.u.hall.state)
-              chair.u.hall     +(chair.u.hall.state)
+              blocknum.u.hall  +(blocknum.hall)
+              chair.u.hall     next-chair
           ==
       :~  :*  %pass  /chunk-gossip
               %agent  [producer %ziggurat]  %poke
@@ -127,7 +138,7 @@
           ==
           :*  %pass  /basket-gossip
               %agent  [our.bowl %sequencer]  %poke
-              %zig-action  !>([%forward ~])
+              %zig-basket-action  !>([%forward ~])
           ==
       ==
     ::
@@ -139,19 +150,12 @@
       ::  assert we're not already running a town
       ?^  hall.state
         ~|("can't init a town, already active in one" !!)
+      ~&  >  "loach"
       ::  check main chain for existence of that town,
       ::  join if we can, fail if we can't, make new town
       ::  if it doesn't exist
-      =/  existing-town
-        .^  (unit chain-hall:ziggurat)
-            %gx
-            (scot %p our.bowl)
-            %ziggurat
-            (scot %da now.bowl)
-            %get-hall
-            (scot %ud town-id.act)
-            noun
-        ==
+      =/  existing-town  .^((unit chain-hall:ziggurat) %gx /(scot %p our.bowl)/ziggurat/(scot %da now.bowl)/get-hall/(scot %ud town-id.act)/noun)
+      ~&  >  existing-town
       ?~  existing-town
         ::  new hall
         =/  council  (silt ~[our.bowl])
@@ -160,6 +164,7 @@
                 %agent  [our.bowl %ziggurat]
                 %poke  %zig-action  !>([%new-hall town-id.act council is-open.act])
             ==
+        ~&  >  "loach2"
         %=  state
             hall  `[town-id.act 0 council ~[our.bowl] 0 is-open.act]
             me    `me.act
@@ -200,7 +205,7 @@
       `state(council.u.hall council.act)
     ::
         %receive-state  ::  we'll get these from our ziggurat agent
-      ?>  =(src.bowl our.bowl)  
+      ?>  =(src.bowl our.bowl)
       ?~  hall.state
         ~&  >>  "ignoring poke, we're not active in a council"
         [~ state]
@@ -215,23 +220,8 @@
 ::
 ++  on-arvo
   |=  [=wire =sign-arvo:agent:gall]
-  |^  ^-  (quip card _this)
-  ?+    wire  (on-arvo:def wire sign-arvo)
-      [%timers [%slot @ @ ~]]
-    =/  epoch-num  (slav %ud i.t.t.wire)
-    =/  slot-num  (slav %ud i.t.t.t.wire)
-    ?>  ?=([%behn %wake *] sign-arvo)
-    =^  cards  state
-      (slot-timer epoch-num slot-num)
-    [cards this]
-  ==
-  ::
-  ++  slot-timer
-    |=  [epoch-num=@ud slot-num=@ud]
-    ^-  (quip card _state)
-    ::  TODO make this create a block
-    !!
-  --
+  ^-  (quip card _this)
+  (on-arvo:def wire sign-arvo)
 ::
 ++  on-peek
   |=  =path
