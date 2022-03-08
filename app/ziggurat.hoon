@@ -172,53 +172,53 @@
       ::  each think the other is producer, and are sending a chunk
       ::  back and forth to each other.
       ?>  (lte (met 3 src.bowl) 2)
-      ~&  >>  "chunk received"
+      ~&  >  "chunk received"
       ?~  to=producer.state
         ~|("can't accept chunk, no known block producer" !!)
       ?:  =(our.bowl u.to)
-        ~&  >>  "chunk stored"
+        ~&  >  "chunk stored"
         `state(chunks chunk.action^chunks)
-      ~&  >>  "chunk forwarded"
+      ~&  >  "chunk forwarded"
       :_  state
       :_  ~
       :*  %pass  /chunk-gossip/(scot %ud num:`epoch`+:(need (pry:poc epochs)))
           %agent  [u.to %ziggurat]  %poke
           %zig-action  !>([%receive-chunk chunk.action])
       ==
-    ::
-        %new-hall
-      ?>  =(src.bowl our.bowl)
-      ?:  (~(has by known-halls.state) id.action)  !!
-      :-  ~
-      %=  state
-          updated-halls  (~(put in updated-halls) id.action)
-          known-halls    %+  ~(put by known-halls)
-                           id.action
-                         chain-hall.action
-      ==
-    ::
-        %add-to-hall
-      ?>  =(src.bowl our.bowl)
-      =/  hall=chain-hall  (~(got by known-halls.state) id.action)
-      ?.  is-open.hall  !!
-      :-  ~
-      %=  state
-          updated-halls  (~(put in updated-halls) id.action)
-          known-halls    %+  ~(put by known-halls)
-                           id.action
-                         hall(council (~(put in council.hall) src.bowl))
-      ==
-    ::
-        %remove-from-hall
-      ?>  =(src.bowl our.bowl)
-      =/  hall=chain-hall  (~(got by known-halls.state) id.action)
-      :-  ~
-      %=  state
-          updated-halls  (~(put in updated-halls) id.action)
-          known-halls    %+  ~(put by known-halls)
-                           id.action
-                         hall(council (~(del in council.hall) src.bowl))
-      ==
+    ::  ::
+    ::      %new-hall
+    ::    ?>  =(src.bowl our.bowl)
+    ::    ?:  (~(has by known-halls.state) id.action)  !!
+    ::    :-  ~
+    ::    %=  state
+    ::        updated-halls  (~(put in updated-halls) id.action)
+    ::        known-halls    %+  ~(put by known-halls)
+    ::                         id.action
+    ::                       chain-hall.action
+    ::    ==
+    ::  ::
+    ::      %add-to-hall
+    ::    ?>  =(src.bowl our.bowl)
+    ::    =/  hall=chain-hall  (~(got by known-halls.state) id.action)
+    ::    ?.  is-open.hall  !!
+    ::    :-  ~
+    ::    %=  state
+    ::        updated-halls  (~(put in updated-halls) id.action)
+    ::        known-halls    %+  ~(put by known-halls)
+    ::                         id.action
+    ::                       hall(council (~(put in council.hall) src.bowl))
+    ::    ==
+    ::  ::
+    ::      %remove-from-hall
+    ::    ?>  =(src.bowl our.bowl)
+    ::    =/  hall=chain-hall  (~(got by known-halls.state) id.action)
+    ::    :-  ~
+    ::    %=  state
+    ::        updated-halls  (~(put in updated-halls) id.action)
+    ::        known-halls    %+  ~(put by known-halls)
+    ::                         id.action
+    ::                       hall(council (~(del in council.hall) src.bowl))
+    ::    ==
     ==
   ::
   ++  filter-by-wex

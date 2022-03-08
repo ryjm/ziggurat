@@ -1,6 +1,6 @@
 /+  smart=zig-sys-smart
 |%
-++  epoch-interval    ~s10
+++  epoch-interval    ~s40
 ::
 +$  epoch   [num=@ud =start=time order=(list ship) =slots]
 ::
@@ -34,8 +34,8 @@
       [%stop ~]
       [%new-epoch ~]
       [%receive-chunk =chunk]
-      [%new-hall id=@ud =chain-hall]
-      [%add-to-hall id=@ud]
-      [%remove-from-hall id=@ud]
+      ::  [%new-hall id=@ud =chain-hall]
+      ::  [%add-to-hall id=@ud]
+      ::  [%remove-from-hall id=@ud]
   ==
 --

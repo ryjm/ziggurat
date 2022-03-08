@@ -22,7 +22,7 @@
   $%  [%submit ~]
       [%leave-hall ~]
       [%receive-state =grain:smart]
-      [%hall-update council=(set ship)]
+      ::  [%hall-update council=(set ship)]
       $:  %init
           town-id=@ud
           me=account:smart

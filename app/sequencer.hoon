@@ -70,7 +70,7 @@
         %forward
       ::  getting an egg from user / eggs from fellow sequencer
       ::  add to our basket
-      ~&  >  "received eggs: {<eggs.act>}"
+      ~&  >>  "received eggs: {<eggs.act>}"
       =/  current-producer  (snag chair.hall order.hall)
       ?:  =(current-producer our.bowl)
         ~&  >>  "adding eggs to basket"
@@ -87,7 +87,7 @@
         %receive
       ::  should only accept from other validators
       ?>  (~(has in council.hall) src.bowl)
-      ~&  >  "received gossiped eggs from {<src.bowl>}: {<eggs.act>}"
+      ~&  >>  "received gossiped eggs from {<src.bowl>}: {<eggs.act>}"
       :-  ~
       %=  state
         basket           (~(uni in basket) eggs.act)
@@ -150,41 +150,47 @@
       ::  assert we're not already running a town
       ?^  hall.state
         ~|("can't init a town, already active in one" !!)
-      ~&  >  "loach"
       ::  check main chain for existence of that town,
       ::  join if we can, fail if we can't, make new town
       ::  if it doesn't exist
       =/  existing-town  .^((unit chain-hall:ziggurat) %gx /(scot %p our.bowl)/ziggurat/(scot %da now.bowl)/get-hall/(scot %ud town-id.act)/noun)
       ~&  >  existing-town
-      ?~  existing-town
-        ::  new hall
-        =/  council  (silt ~[our.bowl])
-        :-  :_  ~
-            :*  %pass  /hall-modify
-                %agent  [our.bowl %ziggurat]
-                %poke  %zig-action  !>([%new-hall town-id.act council is-open.act])
-            ==
-        ~&  >  "loach2"
-        %=  state
-            hall  `[town-id.act 0 council ~[our.bowl] 0 is-open.act]
-            me    `me.act
-            town  ?~(starting-state.act [~ ~] u.starting-state.act)
-        ==
-      ?:  is-open.u.existing-town
-        ::  it is open, join it
-        :-  :_  ~
-            :*  %pass  /hall-modify
-                %agent  [our.bowl %ziggurat]
-                %poke  %zig-action  !>([%add-to-hall town-id.act])
-            ==
-        %=  state
-          ::  will get real town state and order at beginning of next epoch
-          hall  `[town-id.act 0 (~(put in council.u.existing-town) our.bowl) ~ 0 is-open.u.existing-town]
+      ~&  >>  "sequencer initialized"
+      :-  ~
+      %=  state
+          hall  `[town-id.act 0 (silt ~[our.bowl]) ~[our.bowl] 0 is-open.act]
           me    `me.act
-          town  [~ ~]
-        ==
-      ::  it is closed, fail
-      ~|("that town is closed to you!" !!)
+          town  ?~(starting-state.act [~ ~] u.starting-state.act)
+      ==
+      ::  ?~  existing-town
+      ::    ::  new hall
+      ::    =/  council  (silt ~[our.bowl])
+      ::    :-  :_  ~
+      ::        :*  %pass  /hall-modify
+      ::            %agent  [our.bowl %ziggurat]
+      ::            %poke  %zig-action  !>([%new-hall town-id.act council is-open.act])
+      ::        ==
+      ::    ~&  >>  "sequencer initialized"
+      ::    %=  state
+      ::        hall  `[town-id.act 0 council ~[our.bowl] 0 is-open.act]
+      ::        me    `me.act
+      ::        town  ?~(starting-state.act [~ ~] u.starting-state.act)
+      ::    ==
+      ::  ?:  is-open.u.existing-town
+      ::    ::  it is open, join it
+      ::    :-  :_  ~
+      ::        :*  %pass  /hall-modify
+      ::            %agent  [our.bowl %ziggurat]
+      ::            %poke  %zig-action  !>([%add-to-hall town-id.act])
+      ::        ==
+      ::    %=  state
+      ::      ::  will get real town state and order at beginning of next epoch
+      ::      hall  `[town-id.act 0 (~(put in council.u.existing-town) our.bowl) ~ 0 is-open.u.existing-town]
+      ::      me    `me.act
+      ::      town  [~ ~]
+      ::    ==
+      ::  ::  it is closed, fail
+      ::  ~|("that town is closed to you!" !!)
     ::
         %leave-hall
       ?>  =(src.bowl our.bowl)
@@ -195,14 +201,14 @@
           %agent  [our.bowl %ziggurat]
           %poke  %zig-action  !>([%remove-from-hall id.u.hall.state])
       ==
-    ::
-        %hall-update  ::  we'll get these from our ziggurat agent
-      ?>  =(src.bowl our.bowl)
-      ?~  hall.state
-        ~&  >>  "ignoring poke, we're not active in a council"
-        [~ state]
-      ::  TODO maybe don't accept these uncritically?
-      `state(council.u.hall council.act)
+    ::  ::
+    ::      %hall-update  ::  we'll get these from our ziggurat agent
+    ::    ?>  =(src.bowl our.bowl)
+    ::    ?~  hall.state
+    ::      ~&  >>  "ignoring poke, we're not active in a council"
+    ::      [~ state]
+    ::    ::  TODO maybe don't accept these uncritically?
+    ::    `state(council.u.hall council.act)
     ::
         %receive-state  ::  we'll get these from our ziggurat agent
       ?>  =(src.bowl our.bowl)

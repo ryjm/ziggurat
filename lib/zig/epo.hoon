@@ -11,7 +11,6 @@
   ::
   ++  our-block
     |=  data=chunks
-    ~>  %bout
     ^-  (quip card epoch)
     ~&  >  "creating block"  ::  printout
     :: TODO: check time and if necessary skip our own block
@@ -38,6 +37,7 @@
     =/  =slot
       =/  hed=block-header  [next-num prev-hed-hash data-hash]
       [hed `[(sign:sig our now (sham hed)) data]]
+    ~&  >  "block size: {<(met 3 (jam slot))>}"
     :_  cur(slots (put:sot slots.cur next-num slot))
     :-  (give-on-updates [%new-block num.cur p.slot (need q.slot)])
     ?.  =((lent order.cur) +(next-num))
