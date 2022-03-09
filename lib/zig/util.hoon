@@ -26,7 +26,8 @@
     ::  if we're the block producer for this slot,
     ::  make our timer pop early so we don't miss the deadline
     ::  otherwise, just set timer for slot deadline
-    =-  ?.(our-block - (sub - (mul 8 (div epoch-interval 10))))
+    ::  (currently: try to produce block halfway to deadline)
+    =-  ?.(our-block - (sub - (div epoch-interval 2)))
     (deadline epoch-start slot-num)
   ~&  timer+[[%our our-block] epoch-num slot-num time]
   =-  [%pass - %arvo %b %wait time]

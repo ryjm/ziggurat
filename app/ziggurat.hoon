@@ -141,7 +141,7 @@
         (got-hed-hash last-slot-num epochs cur)
       =/  new-epoch=epoch
         :^    +(num.cur)
-            (deadline start-time.cur +((lent order.cur)))
+            (deadline start-time.cur (dec (lent order.cur)))
           (shuffle (silt order.cur) (mug prev-hash))
         ~
       =/  validators=(list ship)
