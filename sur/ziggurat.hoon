@@ -1,6 +1,6 @@
 /+  smart=zig-sys-smart
 |%
-++  epoch-interval    ~s40
+++  epoch-interval    ~s30
 ::
 +$  epoch   [num=@ud =start=time order=(list ship) =slots]
 ::
@@ -15,8 +15,7 @@
 ++  sot    ((on @ud slot) gth)
 ::
 +$  signature   [p=@ux q=ship r=life]
-+$  chunks      (list chunk)
-+$  chunk       [txs=(list [@ux egg:smart]) =town:smart]
++$  chunks      (map town-id=@ud root=@ux)
 +$  chain-hall  [council=(set ship) is-open=?]
 ::
 +$  update
@@ -33,7 +32,7 @@
   $%  [%start mode=?(%fisherman %validator) history=epochs validators=(set ship)]
       [%stop ~]
       [%new-epoch ~]
-      [%receive-chunk =chunk]
+      [%receive-chunk town-id=@ud root=@ux]
       ::  [%new-hall id=@ud =chain-hall]
       ::  [%add-to-hall id=@ud]
       ::  [%remove-from-hall id=@ud]

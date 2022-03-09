@@ -27,13 +27,9 @@
     =/  prev-hed-hash
       ?~  last-slot  prev-hash
       (sham p.u.last-slot)
-    ::  TODO temporary: make a fake block if no data, just so as to not skip all
-    =?  data  ?=(~ data)  `(list chunk)`~[*chunk]
-    =/  data-hash
-      ::  temporary: only hashing tx data, as un-merklized town is huge time sink
-      %-  sham
-      %+  turn  data
-      |=([=chunk] (mug txs.chunk))
+    ~|  "we must have at least one chunk to produce a block"
+    ?>  ?=(^ data)
+    =/  data-hash  (sham data)
     =/  =slot
       =/  hed=block-header  [next-num prev-hed-hash data-hash]
       [hed `[(sign:sig our now (sham hed)) data]]
@@ -89,12 +85,7 @@
             ?=(^ q.u.blk)
         ==
     ~|  "their data hash must be valid!"
-    =/  blk-hash
-      ::  temporary: only hashing tx data, as un-merklized town is huge time sink
-      ?~  blk  (sham ~)
-      %-  sham
-      %+  turn  q.u.blk
-      |=([=chunk] (mug txs.chunk))
+    =/  blk-hash  ?~(blk (sham ~) (sham q.u.blk))
     ?>  ?&  =(blk-hash data-hash.hed)
             ?|(?=(~ blk) !=(data-hash.hed (sham ~)))
         ==

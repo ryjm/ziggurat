@@ -177,13 +177,13 @@
         ~|("can't accept chunk, no known block producer" !!)
       ?:  =(our.bowl u.to)
         ~&  >  "chunk stored"
-        `state(chunks chunk.action^chunks)
+        `state(chunks (~(put by chunks.state) town-id.action root.action))
       ~&  >  "chunk forwarded"
       :_  state
       :_  ~
       :*  %pass  /chunk-gossip/(scot %ud num:`epoch`+:(need (pry:poc epochs)))
           %agent  [u.to %ziggurat]  %poke
-          %zig-action  !>([%receive-chunk chunk.action])
+          %zig-action  !>(action)
       ==
     ::  ::
     ::      %new-hall
@@ -436,17 +436,19 @@
       ~|("we can only produce the next block, not past or future blocks" !!)
     =/  prev-hash
       (got-hed-hash slot-num epochs cur)
+    ::  TODO temporary: make a fake chunk if we have none
+    =?  chunks.state  ?=(~ chunks.state)  (malt ~[[0 `@ux`eny.bowl]])
     ?:  =(ship our.bowl)
       ::  we are responsible for producing a block in this slot
       =/  next-producer
         ?:  (gte +(slot-num) (lent order.cur))  ~
         `(snag +(slot-num) order.cur)
-      ::  ?~  chunks.state
-      ::    ::  we have no data to put in a block, just skip
-      ::    =^  cards  cur
-      ::      ~(skip-block epo cur prev-hash [our now src]:bowl)
-      ::    ~&  skip-block-no-data+[num.cur slot-num]
-      ::    [cards state(epochs (put:poc epochs num.cur cur))]
+      ?~  chunks.state
+        ::  we have no data to put in a block, just skip
+        =^  cards  cur
+          ~(skip-block epo cur prev-hash [our now src]:bowl)
+        ~&  skip-block-no-data+[num.cur slot-num]
+        [cards state(epochs (put:poc epochs num.cur cur))]
       ::  produce block
       =^  cards  cur
         (~(our-block epo cur prev-hash [our now src]:bowl) chunks.state)
