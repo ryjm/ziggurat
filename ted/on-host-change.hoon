@@ -84,14 +84,17 @@
       =/  hook-action=@tas
         (slav %tas (rap 3 add-hook-direction '-action' ~))
       |^
+      =/  m  (strand ,~)
       ?:  =(our.bowl entity.old-group)
-        =/  m  (strand ,~)
         ;<  ~  bind:m
           (remove-hook %push-hook-action [entity.old-group name.rid])
-        add-pull-hook
+        ;<  ~  bind:m  add-pull-hook
+        (pure:m ~)
       ?:  =(our.bowl entity.new-group)
-        add-hook
-      add-pull-hook
+        ;<  ~  bind:m  add-hook
+        (pure:m ~)
+      ;<  ~  bind:m  add-pull-hook
+      (pure:m ~)
       ::
       ++  add-pull-hook
         (poke-our app-add-hook %pull-hook-action !>([%add entity.new-group rid]))
