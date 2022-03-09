@@ -158,6 +158,9 @@
       ;<  ~  bind:m
         (poke-our %graph-store %graph-update-3 !>(update))
       ::
+      ?:  =(our.bowl entity.old-group)
+        ;<  ~  bind:m  (leave wire [entity.old-group %graph-push-hook])
+        loop(as t.as)
       ;<  ~  bind:m
         (poke-our %graph-pull-hook (rem-pull-hook resource.mdr))
       ::
