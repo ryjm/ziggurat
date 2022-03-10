@@ -15,7 +15,7 @@
 ++  sot    ((on @ud slot) gth)
 ::
 +$  signature   [p=@ux q=ship r=life]
-+$  chunks      (map town-id=@ud root=@ux)
++$  chunks      (map town-id=@ud =chunk:smart)
 +$  chain-hall  [council=(set ship) is-open=?]
 ::
 +$  update
@@ -32,7 +32,7 @@
   $%  [%start mode=?(%fisherman %validator) history=epochs validators=(set ship)]
       [%stop ~]
       [%new-epoch ~]
-      [%receive-chunk town-id=@ud root=@ux]
+      [%receive-chunk town-id=@ud =chunk:smart]
       ::  [%new-hall id=@ud =chain-hall]
       ::  [%add-to-hall id=@ud]
       ::  [%remove-from-hall id=@ud]

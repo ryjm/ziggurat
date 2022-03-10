@@ -16,8 +16,8 @@
 ::  * (test all constraints in contract: balance, gas, +give, etc)
 ::  * executing multiple calls with +mill-all
 ::
-/+  *test, *zig-mill, smart=zig-sys-smart :: , *zig-contracts-zigs
-/=  zigs-contract  /lib/zig/contracts/zigs
+/+  *test, *zig-mill, smart=zig-sys-smart, deploy=zig-deploy :: , *zig-contracts-zigs
+/*  zigs-contract  %txt  /lib/zig/contracts/zigs/hoon
 |%
 ++  zigs
   |%
@@ -51,19 +51,16 @@
         town-id
         %&^[100.000 ~]
     ==
-  ++  wheat
-    ^-  wheat:smart
-    :-  `zigs-contract
-    (silt ~[0x1.beef 0x1.dead 0x1.cafe])
   ++  wheat-grain
     ^-  grain:smart
+    =/  cont  (of-wain:format zigs-contract)
     :*  zigs-wheat-id:smart  ::  id
         zigs-wheat-id:smart  ::  lord
         zigs-wheat-id:smart  ::  holders
         town-id              ::  town-id
         :+    %|             ::  germ
-          `zigs-contract
-        (silt ~[0x1.beef 0x1.dead 0x1.cafe])        
+          `(text-deploy:deploy cont)
+        (silt ~[0x1.beef 0x1.dead 0x1.cafe])
     ==
   ++  fake-granary
     ^-  granary:smart
@@ -93,7 +90,7 @@
   =/  shel
     [[0xbeef 1 0x1.beef] zigs-wheat-id:smart 1 bud town-id]
   =/  egg  [shel yok]
-  =/  res  
+  =/  res
     %+  ~(mill mill [0xdead 1 0x1.dead] town-id 1 now)
       fake-town:zigs
     egg
@@ -118,7 +115,7 @@
   =/  shel
     [[0xbeef 1 0x1.beef] zigs-wheat-id:smart 1 bud town-id]
   =/  egg  [shel yok]
-  =/  res  
+  =/  res
     %+  ~(mill mill [0xdead 1 0x1.dead] town-id 1 now)
       fake-town:zigs
     egg
@@ -141,7 +138,7 @@
   =/  shel
     [[0xbeef 1 0x1.beef] zigs-wheat-id:smart 1 bud town-id]
   =/  egg  [shel yok]
-  =/  res  
+  =/  res
     %+  ~(mill mill [0xdead 1 0x1.dead] town-id 1 now)
       fake-town:zigs
     egg
@@ -167,7 +164,7 @@
   =/  shel
     [[0xbeef 1 0x1.beef] zigs-wheat-id:smart 1 bud town-id]
   =/  egg  [shel yok]
-  =/  res  
+  =/  res
     %+  ~(mill mill [0xdead 1 0x1.dead] town-id 1 now)
       fake-town:zigs
     egg
@@ -190,7 +187,7 @@
   =/  shel
     [[0xbeef 1 0x1.beef] zigs-wheat-id:smart 1 bud town-id]
   =/  egg  [shel yok]
-  =/  res  
+  =/  res
     %+  ~(mill mill [0xdead 1 0x1.dead] town-id 1 now)
       fake-town:zigs
     egg

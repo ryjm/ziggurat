@@ -1,6 +1,6 @@
 /-  *sequencer
-/+  smart=zig-sys-smart
-/=  zigs-contract  /lib/zig/contracts/zigs
+/+  smart=zig-sys-smart, deploy=zig-deploy
+/*  zigs-contract  %txt  /lib/zig/contracts/zigs/hoon
 :-  %say
 |=  [[now=@da eny=@uvJ bek=beak] [town-id=@ud ~] ~]
 =/  beef-zigs-grain  ::  our sequencer account's zigs
@@ -27,9 +27,11 @@
       town-id
       %&^[100.000 ~]
   ==
+::  store only contract code, insert into shared subject
 =/  wheat
   ^-  wheat:smart
-  :-  `zigs-contract
+  =/  cont  (of-wain:format zigs-contract)
+  :-  `(text-deploy:deploy cont)
   (silt ~[0x1.beef 0x1.dead 0x1.cafe])
 =/  wheat-grain
   ^-  grain:smart
@@ -37,9 +39,7 @@
       zigs-wheat-id:smart  ::  lord
       zigs-wheat-id:smart  ::  holder
       town-id              ::  town-id
-      :+    %|             ::  germ
-        `zigs-contract
-      (silt ~[0x1.beef 0x1.dead 0x1.cafe])        
+      [%| wheat]           ::  germ
   ==
 =/  fake-granary
   ^-  granary:smart

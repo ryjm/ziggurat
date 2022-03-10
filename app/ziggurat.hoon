@@ -177,7 +177,7 @@
         ~|("can't accept chunk, no known block producer" !!)
       ?:  =(our.bowl u.to)
         ~&  >  "chunk stored"
-        `state(chunks (~(put by chunks.state) town-id.action root.action))
+        `state(chunks (~(put by chunks.state) town-id.action chunk.action))
       ~&  >  "chunk forwarded"
       :_  state
       :_  ~
@@ -437,7 +437,7 @@
     =/  prev-hash
       (got-hed-hash slot-num epochs cur)
     ::  TODO temporary: make a fake chunk if we have none
-    =?  chunks.state  ?=(~ chunks.state)  (malt ~[[0 `@ux`eny.bowl]])
+    =?  chunks.state  ?=(~ chunks.state)  (malt ~[[0 *chunk:smart]])
     ?:  =(ship our.bowl)
       ::  we are responsible for producing a block in this slot
       =/  next-producer

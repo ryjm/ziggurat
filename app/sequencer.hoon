@@ -118,13 +118,7 @@
         %+  ~(mill-all mill u.me.state id.hall blocknum.hall now)
           town.state
         ~(tap in basket.state)
-      ::
-      ::  TODO resolve: we'll eventually just be sharing a merkle root,
-      ::  for now, just sharing hash of town state. town is too big to send all over
-      ::  because zigs contract is 1.4mb -- contains entire subject, etc, etc
-      =/  town-root
-        ~>  %bout
-        `@ux`(sham +.our-chunk)
+      ~&  >>  "town size: {<(met 3 (jam +.our-chunk))>}"
       ::
       ::  find who will be next in town to produce chunk
       =/  next-chair=@ud
@@ -142,7 +136,7 @@
           ==
       :~  :*  %pass  /chunk-gossip
               %agent  [producer %ziggurat]  %poke
-              %zig-action  !>([%receive-chunk id.hall town-root])
+              %zig-action  !>([%receive-chunk id.hall our-chunk])
           ==
           :*  %pass  /basket-gossip
               %agent  [our.bowl %sequencer]  %poke

@@ -1,4 +1,6 @@
-/+  *bink, *zig-sys-smart
+/+  *bink, smart=zig-sys-smart
+/*  smart-lib  %noun  /lib/zig/sys/smart-lib/noun
+=,  smart
 |_  [miller=account town-id=@ud blocknum=@ud now=time]
 ::
 ::  +mill-all: mills all eggs in basket
@@ -124,7 +126,7 @@
       ?.  ?=(%| -.germ.u.gra)           ~
       ?~  cont.p.germ.u.gra             ~
       :+  ~
-        (hole contract u.cont.p.germ.u.gra)
+        (compile u.cont.p.germ.u.gra)
       %-  ~(gas by *(map id grain))
       %+  murn  ~(tap in grains)
       |=  =id
@@ -132,6 +134,12 @@
       ?.  ?=(%& -.germ.u.res)         ~
       ?.  =(lord.u.res find)          ~
       `[id u.res]
+    ::
+    ++  compile
+      |=  nok=*
+      ^-  contract
+      =/  cued  (cue q.q.smart-lib)
+      (hole contract cued(- nok))
     --
   ::
   ++  grow

@@ -1,4 +1,3 @@
-/+  *zig-sys-smart
 |_  =cart
 ++  write
   |=  inp=zygote
@@ -7,7 +6,7 @@
 ++  read
   |=  inp=path
   ^-  noun
-  (add 69 420)
+  ~
 ++  event
   |=  inp=rooster
   ^-  chick

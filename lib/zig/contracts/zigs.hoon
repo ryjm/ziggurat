@@ -1,14 +1,8 @@
-/+  *zig-sys-smart
-=>  |%
-    +$  account
-      $:  balance=@ud
-          allowances=(map sender=id @ud)
-      ==
-    --
 |_  =cart
 ++  write
   |=  inp=zygote
   ^-  chick
+  |^
   =/  caller-id  (pin caller.inp)
   ?~  args.inp  !!
   =*  args  +.u.args.inp
@@ -48,6 +42,11 @@
     =.  data.p.germ.acc  account
     [%& (malt ~[[id.acc acc]]) ~]
   !!
+  +$  account
+      $:  balance=@ud
+          allowances=(map sender=id @ud)
+      ==
+  --
 ::
 ++  read
   |=  inp=path

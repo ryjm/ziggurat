@@ -27,6 +27,8 @@
     ::  make our timer pop early so we don't miss the deadline
     ::  otherwise, just set timer for slot deadline
     ::  (currently: try to produce block halfway to deadline)
+    ::  have chunks submitted to *next* producer,
+    ::  give a little time at beginning of epoch to find next producer
     =-  ?.(our-block - (sub - (div epoch-interval 2)))
     (deadline epoch-start slot-num)
   ~&  timer+[[%our our-block] epoch-num slot-num time]
