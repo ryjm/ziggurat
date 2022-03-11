@@ -7,6 +7,7 @@
 ::
 ++  mill-all
   |=  [=town basket=(list egg)]
+  ~>  %bout
   =/  pending
     %+  sort  basket
     |=  [a=egg b=egg]

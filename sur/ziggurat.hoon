@@ -27,6 +27,7 @@
       ::
       [%saw-block epoch-num=@ud header=block-header]
   ==
++$  sequencer-update  [%next-producer =ship]
 ::
 +$  action
   $%  [%start mode=?(%fisherman %validator) history=epochs validators=(set ship)]

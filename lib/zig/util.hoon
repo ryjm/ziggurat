@@ -10,12 +10,11 @@
   ~[/validator/updates /fisherman/updates]
 ::
 ++  notify-sequencer
-  |=  our=ship
+  |=  =ship
   ^-  card
-  :*  %pass  /submit-alert
-      %agent  [our %sequencer]  %poke
-      %zig-chain-action  !>([%submit ~])
-  ==
+  :-  %give
+  :^  %fact  ~[/sequencer/updates]
+      %sequencer-update  !>([%next-producer ship])
 ::
 ::  +wait: create %behn timer cards for a given epoch-slot
 ::
@@ -26,9 +25,7 @@
     ::  if we're the block producer for this slot,
     ::  make our timer pop early so we don't miss the deadline
     ::  otherwise, just set timer for slot deadline
-    ::  (currently: try to produce block halfway to deadline)
-    ::  have chunks submitted to *next* producer,
-    ::  give a little time at beginning of epoch to find next producer
+    ::  (currently: try to produce block 1/2 of way to deadline)
     =-  ?.(our-block - (sub - (div epoch-interval 2)))
     (deadline epoch-start slot-num)
   ~&  timer+[[%our our-block] epoch-num slot-num time]

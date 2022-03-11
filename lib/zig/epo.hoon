@@ -36,8 +36,9 @@
     ~&  >  "block size: {<(met 3 (jam slot))>}"
     :_  cur(slots (put:sot slots.cur next-num slot))
     :-  (give-on-updates [%new-block num.cur p.slot (need q.slot)])
-    ?.  =((lent order.cur) +(next-num))
-      (notify-sequencer our)^~
+    =+  l=(lent order.cur)
+    ?.  =(l +(next-num))
+      (notify-sequencer (snag +(next-num) order.cur))^~
     ::  start new epoch
     ::
     (poke-new-epoch our +(num.cur))^~
@@ -100,8 +101,9 @@
     :-  ::  send block header to others
         ::
         (give-on-updates [%saw-block num.cur hed])
-    ?.  =((lent order.cur) +(next-num))
-      (notify-sequencer our)^~
+    =+  l=(lent order.cur)
+    ?.  =(l +(next-num))
+      (notify-sequencer (snag +(next-num) order.cur))^~
     ::  start new epoch
     ::
     (poke-new-epoch our +(num.cur))^~

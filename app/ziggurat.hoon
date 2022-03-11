@@ -8,7 +8,6 @@
   $:  %0
       mode=?(%fisherman %validator %none)
       =epochs
-      producer=(unit ship)
       =chunks
       known-halls=(map @ud =chain-hall)
       updated-halls=(set @ud)
@@ -41,7 +40,7 @@
 +*  this  .
     def   ~(. (default-agent this %|) bowl)
 ::
-++  on-init  `this(state [%0 %none ~ ~ ~ ~ ~])
+++  on-init  `this(state [%0 %none ~ ~ ~ ~])
 ::
 ++  on-save  !>(state)
 ++  on-load
@@ -81,6 +80,13 @@
       ~
     ==
   ::
+      [%sequencer %updates ~]
+    ~|  "comets and moons may not be sequencers"
+    ?>  (lte (met 3 src.bowl) 4)
+    ~&  >  "got a sequencer subscription"
+    ::  send next-producer on this path for sequencers
+    `this
+  ::
       [%fisherman %updates ~]
     ~|  "comets and moons may not be fishermen, tiny dos protection"
     ?>  (lte (met 3 src.bowl) 4)
@@ -99,6 +105,7 @@
     [cards this]
       %noun
     ::  TODO this poke should be gated by something, right?
+    ?>  (lte (met 3 src.bowl) 2)
     ?>  (validate-history our.bowl epochs)
     `this
   ==
@@ -119,18 +126,19 @@
         %-  zing
         :~  cleanup-fisherman
             cleanup-validator
+            cleanup-sequencer
             (watch-updates validators.action)
             ?~  epochs  ~
             =/  cur=epoch  +:(need (pry:poc epochs))
             (new-epoch-timers cur our.bowl)
         ==
       :_  state(mode %fisherman)
-      (weld cleanup-validator cleanup-fisherman)
+      (weld cleanup-validator (weld cleanup-sequencer cleanup-fisherman))
     ::
         %stop
       ?>  =(src.bowl our.bowl)
-      :_  state(mode %none, epochs ~)
-      (weld cleanup-validator cleanup-fisherman)
+      :-  (weld cleanup-validator (weld cleanup-sequencer cleanup-fisherman))
+      state(mode %none, epochs ~, chunks ~, known-halls ~, updated-halls ~)
     ::
         %new-epoch
       ?>  =(src.bowl our.bowl)
@@ -157,34 +165,24 @@
       ~&  num.new-epoch^(sham epochs)
       :_  %=  state
               epochs        (put:poc epochs num.new-epoch new-epoch)
-              producer      `-.order.new-epoch
               updated-halls  ~
           ==
-      %+  weld
-        (notify-sequencer our.bowl)^hall-updates
-      %+  weld
-        (watch-updates (silt (murn order.new-epoch filter-by-wex)))
-      (new-epoch-timers new-epoch our.bowl)
+      ::  alert other validators of any new towns made known to us,
+      ::  set our timers for all the slots in this epoch,
+      ::  subscribe to all the other validator ships,
+      ::  and alert subscribing sequencers of the next block producer
+      %-  zing
+      :~  hall-updates
+          ~[(notify-sequencer -.order.new-epoch)]
+          (watch-updates (silt (murn order.new-epoch filter-by-wex)))
+          (new-epoch-timers new-epoch our.bowl)
+      ==
     ::
         %receive-chunk
       ::  TODO make this town-running-stars only once that info is known
-      ::  TODO handle poke-ack for the case where two validators
-      ::  each think the other is producer, and are sending a chunk
-      ::  back and forth to each other.
       ?>  (lte (met 3 src.bowl) 2)
       ~&  >  "chunk received"
-      ?~  to=producer.state
-        ~|("can't accept chunk, no known block producer" !!)
-      ?:  =(our.bowl u.to)
-        ~&  >  "chunk stored"
-        `state(chunks (~(put by chunks.state) town-id.action chunk.action))
-      ~&  >  "chunk forwarded"
-      :_  state
-      :_  ~
-      :*  %pass  /chunk-gossip/(scot %ud num:`epoch`+:(need (pry:poc epochs)))
-          %agent  [u.to %ziggurat]  %poke
-          %zig-action  !>(action)
-      ==
+      `state(chunks (~(put by chunks.state) town-id.action chunk.action))
     ::  ::
     ::      %new-hall
     ::    ?>  =(src.bowl our.bowl)
@@ -250,6 +248,9 @@
     =-  [%give %fact - %zig-update !>([%hall-update n new-hall])]
     ~[/validator/updates /fisherman/updates]
   ::
+  ::  cleanup arms: close subscriptions of our various watchers
+  ::  TODO can probably merge these into a single arm and single +murn
+  ::
   ++  cleanup-validator
     ^-  (list card)
     %+  weld
@@ -263,6 +264,14 @@
     ^-  (unit card)
     ?.  ?=([%validator *] q)  ~
     `[%give %kick q^~ `p]
+  ::
+  ++  cleanup-sequencer
+    ^-  (list card)
+    %+  murn  ~(tap by wex.bowl)
+    |=  [[=wire =ship =term] *]
+    ^-  (unit card)
+    ?.  ?=([%sequencer %updates *] wire)  ~
+    `[%pass wire %agent [ship term] %leave ~]
   ::
   ++  cleanup-fisherman
     ^-  (list card)
@@ -346,13 +355,10 @@
         :_  state
         (start-epoch-catchup i.validators num.cur)^~
       ::  incorporate new-block into our epoch
-      =/  next-producer
-        ?:  (gte +(next-slot-num) (lent order.cur))  ~
-        `(snag +(next-slot-num) order.cur)
       =^  cards  cur
         %-  ~(their-block epo cur prev-hash [our now src]:bowl)
         [header `block]:update
-      [cards state(epochs (put:poc epochs num.cur cur), producer next-producer)]
+      [cards state(epochs (put:poc epochs num.cur cur))]
     ::
         %saw-block
       :_  state
@@ -440,9 +446,6 @@
     =?  chunks.state  ?=(~ chunks.state)  (malt ~[[0 *chunk:smart]])
     ?:  =(ship our.bowl)
       ::  we are responsible for producing a block in this slot
-      =/  next-producer
-        ?:  (gte +(slot-num) (lent order.cur))  ~
-        `(snag +(slot-num) order.cur)
       ?~  chunks.state
         ::  we have no data to put in a block, just skip
         =^  cards  cur
@@ -452,7 +455,7 @@
       ::  produce block
       =^  cards  cur
         (~(our-block epo cur prev-hash [our now src]:bowl) chunks.state)
-      [cards state(epochs (put:poc epochs num.cur cur), producer next-producer)]
+      [cards state(epochs (put:poc epochs num.cur cur))]
     ::  someone else is responsible for producing this block,
     ::  but they have not done so
     =^  cards  cur
@@ -469,9 +472,6 @@
   ?+    +.path  (on-peek:def path)
       [%active ~]
     ``noun+!>(`?`=(%validator mode.state))
-  ::
-      [%producer ~]
-    ``noun+!>(`@p`(need producer.state))
   ::
       [%epoch ~]
     =/  cur=epoch  +:(need (pry:poc epochs))

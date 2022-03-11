@@ -19,8 +19,7 @@
   ==
 ::
 +$  chain-action
-  $%  [%submit ~]
-      [%leave-hall ~]
+  $%  [%leave-hall ~]
       [%receive-state =grain:smart]
       ::  [%hall-update council=(set ship)]
       $:  %init
