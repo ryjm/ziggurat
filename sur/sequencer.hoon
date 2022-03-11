@@ -21,7 +21,7 @@
 +$  chain-action
   $%  [%leave-hall ~]
       [%receive-state =grain:smart]
-      ::  [%hall-update council=(set ship)]
+      [%set-standard-lib =path]
       $:  %init
           town-id=@ud
           me=account:smart

@@ -3,10 +3,9 @@
 ::  Agent for managing a single Uqbar town. Publishes blocks
 ::  of transaction data to main chain agent, Ziggurat.
 ::
-::  calls out to ziggurat agent and gets timer for block submission
-::
 /-  *sequencer, ziggurat
 /+  default-agent, dbug, verb, smart=zig-sys-smart, *zig-mill
+/*  smart-lib  %noun  /lib/zig/sys/smart-lib/noun
 |%
 +$  card  card:agent:gall
 +$  state-0
@@ -15,6 +14,7 @@
       =town:smart
       hall=(unit hall)
       =basket
+      library=(unit *)
   ==
 --
 ::
@@ -28,7 +28,7 @@
 +*  this  .
     def   ~(. (default-agent this %|) bowl)
 ::
-++  on-init  `this(state [%0 ~ [~ ~] ~ ~])
+++  on-init  `this(state [%0 ~ [~ ~] ~ ~ ~])
 ::
 ++  on-save  !>(state)
 ++  on-load
@@ -99,6 +99,12 @@
     ^-  (quip card _state)
     ?>  (lte (met 3 src.bowl) 4)
     ?-    -.act
+        %set-standard-lib
+      ?>  =(src.bowl our.bowl)
+      =/  blob  .^([p=path q=[p=@ud q=@]] %cx (weld /(scot %p our.bowl)/zig/(scot %da now.bowl) path.act))
+      =/  cued  (cue q.q.blob)
+      `state(library `cued)
+    ::
         %init
       ?>  =(src.bowl our.bowl)
       ::  assert that we're active in main chain
@@ -107,6 +113,8 @@
       ::  assert we're not already running a town
       ?^  hall.state
         ~|("can't init a town, already active in one" !!)
+      ?~  library.state
+        ~|("can't init a town, no standard library for contracts" !!)
       ::  check main chain for existence of that town,
       ::  join if we can, fail if we can't, make new town
       ::  if it doesn't exist
@@ -157,7 +165,7 @@
         %leave-hall
       ?>  =(src.bowl our.bowl)
       ?<  ?=(~ hall.state)
-      :_  state(hall ~, town [~ ~], basket ~)
+      :_  state(hall ~, town [~ ~], basket ~, library ~)
       %+  murn  ~(tap by wex.bowl)
       |=  [[=wire =ship =term] *]
       ^-  (unit card)
@@ -189,6 +197,10 @@
   |=  [=wire =sign:agent:gall]
   ^-  (quip card _this)
   ?+    wire  (on-agent:def wire sign)
+      [%chunk-gossip ~]
+    ::  TODO manage rejected chunks here.
+    ::  try and submit them to the next producer
+    `this
       [%sequencer %updates ~]
     ?:  ?=(%watch-ack -.sign)              (on-agent:def wire sign)
     ?.  ?=(%fact -.sign)                   (on-agent:def wire sign)
@@ -206,7 +218,7 @@
     ~&  >>  "submitting chunk to producer {<next-producer>}"
     ::  create and send our chunk to them
     =/  our-chunk=chunk:smart
-      %+  ~(mill-all mill u.me.state id.hall blocknum.hall now)
+      %+  ~(mill-all mill u.me.state (need library.state) id.hall blocknum.hall now)
         town.state
       ~(tap in basket.state)
     ~&  >>  "chunk size: {<(met 3 (jam our-chunk))>}"

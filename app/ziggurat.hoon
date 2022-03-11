@@ -181,6 +181,11 @@
         %receive-chunk
       ::  TODO make this town-running-stars only once that info is known
       ?>  (lte (met 3 src.bowl) 2)
+      =/  cur=epoch  +:(need (pry:poc epochs))
+      =/  last-slot-num=@ud
+        (need (bind (pry:sot slots.cur) head))
+      ~|  "rejected chunk: not sent to current producer"
+      ?>  =(our.bowl (snag last-slot-num order.cur))
       ~&  >  "chunk received"
       `state(chunks (~(put by chunks.state) town-id.action chunk.action))
     ::  ::

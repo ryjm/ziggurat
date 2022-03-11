@@ -1,13 +1,14 @@
 /+  *bink, smart=zig-sys-smart
 /*  smart-lib  %noun  /lib/zig/sys/smart-lib/noun
 =,  smart
-|_  [miller=account town-id=@ud blocknum=@ud now=time]
+|_  [miller=account library=* town-id=@ud blocknum=@ud now=time]
 ::
 ::  +mill-all: mills all eggs in basket
 ::
 ++  mill-all
   |=  [=town basket=(list egg)]
   ~>  %bout
+  ~&  >>>  "total:"
   =/  pending
     %+  sort  basket
     |=  [a=egg b=egg]
@@ -30,6 +31,7 @@
 ++  mill
   |=  [=town =egg]
   ^-  [^town fee=@ud]
+  ~&  >>>  "processing egg"
   ?.  ?=(account from.p.egg)  [town 0]
   ?~  curr-nonce=(~(get by q.town) id.from.p.egg)
     [town 0]  ::  missing account
@@ -139,12 +141,18 @@
     ++  compile
       |=  nok=*
       ^-  contract
-      =/  cued  (cue q.q.smart-lib)
-      (hole contract cued(- nok))
+      ::=/  cued  (cue q.q.smart-lib)
+      ::  crazy weird issue: importing this way results in unjetted execution (my guess)
+      ::  ~&  >>>  "smart-lib size: {<(met 3 (jam cued))>}"
+      ::  ~&  >>>  "library size: {<(met 3 (jam library))>}"
+      ::  ::  ~&  >>>  "are they equal? {<=(cued library)>}" (yes they are)
+      ::  contract execution with this is ~10x slower :/
+      (hole contract library(- nok))
     --
   ::
   ++  grow
     |=  [=crop =zygote =egg]
+    ~>  %bout
     ^-  [(unit rooster) @ud]
     |^
     =+  [chick rem]=(weed crop to.p.egg [%& zygote] ~ budget.p.egg)
@@ -188,6 +196,7 @@
     ++  barn
       |=  [=contract inp=embryo =cart bud=@ud]
       ^-  [(unit (each (each * chick) (list tank))) @ud]
+      ~>  %bout
       |^
       ?:  ?=(%| -.inp)
         ::  event
@@ -212,8 +221,10 @@
       ++  write
         |=  =^zygote
         ^-  [(unit (each chick (list tank))) @ud]
-        :_  (sub bud 7)
-        `(mule |.(;;(chick (~(write contract cart) zygote))))
+        ~>  %bout
+        (bull |.(;;(chick (~(write contract cart) zygote))) bud)
+        :: :_  (sub bud 7)
+        :: `(mule |.(;;(chick (~(write contract cart) zygote))))
       ++  event
         |=  =rooster
         ^-  [(unit (each chick (list tank))) @ud]
