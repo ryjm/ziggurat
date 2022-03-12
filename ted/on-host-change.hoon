@@ -135,7 +135,9 @@
         loop(as t.as)
       ;<  =update:gra  bind:m  (scry-graph resource.mdr)
       ?.  ?=(%add-graph -.q.update)
-        ~&  >>>  "on-host-change +add-graphs: +scry-graph returns non %add-graph for {<resource.mdr>}: {<update>}"
+        ~&  >>>  %+  weld
+            "on-host-change +add-graphs: +scry-graph returns"
+          " non %add-graph for {<resource.mdr>}: {<update>}"
         loop(as t.as)  ::  TODO: can we do better here?
       =.  p.update  now.bowl
       =.  entity.resource.q.update  entity.new-group
@@ -184,17 +186,21 @@
       ;<  =cage  bind:m  (take-fact wire)
       ;<  ~  bind:m  (leave wire [entity.old-group %graph-push-hook])
       ?.  ?=(%graph-update-3 -.cage)
-        ~&  >>>  "on-host-change remove-graphs: expected %graph-update-3; instead got:"
+        ~&  >>>  %+  weld
+            "on-host-change remove-graphs: expected"
+          " %graph-update-3; instead got:"
         ~&  >>>  cage
-        !!  :: TODO: what should happen here?
+        !!
       =/  rem-update=update:gra  !<(update:gra +.cage)
       ?.  ?&
             ?=(%add-graph -.q.rem-update)
             =(resource.mdr resource.q.rem-update)
           ==
-        ~&  >>>  "on-host-change remove-graphs: expected %add-graph and same resource; instead got:"
+        ~&  >>>  %+  weld
+            "on-host-change remove-graphs: expected"
+          " %add-graph and same resource; instead got:"
         ~&  >>>  rem-update
-        !!  :: TODO: what should happen here?
+        !!
       loop(as t.as)
     ::
     ++  add-group
@@ -202,7 +208,9 @@
       ^-  form:m
       ;<  g=(unit group:group)  bind:m  (scry-group old-group)
       ?~  g
-        ~&  >>>  "on-host-change +add-group: +scry-group returns ~ for {<old-group>}"
+        ~&  >>>  %+  weld
+            "on-host-change +add-group: +scry-group"
+          " returns ~ for {<old-group>}"
         (pure:m ~)
       ;<  ~  bind:m
         %+  poke-our
