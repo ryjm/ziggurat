@@ -1,5 +1,13 @@
-/-  group, spider, grp=group-store, gra=graph-store, met=metadata-store
-/+  push-hook, strandio, res=resource
+/-  group,
+    pull-hook,
+    push-hook,
+    spider,
+    gra=graph-store,
+    grp=group-store,
+    met=metadata-store
+/+  push-hook,
+    strandio,
+    res=resource
 ::
 =*  strand     strand:spider
 =*  leave      leave:strandio
@@ -47,7 +55,8 @@
   ++  rem-pull-hook
     |=  rid=resource:res
     ^-  cage
-    [%pull-hook-action !>([%remove rid])]
+    :-  %pull-hook-action
+    !>(`action:pull-hook`[%remove rid])
   ::
   ++  update-metadata-store
     |=  [new-group=resource:res as=(list (pair md-resource:met association:met))]
@@ -59,15 +68,17 @@
     =*  a    q.i.as
     ::
     =/  remove=cage
-      [%metadata-update-2 !>([%remove group.a mdr])]
+      :-  %metadata-update-2
+      !>(`update:met`[%remove group.a mdr])
     ;<  ~  bind:m  (poke-our %metadata-store remove)
     ::
-    =/  add-update=update:met
+    =/  add=cage
+      :-  %metadata-update-2
+      !>  ^-  update:met
       :^    %add
           new-group
         mdr(entity.resource entity.new-group)
       metadatum.a  ::  TODO: do we need to update config? E.g. for group feed
-    =/  add=cage  [%metadata-update-2 !>(add-update)]
     ;<  ~  bind:m  (poke-our %metadata-store add)
     loop(as t.as)
   ::
@@ -80,17 +91,15 @@
         ?:(=(our.bowl entity.new-group) %push-hook %pull-hook)
       =/  app-add-hook=@tas
         (rap 3 app-hook-pfix '-' add-hook-direction ~)
-      =/  hook-action=@tas
-        (rap 3 add-hook-direction '-action' ~)
       |^
       =/  m  (strand ,~)
       ?:  =(our.bowl entity.old-group)
         ;<  ~  bind:m
-          (remove-hook %push-hook-action [entity.old-group name.rid])
+          (remove-push-hook [entity.old-group name.rid])
         ;<  ~  bind:m  add-pull-hook
         (pure:m ~)
       ?:  =(our.bowl entity.new-group)
-        ;<  ~  bind:m  add-hook
+        ;<  ~  bind:m  add-push-hook
         (pure:m ~)
       ;<  ~  bind:m  add-pull-hook
       (pure:m ~)
@@ -99,20 +108,20 @@
         %^  poke-our
             app-add-hook
           %pull-hook-action
-        !>([%add entity.new-group rid])
+        !>(`action:pull-hook`[%add entity.new-group rid])
       ::
-      ++  add-hook
+      ++  add-push-hook
         %^  poke-our
             app-add-hook
-          hook-action
-        !>([%add rid])
+          %push-hook-action
+        !>(`action:push-hook`[%add rid])
       ::
-      ++  remove-hook
-        |=  [rem-hook-action=@tas rem-rid=resource:res]
+      ++  remove-push-hook
+        |=  rem-rid=resource:res
         %^  poke-our
             (rap 3 app-hook-pfix '-' %push-hook ~)
-          rem-hook-action
-        !>([%remove rem-rid])
+          %push-hook-action
+        !>(`action:push-hook`[%remove rem-rid])
       --
     ::
     ++  add-graphs
@@ -199,13 +208,13 @@
         %+  poke-our
           %group-store
         :-  %group-action
-        !>([%add-group new-group policy.u.g %.n])
+        !>(`action:grp`[%add-group new-group policy.u.g %.n])
       ::
       ;<  ~  bind:m
         %+  poke-our
           %group-store
         :-  %group-action
-        !>([%add-members new-group members.u.g])
+        !>(`action:grp`[%add-members new-group members.u.g])
       ::
       ;<  ~  bind:m
         (update-hook %metadata new-group)
@@ -221,7 +230,8 @@
       ;<  ~  bind:m
         %+  poke-our
           %group-store
-        [%group-action !>([%remove-group old-group ~])]
+        :-  %group-action
+        !>(`action:grp`[%remove-group old-group ~])
       ::
       ;<  ~  bind:m
         (poke-our %metadata-pull-hook (rem-pull-hook old-group))
