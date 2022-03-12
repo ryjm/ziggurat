@@ -1,5 +1,5 @@
 /-  group, spider, grp=group-store, gra=graph-store, met=metadata-store
-/+  push-hook, strandio, res=resource::, dao=zig-contracts-dao
+/+  push-hook, strandio, res=resource
 ::
 =*  strand     strand:spider
 =*  leave      leave:strandio
@@ -38,7 +38,6 @@
   ++  scry-graph
     |=  rid=resource:res
     =/  m  (strand ,update:gra)
-
     ^-  form:m
     ;<  =update:gra  bind:m
       %+  scry  update:gra
@@ -80,9 +79,9 @@
       =/  add-hook-direction=@tas
         ?:(=(our.bowl entity.new-group) %push-hook %pull-hook)
       =/  app-add-hook=@tas
-        (slav %tas (rap 3 app-hook-pfix '-' add-hook-direction ~))
+        (rap 3 app-hook-pfix '-' add-hook-direction ~)
       =/  hook-action=@tas
-        (slav %tas (rap 3 add-hook-direction '-action' ~))
+        (rap 3 add-hook-direction '-action' ~)
       |^
       =/  m  (strand ,~)
       ?:  =(our.bowl entity.old-group)
@@ -97,14 +96,23 @@
       (pure:m ~)
       ::
       ++  add-pull-hook
-        (poke-our app-add-hook %pull-hook-action !>([%add entity.new-group rid]))
+        %^  poke-our
+            app-add-hook
+          %pull-hook-action
+        !>([%add entity.new-group rid])
       ::
       ++  add-hook
-        (poke-our app-add-hook hook-action !>([%add rid]))
+        %^  poke-our
+            app-add-hook
+          hook-action
+        !>([%add rid])
       ::
       ++  remove-hook
         |=  [rem-hook-action=@tas rem-rid=resource:res]
-        (poke-our (slav %tas (rap 3 app-hook-pfix '-' %push-hook ~)) rem-hook-action !>([%remove rem-rid]))
+        %^  poke-our
+            (rap 3 app-hook-pfix '-' %push-hook ~)
+          rem-hook-action
+        !>([%remove rem-rid])
       --
     ::
     ++  add-graphs
