@@ -72,13 +72,18 @@
       !>(`update:met`[%remove group.a mdr])
     ;<  ~  bind:m  (poke-our %metadata-store remove)
     ::
+    =/  new-metadatum=metadatum:met
+      ?.  ?=(%group -.config.metadatum.a)  metadatum.a
+      ?~  feed.config.metadatum.a          metadatum.a
+      ?~  u.feed.config.metadatum.a        metadatum.a
+      metadatum.a(entity.resource.u.u.feed.config entity.new-group)
     =/  add=cage
       :-  %metadata-update-2
       !>  ^-  update:met
       :^    %add
           new-group
         mdr(entity.resource entity.new-group)
-      metadatum.a  ::  TODO: do we need to update config? E.g. for group feed
+      new-metadatum
     ;<  ~  bind:m  (poke-our %metadata-store add)
     loop(as t.as)
   ::
