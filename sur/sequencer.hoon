@@ -2,7 +2,6 @@
 |%
 ::  bug: multiple transactions in the same basket must
 ::  be ordered by nonce if submitted by same user!!
-+$  basket   (set egg:smart)  ::  mempool
 ::
 +$  hall  ::  runs a town
   $:  id=@ud
@@ -15,17 +14,17 @@
 ::
 +$  basket-action
   $%  [%forward eggs=(set egg:smart)]
-      [%receive eggs=(set egg:smart) blocknum=@ud chair=@ud]
+      [%receive eggs=(set egg:smart)]
   ==
 ::
 +$  chain-action
   $%  [%leave-hall ~]
-      [%receive-state =grain:smart]
       [%set-standard-lib =path]
       $:  %init
+          ::  TODO make this send a transaction to town mgmt contract
+          ::  via a validator!
           town-id=@ud
-          me=account:smart
-          ::  will probably remove starting-state for persistent testnet
+          ::  TODO will remove for persistent testnet
           starting-state=(unit town:smart)
           is-open=?
       ==

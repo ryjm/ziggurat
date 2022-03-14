@@ -1,6 +1,7 @@
 /+  smart=zig-sys-smart
 |%
-++  epoch-interval    ~s30
+++  epoch-interval  ~s30
+++  relay-town-id   0
 ::
 +$  epoch   [num=@ud =start=time order=(list ship) =slots]
 ::
@@ -22,7 +23,6 @@
   $%  [%epochs-catchup =epochs]
       [%blocks-catchup epoch-num=@ud =slots]
       [%new-block epoch-num=@ud header=block-header =block]
-      [%hall-update id=@ud =chain-hall]
       :: todo: add data availability data
       ::
       [%saw-block epoch-num=@ud header=block-header]
@@ -30,12 +30,11 @@
 +$  sequencer-update  [%next-producer =ship]
 ::
 +$  action
-  $%  [%start mode=?(%fisherman %validator) history=epochs validators=(set ship)]
+  $%  [%set-standard-lib =path]
+      [%set-pubkey =account:smart]
+      [%start mode=?(%fisherman %validator) history=epochs validators=(set ship)]
       [%stop ~]
       [%new-epoch ~]
       [%receive-chunk town-id=@ud =chunk:smart]
-      ::  [%new-hall id=@ud =chain-hall]
-      ::  [%add-to-hall id=@ud]
-      ::  [%remove-from-hall id=@ud]
   ==
 --

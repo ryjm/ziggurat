@@ -1,16 +1,26 @@
 ::  ziggurat [uqbar-dao]
 ::
-/+  *ziggurat, default-agent, dbug, verb
+/-  sequencer
+/+  *ziggurat, default-agent, dbug, verb, smart=zig-sys-smart, mill=zig-mill
+/*  smart-lib  %noun  /lib/zig/sys/smart-lib/noun
 =,  util
 |%
 +$  card  card:agent:gall
 +$  state-0
   $:  %0
       mode=?(%fisherman %validator %none)
+      me=(unit account:smart)
+      library=(unit *)
       =epochs
       =chunks
-      known-halls=(map @ud =chain-hall)
-      updated-halls=(set @ud)
+      ::  TODO need to make sure this design is acceptable in terms of
+      ::  data availability and censorship. last validator in epoch is random,
+      ::  but there's still only 1 per epoch and they could censor. since
+      ::  the set of possible transactions in the town contract is so narrow,
+      ::  possibly we can show that no logic can result in unwanted secret
+      ::  manipulation
+      =basket:smart     ::  accept town mgmt txs from stars
+      globe=town:smart  ::  store town hall info; update once per epoch
   ==
 ++  new-epoch-timers
   |=  [=epoch our=ship]
@@ -40,7 +50,7 @@
 +*  this  .
     def   ~(. (default-agent this %|) bowl)
 ::
-++  on-init  `this(state [%0 %none ~ ~ ~ ~])
+++  on-init  `this(state [%0 %none ~ ~ ~ ~ ~ [~ ~]])
 ::
 ++  on-save  !>(state)
 ++  on-load
@@ -103,6 +113,12 @@
     =^  cards  state
       (poke-zig-action !<(action vase))
     [cards this]
+    ::
+      %zig-basket-action
+    =^  cards  state
+      (poke-basket-action !<(basket-action:sequencer vase))
+    [cards this]
+    ::
       %noun
     ::  TODO this poke should be gated by something, right?
     ?>  (lte (met 3 src.bowl) 2)
@@ -114,6 +130,17 @@
     |=  =action
     ^-  (quip card _state)
     ?-    -.action
+        %set-standard-lib
+      ?>  =(src.bowl our.bowl)
+      =/  blob  .^([p=path q=[p=@ud q=@]] %cx (weld /(scot %p our.bowl)/zig/(scot %da now.bowl) path.action))
+      =/  cued  (cue q.q.blob)
+      `state(library `cued)
+    ::
+        %set-pubkey
+      ::  store private key where? jael?
+      ?>  =(src.bowl our.bowl)
+      `state(me `account.action)
+    ::
         %start
       ?>  =(src.bowl our.bowl)
       ~|  "we have already started in this mode"
@@ -138,7 +165,7 @@
         %stop
       ?>  =(src.bowl our.bowl)
       :-  (weld cleanup-validator (weld cleanup-sequencer cleanup-fisherman))
-      state(mode %none, epochs ~, chunks ~, known-halls ~, updated-halls ~)
+      state(mode %none, epochs ~, chunks ~, basket ~, globe [~ ~])
     ::
         %new-epoch
       ?>  =(src.bowl our.bowl)
@@ -165,7 +192,6 @@
       ~&  num.new-epoch^(sham epochs)
       :_  %=  state
               epochs        (put:poc epochs num.new-epoch new-epoch)
-              updated-halls  ~
           ==
       ::  alert other validators of any new towns made known to us,
       ::  set our timers for all the slots in this epoch,
@@ -186,44 +212,46 @@
         (need (bind (pry:sot slots.cur) head))
       ~|  "rejected chunk: not sent to current producer"
       ?>  =(our.bowl (snag last-slot-num order.cur))
+      ~|  "rejected chunk: sender not part of that town"
+      ::  TODO check town id
       ~&  >  "chunk received"
       `state(chunks (~(put by chunks.state) town-id.action chunk.action))
-    ::  ::
-    ::      %new-hall
-    ::    ?>  =(src.bowl our.bowl)
-    ::    ?:  (~(has by known-halls.state) id.action)  !!
-    ::    :-  ~
-    ::    %=  state
-    ::        updated-halls  (~(put in updated-halls) id.action)
-    ::        known-halls    %+  ~(put by known-halls)
-    ::                         id.action
-    ::                       chain-hall.action
-    ::    ==
-    ::  ::
-    ::      %add-to-hall
-    ::    ?>  =(src.bowl our.bowl)
-    ::    =/  hall=chain-hall  (~(got by known-halls.state) id.action)
-    ::    ?.  is-open.hall  !!
-    ::    :-  ~
-    ::    %=  state
-    ::        updated-halls  (~(put in updated-halls) id.action)
-    ::        known-halls    %+  ~(put by known-halls)
-    ::                         id.action
-    ::                       hall(council (~(put in council.hall) src.bowl))
-    ::    ==
-    ::  ::
-    ::      %remove-from-hall
-    ::    ?>  =(src.bowl our.bowl)
-    ::    =/  hall=chain-hall  (~(got by known-halls.state) id.action)
-    ::    :-  ~
-    ::    %=  state
-    ::        updated-halls  (~(put in updated-halls) id.action)
-    ::        known-halls    %+  ~(put by known-halls)
-    ::                         id.action
-    ::                       hall(council (~(del in council.hall) src.bowl))
-    ::    ==
     ==
   ::
+  ++  poke-basket-action
+    |=  act=basket-action:sequencer
+    ^-  (quip card _state)
+    ?-    -.act
+        %forward
+      ?>  (lte (met 3 src.bowl) 2)
+      ::  getting an egg from sequencer
+      ::  TODO enforce that these transactions are part of
+      ::  a hardcoded subet -- the init/join/leave/stake/etc
+      ::  write calls to the pre-written town contract.
+      =/  cur=epoch  +:(need (pry:poc epochs))
+      =/  last-slot-num=@ud
+        (need (bind (pry:sot slots.cur) head))
+      =/  last-producer  (rear order.cur)  ::  TODO is this optimal? or -:(flop ..)?
+      ?:  =(our.bowl last-producer)
+        `state(basket (~(uni in basket) eggs.act))
+      ~&  >  "forwarding eggs to {<last-producer>}"
+      :_  state(basket ~)
+      :_  ~
+      :*  %pass  /basket-gossip
+          %agent  [last-producer %ziggurat]
+          %poke  %zig-basket-action
+          !>([%receive (~(uni in eggs.act) basket.state)])
+      ==
+    ::
+        %receive
+      ?>  (lte (met 3 src.bowl) 2)
+      =/  cur=epoch  +:(need (pry:poc epochs))
+      ?~  (find [src.bowl]~ order.cur)
+        ~|("can only receive eggs from known validators" !!)
+      ~|  "rejected basket: we're not the last validator"
+      ?>  =(our.bowl (rear order.cur))
+      `state(basket (~(uni in basket) eggs.act))
+    ==
   ++  filter-by-wex
     |=  shp=ship
     ^-  (unit ship)
@@ -246,12 +274,7 @@
   ::
   ++  hall-updates
     ^-  (list card)
-    %+  turn  ~(tap in updated-halls.state)
-    |=  n=@ud
-    ^-  card
-    =/  new-hall=chain-hall  (~(got by known-halls.state) n)
-    =-  [%give %fact - %zig-update !>([%hall-update n new-hall])]
-    ~[/validator/updates /fisherman/updates]
+    ~  :: TODO refactor
   ::
   ::  cleanup arms: close subscriptions of our various watchers
   ::  TODO can probably merge these into a single arm and single +murn
@@ -370,9 +393,6 @@
       %+  ~(see-block epo cur prev-hash [our now src]:bowl)
         epoch-num.update
       header.update
-    ::
-        %hall-update
-      `state(known-halls (~(put by known-halls.state) id.update chain-hall.update))
     ==
   ::
   ++  epoch-catchup
@@ -448,16 +468,18 @@
     =/  prev-hash
       (got-hed-hash slot-num epochs cur)
     ::  TODO temporary: make a fake chunk if we have none
-    =?  chunks.state  ?=(~ chunks.state)  (malt ~[[0 *chunk:smart]])
+    =?  chunks.state  ?=(~ chunks.state)
+      (malt ~[[777 *chunk:smart]])
     ?:  =(ship our.bowl)
       ::  we are responsible for producing a block in this slot
-      ?~  chunks.state
-        ::  we have no data to put in a block, just skip
-        =^  cards  cur
-          ~(skip-block epo cur prev-hash [our now src]:bowl)
-        ~&  skip-block-no-data+[num.cur slot-num]
-        [cards state(epochs (put:poc epochs num.cur cur))]
-      ::  produce block
+      =?  chunks.state  =(our.bowl (rear order.cur))
+        ::  if this is the last block in the epoch,
+        ::  perform global-level transactions
+        %+  ~(put by chunks.state)
+          relay-town-id  ::  0
+        %+  ~(mill-all mill (need me.state) (need library.state) relay-town-id 0 now.bowl)
+          globe.state
+        ~(tap in basket.state)
       =^  cards  cur
         (~(our-block epo cur prev-hash [our now src]:bowl) chunks.state)
       [cards state(epochs (put:poc epochs num.cur cur))]
@@ -472,7 +494,9 @@
 ++  on-peek
   |=  =path
   ^-  (unit (unit cage))
-  ::  handle scries from sequencer agent
+  ::
+  ::  scries for sequencer agent
+  ::
   ?.  =(%x -.path)  ~
   ?+    +.path  (on-peek:def path)
       [%active ~]
@@ -486,9 +510,48 @@
     =/  cur=epoch  +:(need (pry:poc epochs))
     ``noun+!>(`@ud`?~(p=(bind (pry:sot slots.cur) head) 0 +(u.p)))
   ::
-      [%get-hall @ ~]
-    =/  res  (~(get by known-halls.state) (slav %ud i.t.t.path))
-    ``noun+!>(`(unit chain-hall)`res)
+      [%account ~]
+    ``noun+!>(`account:smart`(need me.state))
+  ::
+      [%library ~]
+    ::  TODO is this too big of a scry? are big scrys okay?
+    ``noun+!>(`*`(need library.state))
+  ::
+  ::  scries for contracts
+  ::
+      [%rice @ ~]
+    =/  id  (slav %ux i.t.t.path)
+    ?~  res=(~(get by p.globe.state) id)
+      [~ ~]
+    ?.  ?=(%& -.germ.u.res)
+      [~ ~]
+    ``noun+!>(`rice:smart`p.germ.u.res)
+  ::
+      [%wheat @ @ta ~]
+    ::  call read arm of contract
+    =/  id  (slav %ux i.t.t.path)
+    =/  arg=^path  [i.t.t.t.path ~]
+    ?~  res=(~(get by p.globe.state) id)  [~ ~]
+    ?.  ?=(%| -.germ.u.res)               [~ ~]
+    ?~  cont.p.germ.u.res                 [~ ~]
+    ::  TODO make way for reads to get some rice input..
+    ::  =/  owns
+    ::    %-  ~(gas by *(map:smart id:smart grain:smart))
+    ::    %+  murn  ~(tap in owns.p.germ.u.res)
+    ::    |=  find=id:smart
+    ::    ?~  found=(~(get by p.town.state) find)  ~
+    ::    ?.  ?=(%& -.germ.u.found)                ~
+    ::    ?.  =(lord.u.found id)                   ~
+    ::    `[find u.res]
+    =/  cont  (hole:smart contract:smart u.cont.p.germ.u.res)
+    =/  cart  [~ id 0 relay-town-id ~]
+    ``noun+!>((~(read cont cart) path))
+  ::
+      [%sizeof @ ~]
+    ::  give size of item in global granary
+    =/  id  (slav %ux i.t.t.path)
+    ?~  res=(~(get by p.globe.state) id)  [~ ~]
+    ``noun+!>((met 3 (jam res)))
   ==
 ::
 ++  on-leave  on-leave:def

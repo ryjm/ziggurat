@@ -29,13 +29,14 @@
 ::
 ::  smart contract types
 ::
-+$  id  @ux             ::  pubkey
++$  id             @ux  ::  pubkey
 ++  zigs-wheat-id  0x0  ::  hardcoded "native" token contract
 ::
-+$  chunk  [(list [@ux egg]) town]
++$  chunk   [(list [@ux egg]) town]
++$  basket  (set egg)  ::  mempool
 ::
-+$  account  [=id nonce=@ud zigs=id]
-+$  caller  $@(id account)
++$  account    [=id nonce=@ud zigs=id]
++$  caller     $@(id account)
 +$  signature  [r=@ux s=@ux type=?(%schnorr %ecdsa)]
 ::
 +$  germ   (each rice wheat)

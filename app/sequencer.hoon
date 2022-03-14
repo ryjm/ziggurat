@@ -4,16 +4,15 @@
 ::  of transaction data to main chain agent, Ziggurat.
 ::
 /-  *sequencer, ziggurat
-/+  default-agent, dbug, verb, smart=zig-sys-smart, *zig-mill
+/+  default-agent, dbug, verb, smart=zig-sys-smart, mill=zig-mill
 /*  smart-lib  %noun  /lib/zig/sys/smart-lib/noun
 |%
 +$  card  card:agent:gall
 +$  state-0
   $:  %0
-      me=(unit account:smart)
       =town:smart
       hall=(unit hall)
-      =basket
+      =basket:smart
       library=(unit *)
   ==
 --
@@ -28,7 +27,7 @@
 +*  this  .
     def   ~(. (default-agent this %|) bowl)
 ::
-++  on-init  `this(state [%0 ~ [~ ~] ~ ~ ~])
+++  on-init  `this(state [%0 [~ ~] ~ ~ ~])
 ::
 ++  on-save  !>(state)
 ++  on-load
@@ -79,19 +78,14 @@
       :*  %pass  /basket-gossip
           %agent  [current-producer %sequencer]
           %poke  %zig-basket-action
-          !>([%receive (~(uni in eggs.act) basket.state) blocknum.hall chair.hall])
+          !>([%receive (~(uni in eggs.act) basket.state)])
       ==
     ::
         %receive
       ::  should only accept from other validators
       ?>  (~(has in council.hall) src.bowl)
       ~&  >>  "received gossiped eggs from {<src.bowl>}: {<eggs.act>}"
-      :-  ~
-      %=  state
-        basket           (~(uni in basket) eggs.act)
-        blocknum.u.hall  blocknum.act
-        chair.u.hall     chair.act
-      ==
+      `state(basket (~(uni in basket) eggs.act))
     ==
   ::
   ++  poke-chain-action
@@ -129,38 +123,8 @@
           ==  ==
       %=  state
           hall  `[town-id.act 0 (silt ~[our.bowl]) ~[our.bowl] 0 is-open.act]
-          me    `me.act
           town  ?~(starting-state.act [~ ~] u.starting-state.act)
       ==
-      ::  ?~  existing-town
-      ::    ::  new hall
-      ::    =/  council  (silt ~[our.bowl])
-      ::    :-  :_  ~
-      ::        :*  %pass  /hall-modify
-      ::            %agent  [our.bowl %ziggurat]
-      ::            %poke  %zig-action  !>([%new-hall town-id.act council is-open.act])
-      ::        ==
-      ::    ~&  >>  "sequencer initialized"
-      ::    %=  state
-      ::        hall  `[town-id.act 0 council ~[our.bowl] 0 is-open.act]
-      ::        me    `me.act
-      ::        town  ?~(starting-state.act [~ ~] u.starting-state.act)
-      ::    ==
-      ::  ?:  is-open.u.existing-town
-      ::    ::  it is open, join it
-      ::    :-  :_  ~
-      ::        :*  %pass  /hall-modify
-      ::            %agent  [our.bowl %ziggurat]
-      ::            %poke  %zig-action  !>([%add-to-hall town-id.act])
-      ::        ==
-      ::    %=  state
-      ::      ::  will get real town state and order at beginning of next epoch
-      ::      hall  `[town-id.act 0 (~(put in council.u.existing-town) our.bowl) ~ 0 is-open.u.existing-town]
-      ::      me    `me.act
-      ::      town  [~ ~]
-      ::    ==
-      ::  ::  it is closed, fail
-      ::  ~|("that town is closed to you!" !!)
     ::
         %leave-hall
       ?>  =(src.bowl our.bowl)
@@ -171,10 +135,6 @@
       ^-  (unit card)
       ?.  ?=([%sequencer %updates *] wire)  ~
       `[%pass wire %agent [ship term] %leave ~]
-      :: :*  %pass  /hall-modify
-      ::     %agent  [our.bowl %ziggurat]
-      ::     %poke  %zig-action  !>([%remove-from-hall id.u.hall.state])
-      :: ==
     ::  ::
     ::      %hall-update  ::  we'll get these from our ziggurat agent
     ::    ?>  =(src.bowl our.bowl)
@@ -184,12 +144,6 @@
     ::    ::  TODO maybe don't accept these uncritically?
     ::    `state(council.u.hall council.act)
     ::
-        %receive-state  ::  we'll get these from our ziggurat agent
-      ?>  =(src.bowl our.bowl)
-      ?~  hall.state
-        ~&  >>  "ignoring poke, we're not active in a council"
-        [~ state]
-      `state(p.town (~(put in p.town) id.grain.act grain.act))
     ==
   --
 ::
@@ -209,7 +163,6 @@
     ::  if we can, produce a chunk!
     ~&  >>  "received request to submit chunk"
     ?:  ?|  ?=(~ hall.state)
-            ?=(~ me.state)
             !=(our.bowl (snag chair.u.hall.state order.u.hall.state))
         ==
       ~&  >>  "ignoring request"
@@ -217,8 +170,9 @@
     =*  hall  u.hall.state
     ~&  >>  "submitting chunk to producer {<next-producer>}"
     ::  create and send our chunk to them
+    =/  me  .^(account:smart %gx /(scot %p our.bowl)/ziggurat/(scot %da now.bowl)/account/noun)
     =/  our-chunk=chunk:smart
-      %+  ~(mill-all mill u.me.state (need library.state) id.hall blocknum.hall now)
+      %+  ~(mill-all mill me (need library.state) id.hall blocknum.hall now.bowl)
         town.state
       ~(tap in basket.state)
     ~&  >>  "chunk size: {<(met 3 (jam our-chunk))>}"
@@ -291,7 +245,7 @@
     ::    ?.  ?=(%& -.germ.u.found)                ~
     ::    ?.  =(lord.u.found id)                   ~
     ::    `[find u.res]
-    =/  cont  (hole contract.smart u.cont.p.germ.u.res)
+    =/  cont  (hole:smart contract:smart u.cont.p.germ.u.res)
     =/  cart  [~ id blocknum.u.hall.state id.u.hall.state ~]
     ``noun+!>((~(read cont cart) path))
   ::
