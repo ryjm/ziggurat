@@ -8,7 +8,6 @@
 ++  mill-all
   |=  [=town basket=(list egg)]
   ~>  %bout
-  ~&  >>>  "total:"
   =/  pending
     %+  sort  basket
     |=  [a=egg b=egg]
@@ -31,7 +30,6 @@
 ++  mill
   |=  [=town =egg]
   ^-  [^town fee=@ud]
-  ~&  >>>  "processing egg"
   ?.  ?=(account from.p.egg)  [town 0]
   ?~  curr-nonce=(~(get by q.town) id.from.p.egg)
     [town 0]  ::  missing account
@@ -152,7 +150,6 @@
   ::
   ++  grow
     |=  [=crop =zygote =egg]
-    ~>  %bout
     ^-  [(unit rooster) @ud]
     |^
     =+  [chick rem]=(weed crop to.p.egg [%& zygote] ~ budget.p.egg)
@@ -196,7 +193,6 @@
     ++  barn
       |=  [=contract inp=embryo =cart bud=@ud]
       ^-  [(unit (each (each * chick) (list tank))) @ud]
-      ~>  %bout
       |^
       ?:  ?=(%| -.inp)
         ::  event
@@ -221,7 +217,6 @@
       ++  write
         |=  =^zygote
         ^-  [(unit (each chick (list tank))) @ud]
-        ~>  %bout
         (bull |.(;;(chick (~(write contract cart) zygote))) bud)
         :: :_  (sub bud 7)
         :: `(mule |.(;;(chick (~(write contract cart) zygote))))

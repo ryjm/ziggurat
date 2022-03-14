@@ -112,9 +112,6 @@
       ::  check main chain for existence of that town,
       ::  join if we can, fail if we can't, make new town
       ::  if it doesn't exist
-      =/  existing-town
-        .^((unit chain-hall:ziggurat) %gx /(scot %p our.bowl)/ziggurat/(scot %da now.bowl)/get-hall/(scot %ud town-id.act)/noun)
-      ~&  >  existing-town
       ~&  >>  "sequencer initialized"
       :-  ::  subscribe to next-producer updates
           :~  :*  %pass   /sequencer/updates
@@ -122,7 +119,7 @@
                   %watch  /sequencer/updates
           ==  ==
       %=  state
-          hall  `[town-id.act 0 (silt ~[our.bowl]) ~[our.bowl] 0 is-open.act]
+          hall  `[town-id.act 0 (silt ~[our.bowl]) ~[our.bowl] 0]
           town  ?~(starting-state.act [~ ~] u.starting-state.act)
       ==
     ::
@@ -161,21 +158,19 @@
     ?.  ?=(%sequencer-update p.cage.sign)  (on-agent:def wire sign)
     =/  next-producer  ship:!<(sequencer-update:ziggurat q.cage.sign)
     ::  if we can, produce a chunk!
-    ~&  >>  "received request to submit chunk"
     ?:  ?|  ?=(~ hall.state)
             !=(our.bowl (snag chair.u.hall.state order.u.hall.state))
         ==
       ~&  >>  "ignoring request"
       `this
     =*  hall  u.hall.state
-    ~&  >>  "submitting chunk to producer {<next-producer>}"
     ::  create and send our chunk to them
     =/  me  .^(account:smart %gx /(scot %p our.bowl)/ziggurat/(scot %da now.bowl)/account/noun)
     =/  our-chunk=chunk:smart
       %+  ~(mill-all mill me (need library.state) id.hall blocknum.hall now.bowl)
         town.state
       ~(tap in basket.state)
-    ~&  >>  "chunk size: {<(met 3 (jam our-chunk))>}"
+    ~&  >>  "chunk size: {<(met 3 (jam our-chunk))>} bytes"
     ::
     ::  find who will be next in town to produce chunk
     =/  next-chair=@ud
@@ -184,6 +179,7 @@
       +(chair.hall)
     ::  currently clearing mempool with every chunk, but
     ::  this is not necessary: we forward our basket
+    ~&  >>  "submitting chunk to producer {<next-producer>}"
     :_  %=  this
             basket           ~
             town             +.our-chunk

@@ -9,7 +9,6 @@
       council=(set ship)
       order=(list ship)
       chair=@ud  :: position of leader in order
-      is-open=?
   ==
 ::
 +$  basket-action
@@ -19,14 +18,11 @@
 ::
 +$  chain-action
   $%  [%leave-hall ~]
+      ::  can fold this into init
       [%set-standard-lib =path]
-      $:  %init
-          ::  TODO make this send a transaction to town mgmt contract
-          ::  via a validator!
-          town-id=@ud
-          ::  TODO will remove for persistent testnet
-          starting-state=(unit town:smart)
-          is-open=?
-      ==
+      ::  TODO make this send a transaction to town mgmt contract
+      ::  via a validator!
+      ::  will remove starting-state for persistent testnet
+      [%init town-id=@ud starting-state=(unit town:smart)]
   ==
 --

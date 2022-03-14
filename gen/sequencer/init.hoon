@@ -58,7 +58,5 @@
 ^-  chain-action
 :*  %init
     town-id
-    [0xbeef 0 0x1.beef]
     `[fake-granary fake-populace]
-    %.y
 ==

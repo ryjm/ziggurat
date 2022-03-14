@@ -208,11 +208,9 @@
       ::  TODO make this town-running-stars only once that info is known
       ?>  (lte (met 3 src.bowl) 2)
       =/  cur=epoch  +:(need (pry:poc epochs))
-      =/  last-slot-num=@ud
-        (need (bind (pry:sot slots.cur) head))
-      ~|  "rejected chunk: not sent to current producer"
-      ?>  =(our.bowl (snag last-slot-num order.cur))
-      ~|  "rejected chunk: sender not part of that town"
+      ?>  ?~  slot-num=(bind (pry:sot slots.cur) head)
+            =(our.bowl -.order.cur)
+          =(our.bowl (snag u.slot-num order.cur))
       ::  TODO check town id
       ~&  >  "chunk received"
       `state(chunks (~(put by chunks.state) town-id.action chunk.action))
@@ -467,9 +465,6 @@
       ~|("we can only produce the next block, not past or future blocks" !!)
     =/  prev-hash
       (got-hed-hash slot-num epochs cur)
-    ::  TODO temporary: make a fake chunk if we have none
-    =?  chunks.state  ?=(~ chunks.state)
-      (malt ~[[777 *chunk:smart]])
     ?:  =(ship our.bowl)
       ::  we are responsible for producing a block in this slot
       =?  chunks.state  =(our.bowl (rear order.cur))
@@ -482,7 +477,7 @@
         ~(tap in basket.state)
       =^  cards  cur
         (~(our-block epo cur prev-hash [our now src]:bowl) chunks.state)
-      [cards state(epochs (put:poc epochs num.cur cur))]
+      [cards state(epochs (put:poc epochs num.cur cur), chunks ~)]
     ::  someone else is responsible for producing this block,
     ::  but they have not done so
     =^  cards  cur
