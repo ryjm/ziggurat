@@ -17,7 +17,6 @@
 ::
 +$  signature   [p=@ux q=ship r=life]
 +$  chunks      (map town-id=@ud =chunk:smart)
-+$  chain-hall  [council=(set ship) is-open=?]
 ::
 +$  update
   $%  [%epochs-catchup =epochs]
