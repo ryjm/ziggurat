@@ -1,4 +1,4 @@
-/-  *ziggurat
+/-  *ziggurat, *sequencer
 |_  m-act=basket-action
 ++  grab
   |%

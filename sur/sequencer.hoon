@@ -6,7 +6,6 @@
 +$  hall  ::  runs a town
   $:  council=(map ship id:smart)
       order=(list ship)
-      chair=@ud  :: position of leader in order
   ==
 ::
 +$  basket-action
@@ -17,7 +16,7 @@
 +$  chain-action
   $%  [%leave-hall ~]
       ::  can fold this into init
-      [%set-standard-lib =path]
+      ::  [%set-standard-lib =path]
       ::  TODO make this send a transaction to town mgmt contract
       ::  via a validator!
       ::  will remove starting-state for persistent testnet

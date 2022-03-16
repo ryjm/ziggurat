@@ -12,12 +12,12 @@
 ::  TODO make sha256 or w/e for testnet
 ++  fry
   |=  [lord=id town=@ud =germ]
-  ^-  @ux
-  =-  (mug (cat 3 lord (cat 3 town -)))
+  ^-  id
+  =-  `@ux`(sham (cat 3 lord (cat 3 town -)))
   ?.  ?=(%| -.germ)
-    (mug germ)
+    (jam data.p.germ)
   ::  fry ignores owns.wheat in hash
-  (mug cont.p.germ)
+  (jam cont.p.germ)
 ::
 ::  +pin: get ID from caller
 ++  pin

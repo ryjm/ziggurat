@@ -33,14 +33,15 @@
   ?~  curr-nonce=(~(get by q.town) id.from.p.egg)
     [town 0]  ::  missing account
   ?.  =(nonce.from.p.egg +(u.curr-nonce))
+    ~&  >>>  "tx rejected; bad nonce"
     [town 0]  ::  bad nonce
   ?.  (~(audit tax p.town) egg)
+    ~&  >>>  "tx rejected; not enough budget"
     [town 0]  ::  can't afford gas
   =+  [gan rem]=(~(work farm p.town) egg)
   =/  fee=@ud   (sub budget.p.egg rem)
   :_  fee
-  :-  ?~  gan  (~(charge tax p.town) from.p.egg fee)
-      (~(charge tax u.gan) from.p.egg fee)
+  :-  (~(charge tax ?~(gan p.town u.gan)) from.p.egg fee)
   (~(put by q.town) id.from.p.egg nonce.from.p.egg)
 ::
 ::  +tax: manage payment for egg in zigs
@@ -92,6 +93,7 @@
     ^-  [(unit ^granary) @ud]
     =/  hatchling
       (incubate egg(budget.p (div budget.p.egg rate.p.egg)))
+    ~&  >>>  "we incubated"
     :_  +.hatchling
     ?~  -.hatchling  ~
     (harvest u.-.hatchling to.p.egg from.p.egg)
@@ -102,6 +104,7 @@
     |^
     =/  args  (fertilize q.egg)
     ?~  stalk=(germinate to.p.egg cont-grains.q.egg)
+      ~&  >>>  "failed to germinate"
       `budget.p.egg
     (grow u.stalk args egg)
     ::
@@ -150,6 +153,7 @@
   ++  grow
     |=  [=crop =zygote =egg]
     ^-  [(unit rooster) @ud]
+    ~&  >>>  "growing"
     |^
     =+  [chick rem]=(weed crop to.p.egg [%& zygote] ~ budget.p.egg)
     ?~  chick  `rem
@@ -182,7 +186,9 @@
       =/  cart  [mem to blocknum town-id owns.crop]
       =+  [res bud]=(barn contract.crop inp cart budget)
       ?~  res               `bud
-      ?:  ?=(%| -.u.res)    `bud
+      ?:  ?=(%| -.u.res)  
+        ~&  >>>  p.u.res  
+        `bud
       ?:  ?=(%& -.p.u.res)  `bud
       ::  write or event result
       [`p.p.u.res bud]
@@ -193,6 +199,9 @@
       |=  [=contract inp=embryo =cart bud=@ud]
       ^-  [(unit (each (each * chick) (list tank))) @ud]
       |^
+      ~&  >>  inp
+      ~&  >>  "===="
+      ~&  >>  cart
       ?:  ?=(%| -.inp)
         ::  event
         =/  res  (event p.inp)
@@ -215,9 +224,9 @@
       ++  write
         |=  =^zygote
         ^-  [(unit (each chick (list tank))) @ud]
-        (bull |.(;;(chick (~(write contract cart) zygote))) bud)
-        ::  :_  (sub bud 7)
-        ::  `(mule |.(;;(chick (~(write contract cart) zygote))))
+        ::  (bull |.(;;(chick (~(write contract cart) zygote))) bud)
+        :_  (sub bud 7)
+        `(mule |.(;;(chick (~(write contract cart) zygote))))
       ++  event
         |=  =rooster
         ^-  [(unit (each chick (list tank))) @ud]
@@ -230,7 +239,10 @@
   ++  harvest
     |=  [res=rooster lord=id from=caller]
     ^-  (unit ^granary)
-    =-  ?.  -  ~
+    ~&  >>>  "harvesting this: {<res>}"
+    =-  ?.  -  
+          ~&  >>>  "harvest checks failed"  
+          ~
         `(~(uni by granary) (~(uni by changed.res) issued.res))
     ?&  %-  ~(all in changed.res)
         |=  [=id =grain]

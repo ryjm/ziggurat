@@ -2,6 +2,7 @@
 ::
 /-  sequencer
 /+  *ziggurat, default-agent, dbug, verb, smart=zig-sys-smart, mill=zig-mill
+/*  smart-lib  %noun  /lib/zig/sys/smart-lib/noun
 =,  util
 |%
 +$  card  card:agent:gall
@@ -227,13 +228,11 @@
       ::  getting an egg from sequencer
       ::  filter out any eggs not sent to contracts
       ::  we're aware of
-      =.  eggs.act
-        %-  ~(gas in *(set egg:smart))
-        %+  skim  ~(tap in eggs.act)
-        |=(=egg:smart =(to.p.egg `@ux`'world'))
+      ::  =.  eggs.act
+      ::    %-  ~(gas in *(set egg:smart))
+      ::    %+  skim  ~(tap in eggs.act)
+      ::    |=(=egg:smart =(to.p.egg `@ux`'capitol'))
       =/  cur=epoch  +:(need (pry:poc epochs))
-      =/  last-slot-num=@ud
-        (need (bind (pry:sot slots.cur) head))
       =/  last-producer  (rear order.cur)  ::  TODO is this optimal? or -:(flop ..)?
       ?:  =(our.bowl last-producer)
         `state(basket (~(uni in basket) eggs.act))
@@ -283,15 +282,16 @@
     ::  grab on-chain data for that hall in this epoch
     ?~  found=(~(get by p.globe.state) `@ux`'world')      ~
     ?.  ?=(%& -.germ.u.found)                             ~
-    =/  world  (hole:smart (map @ud @ux) data.p.germ.u.found)
+    =/  world  (hole:smart ,(map @ud id:smart) data.p.germ.u.found)
     ?~  town-rice=(~(get by world) u.town-id)             ~
     ?~  found-rice=(~(get by p.globe.state) u.town-rice)  ~
     ?.  ?=(%& -.germ.u.found-rice)                        ~
     =/  our-town
       %+  hole:smart
-        ,[town-id=@ud council=(map ship id:smart) order=(list ship)]
+        ,[town-id=@ud council=(map ship id:smart)]
       data.p.germ.u.found-rice
     ?.  =(town-id.our-town u.town-id)  ~
+    ~&  >  "giving sequencer hall status update"
     :-  ~  :-  %give
     :^  %fact  ~[/sequencer/updates]
         %sequencer-update  !>([%new-hall council.our-town])
@@ -503,6 +503,7 @@
             globe.state
           ~(tap in basket.state)
         =:  globe.state   +.globe-chunk
+            basket.state  ~
             chunks.state  (~(put by chunks.state) relay-town-id globe-chunk)
         ==
         =^  cards  cur

@@ -4,7 +4,8 @@
 ::  of transaction data to main chain agent, Ziggurat.
 ::
 /-  *sequencer, ziggurat
-/+  default-agent, dbug, verb, smart=zig-sys-smart, mill=zig-mill
+/+  default-agent, dbug, verb, smart=zig-sys-smart, mill=zig-mill, sig=zig-sig
+/*  smart-lib  %noun  /lib/zig/sys/smart-lib/noun
 |%
 +$  card  card:agent:gall
 +$  state-0
@@ -69,8 +70,9 @@
         %forward
       ::  getting an egg from user / eggs from fellow sequencer
       ::  add to our basket
-      =/  current-producer  (snag chair.hall order.hall)
-      ?:  =(current-producer our.bowl)
+      =/  slot-num  .^(@ud %gx /(scot %p our.bowl)/ziggurat/(scot %da now.bowl)/slot/noun)
+      =/  current-producer  (snag (mod slot-num (lent order.u.hall.state)) order.u.hall.this)
+      ?:  =(our.bowl current-producer) 
         `state(basket (~(uni in basket) eggs.act))
       ~&  >>  "forwarding eggs"
       :_  state(basket ~)
@@ -93,11 +95,11 @@
     ^-  (quip card _state)
     ?>  (lte (met 3 src.bowl) 4)
     ?-    -.act
-        %set-standard-lib
-      ?>  =(src.bowl our.bowl)
-      =/  blob  .^([p=path q=[p=@ud q=@]] %cx (weld /(scot %p our.bowl)/zig/(scot %da now.bowl) path.act))
-      =/  cued  (cue q.q.blob)
-      `state(library `cued)
+    ::      %set-standard-lib
+    ::    ?>  =(src.bowl our.bowl)
+    ::    =/  blob  .^([p=path q=[p=@ud q=@]] %cx (weld /(scot %p our.bowl)/zig/(scot %da now.bowl) path.act))
+    ::    =/  cued  (cue q.q.blob)
+    ::    `state(library `cued)
     ::
         %init
       ?>  =(src.bowl our.bowl)
@@ -106,19 +108,38 @@
         ~|("can't run a town, ziggurat not active" !!)
       ::  assert we're not already running a town
       ?^  hall.state     ~|("can't init a town, already active in one" !!)
-      ?~  library.state  ~|("can't init a town, no standard library for contracts" !!)
-      ::  TODO submit tx to ziggurat for inclusion in next epoch
+      ::  ?~  library.state  ~|("can't init a town, no standard library for contracts" !!)
+      ::  submit tx to ziggurat for inclusion in next epoch
+      =/  me  .^(account:smart %gx /(scot %p our.bowl)/ziggurat/(scot %da now.bowl)/account/noun)
+      =/  sig  (sign:sig our.bowl now.bowl (sham me))
+      =/  egg  
+        :-  [me(nonce +(nonce.me)) `@ux`'capitol' 1 500.000 0]
+        [me(nonce +(nonce.me)) `[%init sig town-id.act] ~ (silt ~[`@ux`'world'])]
       ~&  >>  "sequencer initialized"
       :_  state(town ?~(starting-state.act [~ ~] u.starting-state.act), town-id `town-id.act)
           ::  subscribe to updates from ziggurat
+      =/  tx
+        :-  %forward
+        %-  silt  :_  ~
+        :-  [[0xbeef 1 0x1.beef] `@ux`'capitol' 10 10.000 0]
+        :^    [0xbeef 1 0x1.beef]
+            `[%init sig town-id.act]
+          ~
+        (silt ~[`@ux`'world'])
+      ~&  >>  tx
       :~  :*  %pass   /sequencer/updates
               %agent  [our.bowl %ziggurat]
               %watch  /sequencer/updates
-      ==  ==
+          ==
+          :*  %pass  /submit-tx
+              %agent  [our.bowl %ziggurat]
+              %poke  %zig-basket-action
+              !>(tx)
+          ==
+      ==
     ::
         %leave-hall
       ?>  =(src.bowl our.bowl)
-      ?<  ?=(~ hall.state)
       ::  TODO submit tx indicating our absence. wait for ack to actually leave
       :_  state(hall ~, town [~ ~], basket ~, library ~)
       %+  murn  ~(tap by wex.bowl)
@@ -146,39 +167,32 @@
         %new-hall
       ::  receive this at beginning of epoch, update our hall-state
       ::  shuffle council (necessary?) ???? (TODO)
-      ?~  hall.this  `this
-      `this(council.u.hall council.update, order.u.hall ~(tap in ~(key by council.update)))
+      ~&  >>  "received hall update"
+      `this(hall `[council.update ~(tap in ~(key by council.update))])
     ::
         %next-producer
       ::  if we can, produce a chunk!
       =/  slot-num  .^(@ud %gx /(scot %p our.bowl)/ziggurat/(scot %da now.bowl)/slot/noun)
       ?:  ?|  ?=(~ hall.this)
-              ::?=(~ order.u.hall.state)
-              !=(our.bowl (snag (mod (lent order.u.hall.state) slot-num) order.u.hall.this))
+              !=(our.bowl (snag (mod slot-num (lent order.u.hall.this)) order.u.hall.this))
           ==
         ~&  >>  "ignoring request"
         `this
       =*  hall  u.hall.state
       ::  create and send our chunk to them
       =/  me  .^(account:smart %gx /(scot %p our.bowl)/ziggurat/(scot %da now.bowl)/account/noun)
+      =/  lib  .^(* %gx /(scot %p our.bowl)/ziggurat/(scot %da now.bowl)/library/noun)
       =/  our-chunk=chunk:smart
-        %+  ~(mill-all mill me (need library.state) (need town-id.state) 0 now.bowl)  ::  TODO blocknum
+        %+  ~(mill-all mill me lib (need town-id.state) 0 now.bowl)  ::  TODO blocknum
           town.state
         ~(tap in basket.state)
       ~&  >>  "chunk size: {<(met 3 (jam our-chunk))>} bytes"
-      ::
-      ::  find who will be next in town to produce chunk
-      =/  next-chair=@ud
-        ?:  (gte +(chair.hall) ~(wyt by council.hall))
-          0
-        +(chair.hall)
       ::  currently clearing mempool with every chunk, but
       ::  this is not necessary: we forward our basket
       ~&  >>  "submitting chunk to producer {<ship.update>}"
       :_  %=  this
               basket           ~
               town             +.our-chunk
-              chair.u.hall     next-chair
           ==
       :~  :*  %pass  /chunk-gossip
               %agent  [ship.update %ziggurat]  %poke
