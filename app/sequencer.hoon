@@ -5,11 +5,11 @@
 ::
 /-  *sequencer, ziggurat
 /+  default-agent, dbug, verb, smart=zig-sys-smart, mill=zig-mill
-/*  smart-lib  %noun  /lib/zig/sys/smart-lib/noun
 |%
 +$  card  card:agent:gall
 +$  state-0
   $:  %0
+      town-id=(unit @ud)
       =town:smart
       hall=(unit hall)
       =basket:smart
@@ -27,7 +27,7 @@
 +*  this  .
     def   ~(. (default-agent this %|) bowl)
 ::
-++  on-init  `this(state [%0 [~ ~] ~ ~ ~])
+++  on-init  `this(state [%0 ~ [~ ~] ~ ~ ~])
 ::
 ++  on-save  !>(state)
 ++  on-load
@@ -83,7 +83,7 @@
     ::
         %receive
       ::  should only accept from other validators
-      ?>  (~(has in council.hall) src.bowl)
+      ?>  (~(has by council.hall) src.bowl)
       ~&  >>  "received gossiped eggs from {<src.bowl>}: {<eggs.act>}"
       `state(basket (~(uni in basket) eggs.act))
     ==
@@ -109,7 +109,7 @@
       ?~  library.state  ~|("can't init a town, no standard library for contracts" !!)
       ::  TODO submit tx to ziggurat for inclusion in next epoch
       ~&  >>  "sequencer initialized"
-      :_  state(town ?~(starting-state.act [~ ~] u.starting-state.act))
+      :_  state(town ?~(starting-state.act [~ ~] u.starting-state.act), town-id `town-id.act)
           ::  subscribe to updates from ziggurat
       :~  :*  %pass   /sequencer/updates
               %agent  [our.bowl %ziggurat]
@@ -144,12 +144,17 @@
     =/  update  !<(sequencer-update:ziggurat q.cage.sign)
     ?-    -.update
         %new-hall
-      !!
+      ::  receive this at beginning of epoch, update our hall-state
+      ::  shuffle council (necessary?) ???? (TODO)
+      ?~  hall.this  `this
+      `this(council.u.hall council.update, order.u.hall ~(tap in ~(key by council.update)))
     ::
         %next-producer
       ::  if we can, produce a chunk!
-      ?:  ?|  ?=(~ hall.state)
-              !=(our.bowl (snag chair.u.hall.state order.u.hall.state))
+      =/  slot-num  .^(@ud %gx /(scot %p our.bowl)/ziggurat/(scot %da now.bowl)/slot/noun)
+      ?:  ?|  ?=(~ hall.this)
+              ::?=(~ order.u.hall.state)
+              !=(our.bowl (snag (mod (lent order.u.hall.state) slot-num) order.u.hall.this))
           ==
         ~&  >>  "ignoring request"
         `this
@@ -157,14 +162,14 @@
       ::  create and send our chunk to them
       =/  me  .^(account:smart %gx /(scot %p our.bowl)/ziggurat/(scot %da now.bowl)/account/noun)
       =/  our-chunk=chunk:smart
-        %+  ~(mill-all mill me (need library.state) id.hall blocknum.hall now.bowl)
+        %+  ~(mill-all mill me (need library.state) (need town-id.state) 0 now.bowl)  ::  TODO blocknum
           town.state
         ~(tap in basket.state)
       ~&  >>  "chunk size: {<(met 3 (jam our-chunk))>} bytes"
       ::
       ::  find who will be next in town to produce chunk
       =/  next-chair=@ud
-        ?:  (gte +(chair.hall) ~(wyt in council.hall))
+        ?:  (gte +(chair.hall) ~(wyt by council.hall))
           0
         +(chair.hall)
       ::  currently clearing mempool with every chunk, but
@@ -173,12 +178,11 @@
       :_  %=  this
               basket           ~
               town             +.our-chunk
-              blocknum.u.hall  +(blocknum.hall)
               chair.u.hall     next-chair
           ==
       :~  :*  %pass  /chunk-gossip
               %agent  [ship.update %ziggurat]  %poke
-              %zig-action  !>([%receive-chunk id.hall our-chunk])
+              %zig-action  !>([%receive-chunk (need town-id.state) our-chunk])
           ==
           :*  %pass  /basket-gossip
               %agent  [our.bowl %sequencer]  %poke
@@ -202,14 +206,13 @@
   ::  if wheat,
   ::  call read arm here based on path
   ::  args stored in path
-  ?~  hall.state    ~
   ?.  =(%x -.path)  ~
   ?+    +.path  (on-peek:def path)
       [%active ~]
     ``noun+!>(`?`!=(~ hall.state))
   ::
       [%town-id ~]
-    ``noun+!>(`@ud`?~(hall.state !! id.u.hall.state))
+    ``noun+!>(`(unit @ud)`town-id.state)
   ::
       [%rice @ ~]
     =/  id  (slav %ux i.t.t.path)
@@ -236,7 +239,7 @@
     ::    ?.  =(lord.u.found id)                   ~
     ::    `[find u.res]
     =/  cont  (hole:smart contract:smart u.cont.p.germ.u.res)
-    =/  cart  [~ id blocknum.u.hall.state id.u.hall.state ~]
+    =/  cart  [~ id 0 (need town-id.state) ~] ::  TODO blocknum
     ``noun+!>((~(read cont cart) path))
   ::
       [%sizeof @ ~]

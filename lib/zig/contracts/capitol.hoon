@@ -34,7 +34,7 @@
       q.sig.args
     =/  new-hall-hash
       (fry 0x0 0 new-hall-germ)
-    =.  data.p.germ.world-grain  (~(put by world) town-id.args %.y)
+    =.  data.p.germ.world-grain  (~(put by world) town-id.args new-hall-hash)
     :+  %&
       [[id.world-grain world-grain] ~ ~]
     [[new-hall-hash [new-hall-hash 0x0 0x0 0 new-hall-germ]] ~ ~]
@@ -83,7 +83,6 @@
       $:  town-id=@ud
           council=(map ship id)
           ::  stakes=(map ship amt=@ud)
-          order=(list ship)
       ==
   --
 ::

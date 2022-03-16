@@ -28,7 +28,7 @@
   ==
 +$  sequencer-update
   $%  [%next-producer =ship]
-      [%new-hall council=(map ship @ux) order=(list ship)]
+      [%new-hall council=(map ship id:smart)]
   ==
 ::
 +$  action

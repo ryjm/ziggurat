@@ -5,14 +5,13 @@
 |=  [[now=@da eny=@uvJ bek=beak] [=start=time ~] ~]
 :-  %zig-action
 ^-  action
-::  store only contract code, insert into shared subject
 =/  world-map
   ^-  grain:smart
   :*  `@ux`'world'            ::  id
       `@ux`'capitol'          ::  lord
       `@ux`'capitol'          ::  holder
       0                       ::  town-id
-      [%& data=*(map @ux ?)]  ::  germ
+      [%& data=*(map @ud @ux)]  ::  germ
   ==
 =/  wheat
   ^-  wheat:smart

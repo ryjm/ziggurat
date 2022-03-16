@@ -2,7 +2,6 @@
 ::
 /-  sequencer
 /+  *ziggurat, default-agent, dbug, verb, smart=zig-sys-smart, mill=zig-mill
-/*  smart-lib  %noun  /lib/zig/sys/smart-lib/noun
 =,  util
 |%
 +$  card  card:agent:gall
@@ -197,12 +196,15 @@
       ::  set our timers for all the slots in this epoch,
       ::  subscribe to all the other validator ships,
       ::  and alert subscribing sequencers of the next block producer
+      ::  determine which hall our sequencer is on, if any
+      =/  town-id  .^((unit @ud) %gx /(scot %p our.bowl)/sequencer/(scot %da now.bowl)/town-id/noun)
       %-  zing
-      :~  ~[(need hall-update-card)]
-          ~[(notify-sequencer -.order.new-epoch)]
-          (watch-updates (silt (murn order.new-epoch filter-by-wex)))
-          (new-epoch-timers new-epoch our.bowl)
-      ==
+        :~  ?~  hall-card=(hall-update-card town-id)
+              ~[(notify-sequencer -.order.new-epoch)]
+            ~[u.hall-card (notify-sequencer -.order.new-epoch)]
+            (watch-updates (silt (murn order.new-epoch filter-by-wex)))
+            (new-epoch-timers new-epoch our.bowl)
+        ==
     ::
         %receive-chunk
       ::  TODO make this town-running-stars only once that info is known
@@ -272,28 +274,27 @@
     [%pass wire %agent [s %ziggurat] %watch /validator/updates]
   ::
   ::  +hall-update: give sequencer updated hall for their town at start of new epoch
-  ::  TODO: make this not such a shitty ugly arm
+  ::  TODO: make this not such a shitty ugly arm!!!
   ::
   ++  hall-update-card
+    |=  town-id=(unit @ud)
     ^-  (unit card)
-    ::  (1) determine which hall our sequencer is on, if any
-    =/  town-id  .^(@ud %gx /(scot %p our.bowl)/sequencer/(scot %da now.bowl)/town-id/noun)
-    ::  (2) grab on-chain data for that hall in this epoch
+    ?~  town-id  ~
+    ::  grab on-chain data for that hall in this epoch
     ?~  found=(~(get by p.globe.state) `@ux`'world')      ~
     ?.  ?=(%& -.germ.u.found)                             ~
     =/  world  (hole:smart (map @ud @ux) data.p.germ.u.found)
-    ?~  town-rice=(~(get by world) town-id)               ~
+    ?~  town-rice=(~(get by world) u.town-id)             ~
     ?~  found-rice=(~(get by p.globe.state) u.town-rice)  ~
     ?.  ?=(%& -.germ.u.found-rice)                        ~
     =/  our-town
       %+  hole:smart
         ,[town-id=@ud council=(map ship id:smart) order=(list ship)]
       data.p.germ.u.found-rice
-    ?.  =(town-id.our-town town-id)  ~
-    ::  (3) package as a gift for subscribed sequencer
+    ?.  =(town-id.our-town u.town-id)  ~
     :-  ~  :-  %give
     :^  %fact  ~[/sequencer/updates]
-        %sequencer-update  !>([%new-hall council.our-town order.our-town])
+        %sequencer-update  !>([%new-hall council.our-town])
   ::
   ::  cleanup arms: close subscriptions of our various watchers
   ::  TODO can probably merge these into a single arm and single +murn
@@ -496,6 +497,7 @@
       ?:  =(our.bowl (rear order.cur))
         ::  if this is the last block in the epoch,
         ::  perform global-level transactions
+        ::  insert transaction to advance 
         =/  globe-chunk
           %+  ~(mill-all mill (need me.state) (need library.state) relay-town-id 0 now.bowl)
             globe.state

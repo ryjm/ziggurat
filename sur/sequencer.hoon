@@ -4,9 +4,7 @@
 ::  be ordered by nonce if submitted by same user!!
 ::
 +$  hall  ::  runs a town
-  $:  id=@ud
-      blocknum=@ud
-      council=(set ship)
+  $:  council=(map ship id:smart)
       order=(list ship)
       chair=@ud  :: position of leader in order
   ==
