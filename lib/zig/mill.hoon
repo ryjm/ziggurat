@@ -224,9 +224,9 @@
       ++  write
         |=  =^zygote
         ^-  [(unit (each chick (list tank))) @ud]
-        ::  (bull |.(;;(chick (~(write contract cart) zygote))) bud)
-        :_  (sub bud 7)
-        `(mule |.(;;(chick (~(write contract cart) zygote))))
+        (bull |.(;;(chick (~(write contract cart) zygote))) bud)
+        ::  :_  (sub bud 7)
+        ::  `(mule |.(;;(chick (~(write contract cart) zygote))))
       ++  event
         |=  =rooster
         ^-  [(unit (each chick (list tank))) @ud]
