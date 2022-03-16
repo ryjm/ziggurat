@@ -1,6 +1,7 @@
 /-  *group, metadata=metadata-store
 /+  store=graph-store, mdl=metadata, res=resource, graph, group, default-agent,
-    dbug, verb, push-hook, agentio
+    dbug, verb, push-hook, agentio,
+    daolib=dao
 ::
 ~%  %graph-push-hook-top  ..part  ~
 |%
@@ -11,7 +12,7 @@
       /updates
       update:store
       %graph-update
-      %graph-pull-hook
+      %dao-graph-pull-hook
       3  3
   ==
 ::
@@ -64,6 +65,7 @@
     met   ~(. mdl bowl)
     hc    ~(. hook-core bowl +.state)
     io    ~(. agentio bowl)
+    dao   ~(. daolib bowl)
 ::
 ++  on-init   on-init:def
 ++  on-save   !>(-.state)
@@ -238,11 +240,10 @@
 ++  resource-for-update  resource-for-update:gra
 ::
 ++  initial-watch
-  ~/  %initial-watch
+  :: ~/  %initial-watch  ::  TODO: write jet with updated +is-allowed?
   |=  [=path =resource:res]
   ^-  vase
-  |^
-  ?>  (is-allowed resource)
+  ?>  (is-allowed-read:dao src.bowl resource)
   !>  ^-  update:store
   ?~  path
     ::  new subscribe
@@ -255,13 +256,13 @@
   =/  =time  (slav %da i.path)
   =/  =update-log:store  (get-update-log-subset:gra resource time)
   [now.bowl [%run-updates resource update-log]]
-  ::
-  ++  is-allowed
-    |=  =resource:res
-    =/  group-res=resource:res
-      (need (peek-group:met %graph resource))
-    (is-member:grp src.bowl group-res)
-  --
+  :: ::
+  :: ++  is-allowed
+  ::   |=  =resource:res
+  ::   =/  group-res=resource:res
+  ::     (need (peek-group:met %graph resource))
+  ::   (is-member:grp src.bowl group-res)
+  :: --
 ::
 ++  take-update
   |=  =vase
@@ -285,6 +286,7 @@
     met  ~(. mdl bowl)
     gra  ~(. graph bowl)
     io    ~(. agentio bowl)
+    dao   ~(. daolib bowl)
 ::
 ++  scry
   |=  [care=@t desk=@t =path]
@@ -322,37 +324,27 @@
   --
 ::
 ++  get-permission
-  |=  [=permissions:store is-admin=? writers=(set ship)]
+  |=  [=permissions:store is-admin=? is-writer=?]
   ^-  permission-level:store
   ?:  is-admin
     admin.permissions
-  ?:  =(~ writers)
-    writer.permissions
-  ?:  (~(has in writers) src.bowl)
+  ?:  is-writer
     writer.permissions
   reader.permissions
 ::
-++  get-roles-writers-variation
-  ~/  %get-roles-writers-variation
+++  get-permissions-variation
+:: ++  get-roles-writers-variation
+::   ~/  %get-roles-writers-variation  ::  TODO: write jet?
   |=  =resource:res
-  ^-  (unit [is-admin=? writers=(set ship) vip=vip-metadata:metadata])
+  ^-  (unit [is-admin=? is-writer=? vip=vip-metadata:metadata])
   =/  assoc=(unit association:metadata)
     (peek-association:met %graph resource)
   ?~  assoc  ~
-  =/  group=(unit group:grp)
-    (scry-group:grp group.u.assoc)
-  ?~  group  ~
-  =/  role=(unit (unit role-tag))
-    (role-for-ship-with-group:grp u.group group.u.assoc src.bowl)
-  =/  writers=(set ship)
-    %^  get-tagged-ships-with-group:grp
-        u.group
-      group.u.assoc
-    [%graph resource %writers]
-  ?~  role  ~
-  =/  is-admin=?
-    ?=(?([~ %admin] [~ %moderator]) u.role)
-  `[is-admin writers vip.metadatum.u.assoc]
+  ::
+  =/  [is-admin=? is-writer=? is-reader=?]
+    (is-allowed-admin-write-read:dao src.bowl resource)
+  ?.  is-reader  ~
+  `[is-admin is-writer vip.metadatum.u.assoc]
 ::
 ++  node-to-indexed-post
   |=  =node:store
@@ -362,20 +354,20 @@
   [(snag (dec (lent index)) index) p.post.node]
 ::
 ++  is-allowed-add
-  ~/  %is-allowed-add
+  :: ~/  %is-allowed-add  ::  TODO: write jet?
   |=  [=resource:res nodes=(map index:store node:store)]
   ^-  [? (list card)]
   |^
   %-  (bond |.([%.n ~]))
-  %+  biff  (get-roles-writers-variation resource)
-  |=  [is-admin=? writers=(set ship) vip=vip-metadata:metadata]
+  %+  biff  (get-permissions-variation resource)
+  |=  [is-admin=? is-writer=? vip=vip-metadata:metadata]
   ^-  (unit [? (list card)])
   %-  some
   =/  a  ~(tap by nodes)
   =|  cards=(list card)
   |-  ^-  [? (list card)]
   ?~  a  [& cards]
-  =/  c  (check i.a is-admin writers vip)
+  =/  c  (check i.a is-admin is-writer vip)
   ?.  -.c
     [| (weld cards +.c)]
   $(a t.a, cards (weld cards +.c))
@@ -383,7 +375,7 @@
   ++  check
     |=  $:  [=index:store =node:store]
             is-admin=?
-            writers=(set ship)
+            is-writer=?
             vip=vip-metadata:metadata
         ==
     ^-  [? (list card)]
@@ -401,7 +393,7 @@
     =*  permissions  -.added
     =*  cards         +.added
     =/  =permission-level:store
-      (get-permission permissions is-admin writers)
+      (get-permission permissions is-admin is-writer)
     :_  cards
     ?-  permission-level
         %yes  %.y
@@ -421,25 +413,25 @@
   --
 ::
 ++  is-allowed-remove
-  ~/  %is-allowed-remove
+  :: ~/  %is-allowed-remove  TODO: write jet?
   |=  [=resource:res indices=(set index:store)]
   ^-  [? (list card)]
   |^
   %-  (bond |.([%.n ~]))
-  %+  biff  (get-roles-writers-variation resource)
-  |=  [is-admin=? writers=(set ship) vip=vip-metadata:metadata]
+  %+  biff  (get-permissions-variation resource)
+  |=  [is-admin=? is-writer=? vip=vip-metadata:metadata]
   %-  some
   =/  a  ~(tap by indices)
   =|  cards=(list card)
   |-  ^-  [? (list card)]
   ?~  a  [& cards]
-  =/  c  (check i.a is-admin writers vip)
+  =/  c  (check i.a is-admin is-writer vip)
   ?.  -.c
     [| (weld cards +.c)]
   $(a t.a, cards (weld cards +.c))
   ::
   ++  check
-    |=  [=index:store is-admin=? writers=(set ship) vip=vip-metadata:metadata]
+    |=  [=index:store is-admin=? is-writer=? vip=vip-metadata:metadata]
     ^-  [? (list card)]
     =/  =node:store
       (got-node:gra resource index)
@@ -451,7 +443,7 @@
     =*  permissions   -.removed
     =*  cards         +.removed
     =/  =permission-level:store
-      (get-permission permissions is-admin writers)
+      (get-permission permissions is-admin is-writer)
     :_  cards
     ?-  permission-level
       %yes   %.y

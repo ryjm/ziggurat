@@ -9,7 +9,7 @@
   :*  %graph-store
       update:store
       %graph-update
-      %graph-push-hook
+      %dao-graph-push-hook
       3  3
       %.n
   ==
