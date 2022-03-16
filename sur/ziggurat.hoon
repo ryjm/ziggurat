@@ -26,12 +26,15 @@
       ::
       [%saw-block epoch-num=@ud header=block-header]
   ==
-+$  sequencer-update  [%next-producer =ship]
++$  sequencer-update
+  $%  [%next-producer =ship]
+      [%new-hall council=(map ship @ux) order=(list ship)]
+  ==
 ::
 +$  action
   $%  [%set-standard-lib =path]
       [%set-pubkey =account:smart]
-      [%start mode=?(%fisherman %validator) history=epochs validators=(set ship)]
+      [%start mode=?(%fisherman %validator) history=epochs validators=(set ship) starting-state=town:smart]
       [%stop ~]
       [%new-epoch ~]
       [%receive-chunk town-id=@ud =chunk:smart]

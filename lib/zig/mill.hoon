@@ -14,8 +14,7 @@
     (gth rate.p.a rate.p.b)
   =|  [processed=(list [@ux egg]) reward=@ud]
   |-
-  ::  'chunk' def
-  ^-  [(list [@ux egg]) ^town]
+  ^-  chunk
   ?~  pending
     [processed town(p (~(pay tax p.town) reward))]
   =+  [res fee]=(mill town i.pending)
@@ -213,18 +212,18 @@
       ::  output trace ends up resolving at the ;; rather than
       ::  wherever in the contract caused a stack trace.
       ::
-      ::  using +mule here and charging no gas until jet dashboard for +bink
       ++  write
         |=  =^zygote
         ^-  [(unit (each chick (list tank))) @ud]
         (bull |.(;;(chick (~(write contract cart) zygote))) bud)
-        :: :_  (sub bud 7)
-        :: `(mule |.(;;(chick (~(write contract cart) zygote))))
+        ::  :_  (sub bud 7)
+        ::  `(mule |.(;;(chick (~(write contract cart) zygote))))
       ++  event
         |=  =rooster
         ^-  [(unit (each chick (list tank))) @ud]
-        :_  (sub bud 8)
-        `(mule |.(;;(chick (~(event contract cart) rooster))))
+        (bull |.(;;(chick (~(event contract cart) rooster))) bud)
+        ::  :_  (sub bud 8)
+        ::  `(mule |.(;;(chick (~(event contract cart) rooster))))
       --
     --
   ::

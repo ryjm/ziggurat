@@ -1,3 +1,4 @@
+|_  =cart
 ::
 ::  capitol.hoon
 ::
@@ -8,8 +9,6 @@
 ::  must include in each transaction a signature from the
 ::  Urbit star whose town status they wish to modify.
 ::
-/+  *zig-sys-smart
-|_  =cart
 ++  write
   |=  inp=zygote
   ^-  chick
@@ -26,8 +25,7 @@
       %init
     ::  start a new town if one with if that id doesn't exist
     ?.  ?=([sig=[p=@ux q=ship r=life] town-id=@ud] args)  !!
-    =/  active  (~(get by world) town-id.args)
-    ?.  ?|(?=(~ active) !u.active)  !!
+    ?.  (~(has by world) town-id.args)  !!
     =/  new-hall-germ
       :-  %&
       :^    town-id.args
@@ -68,16 +66,16 @@
       [[id.hall-grain hall-grain] ~ ~]
     ::  town has no sequencers and is thus inactive
     =.  data.p.germ.world-grain
-      (~(put by world) town-id.args %.n)
+      (~(del by world) town-id.args)
     :+  %&
       [[id.world-grain world-grain] ~ ~]
     [[id.hall-grain hall-grain] ~ ~]
   ==
   ::
-  ::  existing towns
+  ::  existing towns and the rice that store their hall
   ::
   +$  world-mold
-      (map town-id=@ud active=?)
+      (map town-id=@ud address=id)
   ::
   ::  town hall rice mold
   ::

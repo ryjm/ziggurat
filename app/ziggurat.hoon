@@ -149,7 +149,7 @@
         history.action
       ?:  ?=(%validator mode.action)
         ?>  ?|(?=(^ epochs) ?=(^ validators.action))
-        :_  state(mode %validator)
+        :_  state(mode %validator, globe starting-state.action)
         %-  zing
         :~  cleanup-fisherman
             cleanup-validator
@@ -198,7 +198,7 @@
       ::  subscribe to all the other validator ships,
       ::  and alert subscribing sequencers of the next block producer
       %-  zing
-      :~  hall-updates
+      :~  ~[(need hall-update-card)]
           ~[(notify-sequencer -.order.new-epoch)]
           (watch-updates (silt (murn order.new-epoch filter-by-wex)))
           (new-epoch-timers new-epoch our.bowl)
@@ -223,9 +223,12 @@
         %forward
       ?>  (lte (met 3 src.bowl) 2)
       ::  getting an egg from sequencer
-      ::  TODO enforce that these transactions are part of
-      ::  a hardcoded subet -- the init/join/leave/stake/etc
-      ::  write calls to the pre-written town contract.
+      ::  filter out any eggs not sent to contracts
+      ::  we're aware of
+      =.  eggs.act
+        %-  ~(gas in *(set egg:smart))
+        %+  skim  ~(tap in eggs.act)
+        |=(=egg:smart =(to.p.egg `@ux`'world'))
       =/  cur=epoch  +:(need (pry:poc epochs))
       =/  last-slot-num=@ud
         (need (bind (pry:sot slots.cur) head))
@@ -268,11 +271,29 @@
     =/  =^wire  /validator/updates/(scot %p s)
     [%pass wire %agent [s %ziggurat] %watch /validator/updates]
   ::
-  ::  +hall-updates: give subscribers updated halls we've been poked with
+  ::  +hall-update: give sequencer updated hall for their town at start of new epoch
+  ::  TODO: make this not such a shitty ugly arm
   ::
-  ++  hall-updates
-    ^-  (list card)
-    ~  :: TODO refactor
+  ++  hall-update-card
+    ^-  (unit card)
+    ::  (1) determine which hall our sequencer is on, if any
+    =/  town-id  .^(@ud %gx /(scot %p our.bowl)/sequencer/(scot %da now.bowl)/town-id/noun)
+    ::  (2) grab on-chain data for that hall in this epoch
+    ?~  found=(~(get by p.globe.state) `@ux`'world')      ~
+    ?.  ?=(%& -.germ.u.found)                             ~
+    =/  world  (hole:smart (map @ud @ux) data.p.germ.u.found)
+    ?~  town-rice=(~(get by world) town-id)               ~
+    ?~  found-rice=(~(get by p.globe.state) u.town-rice)  ~
+    ?.  ?=(%& -.germ.u.found-rice)                        ~
+    =/  our-town
+      %+  hole:smart
+        ,[town-id=@ud council=(map ship id:smart) order=(list ship)]
+      data.p.germ.u.found-rice
+    ?.  =(town-id.our-town town-id)  ~
+    ::  (3) package as a gift for subscribed sequencer
+    :-  ~  :-  %give
+    :^  %fact  ~[/sequencer/updates]
+        %sequencer-update  !>([%new-hall council.our-town order.our-town])
   ::
   ::  cleanup arms: close subscriptions of our various watchers
   ::  TODO can probably merge these into a single arm and single +murn
@@ -384,7 +405,12 @@
       =^  cards  cur
         %-  ~(their-block epo cur prev-hash [our now src]:bowl)
         [header `block]:update
-      [cards state(epochs (put:poc epochs num.cur cur))]
+      :-  cards
+      ?.  =(next-slot-num (lent order.cur))
+        state(epochs (put:poc epochs num.cur cur))
+      ::  update globe state if last block in epoch
+      =-  state(epochs (put:poc epochs num.cur cur), globe -)
+      +:(~(got by `^chunks`+.block.update) 0)
     ::
         %saw-block
       :_  state
@@ -467,14 +493,20 @@
       (got-hed-hash slot-num epochs cur)
     ?:  =(ship our.bowl)
       ::  we are responsible for producing a block in this slot
-      =?  chunks.state  =(our.bowl (rear order.cur))
+      ?:  =(our.bowl (rear order.cur))
         ::  if this is the last block in the epoch,
         ::  perform global-level transactions
-        %+  ~(put by chunks.state)
-          relay-town-id  ::  0
-        %+  ~(mill-all mill (need me.state) (need library.state) relay-town-id 0 now.bowl)
-          globe.state
-        ~(tap in basket.state)
+        =/  globe-chunk
+          %+  ~(mill-all mill (need me.state) (need library.state) relay-town-id 0 now.bowl)
+            globe.state
+          ~(tap in basket.state)
+        =:  globe.state   +.globe-chunk
+            chunks.state  (~(put by chunks.state) relay-town-id globe-chunk)
+        ==
+        =^  cards  cur
+          (~(our-block epo cur prev-hash [our now src]:bowl) chunks.state)
+        [cards state(epochs (put:poc epochs num.cur cur), chunks ~)]
+      ::  otherwise normal block
       =^  cards  cur
         (~(our-block epo cur prev-hash [our now src]:bowl) chunks.state)
       [cards state(epochs (put:poc epochs num.cur cur), chunks ~)]

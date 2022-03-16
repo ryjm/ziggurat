@@ -105,42 +105,27 @@
       ?.  .^(? %gx /(scot %p our.bowl)/ziggurat/(scot %da now.bowl)/active/noun)
         ~|("can't run a town, ziggurat not active" !!)
       ::  assert we're not already running a town
-      ?^  hall.state
-        ~|("can't init a town, already active in one" !!)
-      ?~  library.state
-        ~|("can't init a town, no standard library for contracts" !!)
-      ::  check main chain for existence of that town,
-      ::  join if we can, fail if we can't, make new town
-      ::  if it doesn't exist
+      ?^  hall.state     ~|("can't init a town, already active in one" !!)
+      ?~  library.state  ~|("can't init a town, no standard library for contracts" !!)
+      ::  TODO submit tx to ziggurat for inclusion in next epoch
       ~&  >>  "sequencer initialized"
-      :-  ::  subscribe to next-producer updates
-          :~  :*  %pass   /sequencer/updates
-                  %agent  [our.bowl %ziggurat]
-                  %watch  /sequencer/updates
-          ==  ==
-      %=  state
-          hall  `[town-id.act 0 (silt ~[our.bowl]) ~[our.bowl] 0]
-          town  ?~(starting-state.act [~ ~] u.starting-state.act)
-      ==
+      :_  state(town ?~(starting-state.act [~ ~] u.starting-state.act))
+          ::  subscribe to updates from ziggurat
+      :~  :*  %pass   /sequencer/updates
+              %agent  [our.bowl %ziggurat]
+              %watch  /sequencer/updates
+      ==  ==
     ::
         %leave-hall
       ?>  =(src.bowl our.bowl)
       ?<  ?=(~ hall.state)
+      ::  TODO submit tx indicating our absence. wait for ack to actually leave
       :_  state(hall ~, town [~ ~], basket ~, library ~)
       %+  murn  ~(tap by wex.bowl)
       |=  [[=wire =ship =term] *]
       ^-  (unit card)
       ?.  ?=([%sequencer %updates *] wire)  ~
       `[%pass wire %agent [ship term] %leave ~]
-    ::  ::
-    ::      %hall-update  ::  we'll get these from our ziggurat agent
-    ::    ?>  =(src.bowl our.bowl)
-    ::    ?~  hall.state
-    ::      ~&  >>  "ignoring poke, we're not active in a council"
-    ::      [~ state]
-    ::    ::  TODO maybe don't accept these uncritically?
-    ::    `state(council.u.hall council.act)
-    ::
     ==
   --
 ::
@@ -150,50 +135,56 @@
   ?+    wire  (on-agent:def wire sign)
       [%chunk-gossip ~]
     ::  TODO manage rejected chunks here.
-    ::  try and submit them to the next producer
+    ::  try and submit them to the next producer?
     `this
       [%sequencer %updates ~]
     ?:  ?=(%watch-ack -.sign)              (on-agent:def wire sign)
     ?.  ?=(%fact -.sign)                   (on-agent:def wire sign)
     ?.  ?=(%sequencer-update p.cage.sign)  (on-agent:def wire sign)
-    =/  next-producer  ship:!<(sequencer-update:ziggurat q.cage.sign)
-    ::  if we can, produce a chunk!
-    ?:  ?|  ?=(~ hall.state)
-            !=(our.bowl (snag chair.u.hall.state order.u.hall.state))
-        ==
-      ~&  >>  "ignoring request"
-      `this
-    =*  hall  u.hall.state
-    ::  create and send our chunk to them
-    =/  me  .^(account:smart %gx /(scot %p our.bowl)/ziggurat/(scot %da now.bowl)/account/noun)
-    =/  our-chunk=chunk:smart
-      %+  ~(mill-all mill me (need library.state) id.hall blocknum.hall now.bowl)
-        town.state
-      ~(tap in basket.state)
-    ~&  >>  "chunk size: {<(met 3 (jam our-chunk))>} bytes"
+    =/  update  !<(sequencer-update:ziggurat q.cage.sign)
+    ?-    -.update
+        %new-hall
+      !!
     ::
-    ::  find who will be next in town to produce chunk
-    =/  next-chair=@ud
-      ?:  (gte +(chair.hall) ~(wyt in council.hall))
-        0
-      +(chair.hall)
-    ::  currently clearing mempool with every chunk, but
-    ::  this is not necessary: we forward our basket
-    ~&  >>  "submitting chunk to producer {<next-producer>}"
-    :_  %=  this
-            basket           ~
-            town             +.our-chunk
-            blocknum.u.hall  +(blocknum.hall)
-            chair.u.hall     next-chair
-        ==
-    :~  :*  %pass  /chunk-gossip
-            %agent  [next-producer %ziggurat]  %poke
-            %zig-action  !>([%receive-chunk id.hall our-chunk])
-        ==
-        :*  %pass  /basket-gossip
-            %agent  [our.bowl %sequencer]  %poke
-            %zig-basket-action  !>([%forward ~])
-        ==
+        %next-producer
+      ::  if we can, produce a chunk!
+      ?:  ?|  ?=(~ hall.state)
+              !=(our.bowl (snag chair.u.hall.state order.u.hall.state))
+          ==
+        ~&  >>  "ignoring request"
+        `this
+      =*  hall  u.hall.state
+      ::  create and send our chunk to them
+      =/  me  .^(account:smart %gx /(scot %p our.bowl)/ziggurat/(scot %da now.bowl)/account/noun)
+      =/  our-chunk=chunk:smart
+        %+  ~(mill-all mill me (need library.state) id.hall blocknum.hall now.bowl)
+          town.state
+        ~(tap in basket.state)
+      ~&  >>  "chunk size: {<(met 3 (jam our-chunk))>} bytes"
+      ::
+      ::  find who will be next in town to produce chunk
+      =/  next-chair=@ud
+        ?:  (gte +(chair.hall) ~(wyt in council.hall))
+          0
+        +(chair.hall)
+      ::  currently clearing mempool with every chunk, but
+      ::  this is not necessary: we forward our basket
+      ~&  >>  "submitting chunk to producer {<ship.update>}"
+      :_  %=  this
+              basket           ~
+              town             +.our-chunk
+              blocknum.u.hall  +(blocknum.hall)
+              chair.u.hall     next-chair
+          ==
+      :~  :*  %pass  /chunk-gossip
+              %agent  [ship.update %ziggurat]  %poke
+              %zig-action  !>([%receive-chunk id.hall our-chunk])
+          ==
+          :*  %pass  /basket-gossip
+              %agent  [our.bowl %sequencer]  %poke
+              %zig-basket-action  !>([%forward ~])
+          ==
+      ==
     ==
   ==
 ::
@@ -217,6 +208,9 @@
       [%active ~]
     ``noun+!>(`?`!=(~ hall.state))
   ::
+      [%town-id ~]
+    ``noun+!>(`@ud`?~(hall.state !! id.u.hall.state))
+  ::
       [%rice @ ~]
     =/  id  (slav %ux i.t.t.path)
     ?~  res=(~(get by p.town.state) id)
@@ -232,7 +226,7 @@
     ?~  res=(~(get by p.town.state) id)  [~ ~]
     ?.  ?=(%| -.germ.u.res)              [~ ~]
     ?~  cont.p.germ.u.res                [~ ~]
-    ::  TODO make way for reads to get some rice input
+    ::  TODO make way for reads to get some rice input!
     ::  =/  owns
     ::    %-  ~(gas by *(map:smart id:smart grain:smart))
     ::    %+  murn  ~(tap in owns.p.germ.u.res)
