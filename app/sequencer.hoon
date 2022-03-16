@@ -121,8 +121,8 @@
       =/  tx
         :-  %forward
         %-  silt  :_  ~
-        :-  [[0xbeef 1 0x1.beef] `@ux`'capitol' 10 10.000 0]
-        :^    [0xbeef 1 0x1.beef]
+        :-  [[0xbeef 2 0x1.beef] `@ux`'capitol' 1 500.000 0]
+        :^    [0xbeef 2 0x1.beef]
             `[%init sig town-id.act]
           ~
         (silt ~[`@ux`'world'])

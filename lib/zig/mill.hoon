@@ -93,7 +93,6 @@
     ^-  [(unit ^granary) @ud]
     =/  hatchling
       (incubate egg(budget.p (div budget.p.egg rate.p.egg)))
-    ~&  >>>  "we incubated"
     :_  +.hatchling
     ?~  -.hatchling  ~
     (harvest u.-.hatchling to.p.egg from.p.egg)
@@ -153,7 +152,6 @@
   ++  grow
     |=  [=crop =zygote =egg]
     ^-  [(unit rooster) @ud]
-    ~&  >>>  "growing"
     |^
     =+  [chick rem]=(weed crop to.p.egg [%& zygote] ~ budget.p.egg)
     ?~  chick  `rem
@@ -199,9 +197,9 @@
       |=  [=contract inp=embryo =cart bud=@ud]
       ^-  [(unit (each (each * chick) (list tank))) @ud]
       |^
-      ~&  >>  inp
-      ~&  >>  "===="
-      ~&  >>  cart
+      ::  ~&  >>  inp
+      ::  ~&  >>  "===="
+      ::  ~&  >>  cart
       ?:  ?=(%| -.inp)
         ::  event
         =/  res  (event p.inp)
@@ -224,9 +222,9 @@
       ++  write
         |=  =^zygote
         ^-  [(unit (each chick (list tank))) @ud]
-        (bull |.(;;(chick (~(write contract cart) zygote))) bud)
-        ::  :_  (sub bud 7)
-        ::  `(mule |.(;;(chick (~(write contract cart) zygote))))
+        ::  (bull |.(;;(chick (~(write contract cart) zygote))) bud)
+        :_  (sub bud 7)
+        `(mule |.(;;(chick (~(write contract cart) zygote))))
       ++  event
         |=  =rooster
         ^-  [(unit (each chick (list tank))) @ud]
