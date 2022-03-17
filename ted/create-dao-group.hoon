@@ -1,5 +1,6 @@
 /-  spider,
-    dgs=dao-group-store
+    dgs=dao-group-store,
+    ms=metadata-store
 /+  strandio,
     res=resource
 ::
@@ -30,6 +31,35 @@
     |=  our-id=id:dgs
     ^-  ship-to-id:dgs
     (~(put by *ship-to-id:dgs) our.bowl our-id)
+  ::
+  ++  make-dao-group
+    |=  [name=@tas dao-id=id:dgs our-id=id:dgs]
+    ^-  dao-group:dgs
+    =|  =dao-group:dgs
+    =.  name.dao-group         name
+    =.  dao-id.dao-group       dao-id
+    =.  permissions.dao-group  (make-permissions dao-id)
+    =.  members.dao-group      make-members
+    =.  id-to-ship.dao-group   (make-id-to-ship our-id)
+    =.  ship-to-id.dao-group   (make-ship-to-id our-id)
+    dao-group
+  ::
+  ++  make-metadatum
+    |=  name=@tas
+    ^-  metadatum:ms
+    =|  =metadatum:ms
+    =.  title.metadatum         name
+    =.  description.metadatum   name
+    :: =.  color.metadatum
+    =.  date-created.metadatum  now.bowl
+    =.  creator.metadatum       our.bowl
+    =.  config.metadatum        [%group feed=~]  :: ?
+    :: =.  picture.metadatum
+    =.  preview.metadatum       %.n
+    =.  hidden.metadatum        %.n
+    :: =.  vip.metadatum
+    metadatum
+  ::
   --
 ::
 ^-  thread:spider
@@ -52,16 +82,18 @@
 =*  our-id  our-id.u.args
 ;<  =bowl:spider  bind:m  get-bowl:strandio
 ~&  >  "constructing dao-group..."
-=|  =dao-group:dgs
-=.  name.dao-group         name
-=.  dao-id.dao-group       dao-id
-=.  permissions.dao-group  (make-permissions(bowl bowl) dao-id)
-=.  members.dao-group      make-members(bowl bowl)
-=.  id-to-ship.dao-group   (make-id-to-ship(bowl bowl) our-id)
-=.  ship-to-id.dao-group   (make-ship-to-id(bowl bowl) our-id)
+=/  =dao-group:dgs
+  (make-dao-group(bowl bowl) name dao-id our-id)
 ~&  >  "poking dao-group-store..."
 ;<  ~  bind:m
-  %^  poke-our  %dao-group-store  %dao-group-action
-  !>(`action:dgs`[%add-group rid dao-group])
+  %^  poke-our  %dao-group-store  %dao-group-create
+  !>(`create:dgs`[%add-group rid dao-group])
+::  TODO: need to add group to metadata-push-hook?
+~&  >  "constructing metadatum..."
+=/  =metadatum:ms  (make-metadatum(bowl bowl) name)
+~&  >  "poking metadata-store..."
+;<  ~  bind:m
+  %^  poke-our  %metadata-store  %metadata-action
+  !>(`action:ms`[%add rid [%dao-groups rid] metadatum])
 ~&  >  "done"
 (pure:m !>(~))
