@@ -243,7 +243,10 @@
   :: ~/  %initial-watch  ::  TODO: write jet with updated +is-allowed?
   |=  [=path =resource:res]
   ^-  vase
-  ?>  (is-allowed-read:dao src.bowl resource)
+  =/  assoc=(unit association:metadata)
+    (peek-association:met %graph resource)
+  ?~  assoc  !!
+  ?>  (is-allowed-read:dao src.bowl group.u.assoc resource)
   !>  ^-  update:store
   ?~  path
     ::  new subscribe
@@ -285,8 +288,8 @@
 +*  grp  ~(. group bowl)
     met  ~(. mdl bowl)
     gra  ~(. graph bowl)
-    io    ~(. agentio bowl)
-    dao   ~(. daolib bowl)
+    io   ~(. agentio bowl)
+    dao  ~(. daolib bowl)
 ::
 ++  scry
   |=  [care=@t desk=@t =path]
@@ -342,7 +345,7 @@
   ?~  assoc  ~
   ::
   =/  [is-admin=? is-writer=? is-reader=?]
-    (is-allowed-admin-write-read:dao src.bowl resource)
+    (is-allowed-admin-write-read:dao src.bowl group.u.assoc resource)
   ?.  is-reader  ~
   `[is-admin is-writer vip.metadatum.u.assoc]
 ::

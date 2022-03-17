@@ -12,6 +12,7 @@
 +$  ship-to-id   (map ship id)
 +$  dao-group
   $:  name=@t
+      dao-id=id
       =permissions
       =members
       =id-to-ship
@@ -25,9 +26,12 @@
 ::
 +$  dao-groups  (map resource:r dao-group)
 ::
-+$  action
++$  create
   $%  [%add-group =resource:r =dao-group]
-      [%remove-group =resource:r]
+  ==
+::
++$  modify
+  $%  [%remove-group =resource:r]
       [%add-member =resource:r roles=(set role) =id =ship]
       [%remove-member =resource:r =ship]
       [%add-permissions =resource:r name=@tas =address roles=(set role)]
@@ -36,6 +40,7 @@
       [%remove-roles =resource:r roles=(set role) =ship]
   ==
 +$  update
-  $%  action
+  $%  create
+      modify
   ==
 --

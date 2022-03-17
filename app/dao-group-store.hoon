@@ -21,7 +21,10 @@
 ::
 ::    ##  Pokes
 ::
-::    %dao-group-action:
+::    %dao-group-create:
+::      Create a DAO group. Further documented in /sur/dao-group-store.hoon
+::
+::    %dao-group-modify:
 ::      Modify the DAO group. Further documented in /sur/dao-group-store.hoon
 ::
 ::
@@ -30,6 +33,7 @@
 /+  dbug,
     default-agent,
     verb,
+    daolib=dao,
     reslib=resource
 ::
 |%
@@ -55,6 +59,7 @@
       dao-group-core  +>
       dgc             ~(. dao-group-core bowl)
       def             ~(. (default-agent this %|) bowl)
+      dao             ~(. daolib bowl)
   ::
   ++  on-init  `this(state [%0 ~])
   ++  on-save  !>(state)
@@ -70,10 +75,13 @@
     ^-  (quip card _this)
     ?>  (team:title our.bowl src.bowl)
     =^  cards  state
-      ?+    mark  (on-poke:def mark vase)
+      ?+  mark  (on-poke:def mark vase)
       ::
-          ?(%dao-group-update-0 %dao-group-action)
-        (dao-group-update:dgc !<(update:store vase))
+          %dao-group-create
+        (dao-group-create:dgc !<(create:store vase))
+      ::
+          %dao-group-modify
+        (dao-group-modify:dgc !<(modify:store vase))
       ::
       ==
     [cards this]
@@ -102,25 +110,20 @@
   ::
   --
 ::
-|_  bol=bowl:gall
+|_  =bowl:gall
++*  dao  ~(. daolib bowl)
+::
 ++  peek-dao-group
   |=  rid=resource:res
   ^-  (unit dao-group:store)
   (~(get by dao-groups) rid)
 ::
-++  dao-group-update
-  |=  =update:store
+++  dao-group-create
+  |=  =create:store
   ^-  (quip card _state)
   |^
-  ?-  -.update
-      %add-group           (add-group +.update)
-      %remove-group        (remove-group +.update)
-      %add-member          (add-member +.update)
-      %remove-member       (remove-member +.update)
-      %add-permissions     (add-permissions +.update)
-      %remove-permissions  (remove-permissions +.update)
-      %add-roles           (add-roles +.update)
-      %remove-roles        (remove-roles +.update)
+  ?-  -.create
+      %add-group  (add-group +.create)
   ==
   ::  +add-group: add group to store
   ::
@@ -133,26 +136,58 @@
     =.  dao-groups  (~(put by dao-groups) rid dao-group)
     :_  state
     (send-diff %add-group rid dao-group)
-  ::  +remove-group: remove group from store
   ::
-  ::    no-op if group does not exist
+  --
+::
+++  has-write-dao-permissions
+  |=  dao-group-rid=resource:res
+  ^-  (unit dao-group:store)
+  ?~  dao-group=(peek-dao-group dao-group-rid)
+    ~
+  ?.  %:  is-allowed:dao
+          src.bowl
+          dao-id.u.dao-group
+          %write
+          members.u.dao-group
+          permissions.u.dao-group
+      ==
+    ~
+  dao-group
+::  +dao-group-modify: modify DAO group store
+::
+::    no-op if group does not exist
+::    or if user does not have %owner
+::    permissions for DAO
+::
+++  dao-group-modify
+  |=  =modify:store
+  ^-  (quip card _state)
+  |^
+  ?-  -.modify
+      %remove-group        (remove-group +.modify)
+      %add-member          (add-member +.modify)
+      %remove-member       (remove-member +.modify)
+      %add-permissions     (add-permissions +.modify)
+      %remove-permissions  (remove-permissions +.modify)
+      %add-roles           (add-roles +.modify)
+      %remove-roles        (remove-roles +.modify)
+  ==
+  ::  +remove-group: remove group from store
   ::
   ++  remove-group
     |=  rid=resource:res
     ^-  (quip card _state)
-    ?:  ?=(^ (~(get by dao-groups) rid))  `state
+    ?~  (has-write-dao-permissions rid)  `state
     =.  dao-groups
       (~(del by dao-groups) rid)
     :_  state
     (send-diff %remove-group rid)
   ::  +add-member: add members to group
   ::
-  ::    no-op if group does not exist
-  ::
   ++  add-member
     |=  [rid=resource:res roles=(set role:store) =id:store him=ship]
     ^-  (quip card _state)
-    ?~  dao-group=(~(get by dao-groups) rid)  `state
+    ?~  dao-group=(has-write-dao-permissions rid)  `state
     =/  existing-ship=(unit ship)
       (~(get by id-to-ship.u.dao-group) id)
     ?:  ?=(^ existing-ship)
@@ -180,12 +215,10 @@
     (send-diff %add-member rid roles id him)
   ::  +remove-member: remove members from group
   ::
-  ::    no-op if group does not exist
-  ::
   ++  remove-member
     |=  [rid=resource:res him=ship]
     ^-  (quip card _state)
-    ?~  dao-group=(~(get by dao-groups) rid)  `state
+    ?~  dao-group=(has-write-dao-permissions rid)  `state
     ?~  id=(~(get by ship-to-id.u.dao-group) him)  `state
     ?~  existing-ship=(~(get by id-to-ship.u.dao-group) u.id)
       ~|  "dao-group-store: cannot find given member to remove in id-to-ship"
@@ -206,11 +239,10 @@
     (send-diff %remove-member rid him)
   ::  +add-permissions: add 
   ::
-  ::    no-op if group does not exist
-  ::
   ++  add-permissions
     |=  [rid=resource:res name=@tas =address:store roles=(set role:store)]
-    ?~  dao-group=(~(get by dao-groups) rid)  `state
+    ^-  (quip card _state)
+    ?~  (has-write-dao-permissions rid)  `state
     =/  pairs=(list (pair address:store role:store))
       (make-noun-role-pairs address roles)
     =.  dao-groups
@@ -229,11 +261,10 @@
     (send-diff %add-permissions rid name address roles)
   ::  +remove-permissions: remove 
   ::
-  ::    no-op if group does not exist
-  ::
   ++  remove-permissions
     |=  [rid=resource:res name=@tas =address:store roles=(set role:store)]
-    ?~  dao-group=(~(get by dao-groups) rid)  `state
+    ^-  (quip card _state)
+    ?~  dao-group=(has-write-dao-permissions rid)  `state
     =/  pairs=(list (pair address:store role:store))
       (make-noun-role-pairs address roles)
     =.  dao-groups
@@ -256,7 +287,7 @@
   ++  add-roles
     |=  [rid=resource:res roles=(set role:store) him=ship]
     ^-  (quip card _state)
-    ?~  dao-group=(~(get by dao-groups) rid)  `state
+    ?~  dao-group=(has-write-dao-permissions rid)  `state
     ?~  (~(get ju members.u.dao-group) him)  !!
     =.  dao-groups
       %+  ~(jab by dao-groups)  rid
@@ -275,7 +306,7 @@
   ++  remove-roles
     |=  [rid=resource:res roles=(set role:store) him=ship]
     ^-  (quip card _state)
-    ?~  dao-group=(~(get by dao-groups) rid)  `state
+    ?~  dao-group=(has-write-dao-permissions rid)  `state
     ?~  (~(get ju members.u.dao-group) him)  !!
     =.  dao-groups
       %+  ~(jab by dao-groups)  rid

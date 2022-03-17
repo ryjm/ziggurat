@@ -1,4 +1,5 @@
 /-  dgs=dao-group-store,
+    ms=metadata-store,
     r=resource
 /+  agentio,
     rl=resource
@@ -7,10 +8,10 @@
 +*  io  ~(. agentio bowl)
 ::
 ++  is-allowed
-  |=  [him=ship rid=resource:r permission-name=@tas =members:dgs =permissions:dgs]
+  |=  [him=ship =address:dgs permission-name=@tas =members:dgs =permissions:dgs]
   ^-  ?
   ?~  permissioned=(~(get by permissions) permission-name)  %.n
-  ?~  roles-with-access=(~(get ju u.permissioned) rid)  %.n
+  ?~  roles-with-access=(~(get ju u.permissioned) address)  %.n
   ?~  ship-roles=(~(get ju members) him)  %.n
   ?!  .=  0
   %~  wyt  in
@@ -18,35 +19,35 @@
   `(set role:dgs)`roles-with-access
 ::
 ++  is-allowed-helper
-  |=  [him=ship rid=resource:r permission-name=@tas]
+  |=  [him=ship dao-group-rid=resource:r =address:dgs permission-name=@tas]
   ^-  ?
-  ?~  mp=(get-members-and-permissions rid)  %.n
+  ?~  mp=(get-members-and-permissions dao-group-rid)  %.n
   =+  [~ members permissions]=mp
-  (is-allowed him rid permission-name members permissions)
+  (is-allowed him address permission-name members permissions)
 ::
 ++  is-allowed-admin-write-read
-  |=  [him=ship rid=resource:r]
+  |=  [him=ship dao-group-rid=resource:r =address:dgs]
   ^-  [? ? ?]
-  ?~  mp=(get-members-and-permissions rid)  [%.n %.n %.n]
+  ?~  mp=(get-members-and-permissions dao-group-rid)  [%.n %.n %.n]
   =+  [~ members permissions]=mp
-  :+  (is-allowed him rid %admin members permissions)
-    (is-allowed him rid %write members permissions)
-  (is-allowed him rid %read members permissions)
+  :+  (is-allowed him address %admin members permissions)
+    (is-allowed him address %write members permissions)
+  (is-allowed him address %read members permissions)
 ::
 ++  is-allowed-write
-  |=  [him=ship rid=resource:r]
+  |=  [him=ship dao-group-rid=resource:r =address:dgs]
   ^-  ?
-  (is-allowed-helper him rid %write)
+  (is-allowed-helper him dao-group-rid address %write)
 ::
 ++  is-allowed-read
-  |=  [him=ship rid=resource:r]
+  |=  [him=ship dao-group-rid=resource:r =address:dgs]
   ^-  ?
-  (is-allowed-helper him rid %read)
+  (is-allowed-helper him dao-group-rid address %read)
 ::
 ++  is-allowed-admin
-  |=  [him=ship rid=resource:r]
+  |=  [him=ship dao-group-rid=resource:r =address:dgs]
   ^-  ?
-  (is-allowed-helper him rid %admin)
+  (is-allowed-helper him dao-group-rid address %admin)
 ::
 ++  get-dao-group
   |=  rid=resource:r
