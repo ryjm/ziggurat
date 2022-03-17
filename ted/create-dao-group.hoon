@@ -4,8 +4,8 @@
 /+  strandio,
     res=resource
 ::
-=*  strand     strand:spider
-=*  poke-our   poke-our:strandio
+=*  strand    strand:spider
+=*  poke-our  poke-our:strandio
 =>
   |_  =bowl:spider
   ::
