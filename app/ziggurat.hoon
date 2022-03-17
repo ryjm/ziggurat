@@ -2,7 +2,6 @@
 ::
 /-  sequencer
 /+  *ziggurat, default-agent, dbug, verb, smart=zig-sys-smart, mill=zig-mill
-/*  smart-lib  %noun  /lib/zig/sys/smart-lib/noun
 =,  util
 |%
 +$  card  card:agent:gall
@@ -497,14 +496,16 @@
       ?:  =(our.bowl (rear order.cur))
         ::  if this is the last block in the epoch,
         ::  perform global-level transactions
-        ::  insert transaction to advance 
+        ::  insert transaction to advance
+        ?~  me.state  `state
         =/  globe-chunk
-          %+  ~(mill-all mill (need me.state) (need library.state) relay-town-id 0 now.bowl)
+          %+  ~(mill-all mill u.me.state (need library.state) relay-town-id 0 now.bowl)
             globe.state
           ~(tap in basket.state)
         =:  globe.state   +.globe-chunk
             basket.state  ~
             chunks.state  (~(put by chunks.state) relay-town-id globe-chunk)
+            u.me.state    u.me(nonce (~(got by q.+.globe-chunk) id.u.me.state))
         ==
         =^  cards  cur
           (~(our-block epo cur prev-hash [our now src]:bowl) chunks.state)

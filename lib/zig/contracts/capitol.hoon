@@ -9,6 +9,8 @@
 ::  must include in each transaction a signature from the
 ::  Urbit star whose town status they wish to modify.
 ::
+::  TODO: verify ship signatures
+::
 ++  write
   |=  inp=zygote
   ^-  chick
@@ -32,43 +34,43 @@
       :-  town-id.args
           (malt ~[[q.sig.args caller-id]])
     =/  new-hall-hash=id
-      0xa9fb.083b.bdb3.2fe7.e91d.2a24.c4f8.bef8
+      `@ux`(sham (cat 3 me.cart (cat 3 0 (jam new-hall-germ))))
     =.  data.p.germ.world-grain  (~(put by world) town-id.args new-hall-hash)
     :+  %&
       (malt ~[[id.world-grain world-grain]])
     (malt ~[[new-hall-hash [new-hall-hash me.cart me.cart 0 new-hall-germ]]])
   ::
-  ::      %join
-  ::    ::  become a sequencer on an existing town
-  ::    ?.  ?=([sig=[p=@ux q=ship r=life] town-id=@ud] args)  !!
-  ::    ?.  (~(has by world) town-id.args)  !!
-  ::    =/  hall-grain=grain  -:~(val by grains.inp)
-  ::    ?>  ?=(%& -.germ.hall-grain)
-  ::    =/  hall  (hole hall-mold data.p.germ.hall-grain)
-  ::    =.  data.p.germ.hall-grain
-  ::      hall(council (~(put by council.hall) q.sig.args caller-id))
-  ::    :+  %&  ~
-  ::    [[id.hall-grain hall-grain] ~ ~]
-  ::  ::
-  ::      %exit
-  ::    ::  leave a town that you're sequencing on
-  ::    ?.  ?=([sig=[p=@ux q=ship r=life] town-id=@ud] args)  !!
-  ::    ?.  (~(has by world) town-id.args)  !!
-  ::    =/  hall-grain=grain  -:~(val by grains.inp)
-  ::    ?>  ?=(%& -.germ.hall-grain)
-  ::    =/  hall  (hole hall-mold data.p.germ.hall-grain)
-  ::    =/  updated  hall(council (~(del by council.hall) q.sig.args))
-  ::    =.  data.p.germ.hall-grain  updated
-  ::    ?.  =(0 ~(wyt by council.updated))
-  ::      ::  town is still active
-  ::      :+  %&  ~
-  ::      [[id.hall-grain hall-grain] ~ ~]
-  ::    ::  town has no sequencers and is thus inactive
-  ::    =.  data.p.germ.world-grain
-  ::      (~(del by world) town-id.args)
-  ::    :+  %&
-  ::      [[id.world-grain world-grain] ~ ~]
-  ::    [[id.hall-grain hall-grain] ~ ~]
+      %join
+    ::  become a sequencer on an existing town
+    ?.  ?=([sig=[p=@ux q=ship r=life] town-id=@ud] args)  !!
+    ?.  (~(has by world) town-id.args)  !!
+    =/  hall-grain=grain  -:~(val by grains.inp)
+    ?>  ?=(%& -.germ.hall-grain)
+    =/  hall  (hole hall-mold data.p.germ.hall-grain)
+    =.  data.p.germ.hall-grain
+      hall(council (~(put by council.hall) q.sig.args caller-id))
+    :+  %&  ~
+    [[id.hall-grain hall-grain] ~ ~]
+  ::
+      %exit
+    ::  leave a town that you're sequencing on
+    ?.  ?=([sig=[p=@ux q=ship r=life] town-id=@ud] args)  !!
+    ?.  (~(has by world) town-id.args)  !!
+    =/  hall-grain=grain  -:~(val by grains.inp)
+    ?>  ?=(%& -.germ.hall-grain)
+    =/  hall  (hole hall-mold data.p.germ.hall-grain)
+    =/  updated  hall(council (~(del by council.hall) q.sig.args))
+    =.  data.p.germ.hall-grain  updated
+    ?.  =(0 ~(wyt by council.updated))
+      ::  town is still active
+      :+  %&  ~
+      [[id.hall-grain hall-grain] ~ ~]
+    ::  town has no sequencers and is thus inactive
+    =.  data.p.germ.world-grain
+      (~(del by world) town-id.args)
+    :+  %&
+      [[id.world-grain world-grain] ~ ~]
+    [[id.hall-grain hall-grain] ~ ~]
   ==
   ::
   ::  existing towns and the rice that store their hall

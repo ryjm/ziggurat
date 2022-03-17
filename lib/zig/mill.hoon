@@ -140,17 +140,18 @@
     ++  compile
       |=  nok=*
       ^-  contract
-      ::=/  cued  (cue q.q.smart-lib)
+      =/  cued  (cue q.q.smart-lib)
       ::  crazy weird issue: importing this way results in unjetted execution (my guess)
       ::  ~&  >>>  "smart-lib size: {<(met 3 (jam cued))>}"
       ::  ~&  >>>  "library size: {<(met 3 (jam library))>}"
       ::  ::  ~&  >>>  "are they equal? {<=(cued library)>}" (yes they are)
       ::  contract execution with this is ~10x slower :/
-      (hole contract library(- nok))
+      (hole contract cued(- nok))
     --
   ::
   ++  grow
     |=  [=crop =zygote =egg]
+    ~>  %bout
     ^-  [(unit rooster) @ud]
     |^
     =+  [chick rem]=(weed crop to.p.egg [%& zygote] ~ budget.p.egg)
@@ -185,8 +186,7 @@
       =+  [res bud]=(barn contract.crop inp cart budget)
       ?~  res               `bud
       ?:  ?=(%| -.u.res)  
-        ~&  >>>  p.u.res  
-        `bud
+        ~&  >>>  p.u.res    `bud
       ?:  ?=(%& -.p.u.res)  `bud
       ::  write or event result
       [`p.p.u.res bud]
@@ -228,9 +228,9 @@
       ++  event
         |=  =rooster
         ^-  [(unit (each chick (list tank))) @ud]
-        (bull |.(;;(chick (~(event contract cart) rooster))) bud)
-        ::  :_  (sub bud 8)
-        ::  `(mule |.(;;(chick (~(event contract cart) rooster))))
+        ::  (bull |.(;;(chick (~(event contract cart) rooster))) bud)
+        :_  (sub bud 8)
+        `(mule |.(;;(chick (~(event contract cart) rooster))))
       --
     --
   ::
@@ -260,7 +260,9 @@
         ::  all newly issued grains must have properly-hashed id AND
         ::  lord of grain must be contract issuing it
         ?&  =(id id.grain)
-            =((fry lord.grain town-id.grain germ.grain) id.grain)
+            ::  TODO frying here temporarily because i had to edit it
+            ::  and can't get an updated smart-lib.noun :/
+            =(`@ux`(sham (cat 3 lord (cat 3 town-id.grain ?:(?=(%| -.germ.grain) (jam cont.p.germ.grain) (jam germ.grain))))) id.grain)
             =(lord lord.grain)
     ==  ==
   --

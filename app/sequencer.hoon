@@ -5,7 +5,6 @@
 ::
 /-  *sequencer, ziggurat
 /+  default-agent, dbug, verb, smart=zig-sys-smart, mill=zig-mill, sig=zig-sig
-/*  smart-lib  %noun  /lib/zig/sys/smart-lib/noun
 |%
 +$  card  card:agent:gall
 +$  state-0
@@ -14,7 +13,6 @@
       =town:smart
       hall=(unit hall)
       =basket:smart
-      library=(unit *)
   ==
 --
 ::
@@ -28,7 +26,7 @@
 +*  this  .
     def   ~(. (default-agent this %|) bowl)
 ::
-++  on-init  `this(state [%0 ~ [~ ~] ~ ~ ~])
+++  on-init  `this(state [%0 ~ [~ ~] ~ ~])
 ::
 ++  on-save  !>(state)
 ++  on-load
@@ -93,40 +91,19 @@
   ++  poke-chain-action
     |=  act=chain-action
     ^-  (quip card _state)
-    ?>  (lte (met 3 src.bowl) 4)
+    ?>  =(src.bowl our.bowl)
+    ::  assert that we're active in main chain
+    ?.  .^(? %gx /(scot %p our.bowl)/ziggurat/(scot %da now.bowl)/active/noun)
+      ~|("can't run a town, ziggurat not active" !!)
+    =/  me  .^(account:smart %gx /(scot %p our.bowl)/ziggurat/(scot %da now.bowl)/account/noun)
+    =/  sig  (sign:sig our.bowl now.bowl (sham me))
     ?-    -.act
-    ::      %set-standard-lib
-    ::    ?>  =(src.bowl our.bowl)
-    ::    =/  blob  .^([p=path q=[p=@ud q=@]] %cx (weld /(scot %p our.bowl)/zig/(scot %da now.bowl) path.act))
-    ::    =/  cued  (cue q.q.blob)
-    ::    `state(library `cued)
-    ::
         %init
-      ?>  =(src.bowl our.bowl)
-      ::  assert that we're active in main chain
-      ?.  .^(? %gx /(scot %p our.bowl)/ziggurat/(scot %da now.bowl)/active/noun)
-        ~|("can't run a town, ziggurat not active" !!)
       ::  assert we're not already running a town
-      ?^  hall.state     ~|("can't init a town, already active in one" !!)
-      ::  ?~  library.state  ~|("can't init a town, no standard library for contracts" !!)
+      ?^  hall.state  ~|("can't init a town, already active in one" !!)
       ::  submit tx to ziggurat for inclusion in next epoch
-      =/  me  .^(account:smart %gx /(scot %p our.bowl)/ziggurat/(scot %da now.bowl)/account/noun)
-      =/  sig  (sign:sig our.bowl now.bowl (sham me))
-      =/  egg  
-        :-  [me(nonce +(nonce.me)) `@ux`'capitol' 1 500.000 0]
-        [me(nonce +(nonce.me)) `[%init sig town-id.act] ~ (silt ~[`@ux`'world'])]
-      ~&  >>  "sequencer initialized"
       :_  state(town ?~(starting-state.act [~ ~] u.starting-state.act), town-id `town-id.act)
-          ::  subscribe to updates from ziggurat
-      =/  tx
-        :-  %forward
-        %-  silt  :_  ~
-        :-  [[0xbeef 2 0x1.beef] `@ux`'capitol' 1 500.000 0]
-        :^    [0xbeef 2 0x1.beef]
-            `[%init sig town-id.act]
-          ~
-        (silt ~[`@ux`'world'])
-      ~&  >>  tx
+      ::  subscribe to updates from ziggurat
       :~  :*  %pass   /sequencer/updates
               %agent  [our.bowl %ziggurat]
               %watch  /sequencer/updates
@@ -134,14 +111,71 @@
           :*  %pass  /submit-tx
               %agent  [our.bowl %ziggurat]
               %poke  %zig-basket-action
-              !>(tx)
+              !>  :-  %forward
+                  %-  silt  :_  ~
+                  :*  [me(nonce +(nonce.me)) `@ux`'capitol' rate.gas.act bud.gas.act 0]
+                      me(nonce +(nonce.me))
+                      `[%init sig town-id.act]
+                      ~
+                      (silt ~[`@ux`'world'])
+                  ==
           ==
       ==
     ::
-        %leave-hall
-      ?>  =(src.bowl our.bowl)
-      ::  TODO submit tx indicating our absence. wait for ack to actually leave
-      :_  state(hall ~, town [~ ~], basket ~, library ~)
+        %join
+      ::  assert we're not already running a town
+      ?^  hall.state  ~|("can't join a town, already active in one" !!)
+      ::  submit tx to ziggurat for inclusion in next epoch
+      =/  world-rice
+        ;;  ,(map @ud id:smart)
+        .^(* %gx /(scot %p our.bowl)/ziggurat/(scot %da now.bowl)/rice/(scot %ux 'world')/noun)
+      =/  town-rice-id  (~(got by world-rice) town-id.act)
+      :_  state(town-id `town-id.act)
+          ::  subscribe to updates from ziggurat
+      :~  :*  %pass   /sequencer/updates
+              %agent  [our.bowl %ziggurat]
+              %watch  /sequencer/updates
+          ==
+          :*  %pass  /submit-tx
+              %agent  [our.bowl %ziggurat]
+              %poke  %zig-basket-action
+              !>  :-  %forward
+                  %-  silt  :_  ~
+                  :*  [me(nonce +(nonce.me)) `@ux`'capitol' rate.gas.act bud.gas.act 0]
+                      me(nonce +(nonce.me))
+                      `[%join sig town-id.act]
+                      (silt ~[town-rice-id])
+                      (silt ~[`@ux`'world'])
+                  ==
+          ==
+      ==
+    ::
+        %exit
+      ::  submit tx indicating our absence. wait for ack to actually leave
+      ::  assert we're running a town
+      ?~  town-id.state  ~|("can't exit a town, not in one" !!)
+      ::  submit tx to ziggurat for inclusion in next epoch
+      =/  world-rice
+        ;;  ,(map @ud id:smart)
+        .^(* %gx /(scot %p our.bowl)/ziggurat/(scot %da now.bowl)/rice/(scot %ux 'world')/noun)
+      =/  town-rice-id  (~(got by world-rice) u.town-id.state)
+      :_  state
+      :~  :*  %pass  /submit-tx
+              %agent  [our.bowl %ziggurat]
+              %poke  %zig-basket-action
+              !>  :-  %forward
+                  %-  silt  :_  ~
+                  :*  [me(nonce +(nonce.me)) `@ux`'capitol' rate.gas.act bud.gas.act 0]
+                      me(nonce +(nonce.me))
+                      `[%exit sig u.town-id.state]
+                      (silt ~[town-rice-id])
+                      (silt ~[`@ux`'world'])
+                  ==
+          ==
+      ==
+    ::
+        %clear-state
+      :_  state(town-id ~, town [~ ~], hall ~, basket ~)
       %+  murn  ~(tap by wex.bowl)
       |=  [[=wire =ship =term] *]
       ^-  (unit card)

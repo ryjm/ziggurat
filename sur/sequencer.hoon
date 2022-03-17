@@ -14,12 +14,10 @@
   ==
 ::
 +$  chain-action
-  $%  [%leave-hall ~]
-      ::  can fold this into init
-      ::  [%set-standard-lib =path]
-      ::  TODO make this send a transaction to town mgmt contract
-      ::  via a validator!
-      ::  will remove starting-state for persistent testnet
-      [%init town-id=@ud starting-state=(unit town:smart)]
+  $%  ::  will remove starting-state for persistent testnet
+      [%init town-id=@ud starting-state=(unit town:smart) gas=[rate=@ud bud=@ud]]
+      [%join town-id=@ud gas=[rate=@ud bud=@ud]]
+      [%exit gas=[rate=@ud bud=@ud]]
+      [%clear-state ~]
   ==
 --

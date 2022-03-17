@@ -15,7 +15,7 @@
   ^-  id
   =-  `@ux`(sham (cat 3 lord (cat 3 town -)))
   ?.  ?=(%| -.germ)
-    (jam data.p.germ)
+    (jam germ)
   ::  fry ignores owns.wheat in hash
   (jam cont.p.germ)
 ::
