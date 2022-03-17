@@ -1,3 +1,4 @@
+/+  *zig-sys-smart
 |_  =cart
 ::
 ::  capitol.hoon
@@ -28,63 +29,39 @@
     ::  start a new town if one with if that id doesn't exist
     ?.  ?=([sig=[p=@ux q=ship r=life] town-id=@ud] args)  !!
     ?:  (~(has by world) town-id.args)  !!
-    =/  new-hall-germ
-      :-  %&
-      ^-  *
-      :-  town-id.args
-          (malt ~[[q.sig.args caller-id]])
-    =/  new-hall-hash=id
-      `@ux`(sham (cat 3 me.cart (cat 3 0 (jam new-hall-germ))))
-    =.  data.p.germ.world-grain  (~(put by world) town-id.args new-hall-hash)
-    :+  %&
-      (malt ~[[id.world-grain world-grain]])
-    (malt ~[[new-hall-hash [new-hall-hash me.cart me.cart 0 new-hall-germ]]])
+    =.  data.p.germ.world-grain
+      (~(put by world) town-id.args (malt ~[[q.sig.args caller-id]]))
+    [%& (malt ~[[id.world-grain world-grain]]) ~]
   ::
       %join
     ::  become a sequencer on an existing town
     ?.  ?=([sig=[p=@ux q=ship r=life] town-id=@ud] args)  !!
-    ?.  (~(has by world) town-id.args)  !!
-    =/  hall-grain=grain  -:~(val by grains.inp)
-    ?>  ?=(%& -.germ.hall-grain)
-    =/  hall  (hole hall-mold data.p.germ.hall-grain)
-    =.  data.p.germ.hall-grain
-      hall(council (~(put by council.hall) q.sig.args caller-id))
-    :+  %&  ~
-    [[id.hall-grain hall-grain] ~ ~]
+    ?~  current=`(unit (map ship id))`(~(get by world) town-id.args)  !!
+    =/  new  (~(put by u.current) q.sig.args caller-id)
+    =.  data.p.germ.world-grain
+      (~(put by world) town-id.args new)
+    [%& (malt ~[[id.world-grain world-grain]]) ~]
   ::
       %exit
     ::  leave a town that you're sequencing on
     ?.  ?=([sig=[p=@ux q=ship r=life] town-id=@ud] args)  !!
-    ?.  (~(has by world) town-id.args)  !!
-    =/  hall-grain=grain  -:~(val by grains.inp)
-    ?>  ?=(%& -.germ.hall-grain)
-    =/  hall  (hole hall-mold data.p.germ.hall-grain)
-    =/  updated  hall(council (~(del by council.hall) q.sig.args))
-    =.  data.p.germ.hall-grain  updated
-    ?.  =(0 ~(wyt by council.updated))
-      ::  town is still active
-      :+  %&  ~
-      [[id.hall-grain hall-grain] ~ ~]
-    ::  town has no sequencers and is thus inactive
+    ?~  current=`(unit (map ship id))`(~(get by world) town-id.args)  !!
+    =/  new  (~(del by u.current) q.sig.args)
     =.  data.p.germ.world-grain
-      (~(del by world) town-id.args)
-    :+  %&
-      [[id.world-grain world-grain] ~ ~]
-    [[id.hall-grain hall-grain] ~ ~]
+      (~(put by world) town-id.args new)
+    ::  ?.  =(0 ~(wyt by council.updated))
+    ::    ::  town is still active
+    ::    [%& (malt ~[[id.hall-grain hall-grain]]) ~]
+    ::  ::  town has no sequencers and is thus inactive
+    ::  =.  data.p.germ.world-grain
+    ::    (~(del by world) town-id.args)
+    [%& (malt ~[[id.world-grain world-grain]]) ~]
   ==
   ::
-  ::  existing towns and the rice that store their hall
+  ::  existing towns and their halls
   ::
   +$  world-mold
-      (map town-id=@ud address=id)
-  ::
-  ::  town hall rice mold
-  ::
-  +$  hall-mold
-      $:  town-id=@ud
-          council=(map ship id)
-          ::  stakes=(map ship amt=@ud)
-      ==
+      (map town-id=@ud council=(map ship id))
   --
 ::
 ++  read

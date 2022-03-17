@@ -5,6 +5,7 @@
 ::
 /-  *sequencer, ziggurat
 /+  default-agent, dbug, verb, smart=zig-sys-smart, mill=zig-mill, sig=zig-sig
+/*  smart-lib  %noun  /lib/zig/sys/smart-lib/noun
 |%
 +$  card  card:agent:gall
 +$  state-0
@@ -14,9 +15,11 @@
       hall=(unit hall)
       =basket:smart
   ==
++$  inflated-state-0  [state-0 =mil]
++$  mil  $_  ~(mill mill 0) 
 --
 ::
-=|  state-0
+=|  inflated-state-0 
 =*  state  -
 ::
 %-  agent:dbug
@@ -26,14 +29,15 @@
 +*  this  .
     def   ~(. (default-agent this %|) bowl)
 ::
-++  on-init  `this(state [%0 ~ [~ ~] ~ ~])
+++  on-init  `this(state [[%0 ~ [~ ~] ~ ~] ~(mill mill +:(cue q.q.smart-lib))])
 ::
-++  on-save  !>(state)
+++  on-save  !>(-.state)
 ++  on-load
   |=  =old=vase
   ^-  (quip card _this)
   =/  old-state  !<(state-0 old-vase)
-  `this(state old-state)
+  =/  mil   ~(mill mill +:(cue q.q.smart-lib))
+  `this(state [old-state mil])
 ::
 ++  on-watch
   |=  =path
@@ -63,27 +67,32 @@
     ?~  hall.state
       ~&  >>  "ignoring tx, we're not active in a council"
       [~ state]
-    =*  hall  u.hall.state
+      =*  hall  u.hall.state
     ?-    -.act
         %forward
       ::  getting an egg from user / eggs from fellow sequencer
       ::  add to our basket
+      ::  FAKE EASY MILLING FOR TEST PURPOSES
+      ::  =/  milled
+      ::      %+  ~(mill-all mil [0xdead 0 0x1.dead] (need town-id.state) 0 now.bowl)
+      ::        town.state
+      ::      ~(tap in eggs.act)
       =/  slot-num  .^(@ud %gx /(scot %p our.bowl)/ziggurat/(scot %da now.bowl)/slot/noun)
       =/  current-producer  (snag (mod slot-num (lent order.u.hall.state)) order.u.hall.this)
-      ?:  =(our.bowl current-producer) 
+      ?:  =(our.bowl ~zod)
         `state(basket (~(uni in basket) eggs.act))
       ~&  >>  "forwarding eggs"
       :_  state(basket ~)
       :_  ~
       :*  %pass  /basket-gossip
-          %agent  [current-producer %sequencer]
+          %agent  [~zod %sequencer]
           %poke  %zig-basket-action
           !>([%receive (~(uni in eggs.act) basket.state)])
       ==
     ::
         %receive
       ::  should only accept from other validators
-      ?>  (~(has by council.hall) src.bowl)
+      ::  ?>  (~(has by council.hall) src.bowl)
       ~&  >>  "received gossiped eggs from {<src.bowl>}: {<eggs.act>}"
       `state(basket (~(uni in basket) eggs.act))
     ==
@@ -126,10 +135,6 @@
       ::  assert we're not already running a town
       ?^  hall.state  ~|("can't join a town, already active in one" !!)
       ::  submit tx to ziggurat for inclusion in next epoch
-      =/  world-rice
-        ;;  ,(map @ud id:smart)
-        .^(* %gx /(scot %p our.bowl)/ziggurat/(scot %da now.bowl)/rice/(scot %ux 'world')/noun)
-      =/  town-rice-id  (~(got by world-rice) town-id.act)
       :_  state(town-id `town-id.act)
           ::  subscribe to updates from ziggurat
       :~  :*  %pass   /sequencer/updates
@@ -144,7 +149,7 @@
                   :*  [me(nonce +(nonce.me)) `@ux`'capitol' rate.gas.act bud.gas.act 0]
                       me(nonce +(nonce.me))
                       `[%join sig town-id.act]
-                      (silt ~[town-rice-id])
+                      ~
                       (silt ~[`@ux`'world'])
                   ==
           ==
@@ -155,10 +160,6 @@
       ::  assert we're running a town
       ?~  town-id.state  ~|("can't exit a town, not in one" !!)
       ::  submit tx to ziggurat for inclusion in next epoch
-      =/  world-rice
-        ;;  ,(map @ud id:smart)
-        .^(* %gx /(scot %p our.bowl)/ziggurat/(scot %da now.bowl)/rice/(scot %ux 'world')/noun)
-      =/  town-rice-id  (~(got by world-rice) u.town-id.state)
       :_  state
       :~  :*  %pass  /submit-tx
               %agent  [our.bowl %ziggurat]
@@ -168,7 +169,7 @@
                   :*  [me(nonce +(nonce.me)) `@ux`'capitol' rate.gas.act bud.gas.act 0]
                       me(nonce +(nonce.me))
                       `[%exit sig u.town-id.state]
-                      (silt ~[town-rice-id])
+                      ~
                       (silt ~[`@ux`'world'])
                   ==
           ==
@@ -200,7 +201,7 @@
     ?-    -.update
         %new-hall
       ::  receive this at beginning of epoch, update our hall-state
-      ::  shuffle council (necessary?) ???? (TODO)
+      ::  shuffle with root of globe / something each epoch
       ~&  >>  "received hall update"
       `this(hall `[council.update ~(tap in ~(key by council.update))])
     ::
@@ -212,12 +213,10 @@
           ==
         ~&  >>  "ignoring request"
         `this
-      =*  hall  u.hall.state
       ::  create and send our chunk to them
       =/  me  .^(account:smart %gx /(scot %p our.bowl)/ziggurat/(scot %da now.bowl)/account/noun)
-      =/  lib  .^(* %gx /(scot %p our.bowl)/ziggurat/(scot %da now.bowl)/library/noun)
       =/  our-chunk=chunk:smart
-        %+  ~(mill-all mill me lib (need town-id.state) 0 now.bowl)  ::  TODO blocknum
+        %+  ~(mill-all mil me (need town-id.state) 0 now.bowl)
           town.state
         ~(tap in basket.state)
       ~&  >>  "chunk size: {<(met 3 (jam our-chunk))>} bytes"

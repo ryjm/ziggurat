@@ -32,8 +32,7 @@
   ==
 ::
 +$  action
-  $%  [%set-standard-lib =path]
-      [%set-pubkey =account:smart]
+  $%  [%set-pubkey =account:smart]
       [%start mode=?(%fisherman %validator) history=epochs validators=(set ship) starting-state=town:smart]
       [%stop ~]
       [%new-epoch ~]

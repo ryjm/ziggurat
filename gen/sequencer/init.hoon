@@ -59,4 +59,5 @@
 :*  %init
     town-id
     `[fake-granary fake-populace]
+    [rate=1 bud=100.000]
 ==

@@ -2,6 +2,7 @@
 ::
 /-  sequencer
 /+  *ziggurat, default-agent, dbug, verb, smart=zig-sys-smart, mill=zig-mill
+/*  smart-lib  %noun  /lib/zig/sys/smart-lib/noun
 =,  util
 |%
 +$  card  card:agent:gall
@@ -21,6 +22,8 @@
       =basket:smart     ::  accept town mgmt txs from stars
       globe=town:smart  ::  store town hall info; update once per epoch
   ==
++$  inflated-state-0  [state-0 =mil]
++$  mil  $_  ~(mill mill 0) 
 ++  new-epoch-timers
   |=  [=epoch our=ship]
   ^-  (list card)
@@ -39,7 +42,7 @@
   ==
 --
 ::
-=|  state-0
+=|  inflated-state-0
 =*  state  -
 ::
 %-  agent:dbug
@@ -49,14 +52,15 @@
 +*  this  .
     def   ~(. (default-agent this %|) bowl)
 ::
-++  on-init  `this(state [%0 %none ~ ~ ~ ~ ~ [~ ~]])
+++  on-init  `this(state [[%0 %none ~ ~ ~ ~ ~ [~ ~]] ~(mill mill +:(cue q.q.smart-lib))])
 ::
-++  on-save  !>(state)
+++  on-save  !>(-.state)
 ++  on-load
   |=  =old=vase
   ^-  (quip card _this)
   =/  old-state  !<(state-0 old-vase)
-  `this(state old-state)
+  =/  mil   ~(mill mill +:(cue q.q.smart-lib))
+  `this(state [old-state mil])
 ::
 ++  on-watch
   |=  =path
@@ -129,11 +133,11 @@
     |=  =action
     ^-  (quip card _state)
     ?-    -.action
-        %set-standard-lib
-      ?>  =(src.bowl our.bowl)
-      =/  blob  .^([p=path q=[p=@ud q=@]] %cx (weld /(scot %p our.bowl)/zig/(scot %da now.bowl) path.action))
-      =/  cued  (cue q.q.blob)
-      `state(library `cued)
+    ::      %set-standard-lib
+    ::    ?>  =(src.bowl our.bowl)
+    ::    =/  blob  .^([p=path q=[p=@ud q=@]] %cx (weld /(scot %p our.bowl)/zig/(scot %da now.bowl) path.action))
+    ::    =/  cued  (cue q.q.blob)
+    ::    `state(library `cued)
     ::
         %set-pubkey
       ::  store private key where? jael?
@@ -164,7 +168,7 @@
         %stop
       ?>  =(src.bowl our.bowl)
       :-  (weld cleanup-validator (weld cleanup-sequencer cleanup-fisherman))
-      state(mode %none, epochs ~, chunks ~, basket ~, globe [~ ~])
+      state(mode %none, me ~, epochs ~, chunks ~, basket ~, globe [~ ~])
     ::
         %new-epoch
       ?>  =(src.bowl our.bowl)
@@ -208,11 +212,12 @@
     ::
         %receive-chunk
       ::  TODO make this town-running-stars only once that info is known
+      ::  query contract
       ?>  (lte (met 3 src.bowl) 2)
       =/  cur=epoch  +:(need (pry:poc epochs))
       ?>  ?~  slot-num=(bind (pry:sot slots.cur) head)
             =(our.bowl -.order.cur)
-          =(our.bowl (snag u.slot-num order.cur))
+          =(our.bowl (snag +(u.slot-num) order.cur))
       ::  TODO check town id
       ~&  >  "chunk received"
       `state(chunks (~(put by chunks.state) town-id.action chunk.action))
@@ -227,10 +232,10 @@
       ::  getting an egg from sequencer
       ::  filter out any eggs not sent to contracts
       ::  we're aware of
-      ::  =.  eggs.act
-      ::    %-  ~(gas in *(set egg:smart))
-      ::    %+  skim  ~(tap in eggs.act)
-      ::    |=(=egg:smart =(to.p.egg `@ux`'capitol'))
+      =.  eggs.act
+        %-  ~(gas in *(set egg:smart))
+        %+  skim  ~(tap in eggs.act)
+        |=(=egg:smart =(to.p.egg `@ux`'capitol'))
       =/  cur=epoch  +:(need (pry:poc epochs))
       =/  last-producer  (rear order.cur)  ::  TODO is this optimal? or -:(flop ..)?
       ?:  =(our.bowl last-producer)
@@ -272,7 +277,6 @@
     [%pass wire %agent [s %ziggurat] %watch /validator/updates]
   ::
   ::  +hall-update: give sequencer updated hall for their town at start of new epoch
-  ::  TODO: make this not such a shitty ugly arm!!!
   ::
   ++  hall-update-card
     |=  town-id=(unit @ud)
@@ -281,19 +285,12 @@
     ::  grab on-chain data for that hall in this epoch
     ?~  found=(~(get by p.globe.state) `@ux`'world')      ~
     ?.  ?=(%& -.germ.u.found)                             ~
-    =/  world  (hole:smart ,(map @ud id:smart) data.p.germ.u.found)
-    ?~  town-rice=(~(get by world) u.town-id)             ~
-    ?~  found-rice=(~(get by p.globe.state) u.town-rice)  ~
-    ?.  ?=(%& -.germ.u.found-rice)                        ~
-    =/  our-town
-      %+  hole:smart
-        ,[town-id=@ud council=(map ship id:smart)]
-      data.p.germ.u.found-rice
-    ?.  =(town-id.our-town u.town-id)  ~
+    =/  world  (hole:smart ,(map @ud (map ship id:smart)) data.p.germ.u.found)
+    ?~  hall=(~(get by world) u.town-id)                  ~
     ~&  >  "giving sequencer hall status update"
     :-  ~  :-  %give
     :^  %fact  ~[/sequencer/updates]
-        %sequencer-update  !>([%new-hall council.our-town])
+        %sequencer-update  !>([%new-hall u.hall])
   ::
   ::  cleanup arms: close subscriptions of our various watchers
   ::  TODO can probably merge these into a single arm and single +murn
@@ -406,7 +403,7 @@
         %-  ~(their-block epo cur prev-hash [our now src]:bowl)
         [header `block]:update
       :-  cards
-      ?.  =(next-slot-num (lent order.cur))
+      ?.  =(next-slot-num (dec (lent order.cur)))
         state(epochs (put:poc epochs num.cur cur))
       ::  update globe state if last block in epoch
       =-  state(epochs (put:poc epochs num.cur cur), globe -)
@@ -499,7 +496,7 @@
         ::  insert transaction to advance
         ?~  me.state  `state
         =/  globe-chunk
-          %+  ~(mill-all mill u.me.state (need library.state) relay-town-id 0 now.bowl)
+          %+  ~(mill-all mil (need me) 0 0 now.bowl)
             globe.state
           ~(tap in basket.state)
         =:  globe.state   +.globe-chunk

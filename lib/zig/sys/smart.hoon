@@ -42,7 +42,7 @@
 +$  germ   (each rice wheat)
 +$  rice   data=*
 +$  wheat  [cont=(unit *) owns=(set id)]
-+$  crop   [=contract owns=(map id grain)]
++$  crop   [nok=* owns=(map id grain)]
 ::
 +$  grain
   $:  =id
