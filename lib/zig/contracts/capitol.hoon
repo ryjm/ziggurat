@@ -1,4 +1,3 @@
-/+  *zig-sys-smart
 |_  =cart
 ::
 ::  capitol.hoon
@@ -49,12 +48,6 @@
     =/  new  (~(del by u.current) q.sig.args)
     =.  data.p.germ.world-grain
       (~(put by world) town-id.args new)
-    ::  ?.  =(0 ~(wyt by council.updated))
-    ::    ::  town is still active
-    ::    [%& (malt ~[[id.hall-grain hall-grain]]) ~]
-    ::  ::  town has no sequencers and is thus inactive
-    ::  =.  data.p.germ.world-grain
-    ::    (~(del by world) town-id.args)
     [%& (malt ~[[id.world-grain world-grain]]) ~]
   ==
   ::

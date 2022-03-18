@@ -236,6 +236,7 @@
         %-  ~(gas in *(set egg:smart))
         %+  skim  ~(tap in eggs.act)
         |=(=egg:smart =(to.p.egg `@ux`'capitol'))
+      ~&  >  eggs.act
       =/  cur=epoch  +:(need (pry:poc epochs))
       =/  last-producer  (rear order.cur)  ::  TODO is this optimal? or -:(flop ..)?
       ?:  =(our.bowl last-producer)

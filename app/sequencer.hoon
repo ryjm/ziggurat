@@ -203,7 +203,10 @@
       ::  receive this at beginning of epoch, update our hall-state
       ::  shuffle with root of globe / something each epoch
       ~&  >>  "received hall update"
-      `this(hall `[council.update ~(tap in ~(key by council.update))])
+      ?:  (~(has by council.update) our.bowl)
+        `this(hall `[council.update ~(tap in ~(key by council.update))])
+      ::  if we're not in the hall, set our status to inactive
+      `this(hall ~, town [~ ~])
     ::
         %next-producer
       ::  if we can, produce a chunk!
