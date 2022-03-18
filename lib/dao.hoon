@@ -54,7 +54,7 @@
   ^-  (unit dao-group:dgs)
   .^  (unit dao-group:dgs)
       %gx
-      %+  scry:io  %dao
+      %+  scry:io  %dao-group-store
       :(weld /dao-groups (en-path:rl rid) /noun)
   ==
 ::

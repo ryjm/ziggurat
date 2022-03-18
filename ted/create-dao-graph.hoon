@@ -1,4 +1,5 @@
 /-  spider,
+    pull-hook,
     push-hook,
     dgs=dao-group-store,
     gs=graph-store,
@@ -77,10 +78,13 @@
   ~&  >>>  "couldn't find DAO group with rid {<dao-group-rid>}"
   ~&  >>>  "aborting without taking action"
   (pure:m !>(~))
-~&  >  "poking graph-push-hook..."
+~&  >  "poking graph-pu??-hook..."
 ;<  ~  bind:m
-  %^  poke-our  %dao-graph-push-hook  %push-hook-action
-  !>(`action:push-hook`[%add graph-rid])
+  ?:  =(our.bowl entity.graph-rid)
+    %^  poke-our  %dao-graph-push-hook  %push-hook-action
+    !>(`action:push-hook`[%add graph-rid])
+  %^  poke-our  %dao-graph-pull-hook  %pull-hook-action
+  !>(`action:pull-hook`[%add entity.graph-rid graph-rid])
 ~&  >  "poking graph-store..."
 ;<  ~  bind:m
   %^  poke-our  %graph-store  %graph-update-3
