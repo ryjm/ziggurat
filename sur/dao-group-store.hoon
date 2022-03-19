@@ -36,6 +36,8 @@
       [%remove-member =resource:r =ship]
       [%add-permissions =resource:r name=@tas =address roles=(set role)]
       [%remove-permissions =resource:r name=@tas =address roles=(set role)]
+      [%add-subdao =resource:r subdao-id=id]
+      [%remove-subdao =resource:r subdao-id=id]
       [%add-roles =resource:r roles=(set role) =ship]
       [%remove-roles =resource:r roles=(set role) =ship]
   ==

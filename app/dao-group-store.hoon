@@ -125,9 +125,6 @@
   ?-  -.create
       %add-group  (add-group +.create)
   ==
-  ::  +add-group: add group to store
-  ::
-  ::    no-op if group already exists
   ::
   ++  add-group
     |=  [rid=resource:res =dao-group:store]
@@ -172,7 +169,6 @@
       %add-roles           (add-roles +.modify)
       %remove-roles        (remove-roles +.modify)
   ==
-  ::  +remove-group: remove group from store
   ::
   ++  remove-group
     |=  rid=resource:res
@@ -182,7 +178,6 @@
       (~(del by dao-groups) rid)
     :_  state
     (send-diff %remove-group rid)
-  ::  +add-member: add members to group
   ::
   ++  add-member
     |=  [rid=resource:res roles=(set role:store) =id:store him=ship]
@@ -213,7 +208,6 @@
       ==
     :_  state
     (send-diff %add-member rid roles id him)
-  ::  +remove-member: remove members from group
   ::
   ++  remove-member
     |=  [rid=resource:res him=ship]
@@ -237,7 +231,6 @@
       ==
     :_  state
     (send-diff %remove-member rid him)
-  ::  +add-permissions: add 
   ::
   ++  add-permissions
     |=  [rid=resource:res name=@tas =address:store roles=(set role:store)]
@@ -259,7 +252,6 @@
       ==
     :_  state
     (send-diff %add-permissions rid name address roles)
-  ::  +remove-permissions: remove 
   ::
   ++  remove-permissions
     |=  [rid=resource:res name=@tas =address:store roles=(set role:store)]
@@ -280,6 +272,28 @@
       ==  ==
     :_  state
     (send-diff %remove-permissions rid name address roles)
+  ::
+  ++  add-subdao
+    |=  [rid=resource:res subdao-id=id:store]
+    ^-  (quip card _state)
+    ?~  dao-group=(has-write-dao-permissions rid)  `state
+    =.  dao-groups
+      %+  ~(jab by dao-groups)  rid
+      |=  dao-group:store
+      +<(subdaos (~(put in subdaos.u.dao-group) subdao-id))
+    :_  state
+    (send-diff %add-subdao rid subdao-id)
+  ::
+  ++  remove-subdao
+    |=  [rid=resource:res subdao-id=id:store]
+    ^-  (quip card _state)
+    ?~  dao-group=(has-write-dao-permissions rid)  `state
+    =.  dao-groups
+      %+  ~(jab by dao-groups)  rid
+      |=  dao-group:store
+      +<(subdaos (~(del in subdaos.u.dao-group) subdao-id))
+    :_  state
+    (send-diff %remove-subdao rid subdao-id)
   ::  +add-roles: add roles to ships
   ::
   ::    crash if ships are not in group
@@ -301,7 +315,8 @@
     (send-diff %add-roles rid roles him)
   ::  +remove-roles: remove roles from ships
   ::
-  ::    crash if ships are not in group or tag does not exist
+  ::    crash if ships are not in group
+  ::    TODO: crash if role does not exist?
   ::
   ++  remove-roles
     |=  [rid=resource:res roles=(set role:store) him=ship]
