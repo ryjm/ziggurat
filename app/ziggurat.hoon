@@ -137,6 +137,8 @@
     ::
         %start
       ?>  =(src.bowl our.bowl)
+      ~|  "ziggurat must be run on a star or star-moon"
+      ?>  (allowed-participant our.bowl our.bowl now.bowl)
       ~|  "we have already started in this mode"
       ?<  =(mode mode.act)
       =?  epochs  ?=(^ history.act)
@@ -218,7 +220,8 @@
     ^-  (quip card _state)
     ?-    -.act
         %forward
-      ?>  (lte (met 3 src.bowl) 2)
+      ::  only accepts transactions from possible validators/sequencers
+      ?>  (allowed-participant our.bowl our.bowl now.bowl)
       =/  cur=epoch  +:(need (pry:poc epochs))
       =/  last-producer  (rear order.cur)  ::  TODO is this optimal? or -:(flop ..)?
       ?:  =(our.bowl last-producer)
@@ -232,7 +235,7 @@
       ==
     ::
         %receive
-      ?>  (lte (met 3 src.bowl) 2)
+      ?>  (allowed-participant our.bowl our.bowl now.bowl)
       =/  cur=epoch  +:(need (pry:poc epochs))
       ?~  (find [src.bowl]~ order.cur)
         ~|("can only receive eggs from known validators" !!)

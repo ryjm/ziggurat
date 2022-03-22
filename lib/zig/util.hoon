@@ -96,4 +96,15 @@
     len       (dec len)
     lis       (oust [num 1] `(list ship)`lis)
   ==
+::  +allowed-participant: grades whether a ship is permitted to participate
+::  in Uqbar validation. currently stars and star-moons only.
+::
+++  allowed-participant
+  |=  [=ship our=ship now=@da]
+  ^-  ?
+  ?|  =(%king (clan:title ship))
+      ?&  =(%earl (clan:title ship))
+          =(%king (clan:title (sein:title our now ship)))
+      ==
+  ==
 --

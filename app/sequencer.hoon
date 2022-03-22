@@ -93,7 +93,7 @@
     ::
         %receive
       ::  should only accept from other validators
-      ::  ?>  (~(has by council.hall) src.bowl)
+      ?>  (~(has by council:(need hall.state)) src.bowl)
       ~&  >>  "received gossiped eggs from {<src.bowl>}: {<eggs.act>}"
       `state(basket (~(uni in basket) eggs.act))
     ==
