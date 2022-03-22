@@ -1,5 +1,5 @@
 /-  *ziggurat
-/+  smart=zig-sys-smart, deploy=zig-deploy
+/+  smart=zig-sys-smart, deploy=zig-deploy, sig=zig-sig
 /*  capitol-contract  %txt  /lib/zig/contracts/capitol/hoon
 :-  %say
 |=  [[now=@da eny=@uvJ bek=beak] [=start=time ~] ~]
@@ -11,7 +11,7 @@
       zigs-wheat-id:smart
       0xbeef
       0
-      %&^[1.000.000 ~]
+      %&^[100.000.000 ~]
   ==
 =/  dead-zigs-grain  ::  ~bus
   ^-  grain:smart
@@ -19,7 +19,7 @@
       zigs-wheat-id:smart
       0xdead
       0
-      %&^[500.000 ~]
+      %&^[100.000.000 ~]
   ==
 =/  cafe-zigs-grain  ::  ~nec
   ^-  grain:smart
@@ -27,7 +27,7 @@
       zigs-wheat-id:smart
       0xcafe
       0
-      %&^[100.000 ~]
+      %&^[100.000.000 ~]
   ==
 =/  world-map
   ^-  grain:smart
@@ -36,6 +36,14 @@
       `@ux`'capitol'          ::  holder
       0                       ::  town-id
       [%& data=*(map @ud @ux)]  ::  germ
+  ==
+=/  ziggurat-map
+  ^-  grain:smart
+  :*  `@ux`'ziggurat'
+      `@ux`'capitol'
+      `@ux`'capitol'
+      0
+      [%& data=(malt ~[[p.bek (sign:sig p.bek now (sham [0xbeef 0 0x1.beef]))]])]
   ==
 =/  wheat
   ^-  wheat:smart
@@ -55,6 +63,7 @@
   =/  grains=(list:smart (pair:smart id:smart grain:smart))
     :~  [`@ux`'capitol' wheat-grain]
         [`@ux`'world' world-map]
+        [`@ux`'ziggurat' ziggurat-map]
         [0x1.beef beef-zigs-grain]
         [0x1.dead dead-zigs-grain]
         [0x1.cafe cafe-zigs-grain]

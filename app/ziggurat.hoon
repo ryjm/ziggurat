@@ -67,9 +67,13 @@
       [%validator ?([%epoch-catchup @ ~] [%updates ~])]
     ?:  =(mode %none)
       `this
-    ~|  "only validators can listen to block production!"
-    =/  cur=epoch  +:(need (pry:poc epochs))
-    ?>  (~(has in (silt order.cur)) src.bowl)
+    ?>  (allowed-participant [src our now]:bowl)
+    ::  ~|  "only validators can listen to block production!"
+    ::  =/  validator-set
+    ::      =/  found  (~(got by p.globe.state) `@ux`'ziggurat')
+    ::      ?.  ?=(%& -.germ.found)  !!
+    ::      ~(key by (hole:smart ,(map ship [@ux @p life]) data.p.germ.found))
+    ::  ?>  (~(has in validator-set) src.bowl)
     =*  kind  i.t.path
     ?-    kind
         %updates
@@ -83,6 +87,7 @@
       ::=/  start=(unit @ud)
       ::  =-  ?:(=(- 0) ~ `(dec -))
       ::  (slav %ud i.t.t.path)
+      ~&  >  "got a watch on %epoch-catchup, sharing epochs"
       :_  this
       :+  =-  [%give %fact ~ %zig-update !>(-)]
           ^-  update
@@ -92,8 +97,8 @@
     ==
   ::
       [%sequencer %updates ~]
-    ~|  "comets and moons may not be sequencers"
-    ?>  (lte (met 3 src.bowl) 4)
+    ~|  "only stars and star-moons can be sequencers"
+    ?>  (allowed-participant [src our now]:bowl)
     ::  send next-producer on this path for sequencers
     `this
   ::
@@ -143,22 +148,66 @@
       ?<  =(mode mode.act)
       =?  epochs  ?=(^ history.act)
         history.act
-      ?:  ?=(%validator mode.act)
-        ?>  ?|(?=(^ epochs) ?=(^ validators.act))
+      ?:  ?=(%fisherman mode.act)
+        :_  state(mode %fisherman)
+        (subscriptions-cleanup wex.bowl sup.bowl)
+      ::  become a validator
+      ?>  ?|(?=(^ epochs) ?=(^ validators.act))
+      ?~  others=~(tap in (~(del in validators.act) our.bowl))
+        ::  single-validator new chain
+        ~&  >  "initializing new blockchain"
         :_  state(mode %validator, globe starting-state.act)
         %-  zing
         :~  (subscriptions-cleanup wex.bowl sup.bowl)
-            (watch-updates validators.act)
             ?~  epochs  ~
             (new-epoch-timers +:(need (pry:poc epochs)) our.bowl)
         ==
-      :_  state(mode %fisherman)
-      (subscriptions-cleanup wex.bowl sup.bowl)
+      ::  joining the existing blockchain
+      ::  give ourselves a dummy epoch, but immediately start
+      ::  %epoch-catchup from one of the other known validators
+      ~&  >  "attempting to join main chain"
+      =/  dummy=^epochs
+        (gas:poc ~ [0 [0 *@da ~(tap in validators.act) ~]]^~)
+      =/  me  (need me.state)
+      =/  sig  (sign:zig-sig our.bowl now.bowl (sham me))
+      :_  state(mode %validator, globe starting-state.act, epochs dummy)
+      ::  make tx to add ourselves, send to another validator
+      %+  snoc  %-  zing
+                :~  (subscriptions-cleanup wex.bowl sup.bowl)
+                    (watch-updates validators.act)
+                    ~[(start-epoch-catchup i.others 0)]
+                ==
+      :*  %pass  /submit-tx
+          %agent  [i.others %ziggurat]
+          %poke  %zig-weave-poke
+          !>  :-  %forward
+              %-  silt  :_  ~
+              :*  [me(nonce +(nonce.me)) `@ux`'capitol' 1 10.000 0]
+                  me(nonce +(nonce.me))
+                  `[%become-validator sig]
+                  ~
+                  (silt ~[`@ux`'ziggurat'])
+              ==
+      ==
     ::
         %stop
       ?>  =(src.bowl our.bowl)
-      :-  (subscriptions-cleanup wex.bowl sup.bowl)
-      state(mode %none, me ~, epochs ~, chunks ~, basket ~, globe [~ ~])
+      =/  me  (need me.state)
+      =/  sig  (sign:zig-sig our.bowl now.bowl (sham me))
+      :_  state
+      %+  snoc  (subscriptions-cleanup wex.bowl sup.bowl)
+      :*  %pass  /submit-tx
+          %agent  [our.bowl %ziggurat]
+          %poke  %zig-weave-poke
+          !>  :-  %forward
+              %-  silt  :_  ~
+              :*  [me(nonce +(nonce.me)) `@ux`'capitol' 1 10.000 0]
+                  me(nonce +(nonce.me))
+                  `[%stop-validating sig]
+                  ~
+                  (silt ~[`@ux`'ziggurat'])
+              ==
+      ==
     ::
         %new-epoch
       ?>  =(src.bowl our.bowl)
@@ -167,13 +216,24 @@
         (need (bind (pry:sot slots.cur) head))
       =/  prev-hash
         (got-hed-hash last-slot-num epochs cur)
+      ::  BIG change: reading validator set from capitol contract
+      ::
+      =/  new-validator-set
+        =/  found  (~(got by p.globe.state) `@ux`'ziggurat')
+        ?.  ?=(%& -.germ.found)  !!
+        ~(key by (hole:smart ,(map ship [@ux @p life]) data.p.germ.found))
+      ~&  >  "new validator set: {<new-validator-set>}"
+      ::  if we're no longer in validator set, leave the chain
+      ?.  (~(has in new-validator-set) our.bowl)
+        :-  (subscriptions-cleanup wex.bowl sup.bowl)
+        state(mode %none, me ~, epochs ~, chunks ~, basket ~, globe [~ ~])
       =/  new-epoch=epoch
         :^    +(num.cur)
             (deadline start-time.cur (dec (lent order.cur)))
-          (shuffle (silt order.cur) (mug prev-hash))
+          (shuffle new-validator-set (mug prev-hash))
         ~
       =/  validators=(list ship)
-        ~(tap in (~(del in (silt order.cur)) our.bowl))
+        ~(tap in (~(del in new-validator-set) our.bowl))
       ?:  ?&  ?=(^ validators)
               %+  lth  start-time.new-epoch
               (sub now.bowl (mul +((lent order.new-epoch)) epoch-interval))
@@ -183,11 +243,9 @@
         (start-epoch-catchup i.validators num.cur)^~
       ::  either on-time to start epoch, or solo validator
       ~&  num.new-epoch^(sham epochs)
-      ::  alert other validators of any new towns made known to us,
       ::  set our timers for all the slots in this epoch,
       ::  subscribe to all the other validator ships,
       ::  and alert subscribing sequencers of the next block producer
-      ::  determine which hall our sequencer is on, if any
       :_  state(epochs (put:poc epochs num.new-epoch new-epoch))
       =/  town-id  .^((unit @ud) %gx /(scot %p our.bowl)/sequencer/(scot %da now.bowl)/town-id/noun)
       %-  zing
@@ -202,9 +260,9 @@
       ?>  (lte (met 3 src.bowl) 2)
       ::  only accept chunks from sequencers in on-chain council
       ~|  "error: ziggurat couldn't find hall on chain"
-      ?~  found=(~(get by p.globe.state) `@ux`'world')  !!
-      ?.  ?=(%& -.germ.u.found)                         !!
-      =/  world  (hole:smart ,(map @ud (map ship id:smart)) data.p.germ.u.found)
+      =/  found  (~(got by p.globe.state) `@ux`'world')
+      ?.  ?=(%& -.germ.found)                           !!
+      =/  world  (hole:smart ,(map @ud (map ship [@ux [@ux @p life]])) data.p.germ.found)
       ?~  hall=(~(get by world) town-id.act)            !!
       ~|  "only registered sequencers are allowed to submit a chunk!"
       ?.  (~(has by u.hall) src.bowl)                   !!
@@ -270,7 +328,7 @@
     ::  grab on-chain data for that hall in this epoch
     ?~  found=(~(get by p.globe.state) `@ux`'world')      ~
     ?.  ?=(%& -.germ.u.found)                             ~
-    =/  world  (hole:smart ,(map @ud (map ship id:smart)) data.p.germ.u.found)
+    =/  world  (hole:smart ,(map @ud (map ship [@ux [@ux @p life]])) data.p.germ.u.found)
     ?~  hall=(~(get by world) u.town-id)                  ~
     ~&  >  "giving sequencer hall status update"
     :-  ~  :-  %give
@@ -308,14 +366,20 @@
       ?<  ?=(%poke-ack -.sign)
       ?:  ?=(%kick -.sign)  `this
       ?:  ?=(%watch-ack -.sign)
+        ~&  >  "got a watch-ack on %epoch-catchup"
         ?.  ?=(^ p.sign)    `this
         =/  cur=epoch  +:(need (pry:poc epochs))
         =/  validators=(list ship)
-          ~(tap in (~(del in (~(del in (silt order.cur)) our.bowl)) src.bowl))
+          ?:  (gth 2 (lent order.cur))
+            ::  in a 2-ship testnet, this results in empty validator set -> crash
+            ~(tap in (~(del in (~(del in (silt order.cur)) our.bowl)) src.bowl))
+          ~(tap in (~(del in (silt order.cur)) our.bowl))
         ?>  ?=(^ validators)
-        :_  this
-        (start-epoch-catchup i.validators num.cur)^~
+        `this
+        ::  :_  this
+        ::  (start-epoch-catchup i.validators num.cur)^~
       ?>  ?=(%fact -.sign)
+      ~&  >  "got a fact on %epoch-catchup"
       =^  cards  state
         (epoch-catchup !<(update q.cage.sign))
       [cards this]
@@ -382,23 +446,28 @@
       `state(epochs epochs.update)
     ~|  "invalid history"
     ?>  (validate-history our.bowl epochs.update)
-    :-  ~
-    |-  ^-  _state
+    |-  ^-  (quip card _state)
     ?~  a
       ~&  %picked-our-history
-      state
+      `state
     ?~  b
       ~&  %picked-their-history
-      state(epochs epochs.update)
+      ::  if we pick their history, clear old timers if any exist
+      ::  and set new ones based on latest epoch
+      :_  state(epochs epochs.update)
+      (new-epoch-timers +:(need (pry:poc epochs.update)) our.bowl)
     ?:  =(i.a i.b)
       $(a t.a, b t.b)
     =/  a-s=(list (pair @ud slot))  (tap:sot slots.q.i.a)
     =/  b-s=(list (pair @ud slot))  (tap:sot slots.q.i.b)
-    |-  ^-  _state
+    |-  ^-  (quip card _state)
     ?~  a-s        ^$(a t.a, b t.b)
     ?~  b-s        ^$(a t.a, b t.b)
-    ?~  q.q.i.a-s  ~&  %picked-our-history    state
-    ?~  q.q.i.b-s  ~&  %picked-their-history  state(epochs epochs.update)
+    ?~  q.q.i.a-s  ~&  %picked-our-history  `state
+    ?~  q.q.i.b-s  
+      ~&  %picked-their-history
+      :_  state(epochs epochs.update)
+      (new-epoch-timers +:(need (pry:poc epochs.update)) our.bowl)
     $(a-s t.a-s, b-s t.b-s)
   --
 ::
@@ -427,6 +496,7 @@
     |=  [epoch-num=@ud slot-num=@ud]
     ^-  (quip card _state)
     =/  cur=epoch  +:(need (pry:poc epochs))
+    ~&  >>>  "slot timer pop"
     ?.  =(num.cur epoch-num)
       ::  timer is from an epoch that we don't view as current, ignore
       `state
@@ -450,7 +520,9 @@
       ::  if this is the last block in the epoch,
       ::  perform global-level transactions
       ::  insert transaction to advance
-      ?~  me.state  `state
+      ?~  me.state
+        ~&  >  "ziggurat: failed to produce epoch-ending block: no account"
+        `state
       =/  globe-chunk
         %+  ~(mill-all mil (need me) 0 0 now.bowl)
           globe.state
