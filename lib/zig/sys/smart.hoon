@@ -32,6 +32,8 @@
 +$  id  @ux             ::  pubkey
 ++  zigs-wheat-id  0x0  ::  hardcoded "native" token contract
 ::
++$  chunk   [(list [@ux egg]) town]
+::
 +$  account  [=id nonce=@ud zigs=id]
 +$  caller  $@(id account)
 +$  signature  [r=@ux s=@ux type=?(%schnorr %ecdsa)]

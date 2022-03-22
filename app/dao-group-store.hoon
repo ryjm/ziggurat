@@ -28,9 +28,11 @@
 ::      Modify the DAO group. Further documented in /sur/dao-group-store.hoon
 ::
 ::
-/-  res=resource,
+/-  uqbar-indexer,
+    res=resource,
     store=dao-group-store
-/+  dbug,
+/+  agentio,
+    dbug,
     default-agent,
     verb,
     daolib=dao,
@@ -44,7 +46,7 @@
   ==
 ::
 +$  state-zero
-  [%0 =dao-groups:store]
+  [%0 =dao-groups:store indexer=(unit dock)]  ::  TODO: indexer should be set of indexers?
 --
 ::
 =|  state-zero
@@ -61,7 +63,7 @@
       def             ~(. (default-agent this %|) bowl)
       dao             ~(. daolib bowl)
   ::
-  ++  on-init  `this(state [%0 ~])
+  ++  on-init  `this(state [%0 *dao-groups:store ~])
   ++  on-save  !>(state)
   ++  on-load
     |=  =old=vase
@@ -82,6 +84,9 @@
       ::
           %dao-group-modify
         (dao-group-modify:dgc !<(modify:store vase))
+      ::
+          %set-indexer
+        (set-indexer:dgc !<(dock vase))
       ::
       ==
     [cards this]
@@ -104,7 +109,39 @@
     ::
     ==
   ::
-  ++  on-agent  on-agent:def
+  ++  on-agent
+    |=  [=wire =sign:agent:gall]
+    ^-  (quip card _this)
+    ?+  wire  (on-agent:def wire sign)
+    ::
+        [%dao-update @ @ ~]
+      =/  rid=resource:res  [(slav %p i.t.wire) `@tas`i.t.t.wire]
+      ?+  -.sign  (on-agent:def wire sign)
+      ::
+          %kick
+        :_  this
+        ?~  dao-group=(peek-dao-group rid)  ~
+        ?~  wi=(watch-indexer rid dao-id.u.dao-group)  ~
+        ~[u.wi]
+      ::
+          %fact
+        =+  !<(=update:uqbar-indexer q.cage.sign)
+        ?>  ?=(%rice -.update)
+        =/  new-dao-group=dao-group:store
+          ;;(dao-group:store rice.update)  :: TODO: instead send diff?
+        ?.  .=  0  %~  wyt  in
+            (~(get ju members.new-dao-group) our.bowl)
+          :-  ~
+          %=  this
+            dao-groups  (~(put by dao-groups) rid new-dao-group)  :: TODO: instead walk through and make minimal change to existing structure?
+          ==
+        =^  cards  state
+          (remove-group:dgc rid)
+        [cards this]
+      ::
+      ==
+    ::
+    ==
   ++  on-arvo  on-arvo:def
   ++  on-fail   on-fail:def
   ::
@@ -112,11 +149,53 @@
 ::
 |_  =bowl:gall
 +*  dao  ~(. daolib bowl)
+    io   ~(. agentio bowl)
 ::
 ++  peek-dao-group
   |=  rid=resource:res
   ^-  (unit dao-group:store)
   (~(get by dao-groups) rid)
+::
+++  watch-indexer
+  |=  [rid=resource:res dao-id=id:store]
+  ^-  (unit card)
+  ?~  indexer  ~
+  :-  ~
+  %+  %~  watch  pass:io
+    /dao-update/(scot %p entity.rid)/[name.rid]
+  u.indexer  /rice/(scot %ux dao-id)
+::
+++  leave-indexer
+  |=  rid=resource:res
+  ^-  (unit card)
+  ?~  indexer  ~
+  :-  ~
+  %-  %~  leave  pass:io
+    /dao-update/(scot %p entity.rid)/[name.rid]
+  u.indexer
+::
+++  set-indexer  :: TODO: is this properly generalized?
+  |=  d=dock
+  ^-  (quip card _state)
+  :_  state(indexer `d)
+  ?:  =(0 ~(wyt by dao-groups))  ~
+  %+  murn  ~(tap by dao-groups)
+  |=  [rid=resource:res =dao-group:store]
+  (watch-indexer rid dao-id.dao-group)
+::
+++  has-write-dao-permissions
+  |=  dao-group-rid=resource:res
+  ^-  (unit dao-group:store)
+  ?~  dao-group=(peek-dao-group dao-group-rid)  ~
+  ?.  %:  is-allowed:dao
+          src.bowl
+          dao-id.u.dao-group
+          %write
+          members.u.dao-group
+          permissions.u.dao-group
+      ==
+    ~
+  dao-group
 ::
 ++  dao-group-create
   |=  =create:store
@@ -129,27 +208,23 @@
   ++  add-group
     |=  [rid=resource:res =dao-group:store]
     ^-  (quip card _state)
-    ?:  ?=(^ (~(get by dao-groups) rid))  `state
+    ?:  ?=(^ (peek-dao-group rid))  `state
     =.  dao-groups  (~(put by dao-groups) rid dao-group)
     :_  state
-    (send-diff %add-group rid dao-group)
+    :-  (send-diff %add-group rid dao-group)
+    ?~  wi=(watch-indexer rid dao-id.dao-group)  ~  [u.wi ~]
   ::
   --
 ::
-++  has-write-dao-permissions
-  |=  dao-group-rid=resource:res
-  ^-  (unit dao-group:store)
-  ?~  dao-group=(peek-dao-group dao-group-rid)
-    ~
-  ?.  %:  is-allowed:dao
-          src.bowl
-          dao-id.u.dao-group
-          %write
-          members.u.dao-group
-          permissions.u.dao-group
-      ==
-    ~
-  dao-group
+++  remove-group
+  |=  rid=resource:res
+  ^-  (quip card _state)
+  ?~  (peek-dao-group rid)  `state
+  =.  dao-groups
+    (~(del by dao-groups) rid)
+  :_  state
+  :-  (send-diff %remove-group rid)
+  ?~  li=(leave-indexer rid)  ~  [u.li ~]
 ::  +dao-group-modify: modify DAO group store
 ::
 ::    no-op if group does not exist
@@ -168,16 +243,9 @@
       %remove-permissions  (remove-permissions +.modify)
       %add-roles           (add-roles +.modify)
       %remove-roles        (remove-roles +.modify)
+      %add-subdao          (add-subdao +.modify)
+      %remove-subdao       (remove-subdao +.modify)
   ==
-  ::
-  ++  remove-group
-    |=  rid=resource:res
-    ^-  (quip card _state)
-    ?~  (has-write-dao-permissions rid)  `state
-    =.  dao-groups
-      (~(del by dao-groups) rid)
-    :_  state
-    (send-diff %remove-group rid)
   ::
   ++  add-member
     |=  [rid=resource:res roles=(set role:store) =id:store him=ship]
@@ -207,7 +275,7 @@
           (make-ship-role-pairs him roles)
       ==
     :_  state
-    (send-diff %add-member rid roles id him)
+    ~[(send-diff %add-member rid roles id him)]
   ::
   ++  remove-member
     |=  [rid=resource:res him=ship]
@@ -230,7 +298,7 @@
           (remove-roles-helper members roles him)
       ==
     :_  state
-    (send-diff %remove-member rid him)
+    ~[(send-diff %remove-member rid him)]
   ::
   ++  add-permissions
     |=  [rid=resource:res name=@tas =address:store roles=(set role:store)]
@@ -251,7 +319,7 @@
           ==
       ==
     :_  state
-    (send-diff %add-permissions rid name address roles)
+    ~[(send-diff %add-permissions rid name address roles)]
   ::
   ++  remove-permissions
     |=  [rid=resource:res name=@tas =address:store roles=(set role:store)]
@@ -271,7 +339,7 @@
               address
       ==  ==
     :_  state
-    (send-diff %remove-permissions rid name address roles)
+    ~[(send-diff %remove-permissions rid name address roles)]
   ::
   ++  add-subdao
     |=  [rid=resource:res subdao-id=id:store]
@@ -282,7 +350,7 @@
       |=  dao-group:store
       +<(subdaos (~(put in subdaos.u.dao-group) subdao-id))
     :_  state
-    (send-diff %add-subdao rid subdao-id)
+    ~[(send-diff %add-subdao rid subdao-id)]
   ::
   ++  remove-subdao
     |=  [rid=resource:res subdao-id=id:store]
@@ -293,7 +361,7 @@
       |=  dao-group:store
       +<(subdaos (~(del in subdaos.u.dao-group) subdao-id))
     :_  state
-    (send-diff %remove-subdao rid subdao-id)
+    ~[(send-diff %remove-subdao rid subdao-id)]
   ::  +add-roles: add roles to ships
   ::
   ::    crash if ships are not in group
@@ -312,7 +380,7 @@
           (make-noun-role-pairs him roles)
       ==
     :_  state
-    (send-diff %add-roles rid roles him)
+    ~[(send-diff %add-roles rid roles him)]
   ::  +remove-roles: remove roles from ships
   ::
   ::    crash if ships are not in group
@@ -328,7 +396,7 @@
       |=  dao-group:store
       +<(members (remove-roles-helper members roles him))
     :_  state
-    (send-diff %remove-roles rid roles him)
+    ~[(send-diff %remove-roles rid roles him)]
   ::
   ++  add-permissions-helper
     |=  [name=@tas =permissions:store roles=(set role:store) =address:store]
@@ -388,7 +456,7 @@
 ::
 ++  send-diff
   |=  =update:store
-  ^-  (list card)
-  [%give %fact ~[/dao-groups] %dao-group-update-0 !>(update)]~
+  ^-  card
+  [%give %fact ~[/dao-groups] %dao-group-update-0 !>(update)]
 ::
 --
