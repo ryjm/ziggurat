@@ -3,8 +3,8 @@
 /*  capitol-contract  %txt  /lib/zig/contracts/capitol/hoon
 :-  %say
 |=  [[now=@da eny=@uvJ bek=beak] [=start=time ~] ~]
-:-  %zig-action
-^-  action
+:-  %zig-chain-poke
+^-  chain-poke
 =/  beef-zigs-grain  ::  ~zod
   ^-  grain:smart
   :*  0x1.beef

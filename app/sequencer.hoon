@@ -3,8 +3,9 @@
 ::  Agent for managing a single Uqbar town. Publishes blocks
 ::  of transaction data to main chain agent, Ziggurat.
 ::
-/-  *sequencer, ziggurat
-/+  default-agent, dbug, verb, smart=zig-sys-smart, mill=zig-mill, sig=zig-sig
+/+  *ziggurat, default-agent, dbug, verb
+::  Choose which library smart contracts are executed against here
+::
 /*  smart-lib  %noun  /lib/zig/sys/smart-lib/noun
 |%
 +$  card  card:agent:gall
@@ -13,10 +14,10 @@
       town-id=(unit @ud)
       =town:smart
       hall=(unit hall)
-      =basket:smart
+      =basket
   ==
 +$  inflated-state-0  [state-0 =mil]
-+$  mil  $_  ~(mill mill 0) 
++$  mil  $_  ~(mill mill 0)
 --
 ::
 =|  inflated-state-0 
@@ -49,19 +50,19 @@
   ^-  (quip card _this)
   |^
   ?+    mark  !!
-      %zig-basket-action
+      %zig-weave-poke
     =^  cards  state
-      (poke-basket-action !<(basket-action vase))
+      (poke-basket !<(weave-poke vase))
     [cards this]
   ::
-      %zig-chain-action
+      %zig-hall-poke
     =^  cards  state
-      (poke-chain-action !<(chain-action vase))
+      (poke-hall !<(hall-poke vase))
     [cards this]
   ==
   ::
-  ++  poke-basket-action
-    |=  act=basket-action
+  ++  poke-basket
+    |=  act=weave-poke
     ^-  (quip card _state)
     ?>  (lte (met 3 src.bowl) 4)
     ?~  hall.state
@@ -86,7 +87,7 @@
       :_  ~
       :*  %pass  /basket-gossip
           %agent  [~zod %sequencer]
-          %poke  %zig-basket-action
+          %poke  %zig-weave-poke
           !>([%receive (~(uni in eggs.act) basket.state)])
       ==
     ::
@@ -97,8 +98,8 @@
       `state(basket (~(uni in basket) eggs.act))
     ==
   ::
-  ++  poke-chain-action
-    |=  act=chain-action
+  ++  poke-hall
+    |=  act=hall-poke
     ^-  (quip card _state)
     ?>  =(src.bowl our.bowl)
     ::  assert that we're active in main chain
@@ -119,7 +120,7 @@
           ==
           :*  %pass  /submit-tx
               %agent  [our.bowl %ziggurat]
-              %poke  %zig-basket-action
+              %poke  %zig-weave-poke
               !>  :-  %forward
                   %-  silt  :_  ~
                   :*  [me(nonce +(nonce.me)) `@ux`'capitol' rate.gas.act bud.gas.act 0]
@@ -143,7 +144,7 @@
           ==
           :*  %pass  /submit-tx
               %agent  [our.bowl %ziggurat]
-              %poke  %zig-basket-action
+              %poke  %zig-weave-poke
               !>  :-  %forward
                   %-  silt  :_  ~
                   :*  [me(nonce +(nonce.me)) `@ux`'capitol' rate.gas.act bud.gas.act 0]
@@ -163,7 +164,7 @@
       :_  state
       :~  :*  %pass  /submit-tx
               %agent  [our.bowl %ziggurat]
-              %poke  %zig-basket-action
+              %poke  %zig-weave-poke
               !>  :-  %forward
                   %-  silt  :_  ~
                   :*  [me(nonce +(nonce.me)) `@ux`'capitol' rate.gas.act bud.gas.act 0]
@@ -197,7 +198,7 @@
     ?:  ?=(%watch-ack -.sign)              (on-agent:def wire sign)
     ?.  ?=(%fact -.sign)                   (on-agent:def wire sign)
     ?.  ?=(%sequencer-update p.cage.sign)  (on-agent:def wire sign)
-    =/  update  !<(sequencer-update:ziggurat q.cage.sign)
+    =/  update  !<(sequencer-update q.cage.sign)
     ?-    -.update
         %new-hall
       ::  receive this at beginning of epoch, update our hall-state
@@ -218,7 +219,7 @@
         `this
       ::  create and send our chunk to them
       =/  me  .^(account:smart %gx /(scot %p our.bowl)/ziggurat/(scot %da now.bowl)/account/noun)
-      =/  our-chunk=chunk:smart
+      =/  our-chunk=chunk
         %+  ~(mill-all mil me (need town-id.state) 0 now.bowl)
           town.state
         ~(tap in basket.state)
@@ -232,11 +233,11 @@
           ==
       :~  :*  %pass  /chunk-gossip
               %agent  [ship.update %ziggurat]  %poke
-              %zig-action  !>([%receive-chunk (need town-id.state) our-chunk])
+              %zig-chain-poke  !>([%receive-chunk (need town-id.state) our-chunk])
           ==
           :*  %pass  /basket-gossip
               %agent  [our.bowl %sequencer]  %poke
-              %zig-basket-action  !>([%forward ~])
+              %zig-weave-poke  !>([%forward ~])
           ==
       ==
     ==

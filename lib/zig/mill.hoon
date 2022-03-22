@@ -15,7 +15,7 @@
       (gth rate.p.a rate.p.b)
     =|  [processed=(list [@ux egg]) reward=@ud]
     |-
-    ^-  chunk
+    ^-  [(list [@ux egg]) ^town]
     ?~  pending
       [processed town(p (~(pay tax p.town) reward))]
     =+  [res fee]=(mill town i.pending)

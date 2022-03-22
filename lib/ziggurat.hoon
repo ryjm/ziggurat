@@ -1,8 +1,11 @@
 /-  *ziggurat
-/+  zig-epo, zig-util
+/+  zig-epo, zig-util, zig-sig, zig-mill, zig-sys-smart
 =>  |%
-    ++  epo   epo:zig-epo
-    ++  util  zig-util
+    ++  epo    epo:zig-epo
+    ++  util   zig-util
+    ++  sig    zig-sig
+    ++  mill   zig-mill
+    ++  smart  zig-sys-smart
     --
 |%
 ::

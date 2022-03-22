@@ -1,12 +1,12 @@
 /-  *ziggurat
-|_  c-act=chain-action
+|_  act=weave-poke
 ++  grab
   |%
-  ++  noun  chain-action
+  ++  noun  weave-poke
   --
 ++  grow
   |%
-  ++  noun  c-act
+  ++  noun  act
   --
 ++  grad  %noun
 --

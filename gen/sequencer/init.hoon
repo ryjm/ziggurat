@@ -1,4 +1,4 @@
-/-  *sequencer
+/-  *ziggurat
 /+  smart=zig-sys-smart, deploy=zig-deploy
 /*  zigs-contract  %txt  /lib/zig/contracts/zigs/hoon
 :-  %say
@@ -54,10 +54,10 @@
   ^-  populace:smart
   %-  %~  gas  by:smart  *(map:smart id:smart @ud)
   ~[[0xbeef 0] [0xdead 0] [0xcafe 0]]
-:-  %zig-chain-action
-^-  chain-action
+:-  %zig-hall-poke
+^-  hall-poke
 :*  %init
     town-id
     `[fake-granary fake-populace]
-    [rate=1 bud=100.000]
+    [rate=1 bud=10.000]
 ==

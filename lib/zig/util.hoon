@@ -16,6 +16,27 @@
   :^  %fact  ~[/sequencer/updates]
       %sequencer-update  !>([%next-producer ship])
 ::
+::  +subscriptions-cleanup: close subscriptions of our various watchers
+::
+++  subscriptions-cleanup
+  |=  [wex=boat:gall sup=bitt:gall]
+  ^-  (list card)
+  %+  weld
+    %+  murn  ~(tap by wex)
+    |=  [[=wire =ship =term] *]
+    ^-  (unit card)
+    ?.  ?|  ?=([%validator %updates *] wire)
+            ?=([%sequencer %updates *] wire)
+            ?=([%fisherman %updates *] wire)
+        ==
+      ~
+    `[%pass wire %agent [ship term] %leave ~]
+  %+  murn  ~(tap by sup)
+  |=  [* [p=ship q=path]]
+  ^-  (unit card)
+  ?.  ?=([%validator *] q)  ~
+  `[%give %kick q^~ `p]
+::
 ::  +wait: create %behn timer cards for a given epoch-slot
 ::
 ++  wait
@@ -56,7 +77,7 @@
   |=  [our=ship epoch-num=@ud]
   ^-  card
   =-  [%pass /new-epoch/(scot %ud epoch-num) %agent [our %ziggurat] %poke -]
-  zig-action+!>(`action`[%new-epoch ~])
+  zig-chain-poke+!>(`chain-poke`[%new-epoch ~])
 ::
 ++  shuffle
   |=  [set=(set ship) eny=@]

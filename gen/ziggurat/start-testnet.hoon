@@ -1,11 +1,10 @@
 /-  *ziggurat
 /+  smart=zig-sys-smart, deploy=zig-deploy
 /*  capitol-contract  %txt  /lib/zig/contracts/capitol/hoon
-/*  zigs-contract  %txt  /lib/zig/contracts/zigs/hoon
 :-  %say
 |=  [[now=@da eny=@uvJ bek=beak] [=start=time ~] ~]
-:-  %zig-action
-^-  action
+:-  %zig-chain-poke
+^-  chain-poke
 =/  beef-zigs-grain  ::  ~zod
   ^-  grain:smart
   :*  0x1.beef
@@ -40,8 +39,9 @@
   ==
 =/  wheat
   ^-  wheat:smart
-  :-  `(~(deploy deploy ~zod now) /lib/zig/contracts/capitol/hoon)
-  (silt ~[`@ux`'world'])
+  =/  cont  (of-wain:format capitol-contract)
+  :-  `(text-deploy:deploy cont)
+  ~
 =/  wheat-grain
   ^-  grain:smart
   :*  `@ux`'capitol'  ::  id
@@ -50,24 +50,10 @@
       0               ::  town-id
       [%| wheat]      ::  germ
   ==
-=/  zigs-wheat
-  ^-  wheat:smart
-  =/  cont  (of-wain:format zigs-contract)
-  :-  `(text-deploy:deploy cont)
-  (silt ~[0x1.beef 0x1.dead 0x1.cafe])
-=/  zigs-grain
-  ^-  grain:smart
-  :*  zigs-wheat-id:smart  ::  id
-      zigs-wheat-id:smart  ::  lord
-      zigs-wheat-id:smart  ::  holder
-      0                    ::  town-id
-      [%| zigs-wheat]      ::  germ
-  ==
 =/  fake-granary
   ^-  granary:smart
   =/  grains=(list:smart (pair:smart id:smart grain:smart))
     :~  [`@ux`'capitol' wheat-grain]
-        [zigs-wheat-id:smart zigs-grain]
         [`@ux`'world' world-map]
         [0x1.beef beef-zigs-grain]
         [0x1.dead dead-zigs-grain]

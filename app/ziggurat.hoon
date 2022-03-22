@@ -1,7 +1,6 @@
 ::  ziggurat [uqbar-dao]
 ::
-/-  sequencer
-/+  *ziggurat, default-agent, dbug, verb, smart=zig-sys-smart, mill=zig-mill
+/+  *ziggurat, default-agent, dbug, verb
 /*  smart-lib  %noun  /lib/zig/sys/smart-lib/noun
 =,  util
 |%
@@ -10,7 +9,6 @@
   $:  %0
       mode=?(%fisherman %validator %none)
       me=(unit account:smart)
-      library=(unit *)
       =epochs
       =chunks
       ::  TODO need to make sure this design is acceptable in terms of
@@ -19,7 +17,7 @@
       ::  the set of possible transactions in the town contract is so narrow,
       ::  possibly we can show that no logic can result in unwanted secret
       ::  manipulation
-      =basket:smart     ::  accept town mgmt txs from stars
+      =basket           ::  accept town mgmt txs from stars
       globe=town:smart  ::  store town hall info; update once per epoch
   ==
 +$  inflated-state-0  [state-0 =mil]
@@ -52,7 +50,7 @@
 +*  this  .
     def   ~(. (default-agent this %|) bowl)
 ::
-++  on-init  `this(state [[%0 %none ~ ~ ~ ~ ~ [~ ~]] ~(mill mill +:(cue q.q.smart-lib))])
+++  on-init  `this(state [[%0 %none ~ ~ ~ ~ [~ ~]] ~(mill mill +:(cue q.q.smart-lib))])
 ::
 ++  on-save  !>(-.state)
 ++  on-load
@@ -96,7 +94,6 @@
       [%sequencer %updates ~]
     ~|  "comets and moons may not be sequencers"
     ?>  (lte (met 3 src.bowl) 4)
-    ~&  >  "got a sequencer subscription"
     ::  send next-producer on this path for sequencers
     `this
   ::
@@ -112,14 +109,14 @@
   ^-  (quip card _this)
   |^
   ?+    mark  !!
-      %zig-action
+      %zig-chain-poke
     =^  cards  state
-      (poke-zig-action !<(action vase))
+      (poke-chain !<(chain-poke vase))
     [cards this]
     ::
-      %zig-basket-action
+      %zig-weave-poke
     =^  cards  state
-      (poke-basket-action !<(basket-action:sequencer vase))
+      (poke-basket !<(weave-poke vase))
     [cards this]
     ::
       %noun
@@ -129,45 +126,36 @@
     `this
   ==
   ::
-  ++  poke-zig-action
-    |=  =action
+  ++  poke-chain
+    |=  act=chain-poke
     ^-  (quip card _state)
-    ?-    -.action
-    ::      %set-standard-lib
-    ::    ?>  =(src.bowl our.bowl)
-    ::    =/  blob  .^([p=path q=[p=@ud q=@]] %cx (weld /(scot %p our.bowl)/zig/(scot %da now.bowl) path.action))
-    ::    =/  cued  (cue q.q.blob)
-    ::    `state(library `cued)
-    ::
-        %set-pubkey
+    ?-    -.act
+        %key
       ::  store private key where? jael?
       ?>  =(src.bowl our.bowl)
-      `state(me `account.action)
+      `state(me `account.act)
     ::
         %start
       ?>  =(src.bowl our.bowl)
       ~|  "we have already started in this mode"
-      ?<  =(mode mode.action)
-      =?  epochs  ?=(^ history.action)
-        history.action
-      ?:  ?=(%validator mode.action)
-        ?>  ?|(?=(^ epochs) ?=(^ validators.action))
-        :_  state(mode %validator, globe starting-state.action)
+      ?<  =(mode mode.act)
+      =?  epochs  ?=(^ history.act)
+        history.act
+      ?:  ?=(%validator mode.act)
+        ?>  ?|(?=(^ epochs) ?=(^ validators.act))
+        :_  state(mode %validator, globe starting-state.act)
         %-  zing
-        :~  cleanup-fisherman
-            cleanup-validator
-            cleanup-sequencer
-            (watch-updates validators.action)
+        :~  (subscriptions-cleanup wex.bowl sup.bowl)
+            (watch-updates validators.act)
             ?~  epochs  ~
-            =/  cur=epoch  +:(need (pry:poc epochs))
-            (new-epoch-timers cur our.bowl)
+            (new-epoch-timers +:(need (pry:poc epochs)) our.bowl)
         ==
       :_  state(mode %fisherman)
-      (weld cleanup-validator (weld cleanup-sequencer cleanup-fisherman))
+      (subscriptions-cleanup wex.bowl sup.bowl)
     ::
         %stop
       ?>  =(src.bowl our.bowl)
-      :-  (weld cleanup-validator (weld cleanup-sequencer cleanup-fisherman))
+      :-  (subscriptions-cleanup wex.bowl sup.bowl)
       state(mode %none, me ~, epochs ~, chunks ~, basket ~, globe [~ ~])
     ::
         %new-epoch
@@ -191,16 +179,14 @@
         ::  there are other validators, and we're behind them, must catch up
         :_  state
         (start-epoch-catchup i.validators num.cur)^~
-      ::  either on-time to start epoch, or solo validator -- go ahead
+      ::  either on-time to start epoch, or solo validator
       ~&  num.new-epoch^(sham epochs)
-      :_  %=  state
-              epochs        (put:poc epochs num.new-epoch new-epoch)
-          ==
       ::  alert other validators of any new towns made known to us,
       ::  set our timers for all the slots in this epoch,
       ::  subscribe to all the other validator ships,
       ::  and alert subscribing sequencers of the next block producer
       ::  determine which hall our sequencer is on, if any
+      :_  state(epochs (put:poc epochs num.new-epoch new-epoch))
       =/  town-id  .^((unit @ud) %gx /(scot %p our.bowl)/sequencer/(scot %da now.bowl)/town-id/noun)
       %-  zing
         :~  ?~  hall-card=(hall-update-card town-id)
@@ -211,42 +197,37 @@
         ==
     ::
         %receive-chunk
-      ::  TODO make this town-running-stars only once that info is known
-      ::  query contract
       ?>  (lte (met 3 src.bowl) 2)
+      ::  only accept chunks from sequencers in on-chain council
+      ~|  "error: ziggurat couldn't find hall on chain"
+      ?~  found=(~(get by p.globe.state) `@ux`'world')  !!
+      ?.  ?=(%& -.germ.u.found)                         !!
+      =/  world  (hole:smart ,(map @ud (map ship id:smart)) data.p.germ.u.found)
+      ?~  hall=(~(get by world) town-id.act)            !!
+      ~|  "only registered sequencers are allowed to submit a chunk!"
+      ?.  (~(has by u.hall) src.bowl)                   !!
       =/  cur=epoch  +:(need (pry:poc epochs))
       ?>  ?~  slot-num=(bind (pry:sot slots.cur) head)
             =(our.bowl -.order.cur)
           =(our.bowl (snag +(u.slot-num) order.cur))
-      ::  TODO check town id
-      ~&  >  "chunk received"
-      `state(chunks (~(put by chunks.state) town-id.action chunk.action))
+      `state(chunks (~(put by chunks.state) town-id.act chunk.act))
     ==
   ::
-  ++  poke-basket-action
-    |=  act=basket-action:sequencer
+  ++  poke-basket
+    |=  act=weave-poke
     ^-  (quip card _state)
     ?-    -.act
         %forward
       ?>  (lte (met 3 src.bowl) 2)
-      ::  getting an egg from sequencer
-      ::  filter out any eggs not sent to contracts
-      ::  we're aware of
-      =.  eggs.act
-        %-  ~(gas in *(set egg:smart))
-        %+  skim  ~(tap in eggs.act)
-        |=(=egg:smart =(to.p.egg `@ux`'capitol'))
-      ~&  >  eggs.act
       =/  cur=epoch  +:(need (pry:poc epochs))
       =/  last-producer  (rear order.cur)  ::  TODO is this optimal? or -:(flop ..)?
       ?:  =(our.bowl last-producer)
         `state(basket (~(uni in basket) eggs.act))
-      ~&  >  "forwarding eggs to {<last-producer>}"
       :_  state(basket ~)
       :_  ~
       :*  %pass  /basket-gossip
           %agent  [last-producer %ziggurat]
-          %poke  %zig-basket-action
+          %poke  %zig-weave-poke
           !>([%receive (~(uni in eggs.act) basket.state)])
       ==
     ::
@@ -292,39 +273,6 @@
     :-  ~  :-  %give
     :^  %fact  ~[/sequencer/updates]
         %sequencer-update  !>([%new-hall u.hall])
-  ::
-  ::  cleanup arms: close subscriptions of our various watchers
-  ::  TODO can probably merge these into a single arm and single +murn
-  ::
-  ++  cleanup-validator
-    ^-  (list card)
-    %+  weld
-      %+  murn  ~(tap by wex.bowl)
-      |=  [[=wire =ship =term] *]
-      ^-  (unit card)
-      ?.  ?=([%validator %updates *] wire)  ~
-      `[%pass wire %agent [ship term] %leave ~]
-    %+  murn  ~(tap by sup.bowl)
-    |=  [* [p=ship q=path]]
-    ^-  (unit card)
-    ?.  ?=([%validator *] q)  ~
-    `[%give %kick q^~ `p]
-  ::
-  ++  cleanup-sequencer
-    ^-  (list card)
-    %+  murn  ~(tap by wex.bowl)
-    |=  [[=wire =ship =term] *]
-    ^-  (unit card)
-    ?.  ?=([%sequencer %updates *] wire)  ~
-    `[%pass wire %agent [ship term] %leave ~]
-  ::
-  ++  cleanup-fisherman
-    ^-  (list card)
-    %+  murn  ~(tap by wex.bowl)
-    |=  [[=wire =ship =term] *]
-    ^-  (unit card)
-    ?.  ?=([%fisherman %updates *] wire)  ~
-    `[%pass wire %agent [ship term] %leave ~]
   --
 ::
 ++  on-agent
@@ -491,24 +439,24 @@
       (got-hed-hash slot-num epochs cur)
     ?:  =(ship our.bowl)
       ::  we are responsible for producing a block in this slot
-      ?:  =(our.bowl (rear order.cur))
-        ::  if this is the last block in the epoch,
-        ::  perform global-level transactions
-        ::  insert transaction to advance
-        ?~  me.state  `state
-        =/  globe-chunk
-          %+  ~(mill-all mil (need me) 0 0 now.bowl)
-            globe.state
-          ~(tap in basket.state)
-        =:  globe.state   +.globe-chunk
-            basket.state  ~
-            chunks.state  (~(put by chunks.state) relay-town-id globe-chunk)
-            u.me.state    u.me(nonce (~(got by q.+.globe-chunk) id.u.me.state))
-        ==
+      ?.  =(our.bowl (rear order.cur))
+        ::  normal block
         =^  cards  cur
           (~(our-block epo cur prev-hash [our now src]:bowl) chunks.state)
         [cards state(epochs (put:poc epochs num.cur cur), chunks ~)]
-      ::  otherwise normal block
+      ::  if this is the last block in the epoch,
+      ::  perform global-level transactions
+      ::  insert transaction to advance
+      ?~  me.state  `state
+      =/  globe-chunk
+        %+  ~(mill-all mil (need me) 0 0 now.bowl)
+          globe.state
+        ~(tap in basket.state)
+      =:  globe.state   +.globe-chunk
+          basket.state  ~
+          chunks.state  (~(put by chunks.state) relay-town-id globe-chunk)
+          u.me.state    u.me(nonce (~(got by q.+.globe-chunk) id.u.me.state))
+      ==
       =^  cards  cur
         (~(our-block epo cur prev-hash [our now src]:bowl) chunks.state)
       [cards state(epochs (put:poc epochs num.cur cur), chunks ~)]
@@ -541,10 +489,6 @@
   ::
       [%account ~]
     ``noun+!>(`account:smart`(need me.state))
-  ::
-      [%library ~]
-    ::  TODO is this too big of a scry? are big scrys okay?
-    ``noun+!>(`*`(need library.state))
   ::
   ::  scries for contracts
   ::

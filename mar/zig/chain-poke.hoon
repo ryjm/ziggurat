@@ -1,8 +1,8 @@
 /-  *ziggurat
-|_  act=action
+|_  act=chain-poke
 ++  grab
   |%
-  ++  noun  action
+  ++  noun  chain-poke
   --
 ++  grow
   |%
