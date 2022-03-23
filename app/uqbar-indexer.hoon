@@ -163,6 +163,7 @@
         =/  previous-block  (rear blocks)
         ?>  .=  data-hash.block-header.previous-block
           data-hash.block-header.new-block
+        ::  TODO: indexing into index goes here
         `this(blocks (snoc blocks new-block))
       ::
       ==
