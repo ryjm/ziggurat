@@ -4,11 +4,12 @@
 ::
 |%
 +$  blocks  (list [=block-header:zig =block:zig])
-+$  query-type  ?(%block %grain %to %from %egg %hash)
-+$  query-payload  ?(id:smart block-num=@ud)
++$  query-type  ?(%block %block-hash %egg %from %grain %to %hash)
++$  query-payload  ?(@ux block-num=@ud)
 +$  location
-  $?  [block-num=@ud town-id=@ud]              :: grain
-      [block-num=@ud town-id=@ud egg-num=@ud]  :: to, from, egg
+  $?  block-num=@ud                            :: block-hash
+      [block-num=@ud town-id=@ud]              :: grain
+      [block-num=@ud town-id=@ud egg-num=@ud]  :: egg, from, to
   ==
 +$  index
   %+  map  query-type

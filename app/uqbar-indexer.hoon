@@ -13,16 +13,22 @@
 ::      The current block height
 ::    /x/block:
 ::      The most recent block
-::    /x/block/[@ud]:
+::    /x/block-num/[@ud]:
 ::      The block with given block number
-::    /x/hash/[@ux]:
-::      Info about hash
+::    /x/block-hash/[@ux]:
+::      The block with given block hash
 ::    /x/egg/[@ux]:
 ::      Info about egg (transaction) with the given hash
-::    /x/id/[@ux]:
-::      History of id with the given hash
+::    /x/from/[@ux]:
+::      History of sender with the given hash
 ::    /x/grain/[@ux]:
 ::      State of grain with given hash
+::    /x/id/[@ux]:
+::      History of id with the given hash
+::    /x/to/[@ux]:
+::      History of receiver with the given hash
+::    /x/hash/[@ux]:
+::      Info about hash
 ::
 ::
 ::    ## Subscription paths (TODO)
@@ -124,20 +130,33 @@
       ?:  =(0 (lent blocks))  ~
       `(rear blocks)
     ::
-        [%x %block @ ~]
+        [%x %block-num @ ~]
       =/  block-num=@ud  i.t.t.path
       :^  ~  ~  %noun
       !>  ^-  (unit update:uqbar-indexer)
-      ?.  (lth block-num (lent blocks))  ~
-      `(snag block-num blocks)
+      (serve-update %block block-num)
     ::
-        [%x %hash @ ~]
-    ::
-        [%x %egg @ ~]
+        $?  [%x %block-hash @ ~]
+            [%x %egg @ ~]
+            [%x %from @ ~]
+            [%x %grain @ ~]
+            [%x %to @ ~]
+        ==
+      =/  =query-type:uqbar-indexer  i.t.path
+      =/  hash=@ux  i.t.t.path
+      :^  ~  ~  %noun
+      !>  ^-  (unit update:uqbar-indexer)
+      (serve-update query-type block-hash)
     ::
         [%x %id @ ~]
+        ::  search over from and to and return all hits
+      =/  hash=@ux  i.t.t.path
+      :^  ~  ~  %noun
+      !>  ^-  (unit update:uqbar-indexer)
+      (serve-update query-type block-hash)
     ::
-        [%x %grain @ ~]
+        [%x %hash @ ~]
+        ::  search over all hashes and return all hits
     ::
     ==
   ::
@@ -164,11 +183,13 @@
         ?>  .=  data-hash.block-header.previous-block
           data-hash.block-header.new-block
         ::
-        =+  [grain to from egg]=(parse-block block-num block)
+        =/  [block-hash egg from grain to]
+          (parse-block block-num block)
+        =.  index  (update-index index %block-hash block-hash)
+        =.  index  (update-index index %egg egg)
+        =.  index  (update-index index %from from)
         =.  index  (update-index index %grain grain)
         =.  index  (update-index index %to to)
-        =.  index  (update-index index %from from)
-        =.  index  (update-index index %egg egg)
         `this(blocks (snoc blocks new-block), index index)
       ::
       ==
@@ -225,7 +246,7 @@
       %block
     get-block
   ::
-      ?(%grain %to %from %egg)
+      ?(%block-hash %egg %from %grain %to)
     get-from-index
   ::
   ==
@@ -233,7 +254,7 @@
   ++  get-block
     ^-  (unit update:uqbar-indexer)
     ?>  ?=(@ud query-payload)
-    ?>  (lth query-payload (lent blocks))
+    ?.  (lth query-payload (lent blocks))  ~
     `[%block (snag query-payload blocks)]
   ::
   ++  get-chunk-update
@@ -243,17 +264,24 @@
   ::
   ++  get-from-index
     ^-  (unit update:uqbar-indexer)
-    ?>  ?=(id:smart query-payload)
+    ?>  ?=(@ux query-payload)
     ?~  location=get-location  ~
     ?~  chunk=(get-chunk u.location)
     ?-  query-type
+    ::
+        %block-hash
+      ?>  ?=(@ u.location)  ::  block-num
+      ?.  (lth u.location (lent blocks))  ~
+      `[%block (snag u.location blocks)]
+    ::
         %grain
+      ?>  ?=([@ @] u.location)  ::  [block-num town-id]
       =*  granary  p.+.u.chunk
       ?~  grain=(~(get by granary) query-payload)  ~
       `[%grain u.grain]
     ::
-        ?(%to %from $egg)
-      ?>  ?=([@ ^] u.location)  ::  [block-num town-id egg-num]
+        ?(%egg %from %to)
+      ?>  ?=([@ @ @] u.location)  ::  [block-num town-id egg-num]
       =*  egg-num  egg-num.u.location
       =*  txs  -.u.chunk
       ?>  (lth egg-num (lent txs))
@@ -283,22 +311,26 @@
 ++  parse-block
   |=  [block-num=@ud =block:zig]
   |^
-  ^-  $:  (list [id:smart [block-num=@ud town-id=@ud]])
+  ^-  $:  (list [id:smart block-num=@ud])
+          (list [id:smart [block-num=@ud town-id=@ud]])
           (list [id:smart [block-num=@ud town-id=@ud egg-num=@ud]])
           (list [id:smart [block-num=@ud town-id=@ud egg-num=@ud]])
           (list [id:smart [block-num=@ud town-id=@ud egg-num=@ud]])
       ==
+  =/  block-hash=(list [id:smart block-num=@ud])
+    [`@ux`data-hash.block-header.block block-num]
+  =|  egg=(list [id:smart [block-num=@ud town-id=@ud egg-num=@ud]])
+  =|  from=(list [id:smart [block-num=@ud town-id=@ud egg-num=@ud]])
   =|  grain=(list [id:smart [block-num=@ud town-id=@ud]])
   =|  to=(list [id:smart [block-num=@ud town-id=@ud egg-num=@ud]])
-  =|  from=(list [id:smart [block-num=@ud town-id=@ud egg-num=@ud]])
-  =|  egg=(list [id:smart [block-num=@ud town-id=@ud egg-num=@ud]])
   =/  chunks=(list [town-id=@ud =chunk:zig])  ~(tap by q.block)
+  :-  block-hash
   |-
   ?~  chunks
-    :*  grain
-        to
+    :*  egg
         from
-        egg
+        grain
+        to
     ==
   =*  town-id  town-id.i.chunks
   =*  chunk    chunk.i.chunks
@@ -309,13 +341,13 @@
   =+  new-grain=(parse-granary town-id granary)
   ::  transactions
   ::
-  =+  [new-to new-from new-egg]=(parse-transactions town-id txs)
+  =+  [new-egg new-from new-to]=(parse-transactions town-id txs)
   %=  $
       chunks  t.chunks
+      egg     (weld egg new-egg)
+      from    (weld from new-from)
       grain   (weld grain new-grain)
       to      (weld to new-to)
-      from    (weld from new-from)
-      egg     (weld egg new-egg)
   ==
   ::
   ++  parse-granary
@@ -325,7 +357,7 @@
     =/  grains=(list [id:smart grain:smart])
       ~(tap by granary)
     |-
-    ?~  grains  [rice wheat]
+    ?~  grains  [parsed-grain]
     =*  id     id.i.grains
     =*  grain  grain.i.grains
     %=  $
@@ -340,12 +372,12 @@
             (list [id:smart [block-num=@ud town-id=@ud egg-num=@ud]])
             (list [id:smart [block-num=@ud town-id=@ud egg-num=@ud]])
         ==
-    =|  parsed-to=(list [id:smart [block-num=@ud town-id=@ud egg-num=@ud]])
-    =|  parsed-from=(list [id:smart [block-num=@ud town-id=@ud egg-num=@ud]])
     =|  parsed-egg=(list [id:smart [block-num=@ud town-id=@ud egg-num=@ud]])
+    =|  parsed-from=(list [id:smart [block-num=@ud town-id=@ud egg-num=@ud]])
+    =|  parsed-to=(list [id:smart [block-num=@ud town-id=@ud egg-num=@ud]])
     =/  egg-num=@ud  0
     |-
-    ?~  txs  [parsed-to parsed-from parsed-egg]
+    ?~  txs  [parsed-egg parsed-from parsed-to]
     =*  tx-hash  -.i.txs
     =*  egg      +.i.txs
     =*  from     from.p.egg
@@ -353,9 +385,9 @@
     =/  location=[@ud @ud @ud]  [block-num town-id egg-num]
     %=  $
         txs          t.txs
-        parsed-to    [[to location] parsed-to]
-        parsed-from  [[from location] parsed-from]
         parsed-egg   [[tx-hash location] parsed-egg]
+        parsed-from  [[from location] parsed-from]
+        parsed-to    [[to location] parsed-to]
         egg-num      +(egg-num)
     ==
   ::
