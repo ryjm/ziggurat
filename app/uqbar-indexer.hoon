@@ -144,17 +144,29 @@
       =/  hash=@ux  i.t.t.path
       :^  ~  ~  %noun
       !>  ^-  (unit update:uqbar-indexer)
-      (serve-update query-type block-hash)
+      (serve-update query-type hash)
     ::
         [%x %id @ ~]
         ::  search over from and to and return all hits
       =/  hash=@ux  i.t.t.path
+      =/  from=update:uqbar-indexer  (serve-update %from hash)
+      =/  to=update:uqbar-indexer  (serve-update %to hash)
       :^  ~  ~  %noun
       !>  ^-  (unit update:uqbar-indexer)
-      (serve-update query-type block-hash)
+      (combine-update-sets:uic ~[from to])
     ::
         [%x %hash @ ~]
         ::  search over all hashes and return all hits
+      =/  hash=@ux  i.t.t.path
+      =/  block-hash=update:uqbar-indexer
+        (serve-update %block-hash hash)
+      =/  egg=update:uqbar-indexer  (serve-update %egg hash)
+      =/  from=update:uqbar-indexer  (serve-update %from hash)
+      =/  grain=update:uqbar-indexer  (serve-update %grain hash)
+      =/  to=update:uqbar-indexer  (serve-update %to hash)
+      :^  ~  ~  %noun
+      !>  ^-  (unit update:uqbar-indexer)
+      (combine-update-sets:uic ~[block-hash egg from grain to])
     ::
     ==
   ::
@@ -221,6 +233,26 @@
   :_  state(chain-source `d)
   ?~  watch=watch-chain-source  ~
   ~[u.watch]
+::
+++  combine-update-sets
+  |*  updates=(list (unit update:uqbar-indexer))
+  ^-  (unit update:uqbar-indexer)
+  =/  query-type=(unit @tas)
+    %+  roll  updates
+    |=  [update=(unit update:uqbar-indexer) query-type=(unit @tas)]
+    ?~  update  query-type
+    ?~  query-type  `-.u.update
+    ?>  =(u.query-type -.u.update)
+    u.query-type
+  ?~  query-type  ~
+  =/  combined-set
+    %-  silt
+    %-  zing
+    %+  murn  ~[from to]
+    |=  combined=(unit update:uqbar-indexer)
+    ?~  combined  ~
+    ~(tap in +.combined)
+  `[u.query-type combined-set]
 ::
 ++  update-index
   |=  $:  =index:uqbar-indexer
