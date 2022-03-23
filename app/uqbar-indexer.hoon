@@ -17,6 +17,10 @@
 ::      The block with given block number
 ::    /x/block-hash/[@ux]:
 ::      The block with given block hash
+::    /x/chunk-num/[@ud]/[@ud]:
+::      The chunk with given block number/chunk number
+::    /x/chunk-hash/[@ux]/[@ud]:
+::      The chunk with given block hash/chunk number
 ::    /x/egg/[@ux]:
 ::      Info about egg (transaction) with the given hash
 ::    /x/from/[@ux]:
@@ -43,15 +47,11 @@
 ::
 ::
 /-  uqbar-indexer,
-    res=resource,
-    store=dao-group-store,
     zig=ziggurat
 /+  agentio,
     dbug,
     default-agent,
     verb,
-    daolib=dao,
-    reslib=resource,
     smart=zig-sys-smart
 ::
 |%
@@ -82,7 +82,7 @@
       uic                 ~(. uqbar-indexer-core bowl)
       def                 ~(. (default-agent this %|) bowl)
   ::
-  ++  on-init  `this(state [%0 *dao-groups:store ~])
+  ++  on-init  `this(state [%0 ~ ~ *index:uqbar-indexer])
   ++  on-save  !>(state)
   ++  on-load
     |=  =old=vase
@@ -100,16 +100,6 @@
       ::
           %set-chain-source
         (set-chain-source:uic !<(dock vase))
-      ::
-      ::     %serve-update
-      ::   :_  this
-      ::   ?~  $=  update
-      ::       %-  serve-update:uic
-      ::       !<  :-  query-type:uqbar-indexer
-      ::           query-payload:uqbar-index
-      ::       vase
-      ::     ~
-      ::   update
       ::
       ==
     [cards this]
@@ -136,7 +126,15 @@
       !>  ^-  (unit update:uqbar-indexer)
       (serve-update %block block-num)
     ::
+        [%x %chunk-num @ @ ~]
+      =/  block-num=@ud  i.t.t.path
+      =/  town-id=@ud  i.t.t.t.path
+      :^  ~  ~  %noun
+      !>  ^-  (unit update:uqbar-indexer)
+      (serve-update %chunk [block-num town-id])
+    ::
         $?  [%x %block-hash @ ~]
+            :: [%x %chunk-hash @ @ ~]
             [%x %egg @ ~]
             [%x %from @ ~]
             [%x %grain @ ~]
@@ -227,14 +225,14 @@
 ++  update-index
   |=  $:  =index:uqbar-indexer
           =query-type:uqbar-indexer
-          locations=(list [id:smart location:uqbar-indexer])
+          locations=(list [@ux location:uqbar-indexer])
       ==
   ^-  index:uqbar-indexer
   %+  %~  put  by  index
     query-type
-  %-  %~  gas  by
+  %-  %~  gas  ju
     ?~  old=(~(get by index) query-type)
-      *(map id:smart location:uqbar-indexer)
+      *(jug @ux location:uqbar-indexer)
     old
   locations
 ::
@@ -243,8 +241,19 @@
   ^-  (unit update:uqbar-indexer)
   |^
   ?+  query-type  !!
+  ::
       %block
-    get-block
+    ?>  ?=(@ud query-payload)
+    (get-block query-payload)
+  ::
+      %chunk
+    ?>  ?=([@ @] query-payload)  ::  [block-num town-id]
+    ?~  block=(get-block block-num.query-payload)  ~
+    ?~  chunk=(~(get by +.u.block) town-id)  ~
+    `[%chunk query-payload chunk]
+  ::
+  ::     %chunk-hash
+  ::   get-chunk-update
   ::
       ?(%block-hash %egg %from %grain %to)
     get-from-index
@@ -252,49 +261,71 @@
   ==
   ::
   ++  get-block
+    |=  block-num=@ud
     ^-  (unit update:uqbar-indexer)
-    ?>  ?=(@ud query-payload)
-    ?.  (lth query-payload (lent blocks))  ~
-    `[%block (snag query-payload blocks)]
+    ?.  (lth block-num (lent blocks))  ~
+    `[%block (snag block-num blocks)]
   ::
   ++  get-chunk-update
     ^-  (unit update:uqbar-indexer)
-    ?~  chunk=(get-chunk u.location)  ~
-    `[%chunk u.chunk]
+    ?~  locations=~(tap in get-locations)  ~
+    ?>  ?=(1 (lent locations))
+    =/  =location:uqbar-indexer  (rear locations)
+    ?>  ?=([@ @] location)  ::  [block-num town-id]
+    ?~  chunk=(get-chunk location)  ~
+    `[%chunk location u.chunk]
   ::
   ++  get-from-index
     ^-  (unit update:uqbar-indexer)
     ?>  ?=(@ux query-payload)
-    ?~  location=get-location  ~
-    ?~  chunk=(get-chunk u.location)
+    ?~  locations=~(tap in get-locations)  ~
     ?-  query-type
     ::
         %block-hash
-      ?>  ?=(@ u.location)  ::  block-num
-      ?.  (lth u.location (lent blocks))  ~
-      `[%block (snag u.location blocks)]
+      ?>  ?=(1 (lent locations))
+      =/  =location:uqbar-indexer  (rear locations)
+      ?>  ?=(@ location)  ::  block-num
+      ?.  (lth location (lent blocks))  ~
+      `[%block (snag location blocks)]
     ::
         %grain
-      ?>  ?=([@ @] u.location)  ::  [block-num town-id]
+      =|  grains=(set [location:uqbar-indexer grain:smart])
+      |-
+      ?~  locations  `[%grain grains]
+      =*  location  i.locations
+      ?>  ?=([@ @] location)  ::  [block-num town-id]
+      ?~  chunk=(get-chunk location)
+        $(locations t.locations)  :: TODO: can we do better here?
       =*  granary  p.+.u.chunk
-      ?~  grain=(~(get by granary) query-payload)  ~
-      `[%grain u.grain]
+      ?~  grain=(~(get by granary) query-payload)
+        $(locations t.locations)
+      %=  locations  t.locations
+          grains     (~(put in grains) [location grain])
+      ==
     ::
         ?(%egg %from %to)
-      ?>  ?=([@ @ @] u.location)  ::  [block-num town-id egg-num]
-      =*  egg-num  egg-num.u.location
+      =|  eggs=(set [location:uqbar-indexer egg:smart])
+      |-
+      ?~  locations  `[%egg eggs]
+      =*  location  i.locations
+      ?>  ?=([@ @ @] location)  ::  [block-num town-id egg-num]
+      ?~  chunk=(get-chunk location)
+        $(locations t.locations)  :: TODO: can we do better here?
+      =*  egg-num  egg-num.location
       =*  txs  -.u.chunk
       ?>  (lth egg-num (lent txs))
       =+  [hash=@ux =egg:smart]=(snag egg-num txs)
       ?>  =(query-payload hash)
-      `[%egg egg]
+      %=  locations  t.locations
+          eggs       (~(put in eggs) [location egg])
+      ==
     ::
     ==
   ::
-  ++  get-location
-    ^-  (unit location:uqbar-indexer)
+  ++  get-locations
+    ^-  (set location:uqbar-indexer)
     ?~  query-index=(~(get by index) query-type)  ~  :: TODO: crash instead?
-    (~(get by query-index) query-payload)
+    (~(get ju query-index) query-payload)
   ::
   ++  get-chunk
     |=  location:uqbar-indexer
@@ -307,22 +338,24 @@
     (~(get by chunks) town-id)
   ::
   --
+::  parse a given block into hash:location
+::  pairs to be added to index
 ::
 ++  parse-block
   |=  [block-num=@ud =block:zig]
   |^
-  ^-  $:  (list [id:smart block-num=@ud])
-          (list [id:smart [block-num=@ud town-id=@ud]])
-          (list [id:smart [block-num=@ud town-id=@ud egg-num=@ud]])
-          (list [id:smart [block-num=@ud town-id=@ud egg-num=@ud]])
-          (list [id:smart [block-num=@ud town-id=@ud egg-num=@ud]])
+  ^-  $:  (list [@ux block-num=@ud])
+          (list [@ux [block-num=@ud town-id=@ud]])
+          (list [@ux [block-num=@ud town-id=@ud egg-num=@ud]])
+          (list [@ux [block-num=@ud town-id=@ud egg-num=@ud]])
+          (list [@ux [block-num=@ud town-id=@ud egg-num=@ud]])
       ==
-  =/  block-hash=(list [id:smart block-num=@ud])
+  =/  block-hash=(list [@ux block-num=@ud])
     [`@ux`data-hash.block-header.block block-num]
-  =|  egg=(list [id:smart [block-num=@ud town-id=@ud egg-num=@ud]])
-  =|  from=(list [id:smart [block-num=@ud town-id=@ud egg-num=@ud]])
-  =|  grain=(list [id:smart [block-num=@ud town-id=@ud]])
-  =|  to=(list [id:smart [block-num=@ud town-id=@ud egg-num=@ud]])
+  =|  egg=(list [@ux [block-num=@ud town-id=@ud egg-num=@ud]])
+  =|  from=(list [@ux [block-num=@ud town-id=@ud egg-num=@ud]])
+  =|  grain=(list [@ux [block-num=@ud town-id=@ud]])
+  =|  to=(list [@ux [block-num=@ud town-id=@ud egg-num=@ud]])
   =/  chunks=(list [town-id=@ud =chunk:zig])  ~(tap by q.block)
   :-  block-hash
   |-
@@ -352,9 +385,9 @@
   ::
   ++  parse-granary
     |=  [town-id=@ud =granary:smart]
-    ^-  (list [id:smart [block-num=@ud town-id=@ud]])
-    =|  parsed-grain=(list [id:smart [block-num=@ud town-id=@ud]])
-    =/  grains=(list [id:smart grain:smart])
+    ^-  (list [@ux [block-num=@ud town-id=@ud]])
+    =|  parsed-grain=(list [@ux [block-num=@ud town-id=@ud]])
+    =/  grains=(list [@ux grain:smart])
       ~(tap by granary)
     |-
     ?~  grains  [parsed-grain]
@@ -368,13 +401,13 @@
   ::
   ++  parse-transactions
     |=  [town-id=@ud txs=(list [@ux egg:smart])]
-    ^-  $:  (list [id:smart [block-num=@ud town-id=@ud egg-num=@ud]])
-            (list [id:smart [block-num=@ud town-id=@ud egg-num=@ud]])
-            (list [id:smart [block-num=@ud town-id=@ud egg-num=@ud]])
+    ^-  $:  (list [@ux [block-num=@ud town-id=@ud egg-num=@ud]])
+            (list [@ux [block-num=@ud town-id=@ud egg-num=@ud]])
+            (list [@ux [block-num=@ud town-id=@ud egg-num=@ud]])
         ==
-    =|  parsed-egg=(list [id:smart [block-num=@ud town-id=@ud egg-num=@ud]])
-    =|  parsed-from=(list [id:smart [block-num=@ud town-id=@ud egg-num=@ud]])
-    =|  parsed-to=(list [id:smart [block-num=@ud town-id=@ud egg-num=@ud]])
+    =|  parsed-egg=(list [@ux [block-num=@ud town-id=@ud egg-num=@ud]])
+    =|  parsed-from=(list [@ux [block-num=@ud town-id=@ud egg-num=@ud]])
+    =|  parsed-to=(list [@ux [block-num=@ud town-id=@ud egg-num=@ud]])
     =/  egg-num=@ud  0
     |-
     ?~  txs  [parsed-egg parsed-from parsed-to]
