@@ -1,6 +1,7 @@
 /+  smart=zig-sys-smart
 |%
-++  epoch-interval    ~s10
+++  epoch-interval  ~s30
+++  relay-town-id   0
 ::
 +$  epoch   [num=@ud =start=time order=(list ship) =slots]
 ::
@@ -14,51 +15,49 @@
 +$  slots  ((mop @ud slot) gth)
 ++  sot    ((on @ud slot) gth)
 ::
-+$  signature  [p=@ux q=ship r=life]
-+$  chunks     (set @)
-+$  chunk      [=helix-id [(list [hash=@ux =egg:smart]) town:smart]]
++$  signature   [p=@ux q=ship r=life]
 ::
-+$  helix-id  @ux
-+$  helices  (map helix-id helix)
-+$  helix
-  $:  id=helix-id
-      state=town:smart
-      order=(list ship)
-      leader=ship
-      num=@ud
-  ==
++$  chunks  (map town-id=@ud =chunk)
++$  chunk   [(list [@ux egg:smart]) town:smart]
 ::
-+$  mempools  (map helix-id mempool)
-+$  mempool   (set egg:smart)
++$  basket  (set egg:smart)  ::  mempool
+::
+::  runs a town
+::
++$  hall  [council=(map ship [id:smart signature]) order=(list ship)]
 ::
 +$  update
   $%  [%epochs-catchup =epochs]
       [%blocks-catchup epoch-num=@ud =slots]
       [%new-block epoch-num=@ud header=block-header =block]
-      :: todo: add data availability data
+      ::  todo: add data availability data
       ::
       [%saw-block epoch-num=@ud header=block-header]
   ==
++$  sequencer-update
+  $%  [%next-producer =ship]
+      [%new-hall council=(map ship [id:smart signature])]
+  ==
++$  chunk-update  [%new-chunk =town:smart]
 ::
-+$  action
-  $%  [%start mode=?(%fisherman %validator) history=epochs validators=(set ship)]
++$  chain-poke
+  $%  [%key =account:smart]
+      [%start mode=?(%fisherman %validator) history=epochs validators=(set ship) starting-state=town:smart]
       [%stop ~]
       [%new-epoch ~]
-      ::  who gets to form a new helix? vote/sigs from the existing relay set?
-      ::  what helices are hard-coded into the relay chain?
-      ::  [%new-helix validators=(set ship)]
+      [%receive-chunk town-id=@ud =chunk]
   ==
 ::
-+$  mempool-action
-  $%  [%receive =helix-id tx=egg:smart]
-      [%hear =helix-id tx=egg:smart]
-      [%forward-set =helix-id to=ship txs=(set egg:smart)]
-      [%receive-set =helix-id txs=(set egg:smart)]
++$  weave-poke
+  $%  [%forward eggs=(set egg:smart)]
+      [%receive eggs=(set egg:smart)]
   ==
 ::
-+$  chunk-action
-  $%  [%hear =chunk]
-      [%signed =helix-id =signature hash=@ux]
-      [%submit sigs=(set signature) =chunk]
++$  hall-poke
+  $%  ::  will remove starting-state for persistent testnet
+      [%init town-id=@ud starting-state=(unit town:smart) gas=[rate=@ud bud=@ud]]
+      [%join town-id=@ud gas=[rate=@ud bud=@ud]]
+      [%exit gas=[rate=@ud bud=@ud]]
+      [%clear-state ~]
   ==
 --

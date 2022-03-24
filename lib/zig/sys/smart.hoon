@@ -12,12 +12,12 @@
 ::  TODO make sha256 or w/e for testnet
 ++  fry
   |=  [lord=id town=@ud =germ]
-  ^-  @ux
-  =-  (mug (cat 3 lord (cat 3 town -)))
+  ^-  id
+  =-  `@ux`(sham (cat 3 lord (cat 3 town -)))
   ?.  ?=(%| -.germ)
-    (mug germ)
+    (jam germ)
   ::  fry ignores owns.wheat in hash
-  (mug cont.p.germ)
+  (jam cont.p.germ)
 ::
 ::  +pin: get ID from caller
 ++  pin
@@ -29,19 +29,17 @@
 ::
 ::  smart contract types
 ::
-+$  id  @ux             ::  pubkey
++$  id             @ux  ::  pubkey
 ++  zigs-wheat-id  0x0  ::  hardcoded "native" token contract
 ::
-+$  chunk   [(list [@ux egg]) town]
-::
-+$  account  [=id nonce=@ud zigs=id]
-+$  caller  $@(id account)
++$  account    [=id nonce=@ud zigs=id]
++$  caller     $@(id account)
 +$  signature  [r=@ux s=@ux type=?(%schnorr %ecdsa)]
 ::
 +$  germ   (each rice wheat)
 +$  rice   data=*
 +$  wheat  [cont=(unit *) owns=(set id)]
-+$  crop   [=contract owns=(map id grain)]
++$  crop   [nok=* owns=(map id grain)]
 ::
 +$  grain
   $:  =id
