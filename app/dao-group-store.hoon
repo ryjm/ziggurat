@@ -129,8 +129,8 @@
         ?>  ?=(%rice -.update)
         =/  new-dao-group=dao-group:store
           ;;(dao-group:store rice.update)  :: TODO: instead send diff?
-        ?.  .=  0  %~  wyt  in
-            (~(get ju members.new-dao-group) our.bowl)
+        =*  members  members.new-dao-group
+        ?.  =(0 ~(wyt in (~(get ju members) our.bowl)))
           :-  ~
           %=  this
             dao-groups  (~(put by dao-groups) rid new-dao-group)  :: TODO: instead walk through and make minimal change to existing structure?
