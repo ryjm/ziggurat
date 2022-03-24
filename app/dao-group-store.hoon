@@ -412,7 +412,7 @@
         *(jug address:store role:store)
       u.permission
     pairs
-  ::  TODO: use polymorphism?
+  ::
   ++  remove-permissions-helper
     |=  [name=@tas =permissions:store roles=(set role:store) =address:store]
     ^-  permissions:store
