@@ -272,7 +272,7 @@
         ship-to-id  (~(put by ship-to-id) him id)
         members
           %-  ~(gas ju members)
-          (make-ship-role-pairs him roles)
+          (make-noun-role-pairs him roles)
       ==
     :_  state
     ~[(send-diff %add-member rid roles id him)]
@@ -433,13 +433,6 @@
     ?~  pairs  members
     =.  members  (~(del ju members) i.pairs)
     $(pairs t.pairs)
-  ::
-  ++  make-ship-role-pairs
-    |=  [him=ship roles=(set role:store)]
-    ^-  (list (pair ship role:store))
-    %+  turn  ~(tap in roles)
-    |=  =role:store
-    [p=him q=role]
   ::
   ++  make-noun-role-pairs
     |*  [noun=* roles=(set role:store)]
