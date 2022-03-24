@@ -68,7 +68,7 @@
   ++  poke-basket
     |=  act=weave-poke
     ^-  (quip card _state)
-    ?>  (lte (met 3 src.bowl) 4)
+    ?>  (allowed-participant:util [src our now]:bowl)
     ?~  hall.state
       ~&  >>  "ignoring tx, we're not active in a council"
       [~ state]

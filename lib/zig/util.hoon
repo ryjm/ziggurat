@@ -114,15 +114,28 @@
     lis       (oust [num 1] `(list ship)`lis)
   ==
 ::  +allowed-participant: grades whether a ship is permitted to participate
-::  in Uqbar validation. currently galaxies, stars, and star-moons only.
+::  in Uqbar validation. currently using hardcoded whitelist
+::  
 ::
 ++  allowed-participant
   |=  [=ship our=ship now=@da]
   ^-  ?
-  ?|  =(%king (clan:title ship))
-      =(%czar (clan:title ship))  ::  this is really for fakezod testing
-      ?&  =(%earl (clan:title ship))
-          =(%king (clan:title (sein:title our now ship)))
-      ==
+  (~(has in whitelist) ship)
+++  whitelist
+  ^-  (set ship)
+  %-  ~(gas in *(set ship))
+  :~  ::  fakeships for localhost testnets
+      ~zod  ~bus  ~nec
+      ::  hodzod's testing moons
+      ~ransur-rabtyr-dozzod-bacrys
+      ~todnub-figsym-dozzod-bacrys
   ==
+  ::  Potential future gating function:
+  ::
+  ::  ?|  =(%king (clan:title ship))
+  ::      =(%czar (clan:title ship))  ::  this is really for fakezod testing
+  ::      ?&  =(%earl (clan:title ship))
+  ::          =(%king (clan:title (sein:title our now ship)))
+  ::      ==
+  ::  ==
 --

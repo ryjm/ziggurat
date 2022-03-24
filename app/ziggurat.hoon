@@ -88,7 +88,7 @@
   ::
       [%fisherman %updates ~]
     ~|  "comets and moons may not be fishermen, tiny dos protection"
-    ?>  (lte (met 3 src.bowl) 4)
+    ?>  (allowed-participant [src our now]:bowl)
     ::  do nothing here, but send all new blocks and epochs on this path
     `this
   ==
@@ -110,7 +110,7 @@
     ::
       %noun
     ::  TODO this poke should be gated by something, right?
-    ?>  (lte (met 3 src.bowl) 2)
+    ?>  (allowed-participant [src our now]:bowl)
     ?>  (validate-history our.bowl epochs)
     `this
   ==
@@ -241,7 +241,7 @@
         ==
     ::
         %receive-chunk
-      ?>  (lte (met 3 src.bowl) 2)
+      ?>  (allowed-participant [src our now]:bowl)
       ::  only accept chunks from sequencers in on-chain council
       ~|  "error: ziggurat couldn't find hall on chain"
       =/  found  (~(got by p.globe.state) `@ux`'world')
