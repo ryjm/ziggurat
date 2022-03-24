@@ -43,7 +43,11 @@
 ++  on-watch
   |=  =path
   ^-  (quip card _this)
-  (on-watch:def path)
+  ?.  ?=([%new-chunk ~] path)  !!
+    ::  only sequencers in our hall can watch
+    ?~  hall.state  !!
+    ?>  (~(has by council.u.hall.state) src.bowl)
+    `this
 ::
 ++  on-poke
   |=  [=mark =vase]
@@ -80,7 +84,7 @@
       ::      ~(tap in eggs.act)
       =/  slot-num  .^(@ud %gx /(scot %p our.bowl)/ziggurat/(scot %da now.bowl)/slot/noun)
       =/  current-producer  (snag (mod slot-num (lent order.u.hall.state)) order.u.hall.this)
-      ?:  =(our.bowl ~zod)
+      ?:  =(our.bowl current-producer)
         `state(basket (~(uni in basket) eggs.act))
       ~&  >>  "forwarding eggs"
       :_  state(basket ~)
@@ -194,6 +198,20 @@
     ::  TODO manage rejected chunks here.
     ::  try and submit them to the next producer?
     `this
+  ::
+      [%new-chunk ~]
+    ::  update our town state with latest chunk
+    ?:  ?=(%watch-ack -.sign)              (on-agent:def wire sign)
+    ?.  ?=(%fact -.sign)                   (on-agent:def wire sign)
+    ?.  ?=(%zig-chunk-update p.cage.sign)  (on-agent:def wire sign)
+    =/  update  !<(chunk-update q.cage.sign)
+    ~&  >>  "got new chunk state"
+    ?~  hall.state  !!
+    ?>  (~(has by council.u.hall.state) src.bowl)
+    ::  TODO add some validation of the new chunk here so we can reject bad ones
+    ::  currently assuming sequencers are working together like friends :)
+    `this(town town.update)
+  ::
       [%sequencer %updates ~]
     ?:  ?=(%watch-ack -.sign)              (on-agent:def wire sign)
     ?.  ?=(%fact -.sign)                   (on-agent:def wire sign)
@@ -204,10 +222,22 @@
       ::  receive this at beginning of epoch, update our hall-state
       ::  shuffle with root of globe / something each epoch
       ~&  >>  "received hall update"
-      ?:  (~(has by council.update) our.bowl)
-        `this(hall `[council.update ~(tap in ~(key by council.update))])
-      ::  if we're not in the hall, set our status to inactive
-      `this(hall ~, town [~ ~])
+      ?.  (~(has by council.update) our.bowl)
+        ::  if we're not in the hall, set our status to inactive
+        `this(hall ~, town [~ ~])
+      =/  sequencers  ~(key by council.update)
+      =/  not-yet-subbed  (~(del in sequencers) our.bowl)
+      :_  this(hall `[council.update ~(tap in sequencers)])
+      ?~  sub=~(tap in not-yet-subbed)  ~
+      ::  subscribe to other sequencers in town
+      ^-  (list card)
+      %+  murn  `(list ship)`sub
+      |=  s=ship
+      ^-  (unit card)
+      ?:  %-  ~(any in ~(key by wex.bowl))
+          |=([* =ship *] =(s ship))
+        ~
+      `[%pass /new-chunk %agent [s %sequencer] %watch /new-chunk]
     ::
         %next-producer
       ::  if we can, produce a chunk!
@@ -238,6 +268,10 @@
           :*  %pass  /basket-gossip
               %agent  [our.bowl %sequencer]  %poke
               %zig-weave-poke  !>([%forward ~])
+          ==
+          :*  %give  %fact
+              ~[/new-chunk]  %zig-chunk-update
+              !>([%new-chunk +.our-chunk])
           ==
       ==
     ==

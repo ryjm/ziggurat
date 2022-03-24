@@ -234,7 +234,6 @@
     ++  harvest
       |=  [res=rooster lord=id from=caller]
       ^-  (unit ^granary)
-      ~&  >>>  "harvesting this: {<res>}"
       =-  ?.  -  
             ~&  >>>  "harvest checks failed"  
             ~

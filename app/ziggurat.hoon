@@ -22,22 +22,6 @@
   ==
 +$  inflated-state-0  [state-0 =mil]
 +$  mil  $_  ~(mill mill 0) 
-++  new-epoch-timers
-  |=  [=epoch our=ship]
-  ^-  (list card)
-  =/  order  order.epoch
-  =/  i  0
-  =|  cards=(list card)
-  |-  ^-  (list card)
-  ?~  order  cards
-  %_    $
-    i      +(i)
-    order  t.order
-  ::
-      cards
-    :_  cards
-    (wait num.epoch i start-time.epoch =(our i.order))
-  ==
 --
 ::
 =|  inflated-state-0
@@ -261,11 +245,11 @@
       ::  only accept chunks from sequencers in on-chain council
       ~|  "error: ziggurat couldn't find hall on chain"
       =/  found  (~(got by p.globe.state) `@ux`'world')
-      ?.  ?=(%& -.germ.found)                           !!
+      ?.  ?=(%& -.germ.found)                 !!
       =/  world  (hole:smart ,(map @ud (map ship [@ux [@ux @p life]])) data.p.germ.found)
-      ?~  hall=(~(get by world) town-id.act)            !!
+      ?~  hall=(~(get by world) town-id.act)  !!
       ~|  "only registered sequencers are allowed to submit a chunk!"
-      ?.  (~(has by u.hall) src.bowl)                   !!
+      ?.  (~(has by u.hall) src.bowl)         !!
       =/  cur=epoch  +:(need (pry:poc epochs))
       ?>  ?~  slot-num=(bind (pry:sot slots.cur) head)
             =(our.bowl -.order.cur)
@@ -282,6 +266,7 @@
       ?>  (allowed-participant our.bowl our.bowl now.bowl)
       =/  cur=epoch  +:(need (pry:poc epochs))
       =/  last-producer  (rear order.cur)  ::  TODO is this optimal? or -:(flop ..)?
+      ::  if there's a tx we sent ourselves, update our nonce
       ?:  =(our.bowl last-producer)
         `state(basket (~(uni in basket) eggs.act))
       :_  state(basket ~)
@@ -301,13 +286,6 @@
       ?>  =(our.bowl (rear order.cur))
       `state(basket (~(uni in basket) eggs.act))
     ==
-  ++  filter-by-wex
-    |=  shp=ship
-    ^-  (unit ship)
-    ?:  %-  ~(any in ~(key by wex.bowl))
-        |=([* =ship *] =(shp ship))
-      ~
-    `shp
   ::
   ++  watch-updates
     |=  validators=(set ship)
@@ -318,6 +296,14 @@
     ^-  card
     =/  =^wire  /validator/updates/(scot %p s)
     [%pass wire %agent [s %ziggurat] %watch /validator/updates]
+  ::
+  ++  filter-by-wex
+    |=  shp=ship
+    ^-  (unit ship)
+    ?:  %-  ~(any in ~(key by wex.bowl))
+        |=([* =ship *] =(shp ship))
+      ~
+    `shp
   ::
   ::  +hall-update: give sequencer updated hall for their town at start of new epoch
   ::
@@ -330,7 +316,6 @@
     ?.  ?=(%& -.germ.u.found)                             ~
     =/  world  (hole:smart ,(map @ud (map ship [@ux [@ux @p life]])) data.p.germ.u.found)
     ?~  hall=(~(get by world) u.town-id)                  ~
-    ~&  >  "giving sequencer hall status update"
     :-  ~  :-  %give
     :^  %fact  ~[/sequencer/updates]
         %sequencer-update  !>([%new-hall u.hall])
@@ -366,7 +351,6 @@
       ?<  ?=(%poke-ack -.sign)
       ?:  ?=(%kick -.sign)  `this
       ?:  ?=(%watch-ack -.sign)
-        ~&  >  "got a watch-ack on %epoch-catchup"
         ?.  ?=(^ p.sign)    `this
         =/  cur=epoch  +:(need (pry:poc epochs))
         =/  validators=(list ship)
@@ -379,7 +363,6 @@
         ::  :_  this
         ::  (start-epoch-catchup i.validators num.cur)^~
       ?>  ?=(%fact -.sign)
-      ~&  >  "got a fact on %epoch-catchup"
       =^  cards  state
         (epoch-catchup !<(update q.cage.sign))
       [cards this]
@@ -496,7 +479,6 @@
     |=  [epoch-num=@ud slot-num=@ud]
     ^-  (quip card _state)
     =/  cur=epoch  +:(need (pry:poc epochs))
-    ~&  >>>  "slot timer pop"
     ?.  =(num.cur epoch-num)
       ::  timer is from an epoch that we don't view as current, ignore
       `state

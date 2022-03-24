@@ -3,6 +3,23 @@
     +$  card  card:agent:gall
     --
 |%
+++  new-epoch-timers
+  |=  [=epoch our=ship]
+  ^-  (list card)
+  =/  order  order.epoch
+  =/  i  0
+  =|  cards=(list card)
+  |-  ^-  (list card)
+  ?~  order  cards
+  %_    $
+    i      +(i)
+    order  t.order
+  ::
+      cards
+    :_  cards
+    (wait num.epoch i start-time.epoch =(our i.order))
+  ==
+::
 ++  give-on-updates
   |=  =update
   ^-  card

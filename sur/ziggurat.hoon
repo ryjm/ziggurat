@@ -24,7 +24,7 @@
 ::
 ::  runs a town
 ::
-+$  hall  [council=(map ship id:smart) order=(list ship)]
++$  hall  [council=(map ship [id:smart signature]) order=(list ship)]
 ::
 +$  update
   $%  [%epochs-catchup =epochs]
@@ -36,8 +36,9 @@
   ==
 +$  sequencer-update
   $%  [%next-producer =ship]
-      [%new-hall council=(map ship id:smart)]
+      [%new-hall council=(map ship [id:smart signature])]
   ==
++$  chunk-update  [%new-chunk =town:smart]
 ::
 +$  chain-poke
   $%  [%key =account:smart]
