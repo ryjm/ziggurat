@@ -118,17 +118,17 @@
       :^  ~  ~  %noun
       !>  ^-  (unit update:uqbar-indexer)
       ?:  =(0 (lent blocks))  ~
-      `(rear blocks)
+      `[%block (rear blocks)]
     ::
         [%x %block-num @ ~]
-      =/  block-num=@ud  i.t.t.path
+      =/  block-num=@ud  (slav %ud i.t.t.path)
       :^  ~  ~  %noun
       !>  ^-  (unit update:uqbar-indexer)
       (serve-update %block block-num)
     ::
         [%x %chunk-num @ @ ~]
-      =/  block-num=@ud  i.t.t.path
-      =/  town-id=@ud  i.t.t.t.path
+      =/  block-num=@ud  (slav %ud i.t.t.path)
+      =/  town-id=@ud  (slav %ud i.t.t.t.path)
       :^  ~  ~  %noun
       !>  ^-  (unit update:uqbar-indexer)
       (serve-update %chunk [block-num town-id])
@@ -141,34 +141,48 @@
             [%x %to @ ~]
         ==
       =/  =query-type:uqbar-indexer  i.t.path
-      =/  hash=@ux  i.t.t.path
+      =/  hash=@ux  (slav %ux i.t.t.path)
       :^  ~  ~  %noun
       !>  ^-  (unit update:uqbar-indexer)
       (serve-update query-type hash)
     ::
         [%x %id @ ~]
         ::  search over from and to and return all hits
-      =/  hash=@ux  i.t.t.path
-      =/  from=update:uqbar-indexer  (serve-update %from hash)
-      =/  to=update:uqbar-indexer  (serve-update %to hash)
+      =/  hash=@ux  (slav %ux i.t.t.path)
+      =/  from=(unit update:uqbar-indexer)
+        (serve-update %from hash)
+      =/  to=(unit update:uqbar-indexer)
+        (serve-update %to hash)
       :^  ~  ~  %noun
       !>  ^-  (unit update:uqbar-indexer)
-      (combine-update-sets:uic ~[from to])
+      %-  combine-update-sets:uic
+      ;;  %-  list
+        %-  unit
+        [%egg eggs=(set [location:uqbar-indexer egg:smart])]
+      ~[from to]
     ::
         [%x %hash @ ~]
         ::  search over all hashes and return all hits
         ::  TODO: make blocks and grains play nice with eggs
         ::        so we can return all hits together
-      =/  hash=@ux  i.t.t.path
-      :: =/  block-hash=update:uqbar-indexer
+      =/  hash=@ux  (slav %ux i.t.t.path)
+      :: =/  block-hash=(unit update:uqbar-indexer)
       ::   (serve-update %block-hash hash)
-      =/  egg=update:uqbar-indexer  (serve-update %egg hash)
-      =/  from=update:uqbar-indexer  (serve-update %from hash)
-      :: =/  grain=update:uqbar-indexer  (serve-update %grain hash)
-      =/  to=update:uqbar-indexer  (serve-update %to hash)
+      =/  egg=(unit update:uqbar-indexer)
+        (serve-update %egg hash)
+      =/  from=(unit update:uqbar-indexer)
+        (serve-update %from hash)
+      :: =/  grain=(unit update:uqbar-indexer
+      ::   (serve-update %grain hash)
+      =/  to=(unit update:uqbar-indexer)
+        (serve-update %to hash)
       :^  ~  ~  %noun
       !>  ^-  (unit update:uqbar-indexer)
-      (combine-update-sets:uic ~[egg from to])
+      %-  combine-update-sets:uic
+      ;;  %-  list
+        %-  unit
+        [%egg eggs=(set [location:uqbar-indexer egg:smart])]
+      ~[egg from to]
       :: (combine-update-sets:uic ~[block-hash egg from grain to])
     ::
     ==
@@ -191,13 +205,13 @@
         ?>  ?=(%block -.update)
         ?>  =((lent blocks) num.block-header.update)
         =*  new-block  +.update
+        =*  block-num  num.block-header.new-block
         ?~  blocks  `this(blocks ~[new-block])
         =/  previous-block  (rear blocks)
         ?>  .=  data-hash.block-header.previous-block
           data-hash.block-header.new-block
         ::
-        =/  [block-hash egg from grain to]
-          (parse-block block-num new-block)
+        =+  [block-hash egg from grain to]=(parse-block block-num new-block)
         =.  index  (update-index index %block-hash block-hash)
         =.  index  (update-index index %egg egg)
         =.  index  (update-index index %from from)
@@ -267,14 +281,14 @@
 ::   `[u.query-type combined]
 ::
 ++  combine-update-sets
-  |=  updates=(list (unit [%egg eggs=(set [=location:uqbar-indexer =egg:smart])]))
+  |=  updates=(list (unit [%egg eggs=(set [location:uqbar-indexer egg:smart])]))
   ^-  (unit update:uqbar-indexer)
   ?~  updates  ~
   =/  combined=(set [location:uqbar-indexer egg:smart])
     %-  %~  gas  in  *(set [=location:uqbar-indexer =egg:smart])
     %-  zing
     %+  murn  updates
-    |=  update=(unit [%egg eggs=(set [=location:uqbar-indexer =egg:smart])])
+    |=  update=(unit [%egg eggs=(set [location:uqbar-indexer egg:smart])])
     ?~  update  ~
     `~(tap in eggs.u.update)
   `[%egg combined]
