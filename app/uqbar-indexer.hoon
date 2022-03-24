@@ -29,10 +29,5 @@
 ::
 ::    ##  Pokes
 ::
-::    %dao-group-create:
-::      Create a DAO group. Further documented in /sur/dao-group-store.hoon
-::
-::    %dao-group-modify:
-::      Modify the DAO group. Further documented in /sur/dao-group-store.hoon
 ::
 ::

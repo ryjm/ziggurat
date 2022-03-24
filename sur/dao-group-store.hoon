@@ -26,12 +26,9 @@
 ::
 +$  dao-groups  (map resource:r dao-group)
 ::
-+$  create
++$  update
   $%  [%add-group =resource:r =dao-group]
-  ==
-::
-+$  modify
-  $%  [%remove-group =resource:r]
+      [%remove-group =resource:r]
       [%add-member =resource:r roles=(set role) =id =ship]
       [%remove-member =resource:r =ship]
       [%add-permissions =resource:r name=@tas =address roles=(set role)]
@@ -40,9 +37,5 @@
       [%remove-subdao =resource:r subdao-id=id]
       [%add-roles =resource:r roles=(set role) =ship]
       [%remove-roles =resource:r roles=(set role) =ship]
-  ==
-+$  update
-  $%  create
-      modify
   ==
 --

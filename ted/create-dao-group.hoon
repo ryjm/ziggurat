@@ -140,8 +140,8 @@
   ==
 ~&  >  "poking dao-group-store..."
 ;<  ~  bind:m
-  %^  poke-our  %dao-group-store  %dao-group-create
-  !>(`create:dgs`[%add-group rid dao-group])
+  %^  poke-our  %dao-group-store  %dao-group-update
+  !>(`update:dgs`[%add-group rid dao-group])
 ::  TODO: need to add group to metadata-push-hook?
 ~&  >  "constructing metadatum..."
 =/  =metadatum:ms  (make-metadatum(bowl bowl) dao-name)

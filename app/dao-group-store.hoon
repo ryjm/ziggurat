@@ -21,11 +21,8 @@
 ::
 ::    ##  Pokes
 ::
-::    %dao-group-create:
-::      Create a DAO group. Further documented in /sur/dao-group-store.hoon
-::
-::    %dao-group-modify:
-::      Modify the DAO group. Further documented in /sur/dao-group-store.hoon
+::    %dao-group-update:
+::      Update the DAO group. Further documented in /sur/dao-group-store.hoon
 ::
 ::
 /-  uqbar-indexer,
@@ -79,11 +76,8 @@
     =^  cards  state
       ?+  mark  (on-poke:def mark vase)
       ::
-          %dao-group-create
-        (dao-group-create:dgc !<(create:store vase))
-      ::
-          %dao-group-modify
-        (dao-group-modify:dgc !<(modify:store vase))
+          %dao-group-update
+        (dao-group-update:dgc !<(update:store vase))
       ::
           %set-indexer
         (set-indexer:dgc !<(dock vase))
@@ -197,12 +191,36 @@
     ~
   dao-group
 ::
-++  dao-group-create
-  |=  =create:store
+++  remove-group
+  |=  rid=resource:res
+  ^-  (quip card _state)
+  ?~  (peek-dao-group rid)  `state
+  =.  dao-groups
+    (~(del by dao-groups) rid)
+  :_  state
+  :-  (send-diff %remove-group rid)
+  ?~  li=(leave-indexer rid)  ~  [u.li ~]
+::  +dao-group-update: update DAO group store
+::
+::    no-op if group does not exist
+::    or if user does not have %owner
+::    permissions for DAO
+::
+++  dao-group-update
+  |=  =update:store
   ^-  (quip card _state)
   |^
-  ?-  -.create
-      %add-group  (add-group +.create)
+  ?-  -.update
+      %add-group           (add-group +.update)
+      %remove-group        (remove-group +.update)
+      %add-member          (add-member +.update)
+      %remove-member       (remove-member +.update)
+      %add-permissions     (add-permissions +.update)
+      %remove-permissions  (remove-permissions +.update)
+      %add-roles           (add-roles +.update)
+      %remove-roles        (remove-roles +.update)
+      %add-subdao          (add-subdao +.update)
+      %remove-subdao       (remove-subdao +.update)
   ==
   ::
   ++  add-group
@@ -213,39 +231,6 @@
     :_  state
     :-  (send-diff %add-group rid dao-group)
     ?~  wi=(watch-indexer rid dao-id.dao-group)  ~  [u.wi ~]
-  ::
-  --
-::
-++  remove-group
-  |=  rid=resource:res
-  ^-  (quip card _state)
-  ?~  (peek-dao-group rid)  `state
-  =.  dao-groups
-    (~(del by dao-groups) rid)
-  :_  state
-  :-  (send-diff %remove-group rid)
-  ?~  li=(leave-indexer rid)  ~  [u.li ~]
-::  +dao-group-modify: modify DAO group store
-::
-::    no-op if group does not exist
-::    or if user does not have %owner
-::    permissions for DAO
-::
-++  dao-group-modify
-  |=  =modify:store
-  ^-  (quip card _state)
-  |^
-  ?-  -.modify
-      %remove-group        (remove-group +.modify)
-      %add-member          (add-member +.modify)
-      %remove-member       (remove-member +.modify)
-      %add-permissions     (add-permissions +.modify)
-      %remove-permissions  (remove-permissions +.modify)
-      %add-roles           (add-roles +.modify)
-      %remove-roles        (remove-roles +.modify)
-      %add-subdao          (add-subdao +.modify)
-      %remove-subdao       (remove-subdao +.modify)
-  ==
   ::
   ++  add-member
     |=  [rid=resource:res roles=(set role:store) =id:store him=ship]
@@ -444,7 +429,7 @@
   --
 ::  +send-diff: update subscribers of new state
 ::
-::    We only allow subscriptions on /groups
+::    We only allow subscriptions on /dao-groups
 ::    so just give the fact there.
 ::
 ++  send-diff
