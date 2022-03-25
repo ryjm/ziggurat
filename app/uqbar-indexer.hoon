@@ -111,12 +111,22 @@
   ++  on-poke  ::  on-poke:def
     |=  [=mark =vase]
     ^-  (quip card _this)
-    ?>  (team:title our.bowl src.bowl)
     =^  cards  state
       ?+  mark  (on-poke:def mark vase)
       ::
           %set-chain-source
+        ?>  (team:title our.bowl src.bowl)
         (set-chain-source:uic !<(dock vase))
+      ::
+      ::     %serve-update
+      ::   =/  update=(unit update:uqbar-indexer)
+      ::     %-  serve-update:uic
+      ::     !<  :-  query-type:uqbar-indexer
+      ::         query-payload:uqbar-index
+      ::     vase
+      ::   :_  this
+      ::   ?~  update  ~  update
+      ::  :: TODO: make this poke reply to src.bowl
       ::
       ==
     [cards this]
