@@ -58,18 +58,24 @@
 +$  card  card:agent:gall
 ::
 +$  versioned-state
-  $%  state-zero
+  $%  state-0
   ==
 ::
-+$  state-zero
-  $:  %0
-      chain-source=(unit dock)
++$  base-state-0
+  $:  chain-source=(unit dock)
       =blocks:uqbar-indexer
-      =index:uqbar-indexer
   ==
++$  indices-0
+  $:  block-index=(jug @ux block-location:uqbar-indexer)
+      egg-index=(jug @ux egg-location:uqbar-indexer)
+      from-index=(jug @ux egg-location:uqbar-indexer)
+      grain-index=(jug @ux town-location:uqbar-indexer)
+      to-index=(jug @ux egg-location:uqbar-indexer)
+  ==
++$  state-0  [%0 base-state-0 indices-0]
 --
 ::
-=|  state-zero
+=|  state-0
 =*  state  -
 ::
 %-  agent:dbug
@@ -82,7 +88,18 @@
       uic                 ~(. uqbar-indexer-core bowl)
       def                 ~(. (default-agent this %|) bowl)
   ::
-  ++  on-init  `this(state [%0 ~ ~ *index:uqbar-indexer])
+  ++  on-init
+    :-  ~
+    %=  this
+        state
+          :+  %0
+            [chain-source=~ blocks=*blocks:uqbar-indexer]
+          :*  block-index=*(jug @ux block-location:uqbar-indexer)
+              egg-index=*(jug @ux egg-location:uqbar-indexer)
+              from-index=*(jug @ux egg-location:uqbar-indexer)
+              grain-index=*(jug @ux town-location:uqbar-indexer)
+              to-index=*(jug @ux egg-location:uqbar-indexer)
+    ==    ==
   ++  on-save  !>(state)
   ++  on-load
     |=  =old=vase
@@ -212,12 +229,15 @@
           data-hash.block-header.new-block
         ::
         =+  [block-hash egg from grain to]=(parse-block block-num new-block)
-        =.  index  (update-index index %block-hash block-hash)
-        =.  index  (update-index index %egg egg)
-        =.  index  (update-index index %from from)
-        =.  index  (update-index index %grain grain)
-        =.  index  (update-index index %to to)
-        `this(blocks (snoc blocks new-block), index index)
+        :-  ~
+        %=  this
+            blocks       (snoc blocks new-block)
+            block-index  (~(gas ju block-index) block-hash)
+            egg-index    (~(gas ju egg-index) egg)
+            from-index   (~(gas ju from-index) from)
+            grain-index  (~(gas ju grain-index) grain)
+            to-index     (~(gas ju to-index) to)
+        ==
       ::
       ==
     ::
@@ -293,20 +313,6 @@
     `~(tap in eggs.u.update)
   `[%egg combined]
 ::
-++  update-index
-  |=  $:  =index:uqbar-indexer
-          =query-type:uqbar-indexer
-          locations=(list [@ux location:uqbar-indexer])
-      ==
-  ^-  index:uqbar-indexer
-  %+  %~  put  by  index
-    query-type
-  %-  %~  gas  ju
-    ?~  old=(~(get by index) query-type)
-      *(jug @ux location:uqbar-indexer)
-    u.old
-  locations
-::
 ++  serve-update
   |=  [=query-type:uqbar-indexer =query-payload:uqbar-indexer]
   |^  ^-  (unit update:uqbar-indexer)
@@ -339,9 +345,10 @@
   ::
   ++  get-chunk-update
     ^-  (unit update:uqbar-indexer)
-    ?~  locations=~(tap in get-locations)  ~
+    =/  locations=(list location:uqbar-indexer)
+      ~(tap in get-locations)
     ?>  =(1 (lent locations))
-    =/  =location:uqbar-indexer  (rear locations)
+    =/  =location:uqbar-indexer  (snag 0 locations)
     ?>  ?=([@ @] location)  ::  [block-num town-id]
     ?~  chunk=(get-chunk block-num.location town-id.location)  ~
     `[%chunk location u.chunk]
@@ -355,7 +362,7 @@
     ::
         %block-hash
       ?>  =(1 (lent locations))
-      =/  =location:uqbar-indexer  (rear locations)
+      =/  =location:uqbar-indexer  (snag 0 locations)
       ?>  ?=(@ location)  ::  block-num
       ?.  (lth location (lent blocks))  ~
       `[%block (snag location blocks)]
@@ -403,8 +410,24 @@
   ++  get-locations
     ^-  (set location:uqbar-indexer)
     ?>  ?=(@ux query-payload)
-    ?~  query-index=(~(get by index) query-type)  ~  :: TODO: crash instead?
-    (~(get ju u.query-index) query-payload)
+    ?+  query-type  !!
+    ::
+        %block-hash
+      (~(get ju block-index) query-payload)
+    ::
+        %egg
+      (~(get ju egg-index) query-payload)
+    ::
+        %from
+      (~(get ju from-index) query-payload)
+    ::
+        %grain
+      (~(get ju grain-index) query-payload)
+    ::
+        %to
+      (~(get ju to-index) query-payload)
+    ::
+    ==
   ::
   ++  get-chunk
     |=  [block-num=@ud town-id=@ud]
@@ -416,7 +439,7 @@
   ::
   --
 ::  parse a given block into hash:location
-::  pairs to be added to index
+::  pairs to be added to *-index
 ::
 ++  parse-block
   |=  [block-num=@ud =block-header:zig =block:zig]
@@ -428,7 +451,7 @@
           (list [@ux [block-num=@ud town-id=@ud egg-num=@ud]])
       ==
   =/  block-hash=(list [@ux block-num=@ud])
-    ~[[`@ux`data-hash.block-header block-num]]
+    ~[[`@ux`data-hash.block-header block-num]]  :: TODO: should key be @uvH?
   =|  egg=(list [@ux [block-num=@ud town-id=@ud egg-num=@ud]])
   =|  from=(list [@ux [block-num=@ud town-id=@ud egg-num=@ud]])
   =|  grain=(list [@ux [block-num=@ud town-id=@ud]])
