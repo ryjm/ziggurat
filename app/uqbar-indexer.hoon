@@ -98,29 +98,13 @@
 ^-  agent:gall
 =<
   |_  =bowl:gall
-  +*  this            .
+  +*  this                .
       def                 ~(. (default-agent this %|) bowl)
       io                  ~(. agentio bowl)
       uqbar-indexer-core  +>
       uic                 ~(. uqbar-indexer-core bowl)
   ::
-  ++  on-init
-    :-  ~
-    %=  this
-        state
-          :+  %0
-            :*  chain-source=~
-                blocks=*blocks:uqbar-indexer
-                chunk-subs=*(jug town-id=@ud sub=@p)
-                id-subs=*(jug id-hash=@ux sub=@p)
-                grain-subs=*(jug grain-hash=@ux sub=@p)
-            ==
-          :*  block-index=*(jug @ux block-location:uqbar-indexer)
-              egg-index=*(jug @ux egg-location:uqbar-indexer)
-              from-index=*(jug @ux egg-location:uqbar-indexer)
-              grain-index=*(jug @ux town-location:uqbar-indexer)
-              to-index=*(jug @ux egg-location:uqbar-indexer)
-    ==    ==
+  ++  on-init  `this
   ++  on-save  !>(state)
   ++  on-load
     |=  =old=vase
