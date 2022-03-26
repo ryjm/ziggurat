@@ -35,15 +35,27 @@
 ::      Info about hash
 ::
 ::
-::    ## Subscription paths (TODO)
+::    ## Subscription paths
 ::
 ::    /block:
+::      A stream of each new block.
 ::
-::    /hash/[@ux]:
+::    /chunk/[@ud]:
+::      A stream of each new chunk for a given town.
+::
+::    /id/[@ux]:
+::      A stream of new activity of given id.
+::
+::    /grain/[@ux]:
+::      A stream of changes to given grain.
+::
 ::
 ::    ##  Pokes
 ::
 ::    %set-chain-source:
+::      Set source and subscribe to it for new blocks.
+::
+::    %serve-update:
 ::
 ::
 /-  uqbar-indexer,
@@ -64,6 +76,9 @@
 +$  base-state-0
   $:  chain-source=(unit dock)
       =blocks:uqbar-indexer
+      chunk-subs=(jug town-id=@ud sub=@p)
+      id-subs=(jug id-hash=@ux sub=@p)
+      grain-subs=(jug grain-hash=@ux sub=@p)
   ==
 +$  indices-0
   $:  block-index=(jug @ux block-location:uqbar-indexer)
@@ -84,16 +99,22 @@
 =<
   |_  =bowl:gall
   +*  this            .
+      def                 ~(. (default-agent this %|) bowl)
+      io                  ~(. agentio bowl)
       uqbar-indexer-core  +>
       uic                 ~(. uqbar-indexer-core bowl)
-      def                 ~(. (default-agent this %|) bowl)
   ::
   ++  on-init
     :-  ~
     %=  this
         state
           :+  %0
-            [chain-source=~ blocks=*blocks:uqbar-indexer]
+            :*  chain-source=~
+                blocks=*blocks:uqbar-indexer
+                chunk-subs=*(jug town-id=@ud sub=@p)
+                id-subs=*(jug id-hash=@ux sub=@p)
+                grain-subs=*(jug grain-hash=@ux sub=@p)
+            ==
           :*  block-index=*(jug @ux block-location:uqbar-indexer)
               egg-index=*(jug @ux egg-location:uqbar-indexer)
               from-index=*(jug @ux egg-location:uqbar-indexer)
@@ -131,8 +152,61 @@
       ==
     [cards this]
   ::
-  ++  on-watch  on-watch:def
-  ++  on-leave  on-leave:def
+  ++  on-watch
+    |=  =path
+    ^-  (quip card _this)
+    ?+  path  (on-watch:def path)
+    ::
+        [%block ~]
+      `this
+    ::
+        [%chunk @ ~]
+      =/  town-id=@ud  (slav %ud i.t.path)
+      =.  chunk-subs
+        (~(put ju chunk-subs) town-id src.bowl)
+      `this(chunk-subs chunk-subs)
+    ::
+        [%id @ ~]
+      =/  id-hash  (slav %ux i.t.path)
+      =.  id-subs
+        (~(put ju id-subs) id-hash src.bowl)
+      `this(id-subs id-subs)
+    ::
+        [%grain @ ~]
+      =/  grain-hash  (slav %ux i.t.path)
+      =.  grain-subs
+        (~(put ju grain-subs) grain-hash src.bowl)
+      `this(grain-subs grain-subs)
+    ::
+    ==
+  ::
+  ++  on-leave
+    |=  =path
+    ^-  (quip card _this)
+    ?+  path  (on-watch:def path)
+    ::
+        [%block ~]
+      `this
+    ::
+        [%chunk @ ~]
+      =/  town-id=@ud  (slav %ud i.t.path)
+      =.  chunk-subs
+        (~(del ju chunk-subs) town-id src.bowl)
+      `this(chunk-subs chunk-subs)
+    ::
+        [%id @ ~]
+      =/  id-hash  (slav %ux i.t.path)
+      =.  id-subs
+        (~(del ju id-subs) id-hash src.bowl)
+      `this(id-subs id-subs)
+    ::
+        [%grain @ ~]
+      =/  grain-hash  (slav %ux i.t.path)
+      =.  grain-subs
+        (~(del ju grain-subs) grain-hash src.bowl)
+      `this(grain-subs grain-subs)
+    ::
+    ==
   ::
   ++  on-peek
     |=  =path
@@ -228,9 +302,12 @@
         ?~  wcs  ~  ~[u.wcs]
       ::
           %fact
+        |^
         =+  !<(=update:uqbar-indexer q.cage.sign)
         ?>  ?=(%block -.update)
         ?>  =((lent blocks) num.block-header.update)
+        ::  store and index the new block
+        ::
         =*  new-block  +.update
         =*  block-num  num.block-header.new-block
         ?~  blocks  `this(blocks ~[new-block])
@@ -239,15 +316,71 @@
           data-hash.block-header.new-block
         ::
         =+  [block-hash egg from grain to]=(parse-block block-num new-block)
-        :-  ~
+        =.  block-index  (~(gas ju block-index) block-hash)
+        =.  egg-index    (~(gas ju egg-index) egg)
+        =.  from-index   (~(gas ju from-index) from)
+        =.  grain-index  (~(gas ju grain-index) grain)
+        =.  to-index     (~(gas ju to-index) to)
+        ::  publish to subscribers
+        ::
+        =|  cards=(list card)
+        =.  cards
+          %+  snoc  cards
+          %+  fact:io
+            :-  %uqbar-indexer-update
+            !>(`update:uqbar-indexer`update)
+          ~[/block]
+        ::  TODO: generalize make-sub-cards and replace chunk-update
+        =.  cards
+          %+  weld  cards
+          %+  murn  ~(tap in ~(key by chunk-subs))
+          |=  town-id=@ud
+          =/  chunk-update=(unit update:uqbar-indexer)
+            (serve-update %chunk [block-num town-id])
+          ?~  chunk-update  ~
+          :-  ~
+          %+  fact:io
+            :-  %uqbar-indexer-update
+            !>(`update:uqbar-indexer`u.chunk-update)
+          ~[/chunk/(scot %ud town-id)]
+        ::
+        =.  cards
+          %+  weld  cards
+          (make-sub-cards id-subs %ux %from /id)
+        =.  cards
+          %+  weld  cards
+          (make-sub-cards id-subs %ux %to /id)
+        =.  cards
+          %+  weld  cards
+          (make-sub-cards grain-subs %ux %grain /grain)
+        ::
+        :-  cards
         %=  this
             blocks       (snoc blocks new-block)
-            block-index  (~(gas ju block-index) block-hash)
-            egg-index    (~(gas ju egg-index) egg)
-            from-index   (~(gas ju from-index) from)
-            grain-index  (~(gas ju grain-index) grain)
-            to-index     (~(gas ju to-index) to)
+            block-index  block-index
+            egg-index    egg-index
+            from-index   from-index
+            grain-index  grain-index
+            to-index     to-index
         ==
+        ::
+        ++  make-sub-cards
+          |=  $:  subs=(jug id=@u sub=@p)
+                  id-type=?(%ux %ud)
+                  =query-type:uqbar-indexer
+                  path-prefix=path
+              ==
+          ^-  (list card)
+          %+  murn  ~(tap in ~(key by subs))
+          |=  id=@u
+          ?~  update=(serve-update query-type id)  ~
+          :-  ~
+          %+  fact:io
+            :-  %uqbar-indexer-update
+            !>(`update:uqbar-indexer`u.update)
+          ~[(snoc path-prefix (scot id-type id))]
+        ::
+        --
       ::
       ==
     ::
