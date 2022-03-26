@@ -1,4 +1,4 @@
-::  dao-group-store [landscape]:
+::  dao-group-store:
 ::
 ::  Store DAO groups of ships
 ::
@@ -33,7 +33,8 @@
     default-agent,
     verb,
     daolib=dao,
-    reslib=resource
+    reslib=resource,
+    smart=zig-sys-smart
 ::
 |%
 +$  card  card:agent:gall
@@ -119,10 +120,11 @@
         ~[u.wi]
       ::
           %fact
+        |^
         =+  !<(=update:uqbar-indexer q.cage.sign)
-        ?>  ?=(%rice -.update)
+        ?>  ?=(%grain -.update)
         =/  new-dao-group=dao-group:store
-          ;;(dao-group:store rice.update)  :: TODO: instead send diff?
+          (get-dao-group-from-update update)
         =*  members  members.new-dao-group
         ?.  =(0 ~(wyt in (~(get ju members) our.bowl)))
           :-  ~
@@ -132,6 +134,19 @@
         =^  cards  state
           (remove-group:dgc rid)
         [cards this]
+        ::
+        ++  get-dao-group-from-update
+          |=  =update:uqbar-indexer
+          ^-  dao-group:store
+          ?>  ?=(%grain -.update)
+          =/  grains=(list [location:uqbar-indexer grain:smart])
+            ~(tap in grains.update)
+          ?>  =(1 (lent grains))
+          =/  [* dao-grain=grain:smart]  (snag 0 grains)
+          ?>  ?=(%& -.germ.dao-grain)
+          ;;(dao-group:store p.germ.dao-grain)
+        ::
+        --
       ::
       ==
     ::
@@ -157,7 +172,7 @@
   :-  ~
   %+  %~  watch  pass:io
     /dao-update/(scot %p entity.rid)/[name.rid]
-  u.indexer  /rice/(scot %ux dao-id)
+  u.indexer  /grain/(scot %ux dao-id)
 ::
 ++  leave-indexer
   |=  rid=resource:res
