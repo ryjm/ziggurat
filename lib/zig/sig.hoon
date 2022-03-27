@@ -1,5 +1,15 @@
 /-  *ziggurat
 |%
+::
+::  blockchain signatures
+::
+++  pubkey-to-addr
+  |=  pub=@
+  ^-  @ux
+  (end [3 20] (shax pub))
+::
+::  ship signatures
+::
 ++  jael-scry
   |*  [=mold our=ship desk=term now=time =path]
   .^  mold

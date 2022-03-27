@@ -60,4 +60,14 @@
       [%exit gas=[rate=@ud bud=@ud]]
       [%clear-state ~]
   ==
+::
++$  wallet-poke
+  $%  [%set-keys seed=@]
+      [%set-zigs town=@ud addr=id:smart]
+      $:  %submit  sequencer=ship
+          to=id:smart  town=@ud
+          gas=[rate=@ud bud=@ud]  args=(unit *) 
+          my-grains=(set @ux)  cont-grains=(set @ux)
+      ==
+  ==
 --

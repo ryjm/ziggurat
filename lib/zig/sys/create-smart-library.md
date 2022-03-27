@@ -1,4 +1,4 @@
-## How to create a compiled "smart library" for small contract execution:
+## How to create a compiled "smart library" for smart contract execution:
 
 `=trivial .^(@t %cx /=zig=/lib/zig/contracts/trivial/hoon)`
 

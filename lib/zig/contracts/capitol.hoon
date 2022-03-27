@@ -76,7 +76,7 @@
     =.  data.p.germ.ziggurat-grain  (~(del by ziggurat) q.args)
     [%& (malt ~[[id.ziggurat-grain ziggurat-grain]]) ~]
   ==
-  +$  sig  [p=@ux q=ship r=life]
+  +$  sig  [p=@ux q=ship r=@ud]
   ::
   ::  validators on main chain
   ::
