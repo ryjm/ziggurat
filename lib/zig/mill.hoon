@@ -101,6 +101,7 @@
     ++  incubate
       |=  =egg
       ^-  [(unit rooster) @ud]
+      ~&  >>  "incubating"
       |^
       =/  args  (fertilize q.egg)
       ?~  stalk=(germinate to.p.egg cont-grains.q.egg)
@@ -153,6 +154,7 @@
     ++  grow
       |=  [=crop =zygote =egg]
       ~>  %bout
+      ~&  "growing"
       ^-  [(unit rooster) @ud]
       |^
       =+  [chick rem]=(weed crop to.p.egg [%& zygote] ~ budget.p.egg)
@@ -160,6 +162,7 @@
       ?:  ?=(%& -.u.chick)
         ::  rooster result, finished growing
         [`p.u.chick rem]
+      ~&  >>  "continuation call"
       ::  hen result, continuation
       |-
       =*  next  next.p.u.chick
@@ -169,16 +172,20 @@
       ?~  child  `rem
       =/  gan  (harvest u.child to.p.egg from.p.egg)
       ?~  gan  `rem
-      =.  granary  u.gan
-      =^  eve  rem
-        (weed crop to.p.egg [%| u.child] mem rem)
-      ?~  eve  `rem
-      ?:  ?=(%& -.u.eve)
-        [`p.u.eve rem]
-      %_  $
-        next.p.u.chick  next.p.u.eve
-        mem.p.u.chick   mem.p.u.eve
-      ==
+      [`u.child rem]
+      ::  this event trigger phase actually wipes the result of continuations,
+      ::  no bueno. need to move the event trigger inside the above loop.
+      ::  above always returns a result, anyways.
+      ::  =.  granary  u.gan
+      ::  =^  eve  rem
+      ::    (weed crop to.p.egg [%| u.child] mem rem)
+      ::  ?~  eve  `rem
+      ::  ?:  ?=(%& -.u.eve)
+      ::    [`p.u.eve rem]
+      ::  %_  $
+      ::    next.p.u.chick  next.p.u.eve
+      ::    mem.p.u.chick   mem.p.u.eve
+      ::  ==
       ::
       ++  weed
         |=  [=^crop to=id inp=embryo mem=(unit vase) budget=@ud]
@@ -199,15 +206,19 @@
         ^-  [(unit (each (each * chick) (list tank))) @ud]
         =/  =contract  (hole contract [nok +:(cue q.q.smart-lib)])  ::  +:(cue q.q.smart-lib)
         |^
+        ~&  >>  "cart: {<cart>}"
+        ~&  >  "inp: {<inp>}"
         ?:  ?=(%| -.inp)
           ::  event
           =/  res  (event p.inp)
+          ~&  >>>  "res: {<res>}"
           ?~  -.res  `+.res
           ?:  ?=(%& -.u.-.res)
             [`[%& %| p.u.-.res] +.res]
           [`[%| p.u.-.res] +.res]
         ::  write
         =/  res  (write p.inp)
+        ~&  >>>  "res: {<res>}"
         ?~  -.res  `+.res
         ?:  ?=(%& -.u.-.res)
           [`[%& %| p.u.-.res] +.res]
@@ -220,8 +231,6 @@
           ::  (bull |.(;;(chick (~(write contract cart) zygote))) bud)
           :_  (sub bud 7)
           `(mule |.(;;(chick (~(write contract cart) zygote))))
-          ::  =/  res  (~(write contract cart) zygote)
-          ::  `[%& ;;(chick res)]
         ++  event
           |=  =rooster
           ^-  [(unit (each chick (list tank))) @ud]
@@ -234,6 +243,7 @@
     ++  harvest
       |=  [res=rooster lord=id from=caller]
       ^-  (unit ^granary)
+      ~&  "harvesting this: {<res>}"
       =-  ?.  -  
             ~&  >>>  "harvest checks failed"  
             ~

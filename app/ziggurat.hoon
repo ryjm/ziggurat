@@ -8,7 +8,7 @@
 +$  state-0
   $:  %0
       mode=?(%fisherman %validator %none)
-      me=(unit account:smart)
+      me=(unit account:smart)  :: TODO remove
       =epochs
       =chunks
       ::  TODO need to make sure this design is acceptable in terms of
@@ -120,7 +120,7 @@
     ^-  (quip card _state)
     ?-    -.act
         %key
-      ::  store private key where? jael?
+      ::  TODO fetch this from wallet agent
       ?>  =(src.bowl our.bowl)
       `state(me `account.act)
     ::

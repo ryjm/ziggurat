@@ -27,12 +27,20 @@
       town-id
       %&^[100.000 ~]
   ==
+=/  address-book-grain
+  ^-  grain:smart
+  :*  `@ux`'address-book'
+      zigs-wheat-id:smart
+      zigs-wheat-id:smart
+      town-id
+      %&^[(malt ~[[0xbeef 0x1.beef] [0xdead 0x1.dead] [0xcafe 0x1.cafe]])]
+  ==
 ::  store only contract code, insert into shared subject
 =/  wheat
   ^-  wheat:smart
   =/  cont  (of-wain:format zigs-contract)
   :-  `(text-deploy:deploy cont)
-  (silt ~[0x1.beef 0x1.dead 0x1.cafe])
+  (silt ~[0x1.beef 0x1.dead 0x1.cafe `@ux`'address-book'])
 =/  wheat-grain
   ^-  grain:smart
   :*  zigs-wheat-id:smart  ::  id
@@ -45,6 +53,7 @@
   ^-  granary:smart
   =/  grains=(list:smart (pair:smart id:smart grain:smart))
     :~  [zigs-wheat-id:smart wheat-grain]
+        [`@ux`'address-book' address-book-grain]
         [0x1.beef beef-zigs-grain]
         [0x1.dead dead-zigs-grain]
         [0x1.cafe cafe-zigs-grain]
