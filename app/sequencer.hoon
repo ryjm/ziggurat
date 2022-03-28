@@ -109,8 +109,7 @@
     ::  assert that we're active in main chain
     ?.  .^(? %gx /(scot %p our.bowl)/ziggurat/(scot %da now.bowl)/active/noun)
       ~|("can't run a town, ziggurat not active" !!)
-    =/  me  .^(account:smart %gx /(scot %p our.bowl)/ziggurat/(scot %da now.bowl)/account/noun)
-    =/  sig  (sign:sig our.bowl now.bowl (sham me))
+    =/  sig  (sign:sig our.bowl now.bowl 'attestation')
     ?-    -.act
         %init
       ::  assert we're not already running a town
@@ -123,18 +122,17 @@
               %watch  /sequencer/updates
           ==
           :*  %pass  /submit-tx
-              %agent  [our.bowl %ziggurat]
-              %poke  %zig-weave-poke
-              !>  :-  %forward
-                  %-  silt  :_  ~
-                  :*  [me(nonce +(nonce.me)) `@ux`'capitol' rate.gas.act bud.gas.act 0]
-                      me(nonce +(nonce.me))
+              %agent  [our.bowl %wallet]
+              %poke  %zig-wallet-poke
+              !>  :-  %submit
+                  :*  `our.bowl
+                      `@ux`'capitol'
+                      relay-town-id  ::  0
+                      [rate.gas.act bud.gas.act]
                       `[%init sig town-id.act]
-                      ~
-                      (silt ~[`@ux`'world'])
+                      ~  (silt ~[`@ux`'world'])
                   ==
-          ==
-      ==
+      ==  ==
     ::
         %join
       ::  assert we're not already running a town
@@ -147,18 +145,17 @@
               %watch  /sequencer/updates
           ==
           :*  %pass  /submit-tx
-              %agent  [our.bowl %ziggurat]
-              %poke  %zig-weave-poke
-              !>  :-  %forward
-                  %-  silt  :_  ~
-                  :*  [me(nonce +(nonce.me)) `@ux`'capitol' rate.gas.act bud.gas.act 0]
-                      me(nonce +(nonce.me))
+              %agent  [our.bowl %wallet]
+              %poke  %zig-wallet-poke
+              !>  :-  %submit
+                  :*  `our.bowl
+                      `@ux`'capitol'
+                      relay-town-id  ::  0
+                      [rate.gas.act bud.gas.act]
                       `[%join sig town-id.act]
-                      ~
-                      (silt ~[`@ux`'world'])
+                      ~  (silt ~[`@ux`'world'])
                   ==
-          ==
-      ==
+      ==  ==
     ::
         %exit
       ::  submit tx indicating our absence. wait for ack to actually leave
@@ -167,18 +164,17 @@
       ::  submit tx to ziggurat for inclusion in next epoch
       :_  state
       :~  :*  %pass  /submit-tx
-              %agent  [our.bowl %ziggurat]
-              %poke  %zig-weave-poke
-              !>  :-  %forward
-                  %-  silt  :_  ~
-                  :*  [me(nonce +(nonce.me)) `@ux`'capitol' rate.gas.act bud.gas.act 0]
-                      me(nonce +(nonce.me))
+              %agent  [our.bowl %wallet]
+              %poke  %zig-wallet-poke
+              !>  :-  %submit
+                  :*  `our.bowl
+                      `@ux`'capitol'
+                      relay-town-id  ::  0
+                      [rate.gas.act bud.gas.act]
                       `[%exit sig u.town-id.state]
-                      ~
-                      (silt ~[`@ux`'world'])
+                      ~  (silt ~[`@ux`'world'])
                   ==
-          ==
-      ==
+      ==  ==
     ::
         %clear-state
       :_  state(town-id ~, town [~ ~], hall ~, basket ~)
@@ -248,7 +244,7 @@
         ~&  >>  "ignoring request"
         `this
       ::  create and send our chunk to them
-      =/  me  .^(account:smart %gx /(scot %p our.bowl)/ziggurat/(scot %da now.bowl)/account/noun)
+      =/  me  .^(account:smart %gx /(scot %p our.bowl)/wallet/(scot %da now.bowl)/account/(scot %ud (need town-id.state))/noun)
       =/  our-chunk=chunk
         %+  ~(mill-all mil me (need town-id.state) 0 now.bowl)
           town.state

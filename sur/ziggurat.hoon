@@ -41,8 +41,7 @@
 +$  chunk-update  [%new-chunk =town:smart]
 ::
 +$  chain-poke
-  $%  [%key =account:smart]
-      [%start mode=?(%fisherman %validator) history=epochs validators=(set ship) starting-state=town:smart]
+  $%  [%start mode=?(%fisherman %validator) history=epochs validators=(set ship) starting-state=town:smart]
       [%stop ~]
       [%new-epoch ~]
       [%receive-chunk town-id=@ud =chunk]
@@ -64,7 +63,11 @@
 +$  wallet-poke
   $%  [%set-keys seed=@]
       [%set-zigs town=@ud addr=id:smart]
-      $:  %submit  sequencer=ship
+      [%set-node town=@ud =ship]
+      [%inc-nonce town=@ud]
+      [%set-nonce town=@ud new=@ud]  ::  mostly for testing
+      $:  %submit
+          sequencer=(unit ship)  ::  optional custom node choice
           to=id:smart  town=@ud
           gas=[rate=@ud bud=@ud]  args=(unit *) 
           my-grains=(set @ux)  cont-grains=(set @ux)

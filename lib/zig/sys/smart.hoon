@@ -1,6 +1,6 @@
+|%
 ::  /+  hoon-hoon=zig-sys-hoon
 ::  =>  hoon-hoon
-|%
 ::
 ::  smart contract functions
 ::
@@ -20,6 +20,15 @@
     (jam germ)
   ::  fry ignores owns.wheat in hash
   (jam cont.p.germ)
+::
+++  old-fry
+  |=  [lord=id town=@ud =germ]
+  ^-  @ux
+  =-  (mug (cat 3 lord (cat 3 town -)))
+  ?.  ?=(%| -.germ)
+    (mug germ)
+  ::  fry ignores owns.wheat in hash
+  (mug cont.p.germ)
 ::
 ::  +pin: get ID from caller
 ++  pin
@@ -86,6 +95,7 @@
 +$  egg  (pair shell yolk)
 +$  shell
   $:  from=caller
+      sig=@  ::  signed hash of yolk
       to=id
       rate=@ud
       budget=@ud

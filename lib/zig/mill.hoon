@@ -31,6 +31,10 @@
     |=  [=town =egg]
     ^-  [^town fee=@ud]
     ?.  ?=(account from.p.egg)  [town 0]
+    ::  validate transaction signature
+    =/  them  (com:nu:crub:crypto id.from.p.egg)
+    ?.  =(`(sham (jam q.egg)) (sure:as.them sig.p.egg))
+      [town 0]  ::  bad signature
     ?~  curr-nonce=(~(get by q.town) id.from.p.egg)
       [town 0]  ::  missing account
     ?.  =(nonce.from.p.egg +(u.curr-nonce))
@@ -266,10 +270,8 @@
           ::  all newly issued grains must have properly-hashed id AND
           ::  lord of grain must be contract issuing it
           ?&  =(id id.grain)
-              ::  TODO frying here temporarily because i had to edit it
-              ::  and can't get an updated smart-lib.noun :/
-              =((fry lord.grain town-id.grain germ.grain) id.grain)
-              ::  =(`@ux`(sham (cat 3 lord (cat 3 town-id.grain ?:(?=(%| -.germ.grain) (jam cont.p.germ.grain) (jam germ.grain))))) id.grain)
+              ::  TODO can't get an updated smart-lib.noun :/
+              =((old-fry lord.grain town-id.grain germ.grain) id.grain)
               =(lord lord.grain)
       ==  ==
     --

@@ -1,5 +1,7 @@
 ## How to create a compiled "smart library" for smart contract execution:
 
+**something here is WRONG because this isn't producing a functional library.**
+
 `=trivial .^(@t %cx /=zig=/lib/zig/contracts/trivial/hoon)`
 
 `=smart -build-file /=zig=/lib/zig/sys/smart/hoon`

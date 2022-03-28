@@ -8,7 +8,6 @@
 +$  state-0
   $:  %0
       mode=?(%fisherman %validator %none)
-      me=(unit account:smart)  :: TODO remove
       =epochs
       =chunks
       ::  TODO need to make sure this design is acceptable in terms of
@@ -34,7 +33,7 @@
 +*  this  .
     def   ~(. (default-agent this %|) bowl)
 ::
-++  on-init  `this(state [[%0 %none ~ ~ ~ ~ [~ ~]] ~(mill mill +:(cue q.q.smart-lib))])
+++  on-init  `this(state [[%0 %none ~ ~ ~ [~ ~]] ~(mill mill +:(cue q.q.smart-lib))])
 ::
 ++  on-save  !>(-.state)
 ++  on-load
@@ -119,11 +118,6 @@
     |=  act=chain-poke
     ^-  (quip card _state)
     ?-    -.act
-        %key
-      ::  TODO fetch this from wallet agent
-      ?>  =(src.bowl our.bowl)
-      `state(me `account.act)
-    ::
         %start
       ?>  =(src.bowl our.bowl)
       ~|  "ziggurat must be run on a star or star-moon"
@@ -152,8 +146,7 @@
       ~&  >  "attempting to join main chain"
       =/  dummy=^epochs
         (gas:poc ~ [0 [0 *@da ~(tap in validators.act) ~]]^~)
-      =/  me  (need me.state)
-      =/  sig  (sign:zig-sig our.bowl now.bowl (sham me))
+      =/  sig  (sign:zig-sig our.bowl now.bowl 'attestation')
       :_  state(mode %validator, globe starting-state.act, epochs dummy)
       ::  make tx to add ourselves, send to another validator
       %+  snoc  %-  zing
@@ -162,34 +155,33 @@
                     ~[(start-epoch-catchup i.others 0)]
                 ==
       :*  %pass  /submit-tx
-          %agent  [i.others %ziggurat]
-          %poke  %zig-weave-poke
-          !>  :-  %forward
-              %-  silt  :_  ~
-              :*  [me(nonce +(nonce.me)) `@ux`'capitol' 1 10.000 0]
-                  me(nonce +(nonce.me))
+          %agent  [our.bowl %wallet]
+          %poke  %zig-wallet-poke
+          !>  :-  %submit
+              :*  `i.others
+                  `@ux`'capitol'
+                  relay-town-id  ::  0
+                  [1 10.000]  ::  TODO let poke set gas rate
                   `[%become-validator sig]
-                  ~
-                  (silt ~[`@ux`'ziggurat'])
+                  ~  (silt ~[`@ux`'ziggurat'])
               ==
       ==
     ::
         %stop
       ?>  =(src.bowl our.bowl)
-      =/  me  (need me.state)
-      =/  sig  (sign:zig-sig our.bowl now.bowl (sham me))
+      =/  sig  (sign:zig-sig our.bowl now.bowl 'attestation')
       :_  state
       %+  snoc  (subscriptions-cleanup wex.bowl sup.bowl)
       :*  %pass  /submit-tx
-          %agent  [our.bowl %ziggurat]
-          %poke  %zig-weave-poke
-          !>  :-  %forward
-              %-  silt  :_  ~
-              :*  [me(nonce +(nonce.me)) `@ux`'capitol' 1 10.000 0]
-                  me(nonce +(nonce.me))
+          %agent  [our.bowl %wallet]
+          %poke  %zig-wallet-poke
+          !>  :-  %submit
+              :*  `our.bowl
+                  `@ux`'capitol'
+                  relay-town-id  ::  0
+                  [1 10.000]  ::  TODO let poke set gas rate
                   `[%stop-validating sig]
-                  ~
-                  (silt ~[`@ux`'ziggurat'])
+                  ~  (silt ~[`@ux`'ziggurat'])
               ==
       ==
     ::
@@ -210,7 +202,7 @@
       ::  if we're no longer in validator set, leave the chain
       ?.  (~(has in new-validator-set) our.bowl)
         :-  (subscriptions-cleanup wex.bowl sup.bowl)
-        state(mode %none, me ~, epochs ~, chunks ~, basket ~, globe [~ ~])
+        state(mode %none, epochs ~, chunks ~, basket ~, globe [~ ~])
       =/  new-epoch=epoch
         :^    +(num.cur)
             (deadline start-time.cur (dec (lent order.cur)))
@@ -263,6 +255,7 @@
     ?-    -.act
         %forward
       ::  only accepts transactions from possible validators/sequencers
+      ~&  >  "received egg"
       ?>  (allowed-participant our.bowl our.bowl now.bowl)
       =/  cur=epoch  +:(need (pry:poc epochs))
       =/  last-producer  (rear order.cur)  ::  TODO is this optimal? or -:(flop ..)?
@@ -502,17 +495,14 @@
       ::  if this is the last block in the epoch,
       ::  perform global-level transactions
       ::  insert transaction to advance
-      ?~  me.state
-        ~&  >  "ziggurat: failed to produce epoch-ending block: no account"
-        `state
+      =/  me  .^(account:smart %gx /(scot %p our.bowl)/wallet/(scot %da now.bowl)/account/(scot %ud relay-town-id)/noun)
       =/  globe-chunk
-        %+  ~(mill-all mil (need me) 0 0 now.bowl)
+        %+  ~(mill-all mil me relay-town-id 0 now.bowl)
           globe.state
         ~(tap in basket.state)
       =:  globe.state   +.globe-chunk
           basket.state  ~
           chunks.state  (~(put by chunks.state) relay-town-id globe-chunk)
-          u.me.state    u.me(nonce (~(got by q.+.globe-chunk) id.u.me.state))
       ==
       =^  cards  cur
         (~(our-block epo cur prev-hash [our now src]:bowl) chunks.state)
@@ -543,9 +533,6 @@
       [%slot ~]
     =/  cur=epoch  +:(need (pry:poc epochs))
     ``noun+!>(`@ud`?~(p=(bind (pry:sot slots.cur) head) 0 +(u.p)))
-  ::
-      [%account ~]
-    ``noun+!>(`account:smart`(need me.state))
   ::
   ::  scries for contracts
   ::
