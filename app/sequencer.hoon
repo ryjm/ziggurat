@@ -77,11 +77,8 @@
         %forward
       ::  getting an egg from user / eggs from fellow sequencer
       ::  add to our basket
-      ::  FAKE EASY MILLING FOR TEST PURPOSES
-      ::  =/  milled
-      ::      %+  ~(mill-all mil [0xdead 0 0x1.dead] (need town-id.state) 0 now.bowl)
-      ::        town.state
-      ::      ~(tap in eggs.act)
+      ::  ensure each egg in our town
+      =.  eggs.act  (filter:util eggs.act |=(=egg:smart =((need town-id.state) town-id.p.egg)))
       =/  slot-num  .^(@ud %gx /(scot %p our.bowl)/ziggurat/(scot %da now.bowl)/slot/noun)
       =/  current-producer  (snag (mod slot-num (lent order.u.hall.state)) order.u.hall.this)
       ?:  =(our.bowl current-producer)

@@ -257,6 +257,7 @@
       ::  only accepts transactions from possible validators/sequencers
       ~&  >  "received egg"
       ?>  (allowed-participant our.bowl our.bowl now.bowl)
+      =.  eggs.act  (filter eggs.act |=(=egg:smart =(relay-town-id town-id.p.egg)))
       =/  cur=epoch  +:(need (pry:poc epochs))
       =/  last-producer  (rear order.cur)  ::  TODO is this optimal? or -:(flop ..)?
       ::  if there's a tx we sent ourselves, update our nonce

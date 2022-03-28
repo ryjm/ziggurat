@@ -158,7 +158,6 @@
     ++  grow
       |=  [=crop =zygote =egg]
       ~>  %bout
-      ~&  "growing"
       ^-  [(unit rooster) @ud]
       |^
       =+  [chick rem]=(weed crop to.p.egg [%& zygote] ~ budget.p.egg)
@@ -166,7 +165,6 @@
       ?:  ?=(%& -.u.chick)
         ::  rooster result, finished growing
         [`p.u.chick rem]
-      ~&  >>  "continuation call"
       ::  hen result, continuation
       |-
       =*  next  next.p.u.chick
@@ -210,19 +208,19 @@
         ^-  [(unit (each (each * chick) (list tank))) @ud]
         =/  =contract  (hole contract [nok +:(cue q.q.smart-lib)])  ::  +:(cue q.q.smart-lib)
         |^
-        ~&  >>  "cart: {<cart>}"
-        ~&  >  "inp: {<inp>}"
+        ::~&  >>  "cart: {<cart>}"
+        ::~&  >  "inp: {<inp>}"
         ?:  ?=(%| -.inp)
           ::  event
           =/  res  (event p.inp)
-          ~&  >>>  "res: {<res>}"
+          ::~&  >>>  "res: {<res>}"
           ?~  -.res  `+.res
           ?:  ?=(%& -.u.-.res)
             [`[%& %| p.u.-.res] +.res]
           [`[%| p.u.-.res] +.res]
         ::  write
         =/  res  (write p.inp)
-        ~&  >>>  "res: {<res>}"
+        ::~&  >>>  "res: {<res>}"
         ?~  -.res  `+.res
         ?:  ?=(%& -.u.-.res)
           [`[%& %| p.u.-.res] +.res]
@@ -247,7 +245,6 @@
     ++  harvest
       |=  [res=rooster lord=id from=caller]
       ^-  (unit ^granary)
-      ~&  "harvesting this: {<res>}"
       =-  ?.  -  
             ~&  >>>  "harvest checks failed"  
             ~

@@ -113,6 +113,18 @@
     len       (dec len)
     lis       (oust [num 1] `(list ship)`lis)
   ==
+::  +filter: filters a set with boolean gate
+++  filter
+  |*  [a=(tree) b=gate] 
+  =+  c=`(set _?>(?=(^ a) n.a))`~
+  |-  ?~  a  c
+  =.  c
+    ?:  (b n.a)
+      (~(put in c) n.a)
+    c   
+  =.  c  $(a l.a, c c)
+  $(a r.a, c c)
+::
 ::  +allowed-participant: grades whether a ship is permitted to participate
 ::  in Uqbar validation. currently using hardcoded whitelist
 ::  
@@ -129,6 +141,7 @@
       ::  hodzod's testing moons
       ~ransur-rabtyr-dozzod-bacrys
       ~todnub-figsym-dozzod-bacrys
+      ~ricmun-lasfer-hosted-fornet
   ==
   ::  Potential future gating function:
   ::
