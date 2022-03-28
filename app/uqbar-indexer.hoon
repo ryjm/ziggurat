@@ -146,21 +146,15 @@
     ::
         [%chunk @ ~]
       =/  town-id=@ud  (slav %ud i.t.path)
-      =.  chunk-subs
-        (~(put ju chunk-subs) town-id src.bowl)
-      `this(chunk-subs chunk-subs)
+      `this(chunk-subs (~(put ju chunk-subs) town-id src.bowl))
     ::
         [%id @ ~]
       =/  id-hash  (slav %ux i.t.path)
-      =.  id-subs
-        (~(put ju id-subs) id-hash src.bowl)
-      `this(id-subs id-subs)
+      `this(id-subs (~(put ju id-subs) id-hash src.bowl))
     ::
         [%grain @ ~]
       =/  grain-hash  (slav %ux i.t.path)
-      =.  grain-subs
-        (~(put ju grain-subs) grain-hash src.bowl)
-      `this(grain-subs grain-subs)
+      `this(grain-subs (~(put ju grain-subs) grain-hash src.bowl))
     ::
     ==
   ::
@@ -174,21 +168,15 @@
     ::
         [%chunk @ ~]
       =/  town-id=@ud  (slav %ud i.t.path)
-      =.  chunk-subs
-        (~(del ju chunk-subs) town-id src.bowl)
-      `this(chunk-subs chunk-subs)
+      `this(chunk-subs (~(del ju chunk-subs) town-id src.bowl))
     ::
         [%id @ ~]
       =/  id-hash  (slav %ux i.t.path)
-      =.  id-subs
-        (~(del ju id-subs) id-hash src.bowl)
-      `this(id-subs id-subs)
+      `this(id-subs (~(del ju id-subs) id-hash src.bowl))
     ::
         [%grain @ ~]
       =/  grain-hash  (slav %ux i.t.path)
-      =.  grain-subs
-        (~(del ju grain-subs) grain-hash src.bowl)
-      `this(grain-subs grain-subs)
+      `this(grain-subs (~(del ju grain-subs) grain-hash src.bowl))
     ::
     ==
   ::
