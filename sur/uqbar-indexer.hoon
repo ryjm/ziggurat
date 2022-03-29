@@ -3,7 +3,8 @@
 /+  smart=zig-sys-smart
 ::
 |%
-+$  blocks  (list [=block-header:zig =block:zig])
++$  block-bundle  [header=block-header:zig =block:zig]
++$  blocks  ((mop @ud block-bundle) gth)
 +$  query-type
   ?(%block %block-hash %chunk %egg %from %grain %to %hash)
 +$  query-payload
@@ -22,7 +23,7 @@
   [block-num=@ud town-id=@ud egg-num=@ud]
 ::
 +$  update
-  $%  [%block =block-header:zig =block:zig]
+  $%  [%block bundle=block-bundle]
       [%chunk location=town-location =chunk:zig]
       [%egg eggs=(set [location=egg-location =egg:smart])]
       [%grain grains=(set [location=town-location =grain:smart])]

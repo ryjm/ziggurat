@@ -88,6 +88,9 @@
       to-index=(jug @ux egg-location:uqbar-indexer)
   ==
 +$  state-0  [%0 base-state-0 indices-0]
+::
+::  TODO: move this to a lib?
+++  bl-on  ((on @ud block-bundle:uqbar-indexer) gth)
 --
 ::
 =|  state-0
@@ -191,7 +194,8 @@
       :^  ~  ~  %noun
       !>  ^-  (unit update:uqbar-indexer)
       ?:  =(0 (lent blocks))  ~
-      `[%block (rear blocks)]
+      ?~  bundle=(pry:bl-on blocks)  ~
+      `[%block val.u.bundle]
     ::
         [%x %block-num @ ~]
       =/  block-num=@ud  (slav %ud i.t.t.path)
@@ -277,17 +281,17 @@
         |^
         =+  !<(=update:uqbar-indexer q.cage.sign)
         ?>  ?=(%block -.update)
-        ?>  =((lent blocks) num.block-header.update)
+        ?>  =((lent blocks) num.header.bundle.update)
         ::
-        =*  new-block  +.update
-        =*  block-num  num.block-header.new-block
-        ?~  blocks  `this(blocks ~[new-block])
-        =/  previous-block  (rear blocks)
-        ?>  .=  data-hash.block-header.previous-block
-          data-hash.block-header.new-block
+        =*  new-bundle  bundle.update
+        =*  block-num  num.header.new-bundle
+        ?~  previous=(pry:bl-on blocks)
+          `this(blocks (put:bl-on blocks block-num new-bundle))
+        ?>  .=  data-hash.header.val.u.previous
+          data-hash.header.new-bundle
         ::  store and index the new block
         ::
-        =+  [block-hash egg from grain to]=(parse-block block-num new-block)
+        =+  [block-hash egg from grain to]=(parse-block block-num new-bundle)
         =:  block-index  (~(gas ju block-index) block-hash)
             egg-index    (~(gas ju egg-index) egg)
             from-index   (~(gas ju from-index) from)
@@ -309,7 +313,8 @@
               (make-sub-cards grain-subs %ux ~ %grain /grain)
           ==
         ::
-        [cards this(blocks (snoc blocks new-block))]
+        :-  cards
+        this(blocks (put:bl-on blocks block-num new-bundle))
         ::
         ++  make-sub-cards
           |=  $:  subs=(jug id=@u sub=@p)
@@ -413,13 +418,18 @@
   ::
       %block
     ?>  ?=(@ud query-payload)
-    (get-block query-payload)
+    (get-block-bundle query-payload)
   ::
       %chunk
     ?>  ?=([@ @] query-payload)
-    ?~  block-update=(get-block block-num.query-payload)  ~
-    ?>  ?=(%block -.u.block-update)
-    ?~  chunk=(~(get by q.block.u.block-update) town-id.query-payload)  ~
+    =/  update=(unit update:uqbar-indexer)
+      (get-block-bundle block-num.query-payload)
+    ?~  update  ~
+    ?>  ?=(%block -.u.update)
+    =*  chunks  q.block.bundle.u.update
+    =/  chunk=(unit chunk:zig)
+      (~(get by chunks) town-id.query-payload)
+    ?~  chunk  ~
     `[%chunk query-payload u.chunk]
   ::
   ::     %chunk-hash
@@ -430,11 +440,12 @@
   ::
   ==
   ::
-  ++  get-block
+  ++  get-block-bundle
     |=  block-num=@ud
     ^-  (unit update:uqbar-indexer)
     ?.  (lth block-num (lent blocks))  ~
-    `[%block (snag block-num blocks)]
+    ?~  bundle=(get:bl-on blocks block-num)  ~
+    `[%block u.bundle]
   ::
   ++  get-chunk-update
     ^-  (unit update:uqbar-indexer)
@@ -457,8 +468,7 @@
       ?>  =(1 (lent locations))
       =/  =location:uqbar-indexer  (snag 0 locations)
       ?>  ?=(@ location)
-      ?.  (lth location (lent blocks))  ~
-      `[%block (snag location blocks)]
+      (get-block-bundle location)
     ::
         %grain
       =|  grains=(set [town-location:uqbar-indexer grain:smart])
@@ -526,8 +536,8 @@
     |=  [block-num=@ud town-id=@ud]
     ^-  (unit chunk:zig)
     ?>  (lth block-num (lent blocks))
-    =/  [* =block:zig]  (snag block-num blocks)
-    =*  chunks  q.block
+    ?~  block-bundle=(get:bl-on blocks block-num)  ~
+    =*  chunks  q.block.u.block-bundle
     (~(get by chunks) town-id)
   ::
   --
