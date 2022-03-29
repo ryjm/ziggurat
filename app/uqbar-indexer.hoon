@@ -280,119 +280,9 @@
         ?~  wcs  ~  ~[u.wcs]
       ::
           %fact
-        |^
         =+  !<(=update:uqbar-indexer q.cage.sign)
-        ?+  -.update  !!  :: TODO: can we do better here?
-        ::
-            %block
-          =*  block-num   num.header.bundle.update
-          =*  new-bundle  bundle.update
-          ?~  previous=(pry:bl-on blocks)
-            :-  ~
-            ?:  =(0 num.header.bundle.update)
-              %=  this
-                  blocks
-                    (put:bl-on blocks block-num new-bundle)
-              ==
-            %=  this
-                future-blocks
-                  %^  put:bl-on
-                  future-blocks  block-num  new-bundle
-            ==
-          =*  previous-block-num  key.u.previous
-          ?:  (gth block-num +(previous-block-num))
-            :-  ~
-            %=  this
-                future-blocks
-                  %^  put:bl-on
-                  future-blocks  block-num  new-bundle
-            ==
-          ::
-          ?:  (lth block-num +(previous-block-num))
-            ::  TODO: check if input block bundle has new
-            ::  data and if so, add to cache and index it
-            `this
-          ::
-          =*  previous-hash  data-hash.header.val.u.previous
-          =*  next-hash      prev-header-hash.header.new-bundle
-          ?>  =(previous-hash next-hash)
-          ::  store and index the new block
-          ::
-          =+  [block-hash egg from grain to]=(parse-block block-num new-bundle)
-          =:  block-index  (~(gas ju block-index) block-hash)
-              egg-index    (~(gas ju egg-index) egg)
-              from-index   (~(gas ju from-index) from)
-              grain-index  (~(gas ju grain-index) grain)
-              to-index     (~(gas ju to-index) to)
-          ==
-          ::  TODO: check over future-blocks to see if can now apply
-          ::  them now that we've added this new one; del from
-          ::  future-blocks and poke
-          ::
-          ::  publish to subscribers
-          ::
-          =/  cards=(list card)
-            %-  zing
-            :+  :_  ~  %+  fact:io
-                  :-  %uqbar-indexer-update
-                  !>(`update:uqbar-indexer`update)
-                ~[/block]
-              (make-all-sub-cards block-num)
-            ~
-          :-  cards
-          this(blocks (put:bl-on blocks block-num new-bundle))
-        ::
-        ::     %chunk
-        ::   =*  block-num  block-num.location.update
-        ::   =*  town-id    town-id.location.update
-        ::   =*  chunk      chunk.update
-        ::   ::  TODO: chunk already exists?
-        ::   =+  [egg from grain to]=(parse-chunk block-num town-id chunk)
-        ::   =:  egg-index    (~(gas ju egg-index) egg)
-        ::       from-index   (~(gas ju from-index) from)
-        ::       grain-index  (~(gas ju grain-index) grain)
-        ::       to-index     (~(gas ju to-index) to)
-        ::   ==
-        ::   ::  publish to subscribers
-        ::   ::
-        ::   :-  (make-all-sub-cards block-num)
-        ::   this(blocks (put:bl-on blocks block-num new-bundle))
-        ::
-        ==
-        ::
-        ++  make-all-sub-cards
-          |=  block-num=@ud
-          ^-  (list card)
-          %-  zing
-          :~  (make-sub-cards chunk-subs %ud `block-num %chunk /chunk)
-              (make-sub-cards id-subs %ux ~ %from /id)
-              (make-sub-cards id-subs %ux ~ %to /id)
-              (make-sub-cards grain-subs %ux ~ %grain /grain)
-          ==
-        ::  TODO: if this is slow, could optimize by
-        ::  passing in and searching over only newest
-        ::  additions to index
-        ::
-        ++  make-sub-cards
-          |=  $:  subs=(jug id=@u sub=@p)
-                  id-type=?(%ux %ud)
-                  payload-prefix=(unit @ud)
-                  =query-type:uqbar-indexer
-                  path-prefix=path
-              ==
-          ^-  (list card)
-          %+  murn  ~(tap in ~(key by subs))
-          |=  id=@u
-          =/  payload=?(@u [@ud @u])
-            ?~  payload-prefix  id  [u.payload-prefix id]
-          ?~  update=(serve-update query-type payload)  ~
-          :-  ~
-          %+  fact:io
-            :-  %uqbar-indexer-update
-            !>(`update:uqbar-indexer`u.update)
-          ~[(snoc path-prefix (scot id-type id))]
-        ::
-        --
+        =^  cards  state  (consume-update:uic update)
+        [cards this]
       ::
       ==
     ::
@@ -688,4 +578,118 @@
       egg-num      +(egg-num)
   ==
 ::
+++  consume-update
+  |=  =update:uqbar-indexer
+  |^  ^-  (quip card _state)
+  ?+  -.update  !!  :: TODO: can we do better here?
+  ::
+      %block
+    =*  block-num   num.header.bundle.update
+    =*  new-bundle  bundle.update
+    ?~  previous=(pry:bl-on blocks)
+      :-  ~
+      ?:  =(0 num.header.bundle.update)
+        %=  state
+            blocks
+              (put:bl-on blocks block-num new-bundle)
+        ==
+      %=  state
+          future-blocks
+            %^  put:bl-on
+            future-blocks  block-num  new-bundle
+      ==
+    =*  previous-block-num  key.u.previous
+    ?:  (gth block-num +(previous-block-num))
+      :-  ~
+      %=  state
+          future-blocks
+            %^  put:bl-on
+            future-blocks  block-num  new-bundle
+      ==
+    ::
+    ?:  (lth block-num +(previous-block-num))
+      ::  TODO: check if input block bundle has new
+      ::  data and if so, add to cache and index it
+      `state
+    ::
+    =*  previous-hash  data-hash.header.val.u.previous
+    =*  next-hash      prev-header-hash.header.new-bundle
+    ?>  =(previous-hash next-hash)
+    ::  store and index the new block
+    ::
+    =+  [block-hash egg from grain to]=(parse-block block-num new-bundle)
+    =:  block-index  (~(gas ju block-index) block-hash)
+        egg-index    (~(gas ju egg-index) egg)
+        from-index   (~(gas ju from-index) from)
+        grain-index  (~(gas ju grain-index) grain)
+        to-index     (~(gas ju to-index) to)
+    ==
+    ::  TODO: check over future-blocks to see if can now apply
+    ::  them now that we've added this new one; del from
+    ::  future-blocks and poke
+    ::
+    ::  publish to subscribers
+    ::
+    =/  cards=(list card)
+      %-  zing
+      :+  :_  ~  %+  fact:io
+            :-  %uqbar-indexer-update
+            !>(`update:uqbar-indexer`update)
+          ~[/block]
+        (make-all-sub-cards block-num)
+      ~
+    :-  cards
+    state(blocks (put:bl-on blocks block-num new-bundle))
+  ::
+  ::     %chunk
+  ::   =*  block-num  block-num.location.update
+  ::   =*  town-id    town-id.location.update
+  ::   =*  chunk      chunk.update
+  ::   ::  TODO: chunk already exists?
+  ::   =+  [egg from grain to]=(parse-chunk block-num town-id chunk)
+  ::   =:  egg-index    (~(gas ju egg-index) egg)
+  ::       from-index   (~(gas ju from-index) from)
+  ::       grain-index  (~(gas ju grain-index) grain)
+  ::       to-index     (~(gas ju to-index) to)
+  ::   ==
+  ::   ::  publish to subscribers
+  ::   ::
+  ::   :-  (make-all-sub-cards block-num)
+  ::   state(blocks (put:bl-on blocks block-num new-bundle))
+  ::
+  ==
+  ::
+  ++  make-all-sub-cards
+    |=  block-num=@ud
+    ^-  (list card)
+    %-  zing
+    :~  (make-sub-cards chunk-subs %ud `block-num %chunk /chunk)
+        (make-sub-cards id-subs %ux ~ %from /id)
+        (make-sub-cards id-subs %ux ~ %to /id)
+        (make-sub-cards grain-subs %ux ~ %grain /grain)
+    ==
+  ::  TODO: if this is slow, could optimize by
+  ::  passing in and searching over only newest
+  ::  additions to index
+  ::
+  ++  make-sub-cards
+    |=  $:  subs=(jug id=@u sub=@p)
+            id-type=?(%ux %ud)
+            payload-prefix=(unit @ud)
+            =query-type:uqbar-indexer
+            path-prefix=path
+        ==
+    ^-  (list card)
+    %+  murn  ~(tap in ~(key by subs))
+    |=  id=@u
+    =/  payload=?(@u [@ud @u])
+      ?~  payload-prefix  id  [u.payload-prefix id]
+    ?~  update=(serve-update query-type payload)  ~
+    :-  ~
+    %+  fact:io
+      :-  %uqbar-indexer-update
+      !>(`update:uqbar-indexer`u.update)
+    ~[(snoc path-prefix (scot id-type id))]
+  ::
+  --
 --
