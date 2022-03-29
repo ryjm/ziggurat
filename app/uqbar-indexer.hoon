@@ -55,6 +55,9 @@
 ::    %set-chain-source:
 ::      Set source and subscribe to it for new blocks.
 ::
+::    %consume-update:
+::      Add a block or chunk to the index.
+::
 ::    %serve-update:
 ::
 ::
@@ -127,6 +130,11 @@
           %set-chain-source
         ?>  (team:title our.bowl src.bowl)
         (set-chain-source:uic !<(dock vase))
+      ::
+          %consume-update
+        ?>  (team:title our.bowl src.bowl)
+        %-  consume-update:uic
+        !<(update:uqbar-indexer vase)
       ::
       ::     %serve-update
       ::   =/  update=(unit update:uqbar-indexer)
@@ -280,8 +288,9 @@
         ?~  wcs  ~  ~[u.wcs]
       ::
           %fact
-        =+  !<(=update:uqbar-indexer q.cage.sign)
-        =^  cards  state  (consume-update:uic update)
+        =^  cards  state
+          %-  consume-update:uic
+          !<(update:uqbar-indexer q.cage.sign)
         [cards this]
       ::
       ==
