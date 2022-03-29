@@ -536,7 +536,6 @@
 ::
 ++  parse-block
   |=  [block-num=@ud =block-header:zig =block:zig]
-  |^
   ^-  $:  (list [@ux block-num=@ud])
           (list [@ux [block-num=@ud town-id=@ud egg-num=@ud]])
           (list [@ux [block-num=@ud town-id=@ud egg-num=@ud]])
@@ -552,22 +551,14 @@
   =/  chunks=(list [town-id=@ud =chunk:zig])  ~(tap by q.block)
   :-  block-hash
   |-
-  ?~  chunks
-    :*  egg
-        from
-        grain
-        to
-    ==
+  ?~  chunks  [egg from grain to]
   =*  town-id  town-id.i.chunks
   =*  chunk    chunk.i.chunks
   =*  txs      -.chunk
   =*  granary  p.+.chunk
-  ::  grains
   ::
-  =+  new-grain=(parse-granary town-id granary)
-  ::  transactions
-  ::
-  =+  [new-egg new-from new-to]=(parse-transactions town-id txs)
+  =+  new-grain=(parse-granary block-num town-id granary)
+  =+  [new-egg new-from new-to]=(parse-transactions block-num town-id txs)
   %=  $
       chunks  t.chunks
       egg     (weld egg new-egg)
@@ -575,50 +566,48 @@
       grain   (weld grain new-grain)
       to      (weld to new-to)
   ==
-  ::
-  ++  parse-granary
-    |=  [town-id=@ud =granary:smart]
-    ^-  (list [@ux [block-num=@ud town-id=@ud]])
-    =|  parsed-grain=(list [@ux [block-num=@ud town-id=@ud]])
-    =/  grains=(list [@ux grain:smart])
-      ~(tap by granary)
-    |-
-    ?~  grains  [parsed-grain]
-    =*  id     id.i.grains
-    =*  grain  grain.i.grains
-    %=  $
-        grains  t.grains
-        parsed-grain
-          [[id [block-num town-id]] parsed-grain]
-    ==
-  ::
-  ++  parse-transactions
-    |=  [town-id=@ud txs=(list [@ux egg:smart])]
-    ^-  $:  (list [@ux [block-num=@ud town-id=@ud egg-num=@ud]])
-            (list [@ux [block-num=@ud town-id=@ud egg-num=@ud]])
-            (list [@ux [block-num=@ud town-id=@ud egg-num=@ud]])
-        ==
-    =|  parsed-egg=(list [@ux [block-num=@ud town-id=@ud egg-num=@ud]])
-    =|  parsed-from=(list [@ux [block-num=@ud town-id=@ud egg-num=@ud]])
-    =|  parsed-to=(list [@ux [block-num=@ud town-id=@ud egg-num=@ud]])
-    =/  egg-num=@ud  0
-    |-
-    ?~  txs  [parsed-egg parsed-from parsed-to]
-    =*  tx-hash  -.i.txs
-    =*  egg      +.i.txs
-    =*  to       to.p.egg
-    =*  from
-      ?:  ?=(@ux from.p.egg)  from.p.egg
-      id.from.p.egg
-    =/  location=[@ud @ud @ud]  [block-num town-id egg-num]
-    %=  $
-        txs          t.txs
-        parsed-egg   [[tx-hash location] parsed-egg]
-        parsed-from  [[from location] parsed-from]
-        parsed-to    [[to location] parsed-to]
-        egg-num      +(egg-num)
-    ==
-  ::
-  --
+::
+++  parse-granary
+  |=  [block-num=@ud town-id=@ud =granary:smart]
+  ^-  (list [@ux [block-num=@ud town-id=@ud]])
+  =|  parsed-grain=(list [@ux [block-num=@ud town-id=@ud]])
+  =/  grains=(list [@ux grain:smart])
+    ~(tap by granary)
+  |-
+  ?~  grains  [parsed-grain]
+  =*  id     id.i.grains
+  =*  grain  grain.i.grains
+  %=  $
+      grains  t.grains
+      parsed-grain
+        [[id [block-num town-id]] parsed-grain]
+  ==
+::
+++  parse-transactions
+  |=  [block-num=@ud town-id=@ud txs=(list [@ux egg:smart])]
+  ^-  $:  (list [@ux [block-num=@ud town-id=@ud egg-num=@ud]])
+          (list [@ux [block-num=@ud town-id=@ud egg-num=@ud]])
+          (list [@ux [block-num=@ud town-id=@ud egg-num=@ud]])
+      ==
+  =|  parsed-egg=(list [@ux [block-num=@ud town-id=@ud egg-num=@ud]])
+  =|  parsed-from=(list [@ux [block-num=@ud town-id=@ud egg-num=@ud]])
+  =|  parsed-to=(list [@ux [block-num=@ud town-id=@ud egg-num=@ud]])
+  =/  egg-num=@ud  0
+  |-
+  ?~  txs  [parsed-egg parsed-from parsed-to]
+  =*  tx-hash  -.i.txs
+  =*  egg      +.i.txs
+  =*  to       to.p.egg
+  =*  from
+    ?:  ?=(@ux from.p.egg)  from.p.egg
+    id.from.p.egg
+  =/  location=[@ud @ud @ud]  [block-num town-id egg-num]
+  %=  $
+      txs          t.txs
+      parsed-egg   [[tx-hash location] parsed-egg]
+      parsed-from  [[from location] parsed-from]
+      parsed-to    [[to location] parsed-to]
+      egg-num      +(egg-num)
+  ==
 ::
 --
