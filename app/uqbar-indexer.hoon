@@ -639,13 +639,16 @@
     ::
     ::  publish to subscribers
     ::
-    =/  cards=(list card)
+    =^  cards  future-blocks
+      (make-future-blocks-cards block-num)
+    =.  cards
       %-  zing
-      :+  :_  ~  %+  fact:io
-            :-  %uqbar-indexer-update
-            !>(`update:uqbar-indexer`update)
-          ~[/block]
-        (make-all-sub-cards block-num)
+      :^    :_  ~  %+  fact:io
+              :-  %uqbar-indexer-update
+              !>(`update:uqbar-indexer`update)
+            ~[/block]
+          (make-all-sub-cards block-num)
+        cards
       ~
     :-  cards
     state(blocks (put:bl-on blocks block-num new-bundle))
@@ -667,6 +670,18 @@
   ::   state(blocks (put:bl-on blocks block-num new-bundle))
   ::
   ==
+  ::
+  ++  make-future-blocks-cards
+    |=  block-num=@ud
+    ^-  (quip card _future-blocks)
+    ?~  next-bundle=(get:bl-on future-blocks block-num)
+      `future-blocks
+    =+  [* new-future-blocks]=(del:bl-on future-blocks block-num)
+    :_  new-future-blocks
+    :_  ~
+    %-  %~  poke-self  pass:io  /future-blocks-poke
+    :-  %uqbar-indexer-update
+    !>(`update:uqbar-indexer`[%block u.next-bundle])
   ::
   ++  make-all-sub-cards
     |=  block-num=@ud
