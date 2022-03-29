@@ -411,11 +411,11 @@
   ?+  query-type  !!
   ::
       %block
-    ?>  ?=(@ud query-payload)
+    ?>  ?=(block-location:uqbar-indexer query-payload)
     (get-block query-payload)
   ::
       %chunk
-    ?>  ?=([@ @] query-payload)  ::  [block-num town-id]
+    ?>  ?=(town-location:uqbar-indexer query-payload)
     ?~  block-update=(get-block block-num.query-payload)  ~
     ?>  ?=(%block -.u.block-update)
     ?~  chunk=(~(get by q.block.u.block-update) town-id.query-payload)  ~
@@ -441,7 +441,7 @@
       ~(tap in get-locations)
     ?>  =(1 (lent locations))
     =/  =location:uqbar-indexer  (snag 0 locations)
-    ?>  ?=([@ @] location)  ::  [block-num town-id]
+    ?>  ?=(town-location:uqbar-indexer location)
     ?~  chunk=(get-chunk block-num.location town-id.location)  ~
     `[%chunk location u.chunk]
   ::
@@ -455,7 +455,7 @@
         %block-hash
       ?>  =(1 (lent locations))
       =/  =location:uqbar-indexer  (snag 0 locations)
-      ?>  ?=(@ location)  ::  block-num
+      ?>  ?=(block-location:uqbar-indexer location)
       ?.  (lth location (lent blocks))  ~
       `[%block (snag location blocks)]
     ::
@@ -466,7 +466,7 @@
         ?~  grains  ~
         `[%grain grains]
       =*  location  i.locations
-      ?>  ?=([@ @] location)  ::  [block-num town-id]
+      ?>  ?=(town-location:uqbar-indexer location)
       ?~  chunk=(get-chunk block-num.location town-id.location)
         $(locations t.locations)  :: TODO: can we do better here?
       =*  granary  p.+.u.chunk
@@ -484,7 +484,7 @@
         ?~  eggs  ~
         `[%egg eggs]
       =*  location  i.locations
-      ?>  ?=([@ @ @] location)  ::  [block-num town-id egg-num]
+      ?>  ?=(egg-location:uqbar-indexer location)
       ?~  chunk=(get-chunk block-num.location town-id.location)
         $(locations t.locations)  :: TODO: can we do better here?
       =*  egg-num  egg-num.location

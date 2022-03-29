@@ -14,17 +14,17 @@
       town-location
       egg-location
   ==
-+$  block-location  :: block-hash
++$  block-location
   block-num=@ud
-+$  town-location   :: grain
++$  town-location
   [block-num=@ud town-id=@ud]
-+$  egg-location    :: egg, from, to
++$  egg-location
   [block-num=@ud town-id=@ud egg-num=@ud]
 ::
 +$  update
   $%  [%block =block-header:zig =block:zig]
-      [%chunk =location =chunk:zig]
-      [%egg eggs=(set [=location =egg:smart])]
-      [%grain grains=(set [=location =grain:smart])]
+      [%chunk location=town-location =chunk:zig]
+      [%egg eggs=(set [location=egg-location =egg:smart])]
+      [%grain grains=(set [location=town-location =grain:smart])]
   ==
 --
