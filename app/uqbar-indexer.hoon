@@ -295,57 +295,34 @@
         =.  to-index     (~(gas ju to-index) to)
         ::  publish to subscribers
         ::
-        =|  cards=(list card)
-        =.  cards
-          %+  snoc  cards
-          %+  fact:io
-            :-  %uqbar-indexer-update
-            !>(`update:uqbar-indexer`update)
-          ~[/block]
-        ::  TODO: generalize make-sub-cards and replace chunk-update
-        =.  cards
-          %+  weld  cards
-          %+  murn  ~(tap in ~(key by chunk-subs))
-          |=  town-id=@ud
-          =/  chunk-update=(unit update:uqbar-indexer)
-            (serve-update %chunk [block-num town-id])
-          ?~  chunk-update  ~
-          :-  ~
-          %+  fact:io
-            :-  %uqbar-indexer-update
-            !>(`update:uqbar-indexer`u.chunk-update)
-          ~[/chunk/(scot %ud town-id)]
+        =/  cards=(list card)
+          %-  zing
+          :~  :_  ~  %+  fact:io
+                :-  %uqbar-indexer-update
+                !>(`update:uqbar-indexer`update)
+              ~[/block]
+          ::
+              (make-sub-cards chunk-subs %ud `block-num %chunk /chunk)
+              (make-sub-cards id-subs %ux ~ %from /id)
+              (make-sub-cards id-subs %ux ~ %to /id)
+              (make-sub-cards grain-subs %ux ~ %grain /grain)
+          ==
         ::
-        =.  cards
-          %+  weld  cards
-          (make-sub-cards id-subs %ux %from /id)
-        =.  cards
-          %+  weld  cards
-          (make-sub-cards id-subs %ux %to /id)
-        =.  cards
-          %+  weld  cards
-          (make-sub-cards grain-subs %ux %grain /grain)
-        ::
-        :-  cards
-        %=  this
-            blocks       (snoc blocks new-block)
-            block-index  block-index
-            egg-index    egg-index
-            from-index   from-index
-            grain-index  grain-index
-            to-index     to-index
-        ==
+        [cards this(blocks (snoc blocks new-block))]
         ::
         ++  make-sub-cards
           |=  $:  subs=(jug id=@u sub=@p)
                   id-type=?(%ux %ud)
+                  payload-prefix=(unit @ud)
                   =query-type:uqbar-indexer
                   path-prefix=path
               ==
           ^-  (list card)
           %+  murn  ~(tap in ~(key by subs))
           |=  id=@u
-          ?~  update=(serve-update query-type id)  ~
+          =/  payload=?(@u [@ud @u])
+            ?~  payload-prefix  id  [u.payload-prefix id]
+          ?~  update=(serve-update query-type payload)  ~
           :-  ~
           %+  fact:io
             :-  %uqbar-indexer-update
