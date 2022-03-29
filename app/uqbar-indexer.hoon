@@ -278,7 +278,6 @@
         =+  !<(=update:uqbar-indexer q.cage.sign)
         ?>  ?=(%block -.update)
         ?>  =((lent blocks) num.block-header.update)
-        ::  store and index the new block
         ::
         =*  new-block  +.update
         =*  block-num  num.block-header.new-block
@@ -286,13 +285,15 @@
         =/  previous-block  (rear blocks)
         ?>  .=  data-hash.block-header.previous-block
           data-hash.block-header.new-block
+        ::  store and index the new block
         ::
         =+  [block-hash egg from grain to]=(parse-block block-num new-block)
-        =.  block-index  (~(gas ju block-index) block-hash)
-        =.  egg-index    (~(gas ju egg-index) egg)
-        =.  from-index   (~(gas ju from-index) from)
-        =.  grain-index  (~(gas ju grain-index) grain)
-        =.  to-index     (~(gas ju to-index) to)
+        =:  block-index  (~(gas ju block-index) block-hash)
+            egg-index    (~(gas ju egg-index) egg)
+            from-index   (~(gas ju from-index) from)
+            grain-index  (~(gas ju grain-index) grain)
+            to-index     (~(gas ju to-index) to)
+        ==
         ::  publish to subscribers
         ::
         =/  cards=(list card)
