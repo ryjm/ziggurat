@@ -1,6 +1,4 @@
 |%
-::  /+  hoon-hoon=zig-sys-hoon
-::  =>  hoon-hoon
 ::
 ::  smart contract functions
 ::
@@ -10,25 +8,20 @@
   ^-  typ
   !<(typ [-:!>(*typ) val])
 ::
-::  +fry: hash lord+town+germ to make grain pubkey
-::  TODO make sha256 or w/e for testnet
-++  fry
+::  +fry: hash lord+town+germ to make contract grain pubkey
+::
+++  fry-contract
   |=  [lord=id town=@ud =germ]
   ^-  id
   =-  `@ux`(sham (cat 3 lord (cat 3 town -)))
   ?.  ?=(%| -.germ)
     (jam germ)
-  ::  fry ignores owns.wheat in hash
   (jam cont.p.germ)
 ::
-++  old-fry
-  |=  [lord=id town=@ud =germ]
-  ^-  @ux
-  =-  (mug (cat 3 lord (cat 3 town -)))
-  ?.  ?=(%| -.germ)
-    (mug germ)
-  ::  fry ignores owns.wheat in hash
-  (mug cont.p.germ)
+++  fry-rice
+  |=  [holder=id lord=id town=@ud salt=@]
+  ^-  id
+  `@ux`(sham (cat 3 salt (cat 3 town (cat 3 lord holder))))
 ::
 ::  +pin: get ID from caller
 ++  pin
@@ -48,7 +41,7 @@
 +$  signature  [r=@ux s=@ux type=?(%schnorr %ecdsa)]
 ::
 +$  germ   (each rice wheat)
-+$  rice   data=*
++$  rice   [salt=@ data=*]
 +$  wheat  [cont=(unit *) owns=(set id)]
 +$  crop   [nok=* owns=(map id grain)]
 ::

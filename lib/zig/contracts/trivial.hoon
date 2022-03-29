@@ -2,6 +2,7 @@
 ++  write
   |=  inp=zygote
   ^-  chick
+  =/  a  (dec 100)
   [%& ~ ~]
 ++  read
   |=  inp=path

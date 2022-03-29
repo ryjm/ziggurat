@@ -3,7 +3,7 @@
 =/  our-zigs  .^(@ux %gx /(scot %p p.bek)/wallet/(scot %da now)/zigs/(scot %ud town-id)/noun)
 :-  %zig-wallet-poke
 :-  %submit
-:*  ~
+:*  `p.bek
     0x0  ::  zigs-wheat-id
     town-id
     [1 10.000]

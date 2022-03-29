@@ -1,3 +1,6 @@
+::
+::  OUT OF DATE
+::
 /-  *ziggurat
 /+  smart=zig-sys-smart, deploy=zig-deploy
 /*  capitol-contract  %txt  /lib/zig/contracts/capitol/hoon

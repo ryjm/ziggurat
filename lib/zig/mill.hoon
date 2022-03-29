@@ -1,5 +1,5 @@
 /+  *bink, smart=zig-sys-smart
-/*  smart-lib  %noun  /lib/zig/sys/smart-lib/noun
+/*  smart-lib  %noun  /lib/zig/sys/smart-lib-2/noun
 =,  smart
 |_  library=*
 ++  mill
@@ -32,9 +32,9 @@
     ^-  [^town fee=@ud]
     ?.  ?=(account from.p.egg)  [town 0]
     ::  validate transaction signature
-    =/  them  (com:nu:crub:crypto id.from.p.egg)
-    ?.  =(`(sham (jam q.egg)) (sure:as.them sig.p.egg))
-      [town 0]  ::  bad signature
+    ::  =/  them  (com:nu:crub:crypto id.from.p.egg)
+    ::  ?.  =(`(sham (jam q.egg)) (sure:as.them sig.p.egg))
+    ::    [town 0]  ::  bad signature
     ?~  curr-nonce=(~(get by q.town) id.from.p.egg)
       [town 0]  ::  missing account
     ?.  =(nonce.from.p.egg +(u.curr-nonce))
@@ -206,10 +206,11 @@
       ++  barn
         |=  [nok=* inp=embryo =cart bud=@ud]
         ^-  [(unit (each (each * chick) (list tank))) @ud]
-        =/  =contract  (hole contract [nok +:(cue q.q.smart-lib)])  ::  +:(cue q.q.smart-lib)
+        ::  TODO figure out how to pre-cue this and get good results
+        =/  =contract  (hole contract [nok +:(cue q.q.smart-lib)])
         |^
         ::~&  >>  "cart: {<cart>}"
-        ::~&  >  "inp: {<inp>}"
+        ::~&  >  "inp: {<inp>}" 
         ?:  ?=(%| -.inp)
           ::  event
           =/  res  (event p.inp)
@@ -266,10 +267,12 @@
           ::  id in issued map must be equal to id in grain AND
           ::  all newly issued grains must have properly-hashed id AND
           ::  lord of grain must be contract issuing it
+          ::  (rice and wheat have different hashing functions)
           ?&  =(id id.grain)
-              ::  TODO can't get an updated smart-lib.noun :/
-              =((old-fry lord.grain town-id.grain germ.grain) id.grain)
               =(lord lord.grain)
+              ?:  ?=(%& -.germ.grain)
+                =(id (fry-rice holder.grain lord.grain town-id.grain salt.p.germ.grain))
+              =(id (fry-contract lord.grain town-id.grain germ.grain))
       ==  ==
     --
   --

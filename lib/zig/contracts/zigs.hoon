@@ -24,21 +24,11 @@
           data.p.germ.rec  receiver(balance (add balance.receiver amount.args))
       ==
       [%& (malt ~[[id.giv giv] [id.rec rec]]) ~]
-    ::  otherwise, get rice from address book and perform a
-    ::  continuation call with it, or if none exists, make one
-    =/  bok   (~(got by owns.cart) `@ux`'address-book')
-    ?>  &(=(lord.bok me.cart) ?=(%& -.germ.bok))
-    =/  book  (hole address-book data.p.germ.bok)
-    ?~  rec=(~(get by book) to.args)
-      ::  no known address, generate a new rice
-      =/  new-acc  [%& [balance=amount.args allowances=~]]
-      =/  new-id  (fry me.cart town-id.cart new-acc)
-      =/  new-grain  [new-id me.cart to.args town-id.cart new-acc]
-      =.  data.p.germ.giv  giver(balance (sub balance.giver amount.args))
-      [%& (malt ~[[id.giv giv]]) (malt ~[[new-id new-grain]])]
-    ::  found address for receiver, call again with it
-    =-  [%| mem=~ next=[me.cart town-id.cart -]]
-    [caller.inp `[%give to.args %.y amount.args budget.args] (silt ~[id.giv]) (silt ~[u.rec])]
+    ::  otherwise, try to make one
+    =/  new-id  (fry-rice to.args me.cart town-id.cart 'zigs')
+    =.  data.p.germ.giv  giver(balance (sub balance.giver amount.args))
+    =+  [new-id me.cart to.args town-id.cart [%& 'zigs' [balance=amount.args allowances=~]]]
+    [%& (malt ~[[id.giv giv]]) (malt ~[[new-id -]])]
   ::
       %take
     ::  expects the rice to take from in owns.cart,

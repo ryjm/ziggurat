@@ -8,7 +8,12 @@
 ++  text-deploy
   |=  text=@t
   ^-  *
-  =/  contract  (slap !>(smart) (ream text))
-  =/  our-hoon  (ream '-')
-  q:(slap contract our-hoon)
+  ::  this could be faster by creating another .noun
+  ::  saving that for another day.
+  =/  smart-txt  .^(@t %cx /(scot %p our)/zig/(scot %da now)/lib/zig/sys/smart/hoon)
+  =/  hoon-txt  .^(@t %cx /(scot %p our)/base/(scot %da now)/sys/hoon/hoon)
+  =/  hoe  (slap !>(~) (ream hoon-txt))
+  =/  hoed  (slap hoe (ream smart-txt))
+  =/  contract  (slap hoed (ream text))
+  q:(slap contract (ream '-'))
 --

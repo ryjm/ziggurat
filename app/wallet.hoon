@@ -83,7 +83,7 @@
       ::  must manually provide addresses of rice.
       =/  node-type      ?:(=(0 town.act) %ziggurat %sequencer)
       =/  nonce          (~(gut by nonces.state) town.act 0)
-      =/  our-zigs       (~(got by zig-rice.state) town.act)
+      =/  our-zigs       (fry-rice:smart pub:ex:(need keys.state) 0x0 town.act 'zigs')
       =/  =caller:smart  [pub:ex:(need keys.state) +(nonce) our-zigs]
       =/  =yolk:smart    [caller args.act my-grains.act cont-grains.act]
       =/  sig=@          (sign:as:(need keys.state) (sham (jam yolk)))

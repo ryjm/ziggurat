@@ -18,6 +18,7 @@
 ::
 /+  *test, *zig-mill, smart=zig-sys-smart, deploy=zig-deploy :: , *zig-contracts-zigs
 /*  zigs-contract  %txt  /lib/zig/contracts/zigs/hoon
+/*  trivial-contract  %txt  /lib/zig/contracts/trivial/hoon
 |%
 ++  zigs
   |%
@@ -53,22 +54,22 @@
     ==
   ++  wheat-grain
     ^-  grain:smart
-    =/  cont  (of-wain:format zigs-contract)
+    =/  cont  (of-wain:format trivial-contract)
     :*  zigs-wheat-id:smart  ::  id
         zigs-wheat-id:smart  ::  lord
         zigs-wheat-id:smart  ::  holders
         town-id              ::  town-id
         :+    %|             ::  germ
-          `(text-deploy:deploy cont)
-        (silt ~[0x1.beef 0x1.dead 0x1.cafe])
+          `(~(text-deploy deploy ~zod ~2022.3.29..00.56.44..e95b) cont)
+        ~  ::  (silt ~[0x1.beef 0x1.dead 0x1.cafe])
     ==
   ++  fake-granary
     ^-  granary:smart
     =/  grains=(list:smart (pair:smart id:smart grain:smart))
       :~  [zigs-wheat-id:smart wheat-grain]
           [0x1.beef beef-zigs-grain]
-          [0x1.dead dead-zigs-grain]
-          [0x1.cafe cafe-zigs-grain]
+          ::  [0x1.dead dead-zigs-grain]
+          ::  [0x1.cafe cafe-zigs-grain]
       ==
     (~(gas by:smart *(map:smart id:smart grain:smart)) grains)
   ++  fake-populace
@@ -82,124 +83,140 @@
     ^-  land:smart
     (~(gas by:smart *(map @ud town:smart)) ~[[town-id fake-town]])
   --
-++  test-zigs-basic-give
+++  test-trivial
   =/  bud  500
   =/  now  *@da
-  =/  yok
-    [[0xbeef 1 0x1.beef] `[%give 0xcafe 690 bud] (silt ~[0x1.beef]) (silt ~[0x1.cafe])]
-  =/  shel
-    [[0xbeef 1 0x1.beef] zigs-wheat-id:smart 1 bud town-id]
+  =/  yok=yolk:smart
+    [[0xbeef 1 0x1.beef] ~ ~ ~]
+  =/  shel=shell:smart
+    [[0xbeef 1 0x1.beef] 0 0x0 1 bud 0]
   =/  egg  [shel yok]
   =/  res
-    %+  ~(mill mill [0xdead 1 0x1.dead] town-id 1 now)
+    %+  ~(mill mill [0xdead 1 0x1.dead] 0 1 now)
       fake-town:zigs
-    egg
-  ::  can't just check the whole town,
-  ::  best thing to do is check the zigs data
-  =/  beef-account
-    (hole:smart account-mold:zigs +.germ:(~(got by p.-.res) 0x1.beef))
-  =/  cafe-account
-    (hole:smart account-mold:zigs +.germ:(~(got by p.-.res) 0x1.cafe))
-  =/  correct-beef-account
-    `account-mold:zigs`[(sub 1.000.000 (add 690 set-fee:zigs)) ~]
-  =/  correct-cafe-account
-    `account-mold:zigs`[(add 100.000 690) ~]
+    `egg:smart`egg
+  ~&  >  res
   %+  expect-eq
-    !>([beef-account cafe-account])
-  !>([correct-beef-account correct-cafe-account])
-++  test-zigs-failed-give-amount-too-high
-  =/  bud  500
-  =/  now  *@da
-  =/  yok
-    [[0xbeef 1 0x1.beef] `[%give 0xcafe 69.000.000 bud] (silt ~[0x1.beef]) (silt ~[0x1.cafe])]
-  =/  shel
-    [[0xbeef 1 0x1.beef] zigs-wheat-id:smart 1 bud town-id]
-  =/  egg  [shel yok]
-  =/  res
-    %+  ~(mill mill [0xdead 1 0x1.dead] town-id 1 now)
-      fake-town:zigs
-    egg
-  =/  beef-account
-    (hole:smart account-mold:zigs +.germ:(~(got by p.-.res) 0x1.beef))
-  =/  cafe-account
-    (hole:smart account-mold:zigs +.germ:(~(got by p.-.res) 0x1.cafe))
-  =/  correct-beef-account
-    `account-mold:zigs`[(sub 1.000.000 set-fee:zigs) ~]
-  =/  correct-cafe-account
-    `account-mold:zigs`[100.000 ~]
-  %+  expect-eq
-    !>([beef-account cafe-account])
-  !>([correct-beef-account correct-cafe-account])
-++  test-zigs-failed-give-budget-too-high
-  =/  bud  500
-  =/  now  *@da
-  =/  yok
-    [[0xbeef 1 0x1.beef] `[%give 0xcafe 999.501 bud] (silt ~[0x1.beef]) (silt ~[0x1.cafe])]
-  =/  shel
-    [[0xbeef 1 0x1.beef] zigs-wheat-id:smart 1 bud town-id]
-  =/  egg  [shel yok]
-  =/  res
-    %+  ~(mill mill [0xdead 1 0x1.dead] town-id 1 now)
-      fake-town:zigs
-    egg
-  =/  beef-account
-    (hole:smart account-mold:zigs +.germ:(~(got by p.-.res) 0x1.beef))
-  =/  cafe-account
-    (hole:smart account-mold:zigs +.germ:(~(got by p.-.res) 0x1.cafe))
-  =/  correct-beef-account
-    `account-mold:zigs`[(sub 1.000.000 set-fee:zigs) ~]
-  =/  correct-cafe-account
-    `account-mold:zigs`[100.000 ~]
-  %+  expect-eq
-    !>([beef-account cafe-account])
-  !>([correct-beef-account correct-cafe-account])
-++  test-zigs-failed-give-cant-afford-gas
-  ::  stub: can't test this until we integrate +bull
-  (expect-eq !>(%.y) !>(%.y))
-++  test-zigs-failed-give-mismatching-receiver
-  =/  bud  500
-  =/  now  *@da
-  =/  yok
-    [[0xbeef 1 0x1.beef] `[%give 0xb00b 690 bud] (silt ~[0x1.beef]) (silt ~[0x1.cafe])]
-  =/  shel
-    [[0xbeef 1 0x1.beef] zigs-wheat-id:smart 1 bud town-id]
-  =/  egg  [shel yok]
-  =/  res
-    %+  ~(mill mill [0xdead 1 0x1.dead] town-id 1 now)
-      fake-town:zigs
-    egg
-  =/  beef-account
-    (hole:smart account-mold:zigs +.germ:(~(got by p.-.res) 0x1.beef))
-  =/  cafe-account
-    (hole:smart account-mold:zigs +.germ:(~(got by p.-.res) 0x1.cafe))
-  =/  correct-beef-account
-    `account-mold:zigs`[(sub 1.000.000 set-fee:zigs) ~]
-  =/  correct-cafe-account
-    `account-mold:zigs`[100.000 ~]
-  %+  expect-eq
-    !>([beef-account cafe-account])
-  !>([correct-beef-account correct-cafe-account])
-++  test-zigs-failed-give-nonexistent-receiver
-  =/  bud  500
-  =/  now  *@da
-  =/  yok
-    [[0xbeef 1 0x1.beef] `[%give 0xb00b 690 bud] (silt ~[0x1.beef]) (silt ~[0x1.b00b])]
-  =/  shel
-    [[0xbeef 1 0x1.beef] zigs-wheat-id:smart 1 bud town-id]
-  =/  egg  [shel yok]
-  =/  res
-    %+  ~(mill mill [0xdead 1 0x1.dead] town-id 1 now)
-      fake-town:zigs
-    egg
-  =/  beef-account
-    (hole:smart account-mold:zigs +.germ:(~(got by p.-.res) 0x1.beef))
-  =/  cafe-account
-    (hole:smart account-mold:zigs +.germ:(~(got by p.-.res) 0x1.cafe))
-  =/  correct-beef-account
-    `account-mold:zigs`[(sub 1.000.000 set-fee:zigs) ~]
-  =/  correct-cafe-account
-    `account-mold:zigs`[100.000 ~]
-  %+  expect-eq
-    !>([beef-account cafe-account])
-  !>([correct-beef-account correct-cafe-account])
+    !>(1)
+  !>(1)
+::  ++  test-zigs-basic-give
+::    =/  bud  500
+::    =/  now  *@da
+::    =/  yok
+::      [[0xbeef 1 0x1.beef] `[%give 0xcafe 690 bud] (silt ~[0x1.beef]) (silt ~[0x1.cafe])]
+::    =/  shel
+::      [[0xbeef 1 0x1.beef] zigs-wheat-id:smart 1 bud town-id]
+::    =/  egg  [shel yok]
+::    =/  res
+::      %+  ~(mill mill [0xdead 1 0x1.dead] town-id 1 now)
+::        fake-town:zigs
+::      egg
+::    ::  can't just check the whole town,
+::    ::  best thing to do is check the zigs data
+::    =/  beef-account
+::      (hole:smart account-mold:zigs +.germ:(~(got by p.-.res) 0x1.beef))
+::    =/  cafe-account
+::      (hole:smart account-mold:zigs +.germ:(~(got by p.-.res) 0x1.cafe))
+::    =/  correct-beef-account
+::      `account-mold:zigs`[(sub 1.000.000 (add 690 set-fee:zigs)) ~]
+::    =/  correct-cafe-account
+::      `account-mold:zigs`[(add 100.000 690) ~]
+::    %+  expect-eq
+::      !>([beef-account cafe-account])
+::    !>([correct-beef-account correct-cafe-account])
+::  ++  test-zigs-failed-give-amount-too-high
+::    =/  bud  500
+::    =/  now  *@da
+::    =/  yok
+::      [[0xbeef 1 0x1.beef] `[%give 0xcafe 69.000.000 bud] (silt ~[0x1.beef]) (silt ~[0x1.cafe])]
+::    =/  shel
+::      [[0xbeef 1 0x1.beef] zigs-wheat-id:smart 1 bud town-id]
+::    =/  egg  [shel yok]
+::    =/  res
+::      %+  ~(mill mill [0xdead 1 0x1.dead] town-id 1 now)
+::        fake-town:zigs
+::      egg
+::    =/  beef-account
+::      (hole:smart account-mold:zigs +.germ:(~(got by p.-.res) 0x1.beef))
+::    =/  cafe-account
+::      (hole:smart account-mold:zigs +.germ:(~(got by p.-.res) 0x1.cafe))
+::    =/  correct-beef-account
+::      `account-mold:zigs`[(sub 1.000.000 set-fee:zigs) ~]
+::    =/  correct-cafe-account
+::      `account-mold:zigs`[100.000 ~]
+::    %+  expect-eq
+::      !>([beef-account cafe-account])
+::    !>([correct-beef-account correct-cafe-account])
+::  ++  test-zigs-failed-give-budget-too-high
+::    =/  bud  500
+::    =/  now  *@da
+::    =/  yok
+::      [[0xbeef 1 0x1.beef] `[%give 0xcafe 999.501 bud] (silt ~[0x1.beef]) (silt ~[0x1.cafe])]
+::    =/  shel
+::      [[0xbeef 1 0x1.beef] zigs-wheat-id:smart 1 bud town-id]
+::    =/  egg  [shel yok]
+::    =/  res
+::      %+  ~(mill mill [0xdead 1 0x1.dead] town-id 1 now)
+::        fake-town:zigs
+::      egg
+::    =/  beef-account
+::      (hole:smart account-mold:zigs +.germ:(~(got by p.-.res) 0x1.beef))
+::    =/  cafe-account
+::      (hole:smart account-mold:zigs +.germ:(~(got by p.-.res) 0x1.cafe))
+::    =/  correct-beef-account
+::      `account-mold:zigs`[(sub 1.000.000 set-fee:zigs) ~]
+::    =/  correct-cafe-account
+::      `account-mold:zigs`[100.000 ~]
+::    %+  expect-eq
+::      !>([beef-account cafe-account])
+::    !>([correct-beef-account correct-cafe-account])
+::  ++  test-zigs-failed-give-cant-afford-gas
+::    ::  stub: can't test this until we integrate +bull
+::    (expect-eq !>(%.y) !>(%.y))
+::  ++  test-zigs-failed-give-mismatching-receiver
+::    =/  bud  500
+::    =/  now  *@da
+::    =/  yok
+::      [[0xbeef 1 0x1.beef] `[%give 0xb00b 690 bud] (silt ~[0x1.beef]) (silt ~[0x1.cafe])]
+::    =/  shel
+::      [[0xbeef 1 0x1.beef] zigs-wheat-id:smart 1 bud town-id]
+::    =/  egg  [shel yok]
+::    =/  res
+::      %+  ~(mill mill [0xdead 1 0x1.dead] town-id 1 now)
+::        fake-town:zigs
+::      egg
+::    =/  beef-account
+::      (hole:smart account-mold:zigs +.germ:(~(got by p.-.res) 0x1.beef))
+::    =/  cafe-account
+::      (hole:smart account-mold:zigs +.germ:(~(got by p.-.res) 0x1.cafe))
+::    =/  correct-beef-account
+::      `account-mold:zigs`[(sub 1.000.000 set-fee:zigs) ~]
+::    =/  correct-cafe-account
+::      `account-mold:zigs`[100.000 ~]
+::    %+  expect-eq
+::      !>([beef-account cafe-account])
+::    !>([correct-beef-account correct-cafe-account])
+::  ++  test-zigs-failed-give-nonexistent-receiver
+::    =/  bud  500
+::    =/  now  *@da
+::    =/  yok
+::      [[0xbeef 1 0x1.beef] `[%give 0xb00b 690 bud] (silt ~[0x1.beef]) (silt ~[0x1.b00b])]
+::    =/  shel
+::      [[0xbeef 1 0x1.beef] zigs-wheat-id:smart 1 bud town-id]
+::    =/  egg  [shel yok]
+::    =/  res
+::      %+  ~(mill mill [0xdead 1 0x1.dead] town-id 1 now)
+::        fake-town:zigs
+::      egg
+::    =/  beef-account
+::      (hole:smart account-mold:zigs +.germ:(~(got by p.-.res) 0x1.beef))
+::    =/  cafe-account
+::      (hole:smart account-mold:zigs +.germ:(~(got by p.-.res) 0x1.cafe))
+::    =/  correct-beef-account
+::      `account-mold:zigs`[(sub 1.000.000 set-fee:zigs) ~]
+::    =/  correct-cafe-account
+::      `account-mold:zigs`[100.000 ~]
+::    %+  expect-eq
+::      !>([beef-account cafe-account])
+::    !>([correct-beef-account correct-cafe-account])
 --
