@@ -8,15 +8,16 @@
 +$  card  card:agent:gall
 +$  state-0
   $:  %0
-      ::  address=(unit @ux)
-      keys=(unit acru:ames)
+      keys=(unit acru:ames)  ::  private key-store
       nodes=(map town=@ud =ship)  ::  the sequencer you submit txs to for each town
       nonces=(map town=@ud nonce=@ud)
-      zig-rice=(map town=@ud address=@ux)
+      =book  ::  "address book" of rice
+      ::  TODO add block explorer hookup here, can subscribe for changes
+      ::  potential to do cool stuff with %pals integration here
   ==
 --
 ::
-=|  state-0 
+=|  state-0
 =*  state  -
 ::
 %-  agent:dbug
@@ -53,22 +54,40 @@
     ^-  (quip card _state)
     ?>  =(src.bowl our.bowl)
     ?-    -.act
+        %populate
+      ::  populate wallet with fake data for testing
+      =/  new-keys  (pit:nu:crub:crypto 256 eny.bowl)
+      =/  pub  pub:ex:new-keys
+      =/  fake-grain-1=grain:smart
+        :*  (fry-rice:smart pub 0x0 1 `@`'zigs')
+            0x0
+            pub
+            1
+            [%& `@`'zigs' [100.000.000 ~]]
+        ==
+      =/  fake-grain-2=grain:smart
+        :*  (fry-rice:smart pub `@ux`'fake-token' 1 `@`'wETH')
+            `@ux`'fake-token'
+            pub
+            1
+            [%& `@`'wETH' [173.000 ~]]
+        ==
+      :-  ~
+      %=  state
+        keys  `new-keys
+        nodes  (malt ~[[0 ~zod] [1 ~bus] [2 ~nec]])
+        nonces  (malt ~[[0 0] [1 0] [2 0]])
+        book  (malt ~[[1 (malt ~[[id.fake-grain-1 fake-grain-1] [id.fake-grain-2 fake-grain-2]])]])
+      ==
+    ::
         %set-keys
       ::  import wallet from secret key
       ::  poking this will lose/override existing key!!
       =/  new-keys  (pit:nu:crub:crypto 256 seed.act)
       `state(keys `new-keys)
     ::
-        %set-zigs
-      `state(zig-rice (~(put by zig-rice) town.act addr.act))
-    ::
         %set-node
       `state(nodes (~(put by nodes) town.act ship.act))
-    ::
-        %inc-nonce
-      ::  for when an external application performs a transaction
-      =/  curr  (~(gut by nonces.state) town.act 0)
-      `state(nonces (~(put by nonces) town.act +(curr)))
     ::
         %set-nonce  ::  mostly for testing
       `state(nonces (~(put by nonces) town.act new.act))
@@ -78,9 +97,13 @@
       ::  create an egg and sign it, then poke a sequencer
       ::  ultimately, this should poke an explorer that has
       ::  the ABI of the contract they're calling, which will
-      ::  give the wallet instructions as to what kind of 
+      ::  give the wallet instructions as to what kind of
       ::  data this transaction will require. for now, user
-      ::  must manually provide addresses of rice.
+      ::  must already know what to provide.
+      ::
+      ::  things to expose on frontend:
+      ::  town select, gas (rate & budget), transaction type (acquired from ABI..)
+      ::  dropdown or something from our address book for rice-select
       =/  node-type      ?:(=(0 town.act) %ziggurat %sequencer)
       =/  nonce          (~(gut by nonces.state) town.act 0)
       =/  our-zigs       (fry-rice:smart pub:ex:(need keys.state) 0x0 town.act 'zigs')
@@ -90,7 +113,7 @@
       =/  =egg:smart
         :-  [caller sig to.act rate.gas.act bud.gas.act town.act]
         yolk
-      =/  node=ship      
+      =/  node=ship
         ?~  sequencer.act
           (~(got by nodes.state) town.act)
         u.sequencer.act
@@ -110,24 +133,43 @@
 ++  on-peek
   |=  =path
   ^-  (unit (unit cage))
-  ::
-  ::  scries for sequencer agent
-  ::
   ?.  =(%x -.path)  ~
   ?+    +.path  (on-peek:def path)
       [%pubkey ~]
     ``noun+!>(`@ux`pub:ex:(need keys.state))
   ::
-      [%zigs @ ~]
-    ::  returns our zigs account for a given town
-    =/  town-id  (slav %ud i.t.t.path)
-    ``noun+!>(`@ux`(~(got by zig-rice.state) town-id))
       [%account @ ~]
     ::  returns our account for the town-id given
     =/  town-id  (slav %ud i.t.t.path)
     =/  nonce  (~(gut by nonces.state) town-id 0)
-    =/  zigs  (~(gut by zig-rice.state) town-id 0x0)
+    =/  zigs=id:smart
+      (fry-rice:smart `@ux`pub:ex:(need keys.state) 0x0 town-id 'zigs')
     ``noun+!>(`account:smart`[`@ux`pub:ex:(need keys.state) nonce zigs])
+  ::
+      [%book ~]
+    ::  return entire book map for wallet frontend
+    =;  =json  ``json+!>(json)
+    =,  enjs:format
+    %-  pairs
+    %+  turn  ~(tap by book.state)
+    |=  [town-id=@ud q=(map =id:smart =grain:smart)]
+    :-  (scot %ud town-id)
+    %-  pairs
+    %+  turn  ~(tap by q)
+    |=  [=id:smart =grain:smart]
+    =/  bal=@ud
+      ?.  ?=(%& -.germ.grain)  0
+      ;;(@ud -.data.p.germ.grain)
+    :-  (scot %ux id)
+    %-  pairs
+    :~  ['id' (numb id.grain)]
+        ['lord' (numb lord.grain)]
+        ['holder' (numb holder.grain)]
+        ['town' (numb town-id.grain)]
+        ::  note: need to use 'token standard' here
+        ::  to guarantee properly parsed data
+        ['data' (frond 'balance' (numb bal))]
+    ==
   ==
 ::
 ++  on-leave  on-leave:def

@@ -60,16 +60,19 @@
       [%clear-state ~]
   ==
 ::
+::  uqbar wallet types
+::
++$  book  (map town=@ud (map =id:smart grain:smart))
+::
 +$  wallet-poke
-  $%  [%set-keys seed=@]
-      [%set-zigs town=@ud addr=id:smart]
+  $%  [%populate ~]  :: populate wallet with fake data
+      [%set-keys seed=@]
       [%set-node town=@ud =ship]
-      [%inc-nonce town=@ud]
       [%set-nonce town=@ud new=@ud]  ::  mostly for testing
       $:  %submit
           sequencer=(unit ship)  ::  optional custom node choice
           to=id:smart  town=@ud
-          gas=[rate=@ud bud=@ud]  args=(unit *) 
+          gas=[rate=@ud bud=@ud]  args=(unit *)
           my-grains=(set @ux)  cont-grains=(set @ux)
       ==
   ==

@@ -21,7 +21,10 @@
 ++  fry-rice
   |=  [holder=id lord=id town=@ud salt=@]
   ^-  id
-  `@ux`(sham (cat 3 salt (cat 3 town (cat 3 lord holder))))
+  ^-  @ux
+  %^  cat  3
+    (end [3 8] (sham holder))
+  (end [3 8] (sham (cat 3 town (cat 3 lord salt))))
 ::
 ::  +pin: get ID from caller
 ++  pin

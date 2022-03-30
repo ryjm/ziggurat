@@ -32,9 +32,9 @@
     ^-  [^town fee=@ud]
     ?.  ?=(account from.p.egg)  [town 0]
     ::  validate transaction signature
-    ::  =/  them  (com:nu:crub:crypto id.from.p.egg)
-    ::  ?.  =(`(sham (jam q.egg)) (sure:as.them sig.p.egg))
-    ::    [town 0]  ::  bad signature
+    =/  them  (com:nu:crub:crypto id.from.p.egg)
+    ?.  =(`(sham (jam q.egg)) (sure:as.them sig.p.egg))
+      [town 0]  ::  bad signature
     ?~  curr-nonce=(~(get by q.town) id.from.p.egg)
       [town 0]  ::  missing account
     ?.  =(nonce.from.p.egg +(u.curr-nonce))
