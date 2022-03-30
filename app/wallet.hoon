@@ -158,9 +158,9 @@
       ;;(@ud -.data.p.germ.grain)
     :-  (scot %ux id.grain)
     %-  pairs
-    :~  ['id' (numb id.grain)]
-        ['lord' (numb lord.grain)]
-        ['holder' (numb holder.grain)]
+    :~  ['id' (tape (scow %ux id.grain))]
+        ['lord' (tape (scow %ux lord.grain))]
+        ['holder' (tape (scow %ux holder.grain))]
         ['town' (numb town-id.grain)]
         ::  note: need to use 'token standard' here
         ::  to guarantee properly parsed data
