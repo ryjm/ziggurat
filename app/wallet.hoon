@@ -77,7 +77,7 @@
         keys  `new-keys
         nodes  (malt ~[[0 ~zod] [1 ~bus] [2 ~nec]])
         nonces  (malt ~[[0 0] [1 0] [2 0]])
-        book  (malt ~[[1 (malt ~[[id.fake-grain-1 fake-grain-1] [id.fake-grain-2 fake-grain-2]])]])
+        book  (malt ~[[[1 0x0 'zigs'] fake-grain-1] [[1 `@ux`'fake-token' 'wETH'] fake-grain-2]])
       ==
     ::
         %set-keys
@@ -152,15 +152,11 @@
     =,  enjs:format
     %-  pairs
     %+  turn  ~(tap by book.state)
-    |=  [town-id=@ud q=(map =id:smart =grain:smart)]
-    :-  (scot %ud town-id)
-    %-  pairs
-    %+  turn  ~(tap by q)
-    |=  [=id:smart =grain:smart]
+    |=  [* =grain:smart]
     =/  bal=@ud
       ?.  ?=(%& -.germ.grain)  0
       ;;(@ud -.data.p.germ.grain)
-    :-  (scot %ux id)
+    :-  (scot %ux id.grain)
     %-  pairs
     :~  ['id' (numb id.grain)]
         ['lord' (numb lord.grain)]

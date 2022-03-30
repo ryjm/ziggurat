@@ -62,7 +62,7 @@
 ::
 ::  uqbar wallet types
 ::
-+$  book  (map town=@ud (map =id:smart grain:smart))
++$  book  (map [town=@ud lord=id:smart salt=@] grain:smart)
 ::
 +$  wallet-poke
   $%  [%populate ~]  :: populate wallet with fake data
