@@ -10,8 +10,8 @@
 links to other desks, such as base-dev and garden-dev.
 `git submodule add git@github.com:uqbar-dao/ziggurat.git ziggurat`
 
-4. To boot your Urbit, run the following command:
-`urbit -F zod -B urbit/bin/multi.pill zod`
+4. To boot your development Urbit, run the following command:
+`urbit -F zod`
 
 5. To create a `%zig` desk, run
 `|merge %zig our %base`
@@ -28,5 +28,25 @@ links to other desks, such as base-dev and garden-dev.
 9. Commit those files into your Urbit.
 `|commit %zig`
 
-10. Now, install the desk in your Urbit, which will run the `%ziggurat` agent.
+10. Now, install the desk in your Urbit, which will run the agents.
 `|install our %zig`
+
+### To initialize a blockchain:
+
+1. Poke the wallet agent to generate a private key (where 'XXX' is your seed -- keys generated with seeds `0xdead`, `0xbeef`, and `0xcafe` have zigs tokens already in their wallets).
+`:wallet &zig-wallet-poke [%set-keys 'XXX']`
+
+2. Start up a blockchain running solely on your ship:
+`:ziggurat|start-testnet now`
+
+3. Start up the sequencer agent to run a town on that chain, where 1 here is the town ID.
+`:sequencer|init 1`
+
+### To use the wallet
+
+1. Without starting a blockchain, you can populate the wallet with fake data:
+`:wallet &zig-wallet-poke [%populate ~]`
+
+2. The scry paths to receive wallet data:
+Your address: `.^(@ux %gx /=wallet=/pubkey/noun)`
+Your rice: `.^(json %gx /=wallet=/book/json)`
