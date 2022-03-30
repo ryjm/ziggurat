@@ -65,11 +65,14 @@
 +$  book  (map [town=@ud lord=id:smart salt=@] grain:smart)
 ::
 +$  wallet-poke
-  $%  [%populate ~]  :: populate wallet with fake data
-      [%set-keys seed=@]
+  $%  [%populate ~]  :: populate wallet with fake data, for testing
+      [%import seed=@]
+      [%create ~]
+      [%delete address=@]
       [%set-node town=@ud =ship]
-      [%set-nonce town=@ud new=@ud]  ::  mostly for testing
+      [%set-nonce address=@ux town=@ud new=@ud]  ::  mostly for testing
       $:  %submit
+          from=id:smart
           sequencer=(unit ship)  ::  optional custom node choice
           to=id:smart  town=@ud
           gas=[rate=@ud bud=@ud]  args=(unit *)

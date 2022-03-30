@@ -8,10 +8,10 @@
 +$  card  card:agent:gall
 +$  state-0
   $:  %0
-      keys=(unit acru:ames)  ::  private key-store
+      keys=(map pub=@ [=acru:ames seed=@])  ::  private key-store
       nodes=(map town=@ud =ship)  ::  the sequencer you submit txs to for each town
-      nonces=(map town=@ud nonce=@ud)
-      =book  ::  "address book" of rice
+      nonces=(map pub=@ (map town=@ud nonce=@ud))
+      books=(map pub=@ book)  ::  "address book" of rice for each key
       ::  TODO add block explorer hookup here, can subscribe for changes
       ::  potential to do cool stuff with %pals integration here
   ==
@@ -56,7 +56,9 @@
     ?-    -.act
         %populate
       ::  populate wallet with fake data for testing
-      =/  new-keys  (pit:nu:crub:crypto 256 eny.bowl)
+      ::  will WIPE previous wallet state!!
+      =/  seed  eny.bowl
+      =/  new-keys  (pit:nu:crub:crypto 256 seed)
       =/  pub  pub:ex:new-keys
       =/  fake-grain-1=grain:smart
         :*  (fry-rice:smart pub 0x0 1 `@`'zigs')
@@ -74,23 +76,34 @@
         ==
       :-  ~
       %=  state
-        keys  `new-keys
+        keys  (malt ~[[pub [new-keys seed]]])
         nodes  (malt ~[[0 ~zod] [1 ~bus] [2 ~nec]])
-        nonces  (malt ~[[0 0] [1 0] [2 0]])
-        book  (malt ~[[[1 0x0 'zigs'] fake-grain-1] [[1 `@ux`'fake-token' 'wETH'] fake-grain-2]])
+        nonces  (malt ~[[pub (malt ~[[0 0] [1 0] [2 0]])]])
+        books  (malt ~[[pub (malt ~[[[1 0x0 'zigs'] fake-grain-1] [[1 `@ux`'fake-token' 'wETH'] fake-grain-2]])]])
       ==
     ::
-        %set-keys
-      ::  import wallet from secret key
-      ::  poking this will lose/override existing key!!
+        %import
       =/  new-keys  (pit:nu:crub:crypto 256 seed.act)
-      `state(keys `new-keys)
+      `state(keys (~(put by keys) pub:ex:new-keys [new-keys seed.act]))
+    ::
+        %create
+      =/  new-keys  (pit:nu:crub:crypto 256 eny.bowl)
+      `state(keys (~(put by keys) pub:ex:new-keys [new-keys eny.bowl]))
+    ::
+        %delete
+      ::  will irreversibly lose seed...
+      :-  ~  %=  state
+        keys    (~(del by keys) address.act)
+        nonces  (~(del by nonces) address.act)
+        books   (~(del by books) address.act)
+      ==
     ::
         %set-node
       `state(nodes (~(put by nodes) town.act ship.act))
     ::
         %set-nonce  ::  mostly for testing
-      `state(nonces (~(put by nonces) town.act new.act))
+      =+  acc=(~(got by nonces.state) address.act)
+      `state(nonces (~(put by nonces) address.act (~(put by acc) town.act new.act)))
     ::
         %submit
       ::  submit a transaction
@@ -105,11 +118,12 @@
       ::  town select, gas (rate & budget), transaction type (acquired from ABI..)
       ::  dropdown or something from our address book for rice-select
       =/  node-type      ?:(=(0 town.act) %ziggurat %sequencer)
-      =/  nonce          (~(gut by nonces.state) town.act 0)
-      =/  our-zigs       (fry-rice:smart pub:ex:(need keys.state) 0x0 town.act 'zigs')
-      =/  =caller:smart  [pub:ex:(need keys.state) +(nonce) our-zigs]
+      =/  our-nonces     (~(gut by nonces.state) from.act ~)
+      =/  nonce          (~(gut by our-nonces) town.act 0)
+      =/  our-zigs       (fry-rice:smart from.act 0x0 town.act 'zigs')
+      =/  =caller:smart  [from.act +(nonce) our-zigs]
       =/  =yolk:smart    [caller args.act my-grains.act cont-grains.act]
-      =/  sig=@          (sign:as:(need keys.state) (sham (jam yolk)))
+      =/  sig=@          (sign:as:acru:(~(got by keys.state) from.act) (sham (jam yolk)))
       =/  =egg:smart
         :-  [caller sig to.act rate.gas.act bud.gas.act town.act]
         yolk
@@ -117,7 +131,7 @@
         ?~  sequencer.act
           (~(got by nodes.state) town.act)
         u.sequencer.act
-      :_  state(nonces (~(put by nonces) town.act +(nonce)))
+      :_  state(nonces (~(put by nonces) from.act (~(put by our-nonces) town.act +(nonce))))
       :~  :*  %pass  /submit-tx
               %agent  [node node-type]
               %poke  %zig-weave-poke
@@ -134,24 +148,44 @@
   |=  =path
   ^-  (unit (unit cage))
   ?.  =(%x -.path)  ~
+  ::  TODO move JSON parsing stuff into a helper lib
   ?+    +.path  (on-peek:def path)
-      [%pubkey ~]
-    ``noun+!>(`@ux`pub:ex:(need keys.state))
+      [%accounts ~]
+    =;  =json  ``json+!>(json)
+    =,  enjs:format
+    %-  pairs
+    %+  turn  ~(tap by keys.state)
+    |=  [pub=@ux [hold=acru:ames seed=@]]
+    :-  (scot %ux pub)
+    %-  pairs
+    :~  ['address' (tape (scow %ux pub))]
+        ['seed' (tape (scow %ux seed))]
+        :-  'nonces'
+        %-  pairs
+        %+  turn  ~(tap by (~(gut by nonces.state) pub ~))
+        |=  [town=@ud nonce=@ud]
+        [(crip (scow %ud town)) (numb nonce)]
+    ==
   ::
-      [%account @ ~]
+      [%account @ @ ~]
     ::  returns our account for the town-id given
-    =/  town-id  (slav %ud i.t.t.path)
-    =/  nonce  (~(gut by nonces.state) town-id 0)
+    =/  pub  (slav %ux i.t.t.path)
+    =/  town-id  (slav %ud i.t.t.t.path)
+    =/  nonce  (~(gut by (~(got by nonces.state) pub)) town-id 0)
     =/  zigs=id:smart
-      (fry-rice:smart `@ux`pub:ex:(need keys.state) 0x0 town-id 'zigs')
-    ``noun+!>(`account:smart`[`@ux`pub:ex:(need keys.state) nonce zigs])
+      (fry-rice:smart pub 0x0 town-id 'zigs')
+    ``noun+!>(`account:smart`[pub nonce zigs])
   ::
       [%book ~]
     ::  return entire book map for wallet frontend
     =;  =json  ``json+!>(json)
     =,  enjs:format
     %-  pairs
-    %+  turn  ~(tap by book.state)
+    %+  turn  ~(tap by books.state)
+    |=  [pub=@ux =book]
+    :-  (scot %ux pub)
+    %-  pairs
+    %+  turn  ~(tap by book)
     |=  [* =grain:smart]
     =/  bal=@ud
       ?.  ?=(%& -.germ.grain)  0
