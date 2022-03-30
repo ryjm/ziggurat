@@ -47,6 +47,30 @@ links to other desks, such as base-dev and garden-dev.
 1. Without starting a blockchain, you can populate the wallet with fake data:
 `:wallet &zig-wallet-poke [%populate ~]`
 
-2. The scry paths to receive wallet data:
-Your address: `.^(@ux %gx /=wallet=/pubkey/noun)`
-Your rice: `.^(json %gx /=wallet=/book/json)`
+2. Scry for a JSON dict of accounts, keyed by address, containing seed and nonces:
+`.^(@ux %gx /=wallet=/accounts/noun)`
+
+3. Scry for a JSON dict of known assets (rice), keyed by address, then by rice address:
+`.^(json %gx /=wallet=/book/json)`
+
+4. Wallet pokes available:
+
+*NOTE: %submit poke will change to get rid of my-grains and cont-grains once wallet can handle collating those itself.*
+```
+[%populate ~]  :: populate wallet with fake data, for testing
+[%import seed=@]
+[%create ~]
+[%delete address=@]
+[%set-node town=@ud =ship]
+[%set-nonce address=@ux town=@ud new=@ud]  ::  mostly for testing
+$:  %submit
+    from=id:smart  ::  account in your wallet to send from
+    sequencer=(unit ship)  ::  optional custom node choice
+    to=id:smart
+    town=@ud
+    gas=[rate=@ud bud=@ud]
+    args=(unit *)
+    my-grains=(set @ux)
+    cont-grains=(set @ux)
+==
+```
