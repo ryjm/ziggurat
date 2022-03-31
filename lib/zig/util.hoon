@@ -141,6 +141,7 @@
       ::  hodzod's testing moons
       ~ransur-rabtyr-dozzod-bacrys
       ~todnub-figsym-dozzod-bacrys
+      ::  hosted's testing moons
       ~ricmun-lasfer-hosted-fornet
   ==
   ::  Potential future gating function:

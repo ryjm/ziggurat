@@ -1,6 +1,6 @@
 ::  wallet [uqbar-dao]
 ::
-::  Uqbar hot-wallet agent. Stores private key and facilitates signing
+::  Uqbar wallet agent. Stores private key and facilitates signing
 ::  transactions, holding nonce values, and keeping track of owned data.
 ::
 /+  *ziggurat, default-agent, dbug, verb
@@ -54,33 +54,6 @@
     ^-  (quip card _state)
     ?>  =(src.bowl our.bowl)
     ?-    -.act
-        %populate
-      ::  populate wallet with fake data for testing
-      ::  will WIPE previous wallet state!!
-      =/  seed  eny.bowl
-      =/  new-keys  (pit:nu:crub:crypto 256 seed)
-      =/  pub  pub:ex:new-keys
-      =/  fake-grain-1=grain:smart
-        :*  (fry-rice:smart pub 0x0 1 `@`'zigs')
-            0x0
-            pub
-            1
-            [%& `@`'zigs' [100.000.000 ~]]
-        ==
-      =/  fake-grain-2=grain:smart
-        :*  (fry-rice:smart pub `@ux`'fake-token' 1 `@`'wETH')
-            `@ux`'fake-token'
-            pub
-            1
-            [%& `@`'wETH' [173.000 ~]]
-        ==
-      :-  ~
-      %=  state
-        keys  (malt ~[[pub [new-keys seed]]])
-        nodes  (malt ~[[0 ~zod] [1 ~bus] [2 ~nec]])
-        nonces  (malt ~[[pub (malt ~[[0 0] [1 0] [2 0]])]])
-        books  (malt ~[[pub (malt ~[[[1 0x0 'zigs'] fake-grain-1] [[1 `@ux`'fake-token' 'wETH'] fake-grain-2]])]])
-      ==
     ::
         %import
       =/  new-keys  (pit:nu:crub:crypto 256 seed.act)
@@ -105,42 +78,60 @@
       =+  acc=(~(got by nonces.state) address.act)
       `state(nonces (~(put by nonces) address.act (~(put by acc) town.act new.act)))
     ::
+        %populate
+      ::  populate wallet with fake data for testing
+      ::  will WIPE previous wallet state!!
+      =/  new-keys  (pit:nu:crub:crypto 256 eny.bowl)
+      =/  pub  pub:ex:new-keys
+      =/  fake-1
+        :-  [1 0x0 'zigs']
+        :*  (fry-rice:smart pub 0x0 1 `@`'zigs')
+            0x0  pub  1
+            [%& `@`'zigs' [100.000.000 ~]]
+        ==
+      =/  fake-2
+        :-  [1 `@ux`'fake-token' 'wETH']
+        :*  (fry-rice:smart pub `@ux`'fake-token' 1 `@`'wETH')
+            `@ux`'fake-token'  pub  1
+            [%& `@`'wETH' [173.000 ~]]
+        ==
+      :-  ~
+      %=  state
+        keys  (malt ~[[pub [new-keys eny.bowl]]])
+        nodes  (malt ~[[0 ~zod] [1 ~bus] [2 ~nec]])
+        nonces  (malt ~[[pub (malt ~[[0 0] [1 0] [2 0]])]])
+        books  (malt ~[[pub (malt ~[[fake-1] [fake-2]])]])
+      ==        
+    ::
         %submit
       ::  submit a transaction
       ::  create an egg and sign it, then poke a sequencer
-      ::  ultimately, this should poke an explorer that has
-      ::  the ABI of the contract they're calling, which will
-      ::  give the wallet instructions as to what kind of
-      ::  data this transaction will require. for now, user
-      ::  must already know what to provide.
       ::
       ::  things to expose on frontend:
-      ::  town select, gas (rate & budget), transaction type (acquired from ABI..)
-      ::  dropdown or something from our address book for rice-select
-      =/  node-type      ?:(=(0 town.act) %ziggurat %sequencer)
+      ::  'from' address, contract 'to' address, town select, 
+      ::  gas (rate & budget), transaction type (acquired from ABI..?)
+      ::  
       =/  our-nonces     (~(gut by nonces.state) from.act ~)
-      =/  nonce          (~(gut by our-nonces) town.act 0)
-      =/  our-zigs       (fry-rice:smart from.act 0x0 town.act 'zigs')
-      =/  =caller:smart  [from.act +(nonce) our-zigs]
+      =/  nonce=@ud      (~(gut by our-nonces) town.act 0)
+      =/  =caller:smart  [from.act +(nonce) (fry-rice:smart from.act 0x0 town.act 'zigs')]
       =/  =yolk:smart    [caller args.act my-grains.act cont-grains.act]
       =/  sig=@          (sign:as:acru:(~(got by keys.state) from.act) (sham (jam yolk)))
-      =/  =egg:smart
-        :-  [caller sig to.act rate.gas.act bud.gas.act town.act]
-        yolk
-      =/  node=ship
-        ?~  sequencer.act
-          (~(got by nodes.state) town.act)
-        u.sequencer.act
+      =/  =egg:smart     [[caller sig to.act rate.gas.act bud.gas.act town.act] yolk]
+      =/  node=ship      ?~(sequencer.act (~(got by nodes.state) town.act) u.sequencer.act)
       :_  state(nonces (~(put by nonces) from.act (~(put by our-nonces) town.act +(nonce))))
       :~  :*  %pass  /submit-tx
-              %agent  [node node-type]
+              %agent  [node ?:(=(0 town.act) %ziggurat %sequencer)]
               %poke  %zig-weave-poke
               !>([%forward (silt ~[egg])])
       ==  ==
     ==
   --
 ::
-++  on-agent  on-agent:def
+++  on-agent
+  ::  TODO provide subscribe paths for frontend,
+  ::  and update it on changes to wallet state.
+  ::  Changes will be provided by connecting to an indexer
+  on-agent:def
 ::
 ++  on-arvo  on-arvo:def
 ::
@@ -168,7 +159,8 @@
     ==
   ::
       [%account @ @ ~]
-    ::  returns our account for the town-id given
+    ::  returns our account for the pubkey and town-id given
+    ::  for validator & sequencer use, to execute mill
     =/  pub  (slav %ux i.t.t.path)
     =/  town-id  (slav %ud i.t.t.t.path)
     =/  nonce  (~(gut by (~(got by nonces.state) pub)) town-id 0)

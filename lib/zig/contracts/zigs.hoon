@@ -12,7 +12,7 @@
     ::  expects to-id, amount and budget as arguments
     ?.  ?=([to=id known=? amount=@ud budget=@ud] args)  !!
     =/  giv=grain  -:~(val by grains.inp)
-    ?>  &(=(holder.giv caller-id) =(lord.giv me.cart) ?=(%& -.germ.giv))
+    ?>  &(=(lord.giv me.cart) ?=(%& -.germ.giv))
     =/  giver  (hole account data.p.germ.giv)
     ?>  (gte balance.giver (add amount.args budget.args))
     ?:  known.args

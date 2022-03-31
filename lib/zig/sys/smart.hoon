@@ -3,6 +3,7 @@
 ::  smart contract functions
 ::
 ::  +hole: vase-checks your types for you
+::
 ++  hole
   |*  [typ=mold val=*]
   ^-  typ
@@ -113,5 +114,5 @@
 ::
 +$  chick    (each rooster hen)
 +$  rooster  [changed=(map id grain) issued=(map id grain)]
-+$  hen      [mem=(unit vase) next=[to=id town-id=@ud args=yolk]]
++$  hen      [mem=(unit vase) next=[to=id town-id=@ud args=yolk] roost=rooster]
 --

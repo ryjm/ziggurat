@@ -125,6 +125,7 @@
         ?~  res=(~(get by granary) id)      ~
         ?.  ?=(%& -.germ.u.res)             ~
         ?.  =(holder.u.res id.caller.yolk)  ~
+        ?.  =(town-id.u.res town-id)           ~
         `[id u.res]
       ::
       ++  germinate
@@ -141,6 +142,7 @@
         ?~  res=(~(get by granary) id)  ~
         ?.  ?=(%& -.germ.u.res)         ~
         ?.  =(lord.u.res find)          ~
+        ?.  =(town-id.u.res town-id)       ~
         `[id u.res]
       ::
       ::  ++  compile
@@ -169,12 +171,16 @@
       |-
       =*  next  next.p.u.chick
       =*  mem   mem.p.u.chick
+      ::  make it so continuation calls can alter grains, this is important
+      ?~  gan=(harvest roost.p.u.chick to.p.egg from.p.egg)
+        `rem
+      =.  granary  u.gan 
       =^  child  rem
         (incubate egg(from.p to.p.egg, to.p to.next, budget.p rem, q args.next))
       ?~  child  `rem
-      =/  gan  (harvest u.child to.p.egg from.p.egg)
-      ?~  gan  `rem
-      [`u.child rem]
+      ::  =/  gan  (harvest u.child to.p.egg from.p.egg)
+      ::  ?~  gan  `rem
+      [child rem]
       ::  this event trigger phase actually wipes the result of continuations,
       ::  no bueno. need to move the event trigger inside the above loop.
       ::  above always returns a result, anyways.
