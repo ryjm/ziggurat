@@ -1,7 +1,7 @@
 /-  spider,
     pull-hook,
     push-hook,
-    dgs=dao-group-store,
+    d=dao,
     gs=graph-store,
     ms=metadata-store
 /+  strandio,
@@ -13,18 +13,18 @@
 =>
   |%
   ::
-  ++  scry-dao-group
+  ++  scry-dao
     |=  rid=resource:res
-    =/  m  (strand ,(unit dao-group:dgs))
+    =/  m  (strand ,(unit dao:d))
     ^-  form:m
-    ;<  dg=(unit dao-group:dgs)  bind:m
-      %+  scry  (unit dao-group:dgs)
+    ;<  dao=(unit dao:d)  bind:m
+      %+  scry  (unit dao:d)
       ;:  weld
-          /gx/dao-group-store/dao-groups
+          /gx/dao/daos
           (en-path:res rid)
           /noun
       ==
-    (pure:m dg)
+    (pure:m dao)
   ::
   ++  make-graph-mark
     |=  graph-module=@tas
@@ -35,16 +35,17 @@
     |=  [=bowl:spider title=@t description=@t module=@tas]
     ^-  metadatum:ms
     =|  =metadatum:ms
-    =.  title.metadatum         title
-    =.  description.metadatum   description
-    :: =.  color.metadatum
-    =.  date-created.metadatum  now.bowl
-    =.  creator.metadatum       our.bowl
-    =.  config.metadatum        [%graph module=module]
-    :: =.  picture.metadatum
-    =.  preview.metadatum       %.n
-    =.  hidden.metadatum        %.n
-    :: =.  vip.metadatum
+    =:  title.metadatum         title
+        description.metadatum   description
+    ::     color.metadatum
+        date-created.metadatum  now.bowl
+        creator.metadatum       our.bowl
+        config.metadatum        [%graph module=module]
+    ::     picture.metadatum
+        preview.metadatum       %.n
+        hidden.metadatum        %.n
+    ::     vip.metadatum
+    ==
     metadatum
   ::
   --
@@ -54,7 +55,7 @@
 =/  m  (strand ,vase)
 ^-  form:m
 =/  arg-mold
-  $:  dao-group-rid=resource:res
+  $:  dao-rid=resource:res
       graph-rid=resource:res
       graph-title=cord
       graph-description=cord
@@ -66,16 +67,15 @@
   ==
 =/  args  !<((unit arg-mold) arg)
 ?~  args  (pure:m !>(~))
-=*  dao-group-rid      dao-group-rid.u.args
-=*  graph-rid          graph-rid.u.args
+=*  dao-rid      dao-rid.u.args
+=*  graph-rid    graph-rid.u.args
 =*  title        graph-title.u.args
 =*  description  graph-description.u.args
 =*  module       graph-module.u.args
 ;<  =bowl:spider  bind:m  get-bowl:strandio
-;<  dao-group=(unit dao-group:dgs)  bind:m
-  (scry-dao-group dao-group-rid)
-?~  dao-group 
-  ~&  >>>  "couldn't find DAO group with rid {<dao-group-rid>}"
+;<  dao=(unit dao:d)  bind:m  (scry-dao dao-rid)
+?~  dao
+  ~&  >>>  "couldn't find DAO with rid {<dao-rid>}"
   ~&  >>>  "aborting without taking action"
   (pure:m !>(~))
 ~&  >  "poking graph-pu??-hook..."
@@ -102,6 +102,6 @@
 ;<  ~  bind:m
   %^  poke-our  %metadata-store  %metadata-action
   !>  ^-  action:ms
-  [%add dao-group-rid [%graph graph-rid] metadatum]
+  [%add dao-rid [%graph graph-rid] metadatum]
 ~&  >  "done"
 (pure:m !>(~))
