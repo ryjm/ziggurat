@@ -53,6 +53,7 @@
   ++  poke-wallet
     |=  act=wallet-poke
     ^-  (quip card _state)
+    ~&  >  act
     ?>  =(src.bowl our.bowl)
     ?-    -.act
     ::

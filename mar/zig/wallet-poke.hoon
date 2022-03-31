@@ -6,18 +6,24 @@
   ++  noun  wallet-poke
   ++  json
     |=  jon=^json
+    ~&  >>  jon
+    ^-  wallet-poke
     %-  wallet-poke
-    =<  (process jon)
-    |%
+    |^
+    (process jon)
     ++  process
       %-  of
-      :~  [%populate ~]
-          [%import (ot ~[[%seed (se %ux)]])]
-          [%create ~]
-          [%delete (ot ~[[%address (se %ux)]])]
+      :~  [%populate bo]
+          [%import parse-import]
+          [%create bo]
+          [%delete parse-delete]
           [%set-node parse-set]
           [%submit parse-submit]
       ==
+    ++  parse-import
+      (ot ~[[%seed so]])
+    ++  parse-delete
+      (ot ~[[%address (se %ux)]])
     ++  parse-set
       %-  ot
       :~  [%town ni]
@@ -43,6 +49,7 @@
           [%known bo]
           [%amount ni]
       ==
+    --
   --
 ++  grow
   |%
