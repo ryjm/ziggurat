@@ -61,6 +61,7 @@
   ==
 ::
 ::  uqbar wallet types
+::  TODO move into its own file as this grows
 ::
 +$  book  (map [town=@ud lord=id:smart salt=@] grain:smart)
 ::
@@ -75,8 +76,25 @@
           from=id:smart
           sequencer=(unit ship)  ::  optional custom node choice
           to=id:smart  town=@ud
-          gas=[rate=@ud bud=@ud]  args=(unit *)
-          my-grains=(set @ux)  cont-grains=(set @ux)
+          gas=[rate=@ud bud=@ud]
+          args=supported-args
       ==
+  ==
+::
++$  supported-args
+  $%  [%give token=id:smart to=id:smart known=? amount=@ud]
+  ==
+::
++$  token-metadata
+  $:  name=@t
+      symbol=@t
+      decimals=@ud
+      supply=@ud
+      cap=(unit @ud)
+      mintable=?
+      minters=(set id:smart)
+      deployer=id:smart
+      book=id:smart
+      salt=@
   ==
 --

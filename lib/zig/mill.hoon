@@ -125,7 +125,7 @@
         ?~  res=(~(get by granary) id)      ~
         ?.  ?=(%& -.germ.u.res)             ~
         ?.  =(holder.u.res id.caller.yolk)  ~
-        ?.  =(town-id.u.res town-id)           ~
+        ?.  =(town-id.u.res town-id)        ~
         `[id u.res]
       ::
       ++  germinate
@@ -142,7 +142,7 @@
         ?~  res=(~(get by granary) id)  ~
         ?.  ?=(%& -.germ.u.res)         ~
         ?.  =(lord.u.res find)          ~
-        ?.  =(town-id.u.res town-id)       ~
+        ?.  =(town-id.u.res town-id)    ~
         `[id u.res]
       ::
       ::  ++  compile

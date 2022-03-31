@@ -11,7 +11,8 @@
       keys=(map pub=@ [=acru:ames seed=@])  ::  private key-store
       nodes=(map town=@ud =ship)  ::  the sequencer you submit txs to for each town
       nonces=(map pub=@ (map town=@ud nonce=@ud))
-      books=(map pub=@ book)  ::  "address book" of rice for each key
+      tokens=(map pub=@ =book)
+      metadata-store=(map =id:smart token-metadata)
       ::  TODO add block explorer hookup here, can subscribe for changes
       ::  potential to do cool stuff with %pals integration here
   ==
@@ -27,7 +28,7 @@
 +*  this  .
     def   ~(. (default-agent this %|) bowl)
 ::
-++  on-init  `this(state [%0 ~ ~ ~ ~])
+++  on-init  `this(state [%0 ~ ~ ~ ~ ~])
 ::
 ++  on-save  !>(state)
 ++  on-load
@@ -68,7 +69,7 @@
       :-  ~  %=  state
         keys    (~(del by keys) address.act)
         nonces  (~(del by nonces) address.act)
-        books   (~(del by books) address.act)
+        tokens   (~(del by tokens) address.act)
       ==
     ::
         %set-node
@@ -95,12 +96,37 @@
             `@ux`'fake-token'  pub  1
             [%& `@`'wETH' [173.000 ~]]
         ==
+      =/  zigs-metadata
+        :*  name='Uqbar Tokens'
+            symbol='ZIG'
+            decimals=18
+            supply=1.000.000.000.000.000.000.000.000
+            cap=~
+            mintable=%.n
+            minters=~
+            deployer=0x0
+            book=`@ux`'zigs-address-book'
+            salt=777
+        ==
+      =/  weth-metadata
+        :*  name='Wrapped Ether'
+            symbol='wETH'
+            decimals=18
+            supply=9.000.000.000.000.000.000.000.000
+            cap=~
+            mintable=%.n
+            minters=~
+            deployer=0x1234.5678
+            book=0x9999.9999
+            salt=444
+        ==
       :-  ~
       %=  state
         keys  (malt ~[[pub [new-keys eny.bowl]]])
         nodes  (malt ~[[0 ~zod] [1 ~bus] [2 ~nec]])
         nonces  (malt ~[[pub (malt ~[[0 0] [1 0] [2 0]])]])
-        books  (malt ~[[pub (malt ~[[fake-1] [fake-2]])]])
+        tokens  (malt ~[[pub (malt ~[[fake-1] [fake-2]])]])
+        metadata-store  (malt ~[[`@ux`'zigs' zigs-metadata] [`@ux`'weth' weth-metadata]])
       ==        
     ::
         %submit
@@ -114,10 +140,23 @@
       =/  our-nonces     (~(gut by nonces.state) from.act ~)
       =/  nonce=@ud      (~(gut by our-nonces) town.act 0)
       =/  =caller:smart  [from.act +(nonce) (fry-rice:smart from.act 0x0 town.act 'zigs')]
-      =/  =yolk:smart    [caller args.act my-grains.act cont-grains.act]
+      =/  node=ship
+        ?~(sequencer.act (~(gut by nodes.state) town.act our.bowl) u.sequencer.act)
+      ::  need to check transaction type and collect rice based on it
+      ::  only supporting small subset of contract calls, for tokens and NFTs
+      =/  grains=[(set @ux) (set @ux)]
+        ?-    -.args.act
+            %give
+          ::  TODO use block explorer to find rice if it exists and restructure this
+          ::  to use known parameter to find other person's rice
+          =/  metadata  (~(got by metadata-store.state) token.args.act)
+          =/  =book  (~(got by tokens.state) from.act)
+          =/  our-account  (~(got by book) [town.act to.act salt.metadata])
+          [(silt ~[id.our-account]) (silt ~[book.metadata])]
+        ==
+      =/  =yolk:smart    [caller `[-.args.act +.+.args.act] -.grains +.grains]
       =/  sig=@          (sign:as:acru:(~(got by keys.state) from.act) (sham (jam yolk)))
-      =/  =egg:smart     [[caller sig to.act rate.gas.act bud.gas.act town.act] yolk]
-      =/  node=ship      ?~(sequencer.act (~(got by nodes.state) town.act) u.sequencer.act)
+      =/  =egg:smart     [[caller sig to.act rate.gas.act bud.gas.act town.act] yolk] 
       :_  state(nonces (~(put by nonces) from.act (~(put by our-nonces) town.act +(nonce))))
       :~  :*  %pass  /submit-tx
               %agent  [node ?:(=(0 town.act) %ziggurat %sequencer)]
@@ -173,7 +212,7 @@
     =;  =json  ``json+!>(json)
     =,  enjs:format
     %-  pairs
-    %+  turn  ~(tap by books.state)
+    %+  turn  ~(tap by tokens.state)
     |=  [pub=@ux =book]
     :-  (scot %ux pub)
     %-  pairs
@@ -191,6 +230,26 @@
         ::  note: need to use 'token standard' here
         ::  to guarantee properly parsed data
         ['data' (frond 'balance' (numb bal))]
+    ==
+  ::
+      [%token-metadata ~]
+    ::  return entire metadata-store
+    =;  =json  ``json+!>(json)
+    =,  enjs:format
+    %-  pairs
+    %+  turn  ~(tap by metadata-store.state)
+    |=  [id=@ux d=token-metadata]
+    :-  (scot %ux id)
+    %-  pairs
+    :~  ['name' (tape (trip name.d))]
+        ['symbol' (tape (trip symbol.d))]
+        ['decimals' (numb decimals.d)]
+        ['supply' (numb supply.d)]
+        ['cap' (numb (fall cap.d 0))]
+        ['mintable' [%b mintable.d]]
+        ['deployer' (tape (scow %ux deployer.d))]
+        ['book' (tape (scow %ux book.d))]
+        ['salt' (tape (scow %ux salt.d))]
     ==
   ==
 ::

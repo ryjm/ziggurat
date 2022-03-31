@@ -292,21 +292,27 @@
       [%town-id ~]
     ``noun+!>(`(unit @ud)`town-id.state)
   ::
+      [%available @ ~]  ::  see if grain exists in state
+    =/  id  (slav %ux i.t.t.path)
+    ?~  res=(~(get by p.town.state) id)
+      ``noun+!>(%.n)
+    ``noun+!>(%.y)
+  ::
       [%rice @ ~]
     =/  id  (slav %ux i.t.t.path)
     ?~  res=(~(get by p.town.state) id)
-      [~ ~]
+      ``noun+!>(~)
     ?.  ?=(%& -.germ.u.res)
-      [~ ~]
+      ``noun+!>(~)
     ``noun+!>(`rice:smart`p.germ.u.res)
   ::
       [%wheat @ @ta ~]
     ::  call read arm of contract
     =/  id  (slav %ux i.t.t.path)
     =/  arg=^path  [i.t.t.t.path ~]
-    ?~  res=(~(get by p.town.state) id)  [~ ~]
-    ?.  ?=(%| -.germ.u.res)              [~ ~]
-    ?~  cont.p.germ.u.res                [~ ~]
+    ?~  res=(~(get by p.town.state) id)  ``noun+!>(~)
+    ?.  ?=(%| -.germ.u.res)              ``noun+!>(~)
+    ?~  cont.p.germ.u.res                ``noun+!>(~)
     ::  TODO make way for reads to get some rice input!
     ::  =/  owns
     ::    %-  ~(gas by *(map:smart id:smart grain:smart))

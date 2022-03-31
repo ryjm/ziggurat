@@ -16,7 +16,9 @@
 ::  over minting, burning, and sending. They can of course write their own
 ::  contract to custom-handle all of these scenarios, or write a manager
 ::  which performs custom logic but calls back to this contract for the
-::  base token actions.
+::  base token actions. Any token that maintains the same metadata and account
+::  format, even if using a different contract (such as zigs) should be
+::  composable among tools designed to this standard.
 ::
 ::  Tokens that wish to be properly displayed and handled with no additional
 ::  work in the wallet agent should implement the same structure for their
@@ -40,20 +42,24 @@
   +$  token-metadata
     $:  name=@t           ::  the name of a token (not unique!)
         symbol=@t         ::  abbreviation (also not unique)
-        salt=@            ::  data included in account-rice ID hash (unique!)
         decimals=@ud      ::  granularity, minimum 0, maximum 18
         supply=@ud        ::  total amount of token in existence
         cap=(unit @ud)    ::  supply cap (~ if mintable is false)
         mintable=?        ::  whether or not more can be minted
         minters=(set id)  ::  pubkeys permitted to mint, if any
         deployer=id       ::  pubkey which first deployed token
+        book=id           ::  pubkey of address book
+        salt=@            ::  data added to hash for rice IDs of this token
     ==
+  ::
+  +$  address-book  (map id id)  ::  map of pubkey to account rice
   ::
   +$  account
     $:  balance=@ud  ::  the amount of tokens someone has
         ::  a map of pubkeys they've permitted to spend their tokens,
         allowances=(map sender=id @ud)  ::  and how much
         metadata=id  ::  address of the rice holding this token's metadata
+        book=id      ::  address of the rice holding this token's address book
     ==
   ::
   ::  patterns of arguments supported by this contract
@@ -78,6 +84,8 @@
     ==
   ::
   ::  the actual execution arm. branches on argument type and returns final result
+  ::  note that many of these lines will crash with bad input. this is good,
+  ::  because we don't want failing transactions to waste more gas than required
   ::
   ++  process
     |=  args=arguments
@@ -100,19 +108,26 @@
         ==
         ::  return the result: two changed grains
         [%& (malt ~[[id.giv giv] [id.rec rec]]) ~]
-      ::  if !known, we try to issue a new rice for that account.
-      ::  this will fail if that pubkey already has a token balance.
-      ::  in this case, we expect the token metadata rice in owns.cart
-      =/  tok=grain  -:~(val by owns.cart)
-      =/  metadata=token-metadata  (strain tok me.cart token-metadata)
-      =/  new-account-id=id  (fry-rice to.args me.cart town-id.cart salt.metadata)
-      ::  create new rice for reciever and add it to state, passing it into
-      ::  a new call that will attempt to use %give on this new rice.
-      =-  :^  %|  ~
+      ::  if !known, we check the address book to see if rice exists.
+      ::  if it does, we issue a %give to it, otherwise we issue a new rice and %give.
+      =/  bok=grain  -:~(val by owns.cart)
+      ?>  &(=(lord.bok id) ?=(%& -.germ.bok))
+      =/  book=address-book  (hole address-book data.p.germ.bok)
+      ?~  rec=(~(get by book) to.args)
+        ::  create new rice for reciever and add it to state, passing it into
+        ::  a continuation-call that will attempt to use %give on this new rice.
+        =/  new-id=id  (fry-rice to.args me.cart town-id.cart salt.p.germ.giv)
+        =/  new-grain=grain
+          [new-id me.cart to.args town-id.cart [%& salt.p.germ.giv [0 ~ metadata.giver book.giver]]]
+        :^  %|  ~
+          :+  me.cart  town-id.cart
+          [caller.inp `[%give to.args %.y amount.args] (silt ~[id.giv]) (silt ~[new-id])]
+        [~ (malt ~[[new-id new-grain]])]
+      ::  %give to rice found in book
+      :^  %|  ~
         :+  me.cart  town-id.cart
-        [caller.inp `[%give to.args %.y amount.args] (silt ~[id.giv]) (silt ~[new-account-id])]
-      [~ (malt ~[[new-account-id -]])]
-      [new-account-id me.cart to.args town-id.cart [%& salt.metadata [0 ~ id.tok]]]
+        [caller.inp `[%give to.args %.y amount.args] (silt ~[id.giv]) (silt ~[u.rec])]
+      [~ ~]
     ::
         %take
       !!
