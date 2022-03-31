@@ -69,12 +69,11 @@
   $%  [%populate ~]  :: populate wallet with fake data, for testing
       [%import seed=@]
       [%create ~]
-      [%delete address=@]
+      [%delete pubkey=@ux]
       [%set-node town=@ud =ship]
       [%set-nonce address=@ux town=@ud new=@ud]  ::  mostly for testing
       $:  %submit
           from=id:smart
-          sequencer=(unit ship)  ::  optional custom node choice
           to=id:smart  town=@ud
           gas=[rate=@ud bud=@ud]
           args=supported-args
@@ -96,5 +95,12 @@
       deployer=id:smart
       book=id:smart
       salt=@
+  ==
+::
++$  token-account
+  $:  balance=@ud
+      allowances=(map sender=id:smart @ud)
+      metadata=id:smart
+      book=id:smart
   ==
 --

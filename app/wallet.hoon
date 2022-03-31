@@ -67,10 +67,11 @@
     ::
         %delete
       ::  will irreversibly lose seed...
+      ~&  >>>  pubkey.act
       :-  ~  %=  state
-        keys    (~(del by keys) address.act)
-        nonces  (~(del by nonces) address.act)
-        tokens   (~(del by tokens) address.act)
+        keys    (~(del by keys) pubkey.act)
+        nonces  (~(del by nonces) pubkey.act)
+        tokens   (~(del by tokens) pubkey.act)
       ==
     ::
         %set-node
@@ -141,8 +142,7 @@
       =/  our-nonces     (~(gut by nonces.state) from.act ~)
       =/  nonce=@ud      (~(gut by our-nonces) town.act 0)
       =/  =caller:smart  [from.act +(nonce) (fry-rice:smart from.act 0x0 town.act 'zigs')]
-      =/  node=ship
-        ?~(sequencer.act (~(gut by nodes.state) town.act our.bowl) u.sequencer.act)
+      =/  node=ship      (~(gut by nodes.state) town.act our.bowl)
       ::  need to check transaction type and collect rice based on it
       ::  only supporting small subset of contract calls, for tokens and NFTs
       =/  grains=[(set @ux) (set @ux)]
@@ -219,9 +219,8 @@
     %-  pairs
     %+  turn  ~(tap by book)
     |=  [* =grain:smart]
-    =/  bal=@ud
-      ?.  ?=(%& -.germ.grain)  0
-      ;;(@ud -.data.p.germ.grain)
+    ?.  ?=(%& -.germ.grain)  !!
+    =/  data  ;;(token-account data.p.germ.grain)
     :-  (scot %ux id.grain)
     %-  pairs
     :~  ['id' (tape (scow %ux id.grain))]
@@ -230,7 +229,12 @@
         ['town' (numb town-id.grain)]
         ::  note: need to use 'token standard' here
         ::  to guarantee properly parsed data
-        ['data' (frond 'balance' (numb bal))]
+        :-  'data'
+        %-  pairs
+        :~  ['balance' (numb balance.data)]
+            ['metadata' (tape (scow %ux metadata.data))]
+            ['book' (tape (scow %ux book.data))]
+        ==
     ==
   ::
       [%token-metadata ~]

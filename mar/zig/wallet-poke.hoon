@@ -23,7 +23,7 @@
     ++  parse-import
       (ot ~[[%seed so]])
     ++  parse-delete
-      (ot ~[[%address (se %ux)]])
+      (ot ~[[%pubkey (se %ux)]])
     ++  parse-set
       %-  ot
       :~  [%town ni]
@@ -32,7 +32,6 @@
     ++  parse-submit
       %-  ot
       :~  [%from (se %ux)]
-          [%sequencer (mu (se %p))]
           [%to (se %ux)]
           [%town ni]
           [%gas (ot ~[[%rate ni] [%bud ni]])]
