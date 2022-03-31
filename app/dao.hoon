@@ -155,14 +155,16 @@
         =/  new-dao=dao:d
           (get-dao-from-update update)
         =*  members  members.new-dao
-        ?.  =(0 ~(wyt in (~(get ju members) our.bowl)))
-          :-  ~
-          %=  this
-            daos  (~(put by daos) dao-id new-dao)  :: TODO: instead walk through and make minimal change to existing structure?
-          ==
-        =^  cards  state
-          (remove-dao:dc dao-id)
-        [cards this]
+        ?~  (~(get by ship-to-id.new-dao) our.bowl)
+          ::  We are no longer in DAO: remove it.
+          =^  cards  state
+            (remove-dao:dc dao-id)
+          [cards this]
+        ::  We are still in DAO: update it.
+        :-  ~
+        %=  this
+          daos  (~(put by daos) dao-id new-dao)  :: TODO: instead walk through and make minimal change to existing structure?
+        ==
         ::
         ++  get-dao-from-update
           |=  =update:uqbar-indexer
@@ -189,12 +191,16 @@
 +*  dao-lib  ~(. daol bowl)
     io       ~(. agentio bowl)
 ::
+++  address-to-id
+    |=  =address:d
+    ^-  (unit id:smart)
+    ?:  ?=(id:smart address)  `address
+    (~(get by dao-rid-to-id) address)
+::
 ++  peek-dao
-  |=  identifier=?(id:smart resource:res)
+  |=  identifier=address:d
   ^-  (unit dao:d)
-  ?:  ?=(id:smart identifier)
-    (~(get by daos) identifier)
-  ?~  id=(~(get by dao-rid-to-id) identifier)  ~
+  ?~  id=(address-to-id identifier)  ~
   (~(get by daos) u.id)
 ::
 ++  watch-indexer
@@ -222,15 +228,16 @@
   ?:  =(0 ~(wyt by daos))  ~
   %+  murn  ~(tap by daos)
   |=  [dao-id=id:smart =dao:d]
-  (watch-indexer dao-id.dao)
+  (watch-indexer dao-id)
 ::
 ++  has-write-dao-permissions
-  |=  identifier=?(id:smart resource:res)
+  |=  identifier=address:d
   ^-  (unit dao:d)
-  ?~  dao=(peek-dao identifier)  ~
+  ?~  id=(address-to-id identifier)  ~
+  ?~  dao=(peek-dao u.id)  ~
   ?.  %:  is-allowed:dao-lib
-          src.bowl
-          dao-id.u.dao
+          [%| src.bowl]
+          u.id
           %write
           members.u.dao
           permissions.u.dao
@@ -303,7 +310,7 @@
     =.  daos  (~(put by daos) dao-id dao)
     :_  state
     :-  (send-diff %on-chain dao-id %add-dao dao)
-    ?~  wi=(watch-indexer dao-id.dao)  ~  [u.wi ~]
+    ?~  wi=(watch-indexer dao-id)  ~  [u.wi ~]
   ::
   ++  add-member
     |=  [dao-id=id:smart roles=(set role:d) =id:smart him=ship]
@@ -313,13 +320,13 @@
       (~(get by id-to-ship.u.dao) id)
     ?:  ?=(^ existing-ship)
       ?:  =(him u.existing-ship)  `state
-      ~|  "daos: cannot add member whose id corresponds to a different ship"
+      ~|  "%dao: cannot add member whose id corresponds to a different ship"
       !!
     =/  existing-id=(unit id:smart)
       (~(get by ship-to-id.u.dao) him)
     ?:  ?=(^ existing-id)
       ?:  =(id u.existing-id)  `state
-      ~|  "daos: cannot add member whose ship corresponds to a different id"
+      ~|  "%dao: cannot add member whose ship corresponds to a different id"
       !!
     ::
     =.  daos
@@ -330,33 +337,35 @@
         ship-to-id  (~(put by ship-to-id) him id)
         members
           %-  ~(gas ju members)
-          (make-noun-role-pairs him roles)
+          (make-noun-role-pairs id roles)
       ==
     :_  state
     ~[(send-diff %on-chain dao-id %add-member roles id him)]
   ::
   ++  remove-member
-    |=  [dao-id=id:smart him=ship]
+    |=  [dao-id=id:smart =id:smart]
     ^-  (quip card _state)
     ?~  dao=(has-write-dao-permissions dao-id)  `state
-    ?~  id=(~(get by ship-to-id.u.dao) him)  `state
-    ?~  existing-ship=(~(get by id-to-ship.u.dao) u.id)
-      ~|  "daos: cannot find given member to remove in id-to-ship"
+    ?~  him=(~(get by id-to-ship.u.dao) id)
+      ~|  "%dao: cannot find given member to remove in id-to-ship"
       !!
-    ~|  "daos: given ship does not match records"
-    ?>  =(him u.existing-ship)
-    ?~  roles=(~(get ju members.u.dao) him)  `state
+    ?~  existing-id=(~(get by ship-to-id.u.dao) u.him)
+      ~|  "%dao: cannot find given member to remove in ship-to-id"
+      !!
+    ~|  "%dao: given id does not match records"
+    ?>  =(id u.existing-id)
+    ?~  roles=(~(get ju members.u.dao) id)  `state
     =.  daos
       %+  ~(jab by daos)  dao-id
       |=  dao:d
       %=  +<
-        id-to-ship  (~(del by id-to-ship) u.id)
-        ship-to-id  (~(del by ship-to-id) him)
+        id-to-ship  (~(del by id-to-ship) id)
+        ship-to-id  (~(del by ship-to-id) u.him)
         members
-          (remove-roles-helper members roles him)
+          (remove-roles-helper members roles id)
       ==
     :_  state
-    ~[(send-diff %on-chain dao-id %remove-member him)]
+    ~[(send-diff %on-chain dao-id %remove-member id)]
   ::
   ++  add-permissions
     |=  [dao-id=id:smart name=@tas =address:d roles=(set role:d)]
@@ -420,41 +429,41 @@
       +<(subdaos (~(del in subdaos.u.dao) subdao-id))
     :_  state
     ~[(send-diff %on-chain dao-id %remove-subdao subdao-id)]
-  ::  +add-roles: add roles to ships
+  ::  +add-roles: add roles to members
   ::
-  ::    crash if ships are not in DAO
+  ::    crash if member id is not in DAO
   ::
   ++  add-roles
-    |=  [dao-id=id:smart roles=(set role:d) him=ship]
+    |=  [dao-id=id:smart roles=(set role:d) =id:smart]
     ^-  (quip card _state)
     ?~  dao=(has-write-dao-permissions dao-id)  `state
-    ?~  (~(get ju members.u.dao) him)  !!
+    ?~  (~(get ju members.u.dao) id)  !!
     =.  daos
       %+  ~(jab by daos)  dao-id
       |=  dao:d
       %=  +<
         members
           %-  ~(gas ju members)
-          (make-noun-role-pairs him roles)
+          (make-noun-role-pairs id roles)
       ==
     :_  state
-    ~[(send-diff %on-chain dao-id %add-roles roles him)]
-  ::  +remove-roles: remove roles from ships
+    ~[(send-diff %on-chain dao-id %add-roles roles id)]
+  ::  +remove-roles: remove roles from members
   ::
-  ::    crash if ships are not in DAO
+  ::    crash if member id is not in DAO
   ::    TODO: crash if role does not exist?
   ::
   ++  remove-roles
-    |=  [dao-id=id:smart roles=(set role:d) him=ship]
+    |=  [dao-id=id:smart roles=(set role:d) =id:smart]
     ^-  (quip card _state)
     ?~  dao=(has-write-dao-permissions dao-id)  `state
-    ?~  (~(get ju members.u.dao) him)  !!
+    ?~  (~(get ju members.u.dao) id)  !!
     =.  daos
       %+  ~(jab by daos)  dao-id
       |=  dao:d
-      +<(members (remove-roles-helper members roles him))
+      +<(members (remove-roles-helper members roles id))
     :_  state
-    ~[(send-diff %on-chain dao-id %remove-roles roles him)]
+    ~[(send-diff %on-chain dao-id %remove-roles roles id)]
   ::
   ++  add-permissions-helper
     |=  [name=@tas =permissions:d roles=(set role:d) =address:d]
@@ -483,10 +492,10 @@
     $(pairs t.pairs)
   ::
   ++  remove-roles-helper
-    |=  [=members:d roles=(set role:d) him=ship]
+    |=  [=members:d roles=(set role:d) =id:smart]
     ^-  members:d
-    =/  pairs=(list (pair ship role:d))
-      (make-noun-role-pairs him roles)
+    =/  pairs=(list (pair id:smart role:d))
+      (make-noun-role-pairs id roles)
     |-
     ?~  pairs  members
     =.  members  (~(del ju members) i.pairs)

@@ -246,7 +246,7 @@
   =/  assoc=(unit association:metadata)
     (peek-association:met %graph resource)
   ?~  assoc  !!
-  ?>  (is-allowed-read:dao src.bowl group.u.assoc resource)
+  ?>  (is-allowed-read:dao [%| src.bowl] group.u.assoc resource)
   !>  ^-  update:store
   ?~  path
     ::  new subscribe
@@ -345,7 +345,8 @@
   ?~  assoc  ~
   ::
   =/  [is-admin=? is-writer=? is-reader=?]
-    (is-allowed-admin-write-read:dao src.bowl group.u.assoc resource)
+    %^  is-allowed-admin-write-read:dao
+    [%| src.bowl]  group.u.assoc  resource
   ?.  is-reader  ~
   `[is-admin is-writer vip.metadatum.u.assoc]
 ::

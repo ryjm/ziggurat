@@ -4,10 +4,11 @@
 |%
 +$  role         @tas  ::  E.g. %marketing, %development
 +$  address      ?(id:smart resource:r)  ::  [chain=@tas id:smart] for other chains?
++$  member       (each id:smart ship)
 ::  name might be, e.g., %read or %write for a graph;
 ::  %spend for treasury/rice
 +$  permissions  (map name=@tas (jug address role))
-+$  members      (jug ship role)
++$  members      (jug id:smart role)
 +$  id-to-ship   (map id:smart ship)
 +$  ship-to-id   (map ship id:smart)
 +$  dao
@@ -26,13 +27,13 @@
   $%  [%add-dao =dao]
       [%remove-dao ~]
       [%add-member roles=(set role) =id:smart him=ship]
-      [%remove-member him=ship]
+      [%remove-member =id:smart]
       [%add-permissions name=@tas =address roles=(set role)]
       [%remove-permissions name=@tas =address roles=(set role)]
       [%add-subdao subdao-id=id:smart]
       [%remove-subdao subdao-id=id:smart]
-      [%add-roles roles=(set role) him=ship]
-      [%remove-roles roles=(set role) him=ship]
+      [%add-roles roles=(set role) =id:smart]
+      [%remove-roles roles=(set role) =id:smart]
   ==
 ::  off-chain
 ::

@@ -38,7 +38,7 @@
     ++  make-members
       ^-  members:d
       %+  %~  put  ju  *members:d
-      our.bowl  %owner
+      our-id  %owner
     ::
     ++  make-id-to-ship
       |=  our-id=id:smart
@@ -57,21 +57,22 @@
     ^-  dao:d
     |^
     =|  =dao:d
-    =.  name.dao         name
-    =.  permissions.dao  permissions
-    =.  members.dao      make-members
-    =.  id-to-ship.dao   make-id-to-ship
-    =.  ship-to-id.dao   make-ship-to-id
+    =:  name.dao         name
+        permissions.dao  permissions
+        members.dao      make-members
+        id-to-ship.dao   make-id-to-ship
+        ship-to-id.dao   make-ship-to-id
+    ==
     dao
     ::
     ++  make-members
       ^-  members:d
       %-  %~  gas  ju  *members:d
       %+  roll  md
-      |=  [[him=ship =id:smart roles=(set role:d)] out=(list [ship role:d])]
+      |=  [[@ =id:smart roles=(set role:d)] out=(list [id:smart role:d])]
       %+  weld  out
       %+  turn  ~(tap in roles)
-      |=(=role:d [him role])
+      |=(=role:d [id role])
     ::
     ++  make-id-to-ship
       ^-  id-to-ship:d
@@ -91,16 +92,17 @@
     |=  name=@tas
     ^-  metadatum:ms
     =|  =metadatum:ms
-    =.  title.metadatum         name
-    =.  description.metadatum   name
-    :: =.  color.metadatum
-    =.  date-created.metadatum  now.bowl
-    =.  creator.metadatum       our.bowl
-    =.  config.metadatum        [%group feed=~]  :: ?
-    :: =.  picture.metadatum
-    =.  preview.metadatum       %.n
-    =.  hidden.metadatum        %.n
-    :: =.  vip.metadatum
+    =:  title.metadatum         name
+        description.metadatum   name
+    ::     color.metadatum
+        date-created.metadatum  now.bowl
+        creator.metadatum       our.bowl
+        config.metadatum        [%group feed=~]  :: ?
+    ::     picture.metadatum
+        preview.metadatum       %.n
+        hidden.metadatum        %.n
+    ::     vip.metadatum
+    ==
     metadatum
   ::
   --
