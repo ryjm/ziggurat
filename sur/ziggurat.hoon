@@ -67,11 +67,12 @@
 ::
 +$  wallet-poke
   $%  [%populate ~]  :: populate wallet with fake data, for testing
-      [%import seed=@]
+      [%import mnemonic=tape password=tape]
       [%create ~]
-      [%delete pubkey=@ux]
+      ::  TODO add poke to spawn new keypair from seed
+      [%delete pubkey=@ux]  ::  only removes tracking, doesn't lose anything
       [%set-node town=@ud =ship]
-      [%set-nonce address=@ux town=@ud new=@ud]  ::  mostly for testing
+      [%set-nonce address=@ux town=@ud new=@ud]  ::  for testing
       $:  %submit
           from=id:smart
           to=id:smart  town=@ud

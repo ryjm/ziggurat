@@ -32,9 +32,11 @@
     ^-  [^town fee=@ud]
     ?.  ?=(account from.p.egg)  [town 0]
     ::  validate transaction signature
-    ::  =/  them  (com:nu:crub:crypto id.from.p.egg)
-    ::  ?.  =(`(sham (jam q.egg)) (sure:as.them sig.p.egg))
-    ::    [town 0]  ::  bad signature
+    ::  using ecdsa-raw-sign in wallet, TODO review this
+    =/  point  (ecdsa-raw-recover:secp256k1:secp:crypto (sham (jam q.egg)) sig.p.egg)
+    ?.  =(id.from.p.egg (compress-point:secp256k1:secp:crypto point))
+      [town 0]  ::  signed tx doesn't match account
+    ::
     ?~  curr-nonce=(~(get by q.town) id.from.p.egg)
       [town 0]  ::  missing account
     ?.  =(nonce.from.p.egg +(u.curr-nonce))

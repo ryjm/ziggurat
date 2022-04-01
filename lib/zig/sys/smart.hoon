@@ -92,7 +92,7 @@
 +$  egg  (pair shell yolk)
 +$  shell
   $:  from=caller
-      sig=@  ::  signed hash of yolk
+      sig=[v=@ r=@ s=@] ::  signed hash of yolk
       to=id
       rate=@ud
       budget=@ud

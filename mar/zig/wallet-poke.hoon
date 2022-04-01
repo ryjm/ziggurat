@@ -21,7 +21,7 @@
           [%submit parse-submit]
       ==
     ++  parse-import
-      (ot ~[[%seed so]])
+      (ot ~[[%mnemonic sa] [%password sa]])
     ++  parse-delete
       (ot ~[[%pubkey (se %ux)]])
     ++  parse-set

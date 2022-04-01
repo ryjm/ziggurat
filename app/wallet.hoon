@@ -3,12 +3,13 @@
 ::  Uqbar wallet agent. Stores private key and facilitates signing
 ::  transactions, holding nonce values, and keeping track of owned data.
 ::
-/+  *ziggurat, default-agent, dbug, verb, bip32
+/+  *ziggurat, default-agent, dbug, verb, bip32, bip39
 |%
 +$  card  card:agent:gall
 +$  state-0
   $:  %0
-      keys=(map pub=@ [=acru:ames seed=@])  ::  private key-store
+      seed=byts  ::  encrypted with password
+      keys=(map pub=@ priv=@)  ::  keys created from master seed
       nodes=(map town=@ud =ship)  ::  the sequencer you submit txs to for each town
       nonces=(map pub=@ (map town=@ud nonce=@ud))
       tokens=(map pub=@ =book)
@@ -28,7 +29,7 @@
 +*  this  .
     def   ~(. (default-agent this %|) bowl)
 ::
-++  on-init  `this(state [%0 ~ ~ ~ ~ ~])
+++  on-init  `this(state [%0 *byts ~ ~ ~ ~ ~])
 ::
 ++  on-save  !>(state)
 ++  on-load
@@ -58,34 +59,42 @@
     ?-    -.act
     ::
         %import
-      =/  new-keys  (pit:nu:crub:crypto 256 seed.act)
-      `state(keys (~(put by keys) pub:ex:new-keys [new-keys seed.act]))
+      ::  will lose seed in current wallet, should warn on frontend!
+      ::  stores the default keypair in map
+      ::  import takes in a seed phrase and password to encrypt with
+      =+  seed=(to-seed:bip39 mnemonic.act password.act)
+      =+  core=(from-seed:bip32 [64 seed])
+      ::  TODO look on block explorer for pubkeys associated with this seed!
+      `state(seed [64 seed], keys (malt ~[[public-key:core private-key:core]]))
     ::
         %create
-      =/  new-keys  (pit:nu:crub:crypto 256 eny.bowl)
-      `state(keys (~(put by keys) pub:ex:new-keys [new-keys eny.bowl]))
+      ::  will lose seed in current wallet, should warn on frontend!
+      ::  creates a new wallet from entropy derived on-urbit
+      ::  TODO set up password here, currently bad
+      =+  core=(from-seed:bip32 [64 eny.bowl])
+      ::  TODO look on block explorer for pubkeys associated with this seed!
+      `state(seed [64 eny.bowl], keys (malt ~[[public-key:core private-key:core]]))
     ::
         %delete
-      ::  will irreversibly lose seed...
-      ~&  >>>  pubkey.act
+      ::  can recover by re-deriving same path
       :-  ~  %=  state
         keys    (~(del by keys) pubkey.act)
         nonces  (~(del by nonces) pubkey.act)
-        tokens   (~(del by tokens) pubkey.act)
+        tokens  (~(del by tokens) pubkey.act)
       ==
     ::
         %set-node
       `state(nodes (~(put by nodes) town.act ship.act))
     ::
-        %set-nonce  ::  mostly for testing
+        %set-nonce  ::  for testing
       =+  acc=(~(got by nonces.state) address.act)
       `state(nonces (~(put by nonces) address.act (~(put by acc) town.act new.act)))
     ::
         %populate
       ::  populate wallet with fake data for testing
       ::  will WIPE previous wallet state!!
-      =/  new-keys  (pit:nu:crub:crypto 256 eny.bowl)
-      =/  pub  pub:ex:new-keys
+      =+  core=(from-seed:bip32 [64 eny.bowl])
+      =+  pub=public-key:core
       =/  fake-1
         :-  [1 0x0 'zigs']
         :*  (fry-rice:smart pub 0x0 1 `@`'zigs')
@@ -124,8 +133,9 @@
         ==
       :-  ~
       %=  state
-        keys  (malt ~[[pub [new-keys eny.bowl]]])
-        nodes  (malt ~[[0 ~zod] [1 ~bus] [2 ~nec]])
+        seed    [64 eny.bowl]
+        keys    (malt ~[[pub private-key:core]])
+        nodes   (malt ~[[0 ~zod] [1 ~bus] [2 ~nec]])
         nonces  (malt ~[[pub (malt ~[[0 0] [1 0] [2 0]])]])
         tokens  (malt ~[[pub (malt ~[[fake-1] [fake-2]])]])
         metadata-store  (malt ~[[`@ux`'zigs' zigs-metadata] [`@ux`'weth' weth-metadata]])
@@ -158,7 +168,8 @@
           (silt ~[book.metadata])
         ==
       =/  =yolk:smart    [caller args.formatted our-grains.formatted cont-grains.formatted]
-      =/  sig=@          (sign:as:acru:(~(got by keys.state) from.act) (sham (jam yolk)))
+      =/  signer         (~(got by keys.state) from.act)
+      =/  sig            (ecdsa-raw-sign:secp256k1:secp:crypto (sham (jam yolk)) signer)
       =/  =egg:smart     [[caller sig to.act rate.gas.act bud.gas.act town.act] yolk]
       :_  state(nonces (~(put by nonces) from.act (~(put by our-nonces) town.act +(nonce))))
       :~  :*  %pass  /submit-tx
@@ -188,11 +199,11 @@
     =,  enjs:format
     %-  pairs
     %+  turn  ~(tap by keys.state)
-    |=  [pub=@ux [hold=acru:ames seed=@]]
+    |=  [pub=@ux priv=@ux]
     :-  (scot %ux pub)
     %-  pairs
-    :~  ['address' (tape (scow %ux pub))]
-        ['seed' (tape (scow %ux seed))]
+    :~  ['pubkey' (tape (scow %ux pub))]
+        ['privkey' (tape (scow %ux priv))]
         :-  'nonces'
         %-  pairs
         %+  turn  ~(tap by (~(gut by nonces.state) pub ~))
