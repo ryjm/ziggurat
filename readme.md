@@ -52,21 +52,30 @@ links to other desks, such as base-dev and garden-dev.
 4. Wallet pokes available:
 (only those with JSON support shown)
 ```
-$%  [%populate ~]  :: populate wallet with fake data, for testing
-    [%import seed=@]
-    [%create ~]
-    [%delete pubkey=@ux]
-    [%set-node town=@ud =ship]
-    $:  %submit
-        from=id:smart
-        to=id:smart
-        town=@ud
-        gas=[rate=@ud bud=@ud]
-        args=supported-args  ::  see below
-    ==
-  ==
-::
-+$  supported-args  ::  *currently only handling token sends*
-  $%  [%give token=id:smart to=id:smart amount=@ud]
-  ==
+{populate: true}
+
+{import: {mnemonic="12-24 word phrase", password="password"}}
+
+{create: true}
+
+{delete: {pubkey="0x1234.5678"}}  # public key to stop tracking in wallet
+
+{set-node: {town: 1, ship: "~zod"}}  # set the sequencer to send txs to, per town
+
+# currently only supporting token sends
+# 'from' is our pubkey
+# 'to' is the address of the smart contract
+# 'town' is the number ID of the town on which the contract&rice are deployed
+# 'gas' rate and bud are amounts of zigs to spend on tx
+# 'args' will eventually cover many types of transactions,
+# currently only concerned with token sends following this format,
+# where 'token' is address of token metadata rice, 'to' is pubkey receiving tokens.
+{submit:
+  {from: "0x1111",
+   to: "0x2222",
+   town: 1,
+   gas: {rate: 1, bud: 10000},
+   args: {give: {token: 0x3333, to: 0x4444, amount: 10}}
+   }
+}
 ```
