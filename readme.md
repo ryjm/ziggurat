@@ -54,11 +54,11 @@ links to other desks, such as base-dev and garden-dev.
 ```
 {populate: true}
 
-{import: {mnemonic="12-24 word phrase", password="password"}}
+{import: {mnemonic: "12-24 word phrase", password: "password"}}
 
 {create: true}
 
-{delete: {pubkey="0x1234.5678"}}  # public key to stop tracking in wallet
+{delete: {pubkey: "0x1234.5678"}}  # public key to stop tracking in wallet
 
 {set-node: {town: 1, ship: "~zod"}}  # set the sequencer to send txs to, per town
 
