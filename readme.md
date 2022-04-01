@@ -33,14 +33,7 @@ links to other desks, such as base-dev and garden-dev.
 
 ### To initialize a blockchain:
 
-1. Poke the wallet agent to generate a private key (where 'XXX' is your seed -- keys generated with seeds `0xdead`, `0xbeef`, and `0xcafe` have zigs tokens already in their wallets).
-`:wallet &zig-wallet-poke [%set-keys 'XXX']`
-
-2. Start up a blockchain running solely on your ship:
-`:ziggurat|start-testnet now`
-
-3. Start up the sequencer agent to run a town on that chain, where 1 here is the town ID.
-`:sequencer|init 1`
+*TODO: make this work again with new wallet*
 
 ### To use the wallet
 
@@ -53,24 +46,27 @@ links to other desks, such as base-dev and garden-dev.
 3. Scry for a JSON dict of known assets (rice), keyed by address, then by rice address:
 `.^(json %gx /=wallet=/book/json)`
 
-4. Wallet pokes available:
+4. Scry for JSON dict of token metadata we're aware of:
+`.^(json %gx /=wallet=/token-metadata/json)`
 
-*NOTE: %submit poke will change to get rid of my-grains and cont-grains once wallet can handle collating those itself.*
+4. Wallet pokes available:
+(only those with JSON support shown)
 ```
-[%populate ~]  :: populate wallet with fake data, for testing
-[%import seed=@]
-[%create ~]
-[%delete address=@]
-[%set-node town=@ud =ship]
-[%set-nonce address=@ux town=@ud new=@ud]  ::  mostly for testing
-$:  %submit
-    from=id:smart  ::  account in your wallet to send from
-    sequencer=(unit ship)  ::  optional custom node choice
-    to=id:smart
-    town=@ud
-    gas=[rate=@ud bud=@ud]
-    args=(unit *)
-    my-grains=(set @ux)
-    cont-grains=(set @ux)
-==
+$%  [%populate ~]  :: populate wallet with fake data, for testing
+    [%import seed=@]
+    [%create ~]
+    [%delete pubkey=@ux]
+    [%set-node town=@ud =ship]
+    $:  %submit
+        from=id:smart
+        to=id:smart
+        town=@ud
+        gas=[rate=@ud bud=@ud]
+        args=supported-args  ::  see below
+    ==
+  ==
+::
++$  supported-args  ::  *currently only handling token sends*
+  $%  [%give token=id:smart to=id:smart amount=@ud]
+  ==
 ```

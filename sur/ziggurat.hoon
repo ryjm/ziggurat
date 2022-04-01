@@ -81,7 +81,7 @@
   ==
 ::
 +$  supported-args
-  $%  [%give token=id:smart to=id:smart known=? amount=@ud]
+  $%  [%give token=id:smart to=id:smart amount=@ud]
   ==
 ::
 +$  token-metadata

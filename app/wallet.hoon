@@ -3,7 +3,7 @@
 ::  Uqbar wallet agent. Stores private key and facilitates signing
 ::  transactions, holding nonce values, and keeping track of owned data.
 ::
-/+  *ziggurat, default-agent, dbug, verb
+/+  *ziggurat, default-agent, dbug, verb, bip32
 |%
 +$  card  card:agent:gall
 +$  state-0
@@ -90,13 +90,13 @@
         :-  [1 0x0 'zigs']
         :*  (fry-rice:smart pub 0x0 1 `@`'zigs')
             0x0  pub  1
-            [%& `@`'zigs' [100.000.000 ~]]
+            [%& `@`'zigs' [100.000.000 ~ `@ux`'zigs' `@ux`'zigs-address-book']]
         ==
       =/  fake-2
         :-  [1 `@ux`'fake-token' 'wETH']
         :*  (fry-rice:smart pub `@ux`'fake-token' 1 `@`'wETH')
             `@ux`'fake-token'  pub  1
-            [%& `@`'wETH' [173.000 ~]]
+            [%& `@`'wETH' [173.000 ~ `@ux`'weth' 0x9999.9999]]
         ==
       =/  zigs-metadata
         :*  name='Uqbar Tokens'
@@ -145,7 +145,7 @@
       =/  node=ship      (~(gut by nodes.state) town.act our.bowl)
       ::  need to check transaction type and collect rice based on it
       ::  only supporting small subset of contract calls, for tokens and NFTs
-      =/  grains=[(set @ux) (set @ux)]
+      =/  formatted=[args=(unit *) our-grains=(set @ux) cont-grains=(set @ux)]
         ?-    -.args.act
             %give
           ::  TODO use block explorer to find rice if it exists and restructure this
@@ -153,11 +153,13 @@
           =/  metadata  (~(got by metadata-store.state) token.args.act)
           =/  =book  (~(got by tokens.state) from.act)
           =/  our-account  (~(got by book) [town.act to.act salt.metadata])
-          [(silt ~[id.our-account]) (silt ~[book.metadata])]
+          :+  `[%give to.args.act ~ amount.args.act]
+            (silt ~[id.our-account])
+          (silt ~[book.metadata])
         ==
-      =/  =yolk:smart    [caller `[-.args.act +.+.args.act] -.grains +.grains]
+      =/  =yolk:smart    [caller args.formatted our-grains.formatted cont-grains.formatted]
       =/  sig=@          (sign:as:acru:(~(got by keys.state) from.act) (sham (jam yolk)))
-      =/  =egg:smart     [[caller sig to.act rate.gas.act bud.gas.act town.act] yolk] 
+      =/  =egg:smart     [[caller sig to.act rate.gas.act bud.gas.act town.act] yolk]
       :_  state(nonces (~(put by nonces) from.act (~(put by our-nonces) town.act +(nonce))))
       :~  :*  %pass  /submit-tx
               %agent  [node ?:(=(0 town.act) %ziggurat %sequencer)]

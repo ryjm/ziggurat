@@ -45,7 +45,6 @@
       %-  ot
       :~  [%token (se %ux)]
           [%to (se %ux)]
-          [%known bo]
           [%amount ni]
       ==
     --

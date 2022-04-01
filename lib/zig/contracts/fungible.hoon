@@ -33,9 +33,8 @@
   |=  inp=zygote
   ^-  chick
   |^
-  =+  caller-id=(pin caller.inp)
   ?~  args.inp  !!
-  (process (hole arguments +.u.args.inp))
+  (process (hole arguments +.u.args.inp) (pin caller.inp))
   ::
   ::  molds used by writes to this contract
   ::
@@ -67,8 +66,8 @@
   ::
   +$  arguments
     $%  ::  token holder actions
-        [%give to=id known=? amount=@ud]
-        [%take to=id known=? from=id amount=@ud]
+        [%give to=id to-rice=(unit id) amount=@ud]
+        [%take to=id to-rice=(unit id) from-rice=id amount=@ud]
         [%set-allowance who=id amount=@ud]  ::  (to revoke, call with amount=0)
         ::  token management actions
         [%mint to=(set [id bal=@ud])]  ::  can only be called by minters, can't mint above cap
@@ -88,52 +87,112 @@
   ::  because we don't want failing transactions to waste more gas than required
   ::
   ++  process
-    |=  args=arguments
+    |=  [args=arguments caller-id=id]
     ?-    -.args
         %give
       ::  grab giver's rice from the input. it should be only rice in the map
       =/  giv=grain  -:~(val by grains.inp)
-      ?>  &(=(lord.giv id) ?=(%& -.germ.giv))
+      ?>  &(=(lord.giv me.cart) ?=(%& -.germ.giv))
       =/  giver=account  (hole account data.p.germ.giv)
       ?>  (gte balance.giver amount.args)
-      ?:  known.args
-        ::  if known, %give expects 2 rice, the giving account in zygote, and
-        ::  the receiving one in owns.cart.
-        =/  rec=grain  -:~(val by owns.cart)
-        ?>  &(=(lord.rec id) ?=(%& -.germ.rec))
-        =/  receiver=account  (hole account data.p.germ.rec)
-        ::  alter the two balances inside the grains
-        =:  data.p.germ.giv  giver(balance (sub balance.giver amount.args))
-            data.p.germ.rec  receiver(balance (add balance.receiver amount.args))
-        ==
-        ::  return the result: two changed grains
-        [%& (malt ~[[id.giv giv] [id.rec rec]]) ~]
-      ::  if !known, we check the address book to see if rice exists.
-      ::  if it does, we issue a %give to it, otherwise we issue a new rice and %give.
-      =/  bok=grain  -:~(val by owns.cart)
-      ?>  &(=(lord.bok id) ?=(%& -.germ.bok))
-      =/  book=address-book  (hole address-book data.p.germ.bok)
-      ?~  rec=(~(get by book) to.args)
-        ::  create new rice for reciever and add it to state, passing it into
-        ::  a continuation-call that will attempt to use %give on this new rice.
-        =/  new-id=id  (fry-rice to.args me.cart town-id.cart salt.p.germ.giv)
-        =/  new-grain=grain
-          [new-id me.cart to.args town-id.cart [%& salt.p.germ.giv [0 ~ metadata.giver book.giver]]]
+      ?~  to-rice.args
+        ::  if unknown, we check the address book to see if rice exists.
+        ::  if it does, we issue a %give to it, otherwise we issue a new rice and %give.
+        =/  bok=grain  (~(got by owns.cart) book.giver)
+        ?>  &(=(lord.bok me.cart) ?=(%& -.germ.bok))
+        =/  book=address-book  (hole address-book data.p.germ.bok)
+        ?~  rec=(~(get by book) to.args)
+          ::  create new rice for reciever and add it to state
+          ::  update address book with new rice
+          =/  new-id=id  (fry-rice to.args me.cart town-id.cart salt.p.germ.giv)
+          =/  new-grain=grain
+            [new-id me.cart to.args town-id.cart [%& salt.p.germ.giv [amount.args ~ metadata.giver book.giver]]]
+          =.  data.p.germ.giv  giver(balance (sub balance.giver amount.args))
+          =.  data.p.germ.bok  (~(put by book) new-id to.args)
+          [%& (malt ~[[id.giv giv] [id.bok bok]]) (malt ~[[new-id new-grain]])]
+        ::  continuation call: %give to rice found in book
         :^  %|  ~
           :+  me.cart  town-id.cart
-          [caller.inp `[%give to.args %.y amount.args] (silt ~[id.giv]) (silt ~[new-id])]
-        [~ (malt ~[[new-id new-grain]])]
-      ::  %give to rice found in book
-      :^  %|  ~
-        :+  me.cart  town-id.cart
-        [caller.inp `[%give to.args %.y amount.args] (silt ~[id.giv]) (silt ~[u.rec])]
-      [~ ~]
+          [caller.inp `[%give to.args `u.rec amount.args] (silt ~[id.giv]) (silt ~[u.rec])]
+        [~ ~]
+      ::  if known, %give expects 2 rice, the giving account in zygote, and
+      ::  the receiving one in owns.cart.
+      =/  rec=grain  (~(got by owns.cart) u.to-rice.args)
+      ?>  ?=(%& -.germ.rec)
+      =/  receiver=account  (hole account data.p.germ.rec)
+      ::  assert that tokens match
+      ?>  =(metadata.receiver metadata.giver)
+      ::  alter the two balances inside the grains
+      =:  data.p.germ.giv  giver(balance (sub balance.giver amount.args))
+          data.p.germ.rec  receiver(balance (add balance.receiver amount.args))
+      ==
+      ::  return the result: two changed grains
+      [%& (malt ~[[id.giv giv] [id.rec rec]]) ~]
     ::
         %take
-      !!
+      ::  %take expects the account that will be taken from in owns.cart
+      ::  if the receiving account is known, it will also be in owns.cart, otherwise
+      ::  the address book should be there to find it, like in %give.
+      =/  giv=grain  (~(got by owns.cart) from-rice.args)
+      ?>  ?=(%& -.germ.giv)
+      =/  giver=account  (hole account data.p.germ.giv)
+      =/  allowance=@ud  (~(got by allowances.giver) caller-id)
+      ::  assert caller is permitted to spend this amount of token
+      ?>  (gte allowance amount.args)
+      ?~  to-rice.args
+        ::  search in address book like %give
+        =/  bok=grain  (~(got by owns.cart) book.giver)
+        ?>  ?=(%& -.germ.bok)
+        =/  book=address-book  (hole address-book data.p.germ.bok)
+        ?~  rec=(~(get by book) to.args)
+          ::  create new rice for reciever and add it to state
+          ::  update address book with new rice
+          =/  new-id=id  (fry-rice to.args me.cart town-id.cart salt.p.germ.giv)
+          =/  new-grain=grain
+            [new-id me.cart to.args town-id.cart [%& salt.p.germ.giv [amount.args ~ metadata.giver book.giver]]]
+          =:  data.p.germ.bok  (~(put by book) new-id to.args)
+              data.p.germ.giv
+            %=  giver
+              balance  (sub balance.giver amount.args)
+              allowances  (~(jab by allowances.giver) caller-id |=(old=@ud (sub old amount.args)))
+            ==
+          ==
+          [%& (malt ~[[id.giv giv] [id.bok bok]]) (malt ~[[new-id new-grain]])]
+        ::  continuation call: %take to rice found in book
+        :^  %|  ~
+          :+  me.cart  town-id.cart
+          [caller.inp `[%take to.args `u.rec id.giv amount.args] ~ (silt ~[id.giv u.rec])]
+        [~ ~]
+      ::  direct send
+      =/  rec=grain  (~(got by owns.cart) u.to-rice.args)
+      ?>  ?=(%& -.germ.rec)
+      =/  receiver=account  (hole account data.p.germ.rec)
+      ?>  =(metadata.receiver metadata.giver)
+      ::  update the allowance of taker
+      =.  allowances.giver
+        %+  ~(jab by allowances.giver)  caller-id
+        |=(old=@ud (sub old amount.args))
+      =:  data.p.germ.rec  receiver(balance (add balance.receiver amount.args))
+          data.p.germ.giv
+        %=  giver
+          balance  (sub balance.giver amount.args)
+          allowances  (~(jab by allowances.giver) caller-id |=(old=@ud (sub old amount.args)))
+        == 
+      ==
+      [%& (malt ~[[id.giv giv] [id.rec rec]]) ~]
     ::
         %set-allowance
-      !!
+      ::  let some pubkey spend tokens on your behalf
+      ::  note that you can arbitrarily allow as much spend as you want,
+      ::  but spends will still be constrained by token balance
+      ::  single rice expected, account
+      =/  acc=grain  -:~(val by grains.inp)
+      ?>  &(=(lord.acc me.cart) ?=(%& -.germ.acc))
+      =/  =account  (hole account data.p.germ.acc)
+      =.  data.p.germ.acc
+        account(allowances (~(put by allowances.account) who.args amount.args))
+      ::  return single changed rice
+      [%& (malt ~[[id.acc acc]]) ~]
     ::
         %mint
       !!
