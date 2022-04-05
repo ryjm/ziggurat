@@ -19,7 +19,7 @@
   ::  evaluate nock with zink
   ++  eval-noun
     |=  n=^
-    ^-  [res=* hint-js=@t c=(map * phash)]
+    ^-  [* @t (map * phash)]
     =/  [res=* st=[h=hints c=(map * phash)]]
           (~(eval eval-door [~ cache]) n)
     =.  cache  c.st
@@ -28,7 +28,7 @@
   ::  compile a hoon file and evaluate it with zink
   ++  eval-hoon
     |=  [lib=path file=path arm=@tas sample=@t]
-    ^-  [res=* hint-js=@t c=(map * phash)]
+    ^-  [* @t (map * phash)]
     =/  clib
       ?~  lib  !>(~)
       =/  libsrc  .^(@t %cx lib)
@@ -48,19 +48,18 @@
     ^-  [js=json cache=(map * phash)]
     =^  hs  cache  (~(hash eval-door [~ cache]) -.n)
     =^  hf  cache  (~(hash eval-door [~ cache]) +.n)
-    :-  %-  pairs:enjs:format
-        :~
-          ['subject' s+(num:enjs hs)]
-          ['formula' s+(num:enjs hf)]
-          ['hints' (all:enjs h)]
+    :_  cache
+        %-  pairs:enjs:format
+        :~  ['subject' s+(num:enjs hs)]
+            ['formula' s+(num:enjs hf)]
+            ['hints' (all:enjs h)]
         ==
-    cache
   ::
   ++  eval-door
     |_  st=[h=hints c=(map * phash)]
     ++  eval
       |=  [s=* f=*]
-      ^-  [res=* st=[h=hints c=(map * phash)]]
+      ^-  [* hints (map * phash)]
       =*  c  c.st
       =*  h  h.st
       =^  sroot  c  (hash s)
@@ -68,10 +67,11 @@
       |^
       ::~&  >  "{<s>}  {<f>}"
       ?+    -.f  !!
-        ::  formula is a cell; do distribution
-        ::
+      ::  formula is a cell; do distribution
+      ::
           ^
-        =/  [subf1=* subf2=*]  [-.f +.f]
+        =*  subf1  -.f
+        =*  subf2  +.f
         =^  res-head  st
           (eval [s subf1])
         =^  res-tail  st
@@ -79,7 +79,7 @@
         =^  hsubf1  c  (hash subf1)
         =^  hsubf2  c  (hash subf2)
         :-  [res-head res-tail]
-            [(put-hint [%cons hsubf1 hsubf2]) c]
+        [(put-hint [%cons hsubf1 hsubf2]) c]
         ::
           %0
         ?>  ?=(@ +.f)
@@ -88,14 +88,15 @@
         =^  hres  c  (hash res)
         =^  sibs  c  (merk-sibs s axis)
         :-  res
-            [(put-hint [%0 axis hres sibs]) c]
-        ::
+        [(put-hint [%0 axis hres sibs]) c]
+      ::
           %1
         =^  hres  c  (hash +.f)
         [+.f (put-hint [%1 hres]) c]
-        ::
+      ::
           %2
-        =/  [subf1=* subf2=*]  [+<.f +>.f]
+        =*  subf1  +<.f
+        =*  subf2  +>.f
         =^  hsubf1  c  (hash subf1)
         =^  hsubf2  c  (hash subf2)
         =^  res1  st
@@ -105,7 +106,7 @@
         =^  res3  st
           (eval [res1 res2])
         [res3 (put-hint [%2 hsubf1 hsubf2]) c]
-        ::
+      ::
           %3
         =^  res  st
           (eval [s +.f])
@@ -115,16 +116,17 @@
         =^  hhash  c  (hash -.res)
         =^  thash  c  (hash +.res)
         [0 (put-hint [%3 hsubf %cell hhash thash]) c]
-        ::
+      ::
           %4
         =^  res  st
           (eval [s +.f])
         =^  hsubf  c  (hash +.f)
         ?>  ?=(@ res)
         [(add 1 res) (put-hint [%4 hsubf res]) c]
-        ::
+      ::
           %5
-        =/  [subf1=* subf2=*]  [+<.f +>.f]
+        =*  subf1  +<.f
+        =*  subf2  +>.f
         =^  hsubf1  c  (hash subf1)
         =^  hsubf2  c  (hash subf2)
         =^  res1  st
@@ -132,9 +134,11 @@
         =^  res2  st
           (eval [s subf2])
         [=(res1 res2) (put-hint [%5 hsubf1 hsubf2]) c]
-        ::
+      ::
           %6
-        =/  [subf1=* subf2=* subf3=*]  [+<.f +>-.f +>+.f]
+        =*  subf1  +<.f
+        =*  subf2  +>-.f
+        =*  subf3  +>+.f
         =^  hsubf1  c  (hash subf1)
         =^  hsubf2  c  (hash subf2)
         =^  hsubf3  c  (hash subf3)
@@ -143,12 +147,13 @@
         ?>  ?|(=(0 res1) =(1 res1))
         =^  res2  st
           ?:  =(0 res1)
-            (eval [s subf2])
-            (eval [s subf3])
+          (eval [s subf2])
+          (eval [s subf3])
         [res2 (put-hint [%6 hsubf1 hsubf2 hsubf3]) c]
-        ::
+      ::
           %7
-        =/  [subf1=* subf2=*]  [+<.f +>.f]
+        =*  subf1  +<.f
+        =*  subf2  +>.f
         =^  hsubf1  c  (hash subf1)
         =^  hsubf2  c  (hash subf2)
         =^  res1  st
@@ -156,9 +161,10 @@
         =^  res2  st
           (eval [res1 subf2])
         [res2 (put-hint [%7 hsubf1 hsubf2]) c]
-        ::
+      ::
           %8
-        =/  [subf1=* subf2=*]  [+<.f +>.f]
+        =*  subf1  +<.f
+        =*  subf2  +>.f
         =^  hsubf1  c  (hash subf1)
         =^  hsubf2  c  (hash subf2)
         =^  res1  st
@@ -166,9 +172,10 @@
         =^  res2  st
           (eval [[res1 s] subf2])
         [res2 (put-hint [%8 hsubf1 hsubf2]) c]
-        ::
+      ::
           %9
-        =/  [axis=* subf1=*]  [+<.f +>.f]
+        =*  axis   +<.f
+        =*  subf1  +>.f
         ?>  ?=(@ axis)
         =^  hsubf1  c  (hash subf1)
         =^  res1  st
@@ -181,10 +188,12 @@
         =^  sibs  c  (merk-sibs res1 axis)
         =^  hres1  c  (hash res1)
         :-  res2
-            [(put-hint [%9 axis hsubf1 hf2 sibs]) c]
-        ::
+        [(put-hint [%9 axis hsubf1 hf2 sibs]) c]
+      ::
           %10
-        =/  [axis=* subf1=* subf2=*]  [+<-.f +<+.f +>.f]
+        =*  axis   +<-.f
+        =*  subf1  +<+.f
+        =*  subf2  +>.f
         ?>  ?=(@ axis)
         =^  hsubf1  c  (hash subf1)
         =^  hsubf2  c  (hash subf2)
@@ -198,11 +207,10 @@
         =^  holdleaf  c  (hash oldleaf)
         =^  sibs  c  (merk-sibs oldtree axis)
         :-  res
-            [(put-hint [%10 axis hsubf1 hsubf2 holdleaf sibs]) c]
-        ::
+        [(put-hint [%10 axis hsubf1 hsubf2 holdleaf sibs]) c]
+      ::
           %11
-        =/  subf1=*  +>.f
-        (eval [s subf1])
+        (eval [s +>.f])
       ==
       ::
       ++  put-hint
@@ -226,7 +234,7 @@
         =/  pick  (cap axis)
         =^  sibling=phash  c
           %-  hash
-             ?-(pick %2 +.s, %3 -.s)
+          ?-(pick %2 +.s, %3 -.s)
         =/  child  ?-(pick %2 -.s, %3 +.s)
         %=  $
           s     child
@@ -259,20 +267,23 @@
     |=  h=^hints
     ^-  json
     (hints h)
+  ::
   ++  hints
     |=  h=^hints
     |^  ^-  json
     %-  pairs:enjs:format
     %+  turn  ~(tap by h)
-      |=  [sroot=phash v=(map phash cairo-hint)]
-      [(num sroot) (inner v)]
+    |=  [sroot=phash v=(map phash cairo-hint)]
+    [(num sroot) (inner v)]
+    ::
     ++  inner
       |=  i=(map phash cairo-hint)
       ^-  json
       %-  pairs:enjs:format
       %+  turn  ~(tap by i)
-        |=  [froot=phash hin=cairo-hint]
-        [(num froot) (en-hint hin)]
+      |=  [froot=phash hin=cairo-hint]
+      [(num froot) (en-hint hin)]
+    ::
     ++  en-hint
       |=  hin=cairo-hint
       ^-  json
@@ -285,20 +296,21 @@
             s+(num leaf.hin)
             a+(turn path.hin |=(p=phash s+(num p)))
         ==
-        ::
+      ::
           %1
         ~[s+'1' s+(num res.hin)]
-        ::
+      ::
           %2
         ~[s+'2' s+(num subf1.hin) s+(num subf2.hin)]
-        ::
+      ::
           %3
-        ::  if atom, head and tail are 0
-        ::
+      ::  if atom, head and tail are 0
+      ::
         :*  s+'3'  s+(num subf.hin)
             ?-  -.subf-res.hin
                 %atom
               ~[s+(num +.subf-res.hin) s+'0' s+'0']
+            ::
                 %cell
               :~  s+'0'
                   s+(num head.subf-res.hin)
@@ -306,22 +318,22 @@
               ==
             ==
         ==
-        ::
+      ::
           %4
         ~[s+'4' s+(num subf.hin) s+(num atom.hin)]
-        ::
+      ::
           %5
         ~[s+'5' s+(num subf1.hin) s+(num subf2.hin)]
-        ::
+      ::
           %6
         ~[s+'6' s+(num subf1.hin) s+(num subf2.hin) s+(num subf3.hin)]
-        ::
+      ::
           %7
         ~[s+'7' s+(num subf1.hin) s+(num subf2.hin)]
-        ::
+      ::
           %8
         ~[s+'8' s+(num subf1.hin) s+(num subf2.hin)]
-        ::
+      ::
           %9
         :~  s+'9'
             s+(num axis.hin)
@@ -329,7 +341,7 @@
             s+(num leaf.hin)
             a+(turn path.hin |=(p=phash s+(num p)))
         ==
-        ::
+      ::
           %10
         :~  s+'10'
             s+(num axis.hin)
@@ -338,10 +350,10 @@
             s+(num oldleaf.hin)
             a+(turn path.hin |=(p=phash s+(num p)))
         ==
-        ::
+      ::
           %cons
         ~[s+'cons' s+(num subf1.hin) s+(num subf2.hin)]
-        ::
+      ::
       ==
     --
   ::
