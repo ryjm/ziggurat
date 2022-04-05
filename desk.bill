@@ -1,4 +1,6 @@
 :~  %ziggurat
+    %sequencer
+    %wallet
     %dao-graph-pull-hook
     %dao-graph-push-hook
     %dao

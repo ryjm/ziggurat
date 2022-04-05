@@ -1,8 +1,8 @@
 /-  *ziggurat
-|_  act=action
+|_  act=hall-poke
 ++  grab
   |%
-  ++  noun  action
+  ++  noun  hall-poke
   --
 ++  grow
   |%

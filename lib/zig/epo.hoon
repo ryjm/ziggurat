@@ -12,6 +12,11 @@
   ++  our-block
     |=  data=chunks
     ^-  (quip card epoch)
+    ~&  >  "creating block"  ::  printout
+    ::  TODO temporary: make a fake chunk if we have none
+    =?  data  ?=(~ data)
+      (malt ~[[777 [~ p=~ q=~]]])
+    ~&  >  "chunks in block: {<~(key by data)>}"
     :: TODO: check time and if necessary skip our own block
     :: (lth now.bowl (deadline:epo start-time.cur slot-num))
     =/  [last-num=@ud last-slot=(unit slot)]
@@ -26,13 +31,18 @@
     =/  prev-hed-hash
       ?~  last-slot  prev-hash
       (sham p.u.last-slot)
+    ~|  "we must have at least one chunk to produce a block"
+    ?>  ?=(^ data)
     =/  data-hash  (sham data)
     =/  =slot
       =/  hed=block-header  [next-num prev-hed-hash data-hash]
       [hed `[(sign:sig our now (sham hed)) data]]
+    ~&  >  "block size: {<(met 3 (jam slot))>} bytes"
     :_  cur(slots (put:sot slots.cur next-num slot))
     :-  (give-on-updates [%new-block num.cur p.slot (need q.slot)])
-    ?.  =((lent order.cur) +(next-num))  ~
+    =+  l=(lent order.cur)
+    ?.  =(l +(next-num))
+      (notify-sequencer (snag +(next-num) order.cur))^~
     ::  start new epoch
     ::
     (poke-new-epoch our +(num.cur))^~
@@ -60,6 +70,7 @@
   ++  their-block
     |=  [hed=block-header blk=(unit block)]
     ^-  (quip card epoch)
+    ~&  >  "it's {<src>}'s block"  ::  printout
     =/  [last-num=@ud last-slot=(unit slot)]
       (get-last-slot slots.cur)
     ::~&  num.hed^[last-num last-slot]
@@ -79,7 +90,8 @@
             ?=(^ q.u.blk)
         ==
     ~|  "their data hash must be valid!"
-    ?>  ?&  =(?~(blk (sham ~) (sham q.u.blk)) data-hash.hed)
+    =/  blk-hash  ?~(blk (sham ~) (sham q.u.blk))
+    ?>  ?&  =(blk-hash data-hash.hed)
             ?|(?=(~ blk) !=(data-hash.hed (sham ~)))
         ==
     ::  TODO: replace with pubkeys in a helix
@@ -93,7 +105,9 @@
     :-  ::  send block header to others
         ::
         (give-on-updates [%saw-block num.cur hed])
-    ?.  =((lent order.cur) +(next-num))  ~
+    =+  l=(lent order.cur)
+    ?.  =(l +(next-num))
+      (notify-sequencer (snag +(next-num) order.cur))^~
     ::  start new epoch
     ::
     (poke-new-epoch our +(num.cur))^~
@@ -106,13 +120,10 @@
     ^-  (list card)
     ?:  (gth epoch-num num.cur)
       (start-epoch-catchup src epoch-num)^~
-    ?:  (lth epoch-num num.cur)
-      ~
     =/  slot=(unit slot)  (get:sot slots.cur num.hed)
-    ?~  slot  ~
-    ?:  =(p.u.slot hed)
-      ~
+    ?:  (lth epoch-num num.cur)  ~
+    ?~  slot                     ~
+    ?:  =(p.u.slot hed)          ~
     (start-epoch-catchup src num.cur)^~
   --
 --
-

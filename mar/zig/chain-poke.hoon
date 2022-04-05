@@ -1,12 +1,12 @@
 /-  *ziggurat
-|_  m-act=mempool-action
+|_  act=chain-poke
 ++  grab
   |%
-  ++  noun  mempool-action
+  ++  noun  chain-poke
   --
 ++  grow
   |%
-  ++  noun  m-act
+  ++  noun  act
   --
 ++  grad  %noun
 --
