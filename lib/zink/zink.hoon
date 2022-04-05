@@ -49,11 +49,11 @@
     =^  hs  cache  (~(hash eval-door [~ cache]) -.n)
     =^  hf  cache  (~(hash eval-door [~ cache]) +.n)
     :_  cache
-        %-  pairs:enjs:format
-        :~  ['subject' s+(num:enjs hs)]
-            ['formula' s+(num:enjs hf)]
-            ['hints' (all:enjs h)]
-        ==
+    %-  pairs:enjs:format
+    :~  ['subject' s+(num:enjs hs)]
+        ['formula' s+(num:enjs hf)]
+        ['hints' (all:enjs h)]
+    ==
   ::
   ++  eval-door
     |_  st=[h=hints c=(map * phash)]
