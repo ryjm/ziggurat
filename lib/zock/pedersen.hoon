@@ -2,7 +2,7 @@
 ++  pedersen
   |%
   ++  t
-    ^-  domain
+    ^-  domain:secp:crypto
     :*  :(add (bex 251) (mul 17 (bex 192)) 1)
         1
         3.141.592.653.589.793.238.462.643.383.279.
@@ -19,7 +19,7 @@
           457.884.512.865.583
     ==
   ::
-  ++  curve             ~(. secp 32 t)
+  ++  curve             ~(. secp:crypto 32 t)
   ++  add-points        add-points:curve
   ++  mul-point-scalar  mul-point-scalar:curve
   ++  p0
