@@ -2,9 +2,9 @@
 /+  smart=zig-sys-smart
 ::
 |%
-+$  role         @tas  ::  E.g. %marketing, %development
-+$  address      ?(id:smart resource:r)  ::  [chain=@tas id:smart] for other chains?
-+$  member       (each id:smart ship)
++$  role     @tas  ::  E.g. %marketing, %development
++$  address  ?(id:smart resource:r)  ::  [chain=@tas id:smart] for other chains?
++$  member   (each id:smart ship)
 ::  name might be, e.g., %read or %write for a graph;
 ::  %spend for treasury/rice
 +$  permissions  (map name=@tas (jug address role))
@@ -43,7 +43,8 @@
       [%remove-comms dao-id=id:smart]
   ==
 ::
-+$  daos  (map id:smart dao)
-+$  dao-id-to-rid  (map id:smart resource:r)
-+$  dao-rid-to-id  (map resource:r id:smart)
++$  dao-identifier  (each dao address)
++$  daos            (map id:smart dao)
++$  dao-id-to-rid   (map id:smart resource:r)
++$  dao-rid-to-id   (map resource:r id:smart)
 --

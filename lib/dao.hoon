@@ -8,116 +8,111 @@
 |_  =bowl:gall
 +*  io  ~(. agentio bowl)
 ::
+++  get-members-and-permissions
+  |=  =dao-identifier:d
+  ^-  (unit [=members:d =permissions:d])
+  ?~  dao=(get-dao dao-identifier)  ~
+  `[members.u.dao permissions.u.dao]
+::
+++  get-id-to-ship
+  |=  =dao-identifier:d
+  ^-  (unit id-to-ship:d)
+  ?~  dao=(get-dao dao-identifier)  ~
+  `id-to-ship.u.dao
+::
+++  get-ship-to-id
+  |=  =dao-identifier:d
+  ^-  (unit ship-to-id:d)
+  ?~  dao=(get-dao dao-identifier)  ~
+  `ship-to-id.u.dao
+::
 ++  member-to-id
-  |=  [=member:d =address:d]
+  |=  [=member:d =dao-identifier:d]
   ^-  (unit id:smart)
   ?:  ?=(%& -.member)  `p.member
-  ?~  ship-to-id=(get-ship-to-id address)  ~
-  (~(get by u.ship-to-id) p.member)
+  ?~  dao=(get-dao dao-identifier)  ~
+  (~(get by ship-to-id.u.dao) p.member)
 ::
 ++  member-to-ship
-  |=  [=member:d =address:d]
+  |=  [=member:d =dao-identifier:d]
   ^-  (unit ship)
   ?:  ?=(%| -.member)  `p.member
-  ?~  id-to-ship=(get-id-to-ship address)  ~
-  (~(get by u.id-to-ship) p.member)
-::
-++  is-allowed
-  |=  $:  =member:d
-          =address:d
-          permission-name=@tas
-          =members:d
-          =permissions:d
-      ==
-  ^-  ?
-  ?~  permissioned=(~(get by permissions) permission-name)  %.n
-  ?~  roles-with-access=(~(get ju u.permissioned) address)  %.n
-  ?~  user-id=(member-to-id member address)                 %.n
-  ?~  ship-roles=(~(get ju members) u.user-id)              %.n
-  ?!  .=  0
-  %~  wyt  in
-  %-  ~(int in `(set role:d)`ship-roles)
-  `(set role:d)`roles-with-access
-::
-++  is-allowed-helper
-  |=  $:  =member:d
-          identifier=address:d
-          =address:d
-          permission-name=@tas
-      ==
-  ^-  ?
-  ?~  mp=(get-members-and-permissions identifier)  %.n
-  =*  members      members.u.mp
-  =*  permissions  permissions.u.mp
-  (is-allowed member address permission-name members permissions)
-::
-++  is-allowed-admin-write-read
-  |=  $:  =member:d
-          identifier=address:d
-          =address:d
-      ==
-  ^-  [? ? ?]
-  ?~  mp=(get-members-and-permissions identifier)  [%.n %.n %.n]
-  =*  members      members.u.mp
-  =*  permissions  permissions.u.mp
-  :+  (is-allowed member address %admin members permissions)
-    (is-allowed member address %write members permissions)
-  (is-allowed member address %read members permissions)
-::
-++  is-allowed-write
-  |=  $:  =member:d
-          identifier=address:d
-          =address:d
-      ==
-  ^-  ?
-  (is-allowed-helper member identifier address %write)
-::
-++  is-allowed-read
-  |=  $:  =member:d
-          identifier=address:d
-          =address:d
-      ==
-  ^-  ?
-  (is-allowed-helper member identifier address %read)
-::
-++  is-allowed-admin
-  |=  $:  =member:d
-          identifier=address:d
-          =address:d
-      ==
-  ^-  ?
-  (is-allowed-helper member identifier address %admin)
+  ?~  dao=(get-dao dao-identifier)  ~
+  (~(get by id-to-ship.u.dao) p.member)
 ::
 ++  get-dao
-  |=  =address:d
+  |=  =dao-identifier:d
   ^-  (unit dao:d)
+  ?:  ?=(%& -.dao-identifier)  `p.dao-identifier
   =/  scry-path=path
-    ?:  ?=(id:smart address)
-      /daos/(scot %ux address)/noun
-    :(weld /daos (en-path:rl address) /noun)
+    ?:  ?=(id:smart p.dao-identifier)
+      /daos/(scot %ux p.dao-identifier)/noun
+    :(weld /daos (en-path:rl p.dao-identifier) /noun)
   .^  (unit dao:d)
       %gx
       %+  scry:io  %dao
       scry-path
   ==
 ::
-++  get-members-and-permissions
-  |=  =address:d
-  ^-  (unit [=members:d =permissions:d])
-  ?~  dao=(get-dao address)  ~
-  `[members.u.dao permissions.u.dao]
+++  is-allowed
+  |=  $:  =member:d
+          =address:d
+          permission-name=@tas
+          =dao-identifier:d
+      ==
+  ^-  ?
+  ?~  dao=(get-dao dao-identifier)                                %.n
+  ?~  permissioned=(~(get by permissions.u.dao) permission-name)  %.n
+  ?~  roles-with-access=(~(get ju u.permissioned) address)        %.n
+  ?~  user-id=(member-to-id member [%& u.dao])                    %.n
+  ?~  ship-roles=(~(get ju members.u.dao) u.user-id)              %.n
+  ?!  .=  0
+  %~  wyt  in
+  %-  ~(int in `(set role:d)`ship-roles)
+  `(set role:d)`roles-with-access
 ::
-++  get-id-to-ship
-  |=  =address:d
-  ^-  (unit id-to-ship:d)
-  ?~  dao=(get-dao address)  ~
-  `id-to-ship.u.dao
+++  is-allowed-admin-write-read
+  |=  $:  =member:d
+          =address:d
+          =dao-identifier:d
+      ==
+  ^-  [? ? ?]
+  ?~  dao=(get-dao dao-identifier)  [%.n %.n %.n]
+  :+  (is-allowed member address %admin [%& u.dao])
+    (is-allowed member address %write [%& u.dao])
+  (is-allowed member address %read [%& u.dao])
 ::
-++  get-ship-to-id
-  |=  =address:d
-  ^-  (unit ship-to-id:d)
-  ?~  dao=(get-dao address)  ~
-  `ship-to-id.u.dao
+++  is-allowed-write
+  |=  $:  =member:d
+          =address:d
+          =dao-identifier:d
+      ==
+  ^-  ?
+  (is-allowed member address %write dao-identifier)
+::
+++  is-allowed-read
+  |=  $:  =member:d
+          =address:d
+          =dao-identifier:d
+      ==
+  ^-  ?
+  (is-allowed member address %read dao-identifier)
+::
+++  is-allowed-admin
+  |=  $:  =member:d
+          =address:d
+          =dao-identifier:d
+      ==
+  ^-  ?
+  (is-allowed member address %admin dao-identifier)
+::
+++  is-allowed-host
+  |=  $:  =member:d
+          =address:d
+          =dao-identifier:d
+      ==
+  ^-  ?
+  (is-allowed member address %host dao-identifier)
 ::
 ++  update
   |_  =dao:d

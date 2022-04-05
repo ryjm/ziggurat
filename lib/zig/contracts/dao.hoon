@@ -70,7 +70,7 @@
     ::  otherwise execute proposal and remove from rice
     =.  data.p.germ.my-grain
       dao(proposals (~(del by proposals.dao) id.args))
-    $(inp [me.cart `act.prop grains.inp])
+    $(inp [me.cart `update.prop grains.inp])
   ::
   ::  create a proposal
   ::
