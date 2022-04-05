@@ -1,13 +1,10 @@
 :-  %say
 |=  [[now=@da eny=@uvJ bek=beak] [town-id=@ud to=@ux amt=@ud ~] ~]
-=/  our-zigs  .^(@ux %gx /(scot %p p.bek)/wallet/(scot %da now)/zigs/(scot %ud town-id)/noun)
 :-  %zig-wallet-poke
-:-  %submit
-:*  `p.bek
-    0x0  ::  zigs-wheat-id
+:*  %submit
+    0x2.e3c1.d19b.fd3e.43aa.319c.b816.1c89.37fb.b246.3a65.f84d.8562.155d.6181.8113.c85b
+    `@ux`'fungible'
     town-id
     [1 10.000]
-    `[%give to %.n amt 10.000]
-    (silt ~[our-zigs])
-    (silt ~[`@ux`'address-book'])
+    [%give `@ux`'zigs-metadata' to amt]
 ==

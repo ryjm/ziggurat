@@ -41,7 +41,8 @@
 +$  chunk-update  [%new-chunk =town:smart]
 ::
 +$  chain-poke
-  $%  [%start mode=?(%fisherman %validator) history=epochs validators=(set ship) starting-state=town:smart]
+  $%  [%set-addr =id:smart]
+      [%start mode=?(%fisherman %validator) history=epochs validators=(set ship) starting-state=town:smart]
       [%stop ~]
       [%new-epoch ~]
       [%receive-chunk town-id=@ud =chunk]
@@ -83,6 +84,12 @@
 ::
 +$  supported-args
   $%  [%give token=id:smart to=id:smart amount=@ud]
+      ::  only used on backend for validators/sequencers
+      [%become-validator =signature]
+      [%stop-validating =signature]
+      [%init =signature town=@ud]
+      [%join =signature town=@ud]
+      [%exit =signature town=@ud]
   ==
 ::
 +$  token-metadata
@@ -94,7 +101,6 @@
       mintable=?
       minters=(set id:smart)
       deployer=id:smart
-      book=id:smart
       salt=@
   ==
 ::
@@ -102,6 +108,5 @@
   $:  balance=@ud
       allowances=(map sender=id:smart @ud)
       metadata=id:smart
-      book=id:smart
   ==
 --

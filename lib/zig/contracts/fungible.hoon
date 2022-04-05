@@ -1,4 +1,3 @@
-/+  *zig-sys-smart
 ::
 ::  Fungible token standard. Any new token that wishes to use this standard
 ::  format can be issued through this contract. The contract uses an account
@@ -34,7 +33,7 @@
   ^-  chick
   |^
   ?~  args.inp  !!
-  (process (hole arguments +.u.args.inp) (pin caller.inp))
+  (process (hole arguments u.args.inp) (pin caller.inp))
   ::
   ::  molds used by writes to this contract
   ::
@@ -47,18 +46,14 @@
         mintable=?        ::  whether or not more can be minted
         minters=(set id)  ::  pubkeys permitted to mint, if any
         deployer=id       ::  pubkey which first deployed token
-        book=id           ::  pubkey of address book
         salt=@            ::  data added to hash for rice IDs of this token
+                          ::  (currently hashed: symbol+deployer)
     ==
   ::
-  +$  address-book  (map id id)  ::  map of pubkey to account rice
-  ::
   +$  account
-    $:  balance=@ud  ::  the amount of tokens someone has
-        ::  a map of pubkeys they've permitted to spend their tokens,
-        allowances=(map sender=id @ud)  ::  and how much
-        metadata=id  ::  address of the rice holding this token's metadata
-        book=id      ::  address of the rice holding this token's address book
+    $:  balance=@ud                     ::  the amount of tokens someone has
+        allowances=(map sender=id @ud)  ::  a map of pubkeys they've permitted to spend their tokens and how much
+        metadata=id                     ::  address of the rice holding this token's metadata
     ==
   ::
   ::  patterns of arguments supported by this contract
@@ -66,18 +61,20 @@
   ::
   +$  arguments
     $%  ::  token holder actions
-        [%give to=id to-rice=(unit id) amount=@ud]
+        ::
+        [%give to=id to-rice=(unit id) amount=@ud]  
         [%take to=id to-rice=(unit id) from-rice=id amount=@ud]
         [%set-allowance who=id amount=@ud]  ::  (to revoke, call with amount=0)
         ::  token management actions
+        ::
         [%mint to=(set [id bal=@ud])]  ::  can only be called by minters, can't mint above cap
         $:  %deploy
             distribution=(set [id bal=@ud])  ::  sums to <= cap if mintable, == cap otherwise
-            minters=(set id)  ::  ignored if !mintable, otherwise need at least one
+            minters=(set id)                 ::  ignored if !mintable, otherwise need at least one
             name=@t
-            symbol=@t         ::  size limit?
-            decimals=@ud      ::  min 0, max 18
-            cap=@ud           ::  is equivalent to total supply unless token is mintable
+            symbol=@t                        ::  size limit?
+            decimals=@ud                     ::  min 0, max 18
+            cap=@ud                          ::  is equivalent to total supply unless token is mintable
             mintable=?
         ==
     ==
@@ -96,25 +93,15 @@
       =/  giver=account  (hole account data.p.germ.giv)
       ?>  (gte balance.giver amount.args)
       ?~  to-rice.args
-        ::  if unknown, we check the address book to see if rice exists.
-        ::  if it does, we issue a %give to it, otherwise we issue a new rice and %give.
-        =/  bok=grain  (~(got by owns.cart) book.giver)
-        ?>  &(=(lord.bok me.cart) ?=(%& -.germ.bok))
-        =/  book=address-book  (hole address-book data.p.germ.bok)
-        ?~  rec=(~(get by book) to.args)
-          ::  create new rice for reciever and add it to state
-          ::  update address book with new rice
-          =/  new-id=id  (fry-rice to.args me.cart town-id.cart salt.p.germ.giv)
-          =/  new-grain=grain
-            [new-id me.cart to.args town-id.cart [%& salt.p.germ.giv [amount.args ~ metadata.giver book.giver]]]
-          =.  data.p.germ.giv  giver(balance (sub balance.giver amount.args))
-          =.  data.p.germ.bok  (~(put by book) new-id to.args)
-          [%& (malt ~[[id.giv giv] [id.bok bok]]) (malt ~[[new-id new-grain]])]
-        ::  continuation call: %give to rice found in book
+        ::  create new rice for reciever and add it to state
+        =+  (fry-rice to.args me.cart town-id.cart salt.p.germ.giv)
+        =/  new=grain
+          [- me.cart to.args town-id.cart [%& salt.p.germ.giv [amount.args ~ metadata.giver]]]
+        ::  continuation call: %give to rice we issued
         :^  %|  ~
           :+  me.cart  town-id.cart
-          [caller.inp `[%give to.args `u.rec amount.args] (silt ~[id.giv]) (silt ~[u.rec])]
-        [~ ~]
+          [caller.inp `[%give to.args `id.new amount.args] (silt ~[id.giv]) (silt ~[id.new])]
+        [~ (malt ~[[id.new new]])]
       ::  if known, %give expects 2 rice, the giving account in zygote, and
       ::  the receiving one in owns.cart.
       =/  rec=grain  (~(got by owns.cart) u.to-rice.args)
@@ -140,29 +127,15 @@
       ::  assert caller is permitted to spend this amount of token
       ?>  (gte allowance amount.args)
       ?~  to-rice.args
-        ::  search in address book like %give
-        =/  bok=grain  (~(got by owns.cart) book.giver)
-        ?>  ?=(%& -.germ.bok)
-        =/  book=address-book  (hole address-book data.p.germ.bok)
-        ?~  rec=(~(get by book) to.args)
-          ::  create new rice for reciever and add it to state
-          ::  update address book with new rice
-          =/  new-id=id  (fry-rice to.args me.cart town-id.cart salt.p.germ.giv)
-          =/  new-grain=grain
-            [new-id me.cart to.args town-id.cart [%& salt.p.germ.giv [amount.args ~ metadata.giver book.giver]]]
-          =:  data.p.germ.bok  (~(put by book) new-id to.args)
-              data.p.germ.giv
-            %=  giver
-              balance  (sub balance.giver amount.args)
-              allowances  (~(jab by allowances.giver) caller-id |=(old=@ud (sub old amount.args)))
-            ==
-          ==
-          [%& (malt ~[[id.giv giv] [id.bok bok]]) (malt ~[[new-id new-grain]])]
+        ::  create new rice for reciever and add it to state
+        =+  (fry-rice to.args me.cart town-id.cart salt.p.germ.giv)
+        =/  new=grain
+          [- me.cart to.args town-id.cart [%& salt.p.germ.giv [amount.args ~ metadata.giver]]]
         ::  continuation call: %take to rice found in book
         :^  %|  ~
           :+  me.cart  town-id.cart
-          [caller.inp `[%take to.args `u.rec id.giv amount.args] ~ (silt ~[id.giv u.rec])]
-        [~ ~]
+          [caller.inp `[%take to.args `id.new id.giv amount.args] ~ (silt ~[id.giv id.new])]
+        [~ (malt ~[[id.new new]])]
       ::  direct send
       =/  rec=grain  (~(got by owns.cart) u.to-rice.args)
       ?>  ?=(%& -.germ.rec)

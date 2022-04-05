@@ -6,7 +6,6 @@
   ++  noun  wallet-poke
   ++  json
     |=  jon=^json
-    ~&  >>  jon
     ^-  wallet-poke
     %-  wallet-poke
     |^

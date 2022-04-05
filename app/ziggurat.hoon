@@ -8,6 +8,7 @@
 +$  state-0
   $:  %0
       mode=?(%fisherman %validator %none)
+      address=(unit id:smart)
       =epochs
       =chunks
       ::  TODO need to make sure this design is acceptable in terms of
@@ -33,7 +34,7 @@
 +*  this  .
     def   ~(. (default-agent this %|) bowl)
 ::
-++  on-init  `this(state [[%0 %none ~ ~ ~ [~ ~]] ~(mill mill +:(cue q.q.smart-lib))])
+++  on-init  `this(state [[%0 %none ~ ~ ~ ~ [~ ~]] ~(mill mill +:(cue q.q.smart-lib))])
 ::
 ++  on-save  !>(-.state)
 ++  on-load
@@ -118,10 +119,16 @@
     |=  act=chain-poke
     ^-  (quip card _state)
     ?-    -.act
+        %set-addr
+      ?>  =(src.bowl our.bowl)
+      `state(address `id.act)
+    ::
         %start
       ?>  =(src.bowl our.bowl)
       ~|  "ziggurat must be run on a star or star-moon"
       ?>  (allowed-participant our.bowl our.bowl now.bowl)
+      ?~  address.state
+        ~|("ziggurat requires an associated public key" !!)
       ~|  "we have already started in this mode"
       ?<  =(mode mode.act)
       =?  epochs  ?=(^ history.act)
@@ -149,26 +156,32 @@
       =/  sig  (sign:zig-sig our.bowl now.bowl 'attestation')
       :_  state(mode %validator, globe starting-state.act, epochs dummy)
       ::  make tx to add ourselves, send to another validator
-      %+  snoc  %-  zing
-                :~  (subscriptions-cleanup wex.bowl sup.bowl)
-                    (watch-updates validators.act)
-                    ~[(start-epoch-catchup i.others 0)]
-                ==
-      :*  %pass  /submit-tx
-          %agent  [our.bowl %wallet]
-          %poke  %zig-wallet-poke
-          !>  :-  %submit
-              :*  `i.others
-                  `@ux`'capitol'
-                  relay-town-id  ::  0
-                  [1 10.000]  ::  TODO let poke set gas rate
-                  `[%become-validator sig]
-                  ~  (silt ~[`@ux`'ziggurat'])
+      %-  zing
+      :~  (subscriptions-cleanup wex.bowl sup.bowl)
+          (watch-updates validators.act)
+          ~[(start-epoch-catchup i.others 0)]
+          :~  :*  %pass  /set-node
+                  %agent  [our.bowl %wallet]
+                  %poke  %zig-wallet-poke
+                  !>([%set-node 0 i.others])
               ==
+              :*  %pass  /submit-tx
+                  %agent  [our.bowl %wallet]
+                  %poke  %zig-wallet-poke
+                  !>  :-  %submit
+                      :*  u.address.state
+                          `@ux`'capitol'
+                          relay-town-id  ::  0
+                          [1 10.000]  ::  TODO let poke set gas rate
+                          [%become-validator sig]
+                      ==
+          ==  ==
       ==
     ::
         %stop
       ?>  =(src.bowl our.bowl)
+      ?~  address.state
+        ~|("ziggurat requires an associated public key" !!)
       =/  sig  (sign:zig-sig our.bowl now.bowl 'attestation')
       :_  state
       %+  snoc  (subscriptions-cleanup wex.bowl sup.bowl)
@@ -176,12 +189,11 @@
           %agent  [our.bowl %wallet]
           %poke  %zig-wallet-poke
           !>  :-  %submit
-              :*  `our.bowl
+              :*  u.address.state
                   `@ux`'capitol'
                   relay-town-id  ::  0
                   [1 10.000]  ::  TODO let poke set gas rate
-                  `[%stop-validating sig]
-                  ~  (silt ~[`@ux`'ziggurat'])
+                  [%stop-validating sig]
               ==
       ==
     ::
@@ -496,9 +508,10 @@
       ::  if this is the last block in the epoch,
       ::  perform global-level transactions
       ::  insert transaction to advance
-      =/  me  .^(account:smart %gx /(scot %p our.bowl)/wallet/(scot %da now.bowl)/account/(scot %ud relay-town-id)/noun)
+      =+  /(scot %p our.bowl)/wallet/(scot %da now.bowl)/account/(scot %ux (need address.state))/(scot %ud relay-town-id)/noun
+      =+  .^(account:smart %gx -)
       =/  globe-chunk
-        %+  ~(mill-all mil me relay-town-id 0 now.bowl)
+        %+  ~(mill-all mil - relay-town-id 0 now.bowl)
           globe.state
         ~(tap in basket.state)
       =:  globe.state   +.globe-chunk
@@ -526,6 +539,9 @@
   ?+    +.path  (on-peek:def path)
       [%active ~]
     ``noun+!>(`?`=(%validator mode.state))
+  ::
+      [%address ~]
+    ``noun+!>(`(unit id:smart)`address.state)
   ::
       [%epoch ~]
     =/  cur=epoch  +:(need (pry:poc epochs))

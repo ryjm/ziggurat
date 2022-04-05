@@ -87,7 +87,7 @@
       :_  state(basket ~)
       :_  ~
       :*  %pass  /basket-gossip
-          %agent  [~zod %sequencer]
+          %agent  [current-producer %sequencer]
           %poke  %zig-weave-poke
           !>([%receive (~(uni in eggs.act) basket.state)])
       ==
@@ -106,6 +106,8 @@
     ::  assert that we're active in main chain
     ?.  .^(? %gx /(scot %p our.bowl)/ziggurat/(scot %da now.bowl)/active/noun)
       ~|("can't run a town, ziggurat not active" !!)
+    =/  our-address  .^((unit id:smart) %gx /(scot %p our.bowl)/ziggurat/(scot %da now.bowl)/address/noun)
+    ?~  our-address  ~|("sequencer requires an associated public key from ziggurat" !!)
     =/  sig  (sign:sig our.bowl now.bowl 'attestation')
     ?-    -.act
         %init
@@ -122,12 +124,11 @@
               %agent  [our.bowl %wallet]
               %poke  %zig-wallet-poke
               !>  :-  %submit
-                  :*  `our.bowl
+                  :*  u.our-address
                       `@ux`'capitol'
                       relay-town-id  ::  0
                       [rate.gas.act bud.gas.act]
-                      `[%init sig town-id.act]
-                      ~  (silt ~[`@ux`'world'])
+                      [%init sig town-id.act]
                   ==
       ==  ==
     ::
@@ -145,12 +146,11 @@
               %agent  [our.bowl %wallet]
               %poke  %zig-wallet-poke
               !>  :-  %submit
-                  :*  `our.bowl
+                  :*  u.our-address
                       `@ux`'capitol'
                       relay-town-id  ::  0
                       [rate.gas.act bud.gas.act]
-                      `[%join sig town-id.act]
-                      ~  (silt ~[`@ux`'world'])
+                      [%join sig town-id.act]
                   ==
       ==  ==
     ::
@@ -164,12 +164,11 @@
               %agent  [our.bowl %wallet]
               %poke  %zig-wallet-poke
               !>  :-  %submit
-                  :*  `our.bowl
+                  :*  u.our-address
                       `@ux`'capitol'
                       relay-town-id  ::  0
                       [rate.gas.act bud.gas.act]
-                      `[%exit sig u.town-id.state]
-                      ~  (silt ~[`@ux`'world'])
+                      [%exit sig u.town-id.state]
                   ==
       ==  ==
     ::
@@ -234,14 +233,17 @@
     ::
         %next-producer
       ::  if we can, produce a chunk!
-      =/  slot-num  .^(@ud %gx /(scot %p our.bowl)/ziggurat/(scot %da now.bowl)/slot/noun)
+      =/  z  /(scot %p our.bowl)/ziggurat/(scot %da now.bowl)
+      =/  slot-num  .^(@ud %gx (weld z /slot/noun))
       ?:  ?|  ?=(~ hall.this)
               !=(our.bowl (snag (mod slot-num (lent order.u.hall.this)) order.u.hall.this))
           ==
         ~&  >>  "ignoring request"
         `this
       ::  create and send our chunk to them
-      =/  me  .^(account:smart %gx /(scot %p our.bowl)/wallet/(scot %da now.bowl)/account/(scot %ud (need town-id.state))/noun)
+      =/  our-address  .^((unit id:smart) %gx (weld z /address/noun))
+      =+  /(scot %p our.bowl)/wallet/(scot %da now.bowl)/account
+      =/  me  .^(account:smart %gx (weld - /(scot %ux (need our-address))/(scot %ud (need town-id.state))/noun))
       =/  our-chunk=chunk
         %+  ~(mill-all mil me (need town-id.state) 0 now.bowl)
           town.state
@@ -250,10 +252,7 @@
       ::  currently clearing mempool with every chunk, but
       ::  this is not necessary: we forward our basket
       ~&  >>  "submitting chunk to producer {<ship.update>}"
-      :_  %=  this
-              basket           ~
-              town             +.our-chunk
-          ==
+      :_  this(basket ~, town +.our-chunk)
       :~  :*  %pass  /chunk-gossip
               %agent  [ship.update %ziggurat]  %poke
               %zig-chain-poke  !>([%receive-chunk (need town-id.state) our-chunk])

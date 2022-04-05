@@ -1,4 +1,5 @@
 /+  smart=zig-sys-smart
+/*  smart-lib  %noun  /lib/zig/sys/smart-lib-2/noun
 |_  [our=@p now=@da]
 ++  deploy
   |=  =path

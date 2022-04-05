@@ -17,7 +17,7 @@
 ::  * executing multiple calls with +mill-all
 ::
 /+  *test, *zig-mill, smart=zig-sys-smart, deploy=zig-deploy :: , *zig-contracts-zigs
-/*  zigs-contract  %txt  /lib/zig/contracts/zigs/hoon
+/*  capitol-contract  %txt  /lib/zig/contracts/capitol/hoon
 /*  trivial-contract  %txt  /lib/zig/contracts/trivial/hoon
 |%
 ++  zigs
@@ -28,39 +28,41 @@
     ==
   ++  town-id  0
   ++  set-fee  7  :: arbitrary replacement for +bull calculations
-  ++  beef-zigs-grain
+  ++  beef-zigs-grain  ::  ~zod
     ^-  grain:smart
     :*  0x1.beef
-        zigs-wheat-id:smart
+        `@ux`'fungible'
+        ::  associated seed: 0xbeef
         0xbeef
-        town-id
-        %&^[1.000.000 ~]
+        0
+        [%& `@`'zigs' [300.000 ~ `@ux`'zigs-metadata']]
     ==
-  ++  dead-zigs-grain
+  ++  dead-zigs-grain  ::  ~bus
     ^-  grain:smart
     :*  0x1.dead
-        zigs-wheat-id:smart
+        `@ux`'fungible'
+        ::  associated seed: 0xdead
         0xdead
-        town-id
-        %&^[500.000 ~]
+        0
+        [%& `@`'zigs' [200.000 ~ `@ux`'zigs-metadata']]
     ==
-  ++  cafe-zigs-grain
+  ++  cafe-zigs-grain  ::  ~nec
     ^-  grain:smart
     :*  0x1.cafe
-        zigs-wheat-id:smart
+        `@ux`'fungible'
         0xcafe
-        town-id
-        %&^[100.000 ~]
+        0
+        [%& `@`'zigs' [100.000 ~ `@ux`'zigs-metadata']]
     ==
   ++  wheat-grain
     ^-  grain:smart
-    =/  cont  (of-wain:format trivial-contract)
+    =/  cont  (of-wain:format capitol-contract)
     :*  zigs-wheat-id:smart  ::  id
         zigs-wheat-id:smart  ::  lord
         zigs-wheat-id:smart  ::  holders
         town-id              ::  town-id
         :+    %|             ::  germ
-          `(~(text-deploy deploy ~zod ~2022.3.29..00.56.44..e95b) cont)
+          `(~(text-deploy deploy ~zod ~2022.4.5..00.49.42..08bf) cont)
         ~  ::  (silt ~[0x1.beef 0x1.dead 0x1.cafe])
     ==
   ++  fake-granary
@@ -68,8 +70,8 @@
     =/  grains=(list:smart (pair:smart id:smart grain:smart))
       :~  [zigs-wheat-id:smart wheat-grain]
           [0x1.beef beef-zigs-grain]
-          ::  [0x1.dead dead-zigs-grain]
-          ::  [0x1.cafe cafe-zigs-grain]
+          [0x1.dead dead-zigs-grain]
+          [0x1.cafe cafe-zigs-grain]
       ==
     (~(gas by:smart *(map:smart id:smart grain:smart)) grains)
   ++  fake-populace
@@ -87,15 +89,14 @@
   =/  bud  500
   =/  now  *@da
   =/  yok=yolk:smart
-    [[0xbeef 1 0x1.beef] ~ ~ ~]
+    [[0xbeef 1 0x1.beef] `[%init ~] ~ ~]
   =/  shel=shell:smart
-    [[0xbeef 1 0x1.beef] 0 0x0 1 bud 0]
+    [[0xbeef 1 0x1.beef] [0 0 0] 0x0 1 bud 0]
   =/  egg  [shel yok]
   =/  res
     %+  ~(mill mill [0xdead 1 0x1.dead] 0 1 now)
       fake-town:zigs
     `egg:smart`egg
-  ~&  >  res
   %+  expect-eq
     !>(1)
   !>(1)

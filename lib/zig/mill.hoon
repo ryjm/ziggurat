@@ -33,10 +33,10 @@
     ?.  ?=(account from.p.egg)  [town 0]
     ::  validate transaction signature
     ::  using ecdsa-raw-sign in wallet, TODO review this
+    ::  comment this out for tests
     =/  point  (ecdsa-raw-recover:secp256k1:secp:crypto (sham (jam q.egg)) sig.p.egg)
     ?.  =(id.from.p.egg (compress-point:secp256k1:secp:crypto point))
       [town 0]  ::  signed tx doesn't match account
-    ::
     ?~  curr-nonce=(~(get by q.town) id.from.p.egg)
       [town 0]  ::  missing account
     ?.  =(nonce.from.p.egg +(u.curr-nonce))
@@ -55,9 +55,10 @@
   ::
   ++  tax
     |_  =granary
-    +$  account-mold
+    +$  token-account
       $:  balance=@ud
-          allowances=(map sender=id @ud)
+          allowances=(map sender=id:smart @ud)
+          metadata=id:smart
       ==
     ::  +audit: evaluate whether a caller can afford gas
     ++  audit
@@ -66,7 +67,7 @@
       ?.  ?=(account from.p.egg)                    %.n
       ?~  zigs=(~(get by granary) zigs.from.p.egg)  %.n
       ?.  ?=(%& -.germ.u.zigs)                      %.n
-      =/  acc  (hole account-mold data.p.germ.u.zigs)
+      =/  acc  (hole token-account data.p.germ.u.zigs)
       (gth balance.acc budget.p.egg)
     ::  +charge: extract gas fee from caller's zigs balance
     ++  charge
@@ -74,7 +75,7 @@
       ^-  ^granary
       ?~  zigs=(~(get by granary) zigs.payee)  granary
       ?.  ?=(%& -.germ.u.zigs)                 granary
-      =/  acc  (hole account-mold data.p.germ.u.zigs)
+      =/  acc  (hole token-account data.p.germ.u.zigs)
       =.  balance.acc  (sub balance.acc fee)
       =.  data.p.germ.u.zigs  acc
       (~(put by granary) zigs.payee u.zigs)
@@ -84,7 +85,7 @@
       ^-  ^granary
       ?~  zigs=(~(get by granary) zigs.miller)  granary
       ?.  ?=(%& -.germ.u.zigs)                  granary
-      =/  acc  (hole account-mold data.p.germ.u.zigs)
+      =/  acc  (hole token-account data.p.germ.u.zigs)
       =.  balance.acc  (add balance.acc total)
       =.  data.p.germ.u.zigs  acc
       (~(put by granary) zigs.miller u.zigs)
@@ -202,6 +203,7 @@
         ^-  [(unit chick) @ud]
         =/  cart  [mem to blocknum town-id owns.crop]
         =+  [res bud]=(barn nok.crop inp cart budget)
+        ~&  >>  "res: {<res>}"
         ?~  res               `bud
         ?:  ?=(%| -.u.res)  
           ~&  >>>  p.u.res    `bud
@@ -217,8 +219,8 @@
         ::  TODO figure out how to pre-cue this and get good results
         =/  =contract  (hole contract [nok +:(cue q.q.smart-lib)])
         |^
-        ::~&  >>  "cart: {<cart>}"
-        ::~&  >  "inp: {<inp>}" 
+        ~&  >>  "inp: {<inp>}"
+        ~&  >  "cart: {<cart>}"
         ?:  ?=(%| -.inp)
           ::  event
           =/  res  (event p.inp)

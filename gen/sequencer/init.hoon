@@ -1,57 +1,77 @@
 /-  *ziggurat
 /+  smart=zig-sys-smart, deploy=zig-deploy
-/*  zigs-contract  %txt  /lib/zig/contracts/zigs/hoon
-=/  pubkey-1  0x1d.8044.3e18.8c8c.74ef.0551.bac3.ff21.52f3.ced6.9b5d.9b74.70d4.2b8c.20ef.4fb2.d034.f99a.ffc5.f401.5d9c.db9f.bf02.28e2.12de.a1b6.428d.d6f7.6887.e49f.f048.c609.e862
-=/  pubkey-2  0x57.8d3b.e138.c6fe.6b91.1400.aafe.f203.194b.a8c9.2080.3aa3.76bb.5afb.cfda.f2e8.90c7.2bcb.12ad.28bb.de3e.546a.c356.25af.0f9a.29a4.c01e.5399.1a13.b3ba.ee36.74ae.7062
-=/  pubkey-3  0x68.ba7e.534f.2b79.ee33.f388.5482.27dc.eeb6.ddb6.4c39.81a1.7743.4d66.82b8.7ad4.7b9e.0085.d9bb.cc95.5996.a8a6.c955.8cd9.5a41.7f8d.425c.3064.b1fc.541f.2eec.6ce5.0162
+/*  fungible-contract  %txt  /lib/zig/contracts/fungible/hoon
+=/  pubkey-1  0x2.e3c1.d19b.fd3e.43aa.319c.b816.1c89.37fb.b246.3a65.f84d.8562.155d.6181.8113.c85b
+=/  pubkey-2  0x3.4cdd.5f53.b551.e62f.2238.6eb3.8abd.3e91.a546.fad3.2940.ff2d.c316.50dd.8d38.e609
+=/  pubkey-3  0x3.9452.264c.57a5.1b54.d380.70b0.7e0c.934d.15c0.6692.fa9c.7f35.eaf9.eb52.b925.1b7d
 :-  %say
 |=  [[now=@da eny=@uvJ bek=beak] [town-id=@ud ~] ~]
-=/  zigs-1  (fry-rice:smart pubkey-1 0 town-id `@`'zigs')
-=/  zigs-2  (fry-rice:smart pubkey-2 0 town-id `@`'zigs')
-=/  zigs-3  (fry-rice:smart pubkey-3 0 town-id `@`'zigs')
+=/  zigs-1  (fry-rice:smart pubkey-1 `@ux`'fungible' town-id `@`'zigs')
+=/  zigs-2  (fry-rice:smart pubkey-2 `@ux`'fungible' town-id `@`'zigs')
+=/  zigs-3  (fry-rice:smart pubkey-3 `@ux`'fungible' town-id `@`'zigs')
 =/  beef-zigs-grain  ::  ~zod
   ^-  grain:smart
   :*  zigs-1
-      zigs-wheat-id:smart
-      ::  associated secret key: 0xbeef
+      `@ux`'fungible'
+      ::  associated seed: 0xbeef
       pubkey-1
       town-id
-      [%& `@`'zigs' [100.000.000 ~]]
+      [%& `@`'zigs' [300.000 ~ `@ux`'zigs-metadata']]
   ==
 =/  dead-zigs-grain  ::  ~bus
   ^-  grain:smart
   :*  zigs-2
-      zigs-wheat-id:smart
+      `@ux`'fungible'
+      ::  associated seed: 0xdead
       pubkey-2
       town-id
-      [%& `@`'zigs' [100.000.000 ~]]
+      [%& `@`'zigs' [200.000 ~ `@ux`'zigs-metadata']]
   ==
 =/  cafe-zigs-grain  ::  ~nec
   ^-  grain:smart
   :*  zigs-3
-      zigs-wheat-id:smart
+      `@ux`'fungible'
+      ::  associated seed: 0xcafe
       pubkey-3
       town-id
-      [%& `@`'zigs' [100.000.000 ~]]
+      [%& `@`'zigs' [100.000 ~ `@ux`'zigs-metadata']]
+  ==
+=/  zigs-metadata-grain
+  ^-  grain:smart
+  :*  `@ux`'zigs-metadata'
+      `@ux`'fungible'
+      `@ux`'fungible'
+      town-id
+      :+  %&  `@`'zigs'
+      :*  name='Uqbar Tokens'
+          symbol='ZIG'
+          decimals=18
+          supply=1.000.000.000.000.000.000.000.000
+          cap=~
+          mintable=%.n
+          minters=~
+          deployer=0x0
+          salt=`@`'zigs'
+      == 
   ==
 ::  store only contract code, insert into shared subject
 =/  wheat
   ^-  wheat:smart
-  =/  cont  (of-wain:format zigs-contract)
+  =/  cont  (of-wain:format fungible-contract)
   :-  `(~(text-deploy deploy p.bek now) cont)
-  (silt ~[zigs-1 zigs-2 zigs-3])
+  (silt ~[zigs-1 zigs-2 zigs-3 `@ux`'zigs-metadata'])
 =/  wheat-grain
   ^-  grain:smart
-  :*  zigs-wheat-id:smart  ::  id
-      zigs-wheat-id:smart  ::  lord
-      zigs-wheat-id:smart  ::  holder
-      town-id              ::  town-id
-      [%| wheat]           ::  germ
+  :*  `@ux`'fungible'  ::  id
+      `@ux`'fungible'  ::  lord
+      `@ux`'fungible'  ::  holder
+      town-id          ::  town-id
+      [%| wheat]       ::  germ
   ==
 =/  fake-granary
   ^-  granary:smart
   =/  grains=(list:smart (pair:smart id:smart grain:smart))
-    :~  [zigs-wheat-id:smart wheat-grain]
+    :~  [`@ux`'fungible' wheat-grain]
         [zigs-1 beef-zigs-grain]
         [zigs-2 dead-zigs-grain]
         [zigs-3 cafe-zigs-grain]

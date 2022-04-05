@@ -54,7 +54,6 @@
   ++  poke-wallet
     |=  act=wallet-poke
     ^-  (quip card _state)
-    ~&  >  act
     ?>  =(src.bowl our.bowl)
     ?-    -.act
     ::
@@ -93,19 +92,25 @@
         %populate
       ::  populate wallet with fake data for testing
       ::  will WIPE previous wallet state!!
-      =+  core=(from-seed:bip32 [64 eny.bowl])
+      =+  core=(from-seed:bip32 [64 0xbeef])
       =+  pub=public-key:core
+      =/  fake-0
+        :-  [0 0x0 'zigs']
+        :*  (fry-rice:smart pub 0x0 0 `@`'zigs')
+            0x0  pub  0
+            [%& `@`'zigs' [300.000.000 ~ `@ux`'zigs-metadata']]
+        ==
       =/  fake-1
-        :-  [1 0x0 'zigs']
-        :*  (fry-rice:smart pub 0x0 1 `@`'zigs')
-            0x0  pub  1
-            [%& `@`'zigs' [100.000.000 ~ `@ux`'zigs' `@ux`'zigs-address-book']]
+        :-  [1 `@ux`'fungible' 'zigs']
+        :*  (fry-rice:smart pub `@ux`'fungible' 1 `@`'zigs')
+            `@ux`'fungible'  pub  1
+            [%& `@`'zigs' [100.000.000 ~ `@ux`'zigs-metadata']]
         ==
       =/  fake-2
-        :-  [1 `@ux`'fake-token' 'wETH']
-        :*  (fry-rice:smart pub `@ux`'fake-token' 1 `@`'wETH')
-            `@ux`'fake-token'  pub  1
-            [%& `@`'wETH' [173.000 ~ `@ux`'weth' 0x9999.9999]]
+        :-  [1 `@ux`'fungible' 'wETH']
+        :*  (fry-rice:smart pub `@ux`'fungible' 1 `@`'wETH')
+            `@ux`'fungible'  pub  1
+            [%& `@`'wETH' [173.000 ~ `@ux`'wETH-metadata']]
         ==
       =/  zigs-metadata
         :*  name='Uqbar Tokens'
@@ -116,8 +121,7 @@
             mintable=%.n
             minters=~
             deployer=0x0
-            book=`@ux`'zigs-address-book'
-            salt=777
+            salt=`@`'zigs'
         ==
       =/  weth-metadata
         :*  name='Wrapped Ether'
@@ -128,17 +132,16 @@
             mintable=%.n
             minters=~
             deployer=0x1234.5678
-            book=0x9999.9999
-            salt=444
+            salt=`@`'wETH'
         ==
       :-  ~
       %=  state
         seed    [64 eny.bowl]
         keys    (malt ~[[pub private-key:core]])
-        nodes   (malt ~[[0 ~zod] [1 ~bus] [2 ~nec]])
+        nodes   (malt ~[[0 ~zod] [1 ~zod] [2 ~zod]])
         nonces  (malt ~[[pub (malt ~[[0 0] [1 0] [2 0]])]])
-        tokens  (malt ~[[pub (malt ~[[fake-1] [fake-2]])]])
-        metadata-store  (malt ~[[`@ux`'zigs' zigs-metadata] [`@ux`'weth' weth-metadata]])
+        tokens  (malt ~[[pub (malt ~[[fake-1] [fake-2] [fake-0]])]])
+        metadata-store  (malt ~[[`@ux`'zigs-metadata' zigs-metadata] [`@ux`'wETH-metadata' weth-metadata]])
       ==        
     ::
         %submit
@@ -151,8 +154,13 @@
       ::  
       =/  our-nonces     (~(gut by nonces.state) from.act ~)
       =/  nonce=@ud      (~(gut by our-nonces) town.act 0)
-      =/  =caller:smart  [from.act +(nonce) (fry-rice:smart from.act 0x0 town.act 'zigs')]
       =/  node=ship      (~(gut by nodes.state) town.act our.bowl)
+      =/  =book  (~(got by tokens.state) from.act)
+      =/  =caller:smart
+        ::  TODO fix
+        ?:  =(town.act 0)
+          [from.act +(nonce) id:(~(got by book) [town.act 0x0 `@`'zigs'])]
+        [from.act +(nonce) id:(~(got by book) [town.act `@ux`'fungible' `@`'zigs'])]
       ::  need to check transaction type and collect rice based on it
       ::  only supporting small subset of contract calls, for tokens and NFTs
       =/  formatted=[args=(unit *) our-grains=(set @ux) cont-grains=(set @ux)]
@@ -161,11 +169,17 @@
           ::  TODO use block explorer to find rice if it exists and restructure this
           ::  to use known parameter to find other person's rice
           =/  metadata  (~(got by metadata-store.state) token.args.act)
-          =/  =book  (~(got by tokens.state) from.act)
           =/  our-account  (~(got by book) [town.act to.act salt.metadata])
-          :+  `[%give to.args.act ~ amount.args.act]
+          =/  their-account-id  (fry-rice:smart to.args.act `@ux`'fungible' town.act salt.metadata)
+          :+  `[%give to.args.act `their-account-id amount.args.act]
             (silt ~[id.our-account])
-          (silt ~[book.metadata])
+          (silt ~[their-account-id])
+        ::
+          %become-validator  [`args.act ~ (silt ~[`@ux`'ziggurat'])]
+          %stop-validating   [`args.act ~ (silt ~[`@ux`'ziggurat'])]
+          %init  [`args.act ~ (silt ~[`@ux`'world'])]
+          %join  [`args.act ~ (silt ~[`@ux`'world'])]
+          %exit  [`args.act ~ (silt ~[`@ux`'world'])]
         ==
       =/  =yolk:smart    [caller args.formatted our-grains.formatted cont-grains.formatted]
       =/  signer         (~(got by keys.state) from.act)
@@ -246,7 +260,6 @@
         %-  pairs
         :~  ['balance' (numb balance.data)]
             ['metadata' (tape (scow %ux metadata.data))]
-            ['book' (tape (scow %ux book.data))]
         ==
     ==
   ::
@@ -266,7 +279,6 @@
         ['cap' (numb (fall cap.d 0))]
         ['mintable' [%b mintable.d]]
         ['deployer' (tape (scow %ux deployer.d))]
-        ['book' (tape (scow %ux book.d))]
         ['salt' (tape (scow %ux salt.d))]
     ==
   ==
