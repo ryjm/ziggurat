@@ -55,7 +55,7 @@
 ::    %set-chain-source:
 ::      Set source and subscribe to it for new blocks.
 ::
-::    %consume-update:
+::    %consume-indexer-update:
 ::      Add a block or chunk to the index.
 ::
 ::    %serve-update:
@@ -125,15 +125,15 @@
     |=  [=mark =vase]
     ^-  (quip card _this)
     =^  cards  state
-      ?+  mark  (on-poke:def mark vase)
+      ?+    mark  (on-poke:def mark vase)
       ::
           %set-chain-source
         ?>  (team:title our.bowl src.bowl)
         (set-chain-source:uic !<(dock vase))
       ::
-          %consume-update
+          %consume-indexer-update
         ?>  (team:title our.bowl src.bowl)
-        %-  consume-update:uic
+        %-  consume-indexer-update:uic
         !<(update:uqbar-indexer vase)
       ::
       ::     %serve-update
@@ -152,7 +152,7 @@
   ++  on-watch
     |=  =path
     ^-  (quip card _this)
-    ?+  path  (on-watch:def path)
+    ?+    path  (on-watch:def path)
     ::
         [%block ~]
       `this
@@ -174,7 +174,7 @@
   ++  on-leave
     |=  =path
     ^-  (quip card _this)
-    ?+  path  (on-watch:def path)
+    ?+    path  (on-watch:def path)
     ::
         [%block ~]
       `this
@@ -196,7 +196,7 @@
   ++  on-peek
     |=  =path
     ^-  (unit (unit cage))
-    ?+  path  (on-peek:def path)
+    ?+    path  (on-peek:def path)
         [%x %block-height ~]
       ``noun+!>(`@ud`(lent blocks))
     ::
@@ -277,10 +277,10 @@
   ++  on-agent
     |=  [=wire =sign:agent:gall]
     ^-  (quip card _this)
-    ?+  wire  (on-agent:def wire sign)
+    ?+    wire  (on-agent:def wire sign)
     ::
         [%chain-update ~]
-      ?+  -.sign  (on-agent:def wire sign)
+      ?+    -.sign  (on-agent:def wire sign)
       ::
           %kick
         :_  this
@@ -289,8 +289,8 @@
       ::
           %fact
         =^  cards  state
-          %-  consume-update:uic
-          !<(update:uqbar-indexer q.cage.sign)
+          %-  consume-ziggurat-update:uic
+          !<(update:zig q.cage.sign)
         [cards this]
       ::
       ==
@@ -311,7 +311,7 @@
   ?~  source  ~
   :-  ~
   %+  %~  watch  pass:io
-  /chain-update  u.source  /blocks  :: TODO: fill in actual path
+  /chain-update  u.source  /fisherman/updates
 ::
 ++  leave-chain-source
   ^-  (unit card)
@@ -370,7 +370,7 @@
 ++  serve-update
   |=  [=query-type:uqbar-indexer =query-payload:uqbar-indexer]
   |^  ^-  (unit update:uqbar-indexer)
-  ?+  query-type  !!
+  ?+    query-type  !!
   ::
       %block
     ?>  ?=(@ud query-payload)
@@ -418,7 +418,7 @@
     ?>  ?=(@ux query-payload)
     =/  locations=(list location:uqbar-indexer)
       ~(tap in get-locations)
-    ?+  query-type  !!
+    ?+    query-type  !!
     ::
         %block-hash
       ?>  =(1 (lent locations))
@@ -469,7 +469,7 @@
   ++  get-locations
     ^-  (set location:uqbar-indexer)
     ?>  ?=(@ux query-payload)
-    ?+  query-type  !!
+    ?+    query-type  !!
     ::
         %block-hash
       (~(get ju block-index) query-payload)
@@ -587,17 +587,17 @@
       egg-num      +(egg-num)
   ==
 ::
-++  consume-update
+++  consume-indexer-update
   |=  =update:uqbar-indexer
   |^  ^-  (quip card _state)
-  ?+  -.update  !!  :: TODO: can we do better here?
+  ?+    -.update  !!  :: TODO: can we do better here?
   ::
       %block
     =*  block-num   num.header.bundle.update
     =*  new-bundle  bundle.update
     ?~  previous=(pry:bl-on blocks)
       :-  ~
-      ?:  =(0 num.header.bundle.update)
+      ?:  =(0 block-num)
         %=  state
             blocks
               (put:bl-on blocks block-num new-bundle)
@@ -621,7 +621,7 @@
       ::  data and if so, add to cache and index it
       `state
     ::
-    =*  previous-hash  data-hash.header.val.u.previous
+    =*  previous-hash  (sham header.val.u.previous)  ::  TODO: keep up to date w current hashing method
     =*  next-hash      prev-header-hash.header.new-bundle
     ?>  =(previous-hash next-hash)
     ::  store and index the new block
@@ -646,6 +646,143 @@
       :^    :_  ~  %+  fact:io
               :-  %uqbar-indexer-update
               !>(`update:uqbar-indexer`update)
+            ~[/block]
+          (make-all-sub-cards block-num)
+        cards
+      ~
+    :-  cards
+    state(blocks (put:bl-on blocks block-num new-bundle))
+  ::
+  ::     %chunk
+  ::   =*  block-num  block-num.location.update
+  ::   =*  town-id    town-id.location.update
+  ::   =*  chunk      chunk.update
+  ::   ::  TODO: chunk already exists?
+  ::   =+  [egg from grain to]=(parse-chunk block-num town-id chunk)
+  ::   =:  egg-index    (~(gas ju egg-index) egg)
+  ::       from-index   (~(gas ju from-index) from)
+  ::       grain-index  (~(gas ju grain-index) grain)
+  ::       to-index     (~(gas ju to-index) to)
+  ::   ==
+  ::   ::  publish to subscribers
+  ::   ::
+  ::   :-  (make-all-sub-cards block-num)
+  ::   state(blocks (put:bl-on blocks block-num new-bundle))
+  ::
+  ==
+  ::
+  ++  make-future-blocks-cards
+    |=  block-num=@ud
+    ^-  (quip card _future-blocks)
+    ?~  next-bundle=(get:bl-on future-blocks block-num)
+      `future-blocks
+    =+  [* new-future-blocks]=(del:bl-on future-blocks block-num)
+    :_  new-future-blocks
+    :_  ~
+    %-  %~  poke-self  pass:io  /future-blocks-poke
+    :-  %uqbar-indexer-update
+    !>(`update:uqbar-indexer`[%block u.next-bundle])
+  ::
+  ++  make-all-sub-cards
+    |=  block-num=@ud
+    ^-  (list card)
+    %-  zing
+    :~  (make-sub-cards chunk-subs %ud `block-num %chunk /chunk)
+        (make-sub-cards id-subs %ux ~ %from /id)
+        (make-sub-cards id-subs %ux ~ %to /id)
+        (make-sub-cards grain-subs %ux ~ %grain /grain)
+    ==
+  ::  TODO: if this is slow, could optimize by
+  ::  passing in and searching over only newest
+  ::  additions to index
+  ::
+  ++  make-sub-cards
+    |=  $:  subs=(jug id=@u sub=@p)
+            id-type=?(%ux %ud)
+            payload-prefix=(unit @ud)
+            =query-type:uqbar-indexer
+            path-prefix=path
+        ==
+    ^-  (list card)
+    %+  murn  ~(tap in ~(key by subs))
+    |=  id=@u
+    =/  payload=?(@u [@ud @u])
+      ?~  payload-prefix  id  [u.payload-prefix id]
+    ?~  update=(serve-update query-type payload)  ~
+    :-  ~
+    %+  fact:io
+      :-  %uqbar-indexer-update
+      !>(`update:uqbar-indexer`u.update)
+    ~[(snoc path-prefix (scot id-type id))]
+  ::
+  --
+::  TODO: refactor and consolidate with +consume-indexer-update
+::
+++  consume-ziggurat-update
+  |=  =update:zig
+  |^  ^-  (quip card _state)
+  ?+    -.update  !!  :: TODO: can we do better here?
+  ::
+      %new-block
+    =*  block-num   num.header.update
+    ~&  >  "uqbar-indexer: got block {<block-num>}"
+    ~&  >  "uqbar-indexer:  with header {<header.update>}"
+    ~&  >  "uqbar-indexer:  with hash {<(sham header.update)>}"
+    =/  new-bundle=block-bundle:uqbar-indexer
+      [header.update block.update]
+    ?~  previous=(pry:bl-on blocks)
+      :-  ~
+      ?:  =(0 block-num)
+        ~&  >  "uqbar-indexer: 0"
+        %=  state
+            blocks
+              (put:bl-on blocks block-num new-bundle)
+        ==
+      ~&  >  "uqbar-indexer: 1"
+      %=  state
+          future-blocks
+            %^  put:bl-on
+            future-blocks  block-num  new-bundle
+      ==
+    =*  previous-block-num  key.u.previous
+    ?:  (gth block-num +(previous-block-num))
+      ~&  >  "uqbar-indexer: 2"
+      :-  ~
+      %=  state
+          future-blocks
+            %^  put:bl-on
+            future-blocks  block-num  new-bundle
+      ==
+    ::
+    ?:  (lth block-num +(previous-block-num))
+      ~&  >  "uqbar-indexer: 3"
+      ::  TODO: check if input block bundle has new
+      ::  data and if so, add to cache and index it
+      `state
+    ::
+    =*  previous-hash  (sham header.val.u.previous)  ::  TODO: keep up to date w current hashing method
+    =*  next-hash      prev-header-hash.header.new-bundle
+    ?>  =(previous-hash next-hash)
+    ~&  >  "uqbar-indexer: 4"
+    ::  store and index the new block
+    ::
+    =+  [block-hash egg from grain to]=(parse-block block-num new-bundle)
+    =:  block-index  (~(gas ju block-index) block-hash)
+        egg-index    (~(gas ju egg-index) egg)
+        from-index   (~(gas ju from-index) from)
+        grain-index  (~(gas ju grain-index) grain)
+        to-index     (~(gas ju to-index) to)
+    ==
+    =^  cards  future-blocks
+      (make-future-blocks-cards block-num)
+    ::  publish to subscribers
+    ::
+    =.  cards
+      %-  zing
+      :^    :_  ~  %+  fact:io
+              :-  %uqbar-indexer-update
+              !>  ^-  update:uqbar-indexer
+              [%block [header.update block.update]]
             ~[/block]
           (make-all-sub-cards block-num)
         cards

@@ -3,6 +3,7 @@
 /+  smart=zig-sys-smart
 ::
 |%
+::  TODO: replace blocks & block-bundle with slot and slots
 +$  block-bundle  [header=block-header:zig =block:zig]
 +$  blocks  ((mop @ud block-bundle) gth)
 +$  query-type
