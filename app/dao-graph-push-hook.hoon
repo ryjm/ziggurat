@@ -240,13 +240,13 @@
 ++  resource-for-update  resource-for-update:gra
 ::
 ++  initial-watch
-  :: ~/  %initial-watch  ::  TODO: write jet with updated +is-allowed?
+  ~/  %initial-watch
   |=  [=path =resource:res]
   ^-  vase
   =/  assoc=(unit association:metadata)
     (peek-association:met %graph resource)
   ?~  assoc  !!
-  ?>  (is-allowed-read:dao src.bowl group.u.assoc resource)
+  ?>  (is-allowed-read:dao [%| src.bowl] resource [%| group.u.assoc])
   !>  ^-  update:store
   ?~  path
     ::  new subscribe
@@ -337,7 +337,7 @@
 ::
 ++  get-permissions-variation
 :: ++  get-roles-writers-variation
-::   ~/  %get-roles-writers-variation  ::  TODO: write jet?
+  ~/  %get-roles-writers-variation
   |=  =resource:res
   ^-  (unit [is-admin=? is-writer=? vip=vip-metadata:metadata])
   =/  assoc=(unit association:metadata)
@@ -345,7 +345,8 @@
   ?~  assoc  ~
   ::
   =/  [is-admin=? is-writer=? is-reader=?]
-    (is-allowed-admin-write-read:dao src.bowl group.u.assoc resource)
+    %^  is-allowed-admin-write-read:dao
+    [%| src.bowl]  resource  [%| group.u.assoc]
   ?.  is-reader  ~
   `[is-admin is-writer vip.metadatum.u.assoc]
 ::
@@ -357,7 +358,7 @@
   [(snag (dec (lent index)) index) p.post.node]
 ::
 ++  is-allowed-add
-  :: ~/  %is-allowed-add  ::  TODO: write jet?
+  ~/  %is-allowed-add
   |=  [=resource:res nodes=(map index:store node:store)]
   ^-  [? (list card)]
   |^
@@ -416,7 +417,7 @@
   --
 ::
 ++  is-allowed-remove
-  :: ~/  %is-allowed-remove  TODO: write jet?
+  ~/  %is-allowed-remove
   |=  [=resource:res indices=(set index:store)]
   ^-  [? (list card)]
   |^
