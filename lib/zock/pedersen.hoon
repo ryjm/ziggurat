@@ -19,7 +19,7 @@
           457.884.512.865.583
     ==
   ::
-  ++  curve             ~(. secp:crypto 32 t)
+  ++  curve             ~(. secp:secp:crypto 32 t)
   ++  add-points        add-points:curve
   ++  mul-point-scalar  mul-point-scalar:curve
   ++  p0
