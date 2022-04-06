@@ -39,7 +39,8 @@
       [hed `[(sign:sig our now (sham hed)) data]]
     ~&  >  "block size: {<(met 3 (jam slot))>} bytes"
     :_  cur(slots (put:sot slots.cur next-num slot))
-    :-  (give-on-updates [%new-block num.cur p.slot (need q.slot)])
+    %+  weld
+      (give-on-updates [%new-block num.cur p.slot (need q.slot)] q.slot)
     =+  l=(lent order.cur)
     ?.  =(l +(next-num))
       (notify-sequencer (snag +(next-num) order.cur))^~
@@ -102,9 +103,9 @@
       :_  cur
       (start-epoch-catchup src num.cur)^~
     :_  cur(slots (put:sot slots.cur next-num [hed blk]))
-    :-  ::  send block header to others
-        ::
-        (give-on-updates [%saw-block num.cur hed])
+    %+  weld  
+      ::  send block header to others
+      (give-on-updates [%saw-block num.cur hed] blk)
     =+  l=(lent order.cur)
     ?.  =(l +(next-num))
       (notify-sequencer (snag +(next-num) order.cur))^~

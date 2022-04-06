@@ -7,7 +7,7 @@
 +$  card  card:agent:gall
 +$  state-0
   $:  %0
-      mode=?(%fisherman %validator %none)
+      mode=?(%indexer %validator %none)
       address=(unit id:smart)
       =epochs
       =chunks
@@ -86,7 +86,7 @@
     ::  send next-producer on this path for sequencers
     `this
   ::
-      [%fisherman %updates ~]
+      [%indexer %updates ~]
     ~|  "comets and moons may not be fishermen, tiny dos protection"
     ?>  (allowed-participant [src our now]:bowl)
     ::  do nothing here, but send all new blocks and epochs on this path
@@ -133,8 +133,8 @@
       ?<  =(mode mode.act)
       =?  epochs  ?=(^ history.act)
         history.act
-      ?:  ?=(%fisherman mode.act)
-        :_  state(mode %fisherman)
+      ?:  ?=(%indexer mode.act)
+        :_  state(mode %indexer)
         (subscriptions-cleanup wex.bowl sup.bowl)
       ::  become a validator
       ?>  ?|(?=(^ epochs) ?=(^ validators.act))
@@ -374,9 +374,9 @@
       [cards this]
     ==
   ::
-      [%fisherman %updates ~]
-    ~|  "can only receive fisherman updates when we are a fisherman!"
-    ?>  =(%fisherman mode)
+      [%indexer %updates ~]
+    ~|  "can only receive indexer updates when we are an indexer!"
+    ?>  =(%indexer mode)
     `this
   ==
   ::
