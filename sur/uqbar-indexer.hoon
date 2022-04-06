@@ -3,11 +3,8 @@
 /+  smart=zig-sys-smart
 ::
 |%
-::  TODO: replace blocks & block-bundle with slot and slots
-+$  block-bundle  [header=block-header:zig =block:zig]
-+$  blocks  ((mop @ud block-bundle) gth)
 +$  query-type
-  ?(%block %block-hash %chunk %egg %from %grain %to %hash)
+  ?(%block-hash %chunk %egg %from %grain %slot %to %hash)
 +$  query-payload
   ?(hash=@ux block-num=@ud [block-num=@ud town-id=@ud])
 ::
@@ -24,9 +21,9 @@
   [block-num=@ud town-id=@ud egg-num=@ud]
 ::
 +$  update
-  $%  [%block bundle=block-bundle]
-      [%chunk location=town-location =chunk:zig]
+  $%  [%chunk location=town-location =chunk:zig]
       [%egg eggs=(set [location=egg-location =egg:smart])]
       [%grain grains=(set [location=town-location =grain:smart])]
+      [%slot =slot:zig]
   ==
 --

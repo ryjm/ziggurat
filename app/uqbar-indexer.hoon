@@ -11,12 +11,8 @@
 ::
 ::    /x/block-height:
 ::      The current block height
-::    /x/block:
-::      The most recent block
-::    /x/block-num/[@ud]:
-::      The block with given block number
 ::    /x/block-hash/[@ux]:
-::      The block with given block hash
+::      The slot with given block hash
 ::    /x/chunk-num/[@ud]/[@ud]:
 ::      The chunk with given block number/chunk number
 ::    /x/chunk-hash/[@ux]/[@ud]:
@@ -27,18 +23,19 @@
 ::      History of sender with the given hash
 ::    /x/grain/[@ux]:
 ::      State of grain with given hash
-::    /x/id/[@ux]:
-::      History of id with the given hash
-::    /x/to/[@ux]:
-::      History of receiver with the given hash
 ::    /x/hash/[@ux]:
 ::      Info about hash
+::    /x/id/[@ux]:
+::      History of id with the given hash
+::    /x/slot:
+::      The most recent slot
+::    /x/slot-num/[@ud]:
+::      The slot with given block number
+::    /x/to/[@ux]:
+::      History of receiver with the given hash
 ::
 ::
 ::    ## Subscription paths
-::
-::    /block:
-::      A stream of each new block.
 ::
 ::    /chunk/[@ud]:
 ::      A stream of each new chunk for a given town.
@@ -48,6 +45,9 @@
 ::
 ::    /grain/[@ux]:
 ::      A stream of changes to given grain.
+::
+::    /slot:
+::      A stream of each new slot.
 ::
 ::
 ::    ##  Pokes
@@ -78,9 +78,9 @@
 ::
 +$  base-state-0
   $:  chain-source=(unit dock)
-      =blocks:uqbar-indexer
-      future-blocks=blocks:uqbar-indexer
-      :: chunks-to-be-indexed=s:uqbar-indexer
+      =slots:zig
+      future-slots=slots:zig
+      :: future-chunks=chunks:zig
       chunk-subs=(jug town-id=@ud sub=@p)
       id-subs=(jug id-hash=@ux sub=@p)
       grain-subs=(jug grain-hash=@ux sub=@p)
@@ -94,8 +94,6 @@
   ==
 +$  state-0  [%0 base-state-0 indices-0]
 ::
-::  TODO: move this to a lib?
-++  bl-on  ((on @ud block-bundle:uqbar-indexer) gth)
 --
 ::
 =|  state-0
@@ -154,9 +152,6 @@
     ^-  (quip card _this)
     ?+    path  (on-watch:def path)
     ::
-        [%block ~]
-      `this
-    ::
         [%chunk @ ~]
       =/  town-id=@ud  (slav %ud i.t.path)
       `this(chunk-subs (~(put ju chunk-subs) town-id src.bowl))
@@ -169,15 +164,15 @@
       =/  grain-hash  (slav %ux i.t.path)
       `this(grain-subs (~(put ju grain-subs) grain-hash src.bowl))
     ::
+        [%slot ~]
+      `this
+    ::
     ==
   ::
   ++  on-leave
     |=  =path
     ^-  (quip card _this)
     ?+    path  (on-watch:def path)
-    ::
-        [%block ~]
-      `this
     ::
         [%chunk @ ~]
       =/  town-id=@ud  (slav %ud i.t.path)
@@ -191,6 +186,9 @@
       =/  grain-hash  (slav %ux i.t.path)
       `this(grain-subs (~(del ju grain-subs) grain-hash src.bowl))
     ::
+        [%slot ~]
+      `this
+    ::
     ==
   ::
   ++  on-peek
@@ -198,20 +196,7 @@
     ^-  (unit (unit cage))
     ?+    path  (on-peek:def path)
         [%x %block-height ~]
-      ``noun+!>(`@ud`(lent blocks))
-    ::
-        [%x %block ~]
-      :^  ~  ~  %noun
-      !>  ^-  (unit update:uqbar-indexer)
-      ?:  =(0 (lent blocks))  ~
-      ?~  bundle=(pry:bl-on blocks)  ~
-      `[%block val.u.bundle]
-    ::
-        [%x %block-num @ ~]
-      =/  block-num=@ud  (slav %ud i.t.t.path)
-      :^  ~  ~  %noun
-      !>  ^-  (unit update:uqbar-indexer)
-      (serve-update %block block-num)
+      ``noun+!>(`@ud`(lent slots))
     ::
         [%x %chunk-num @ @ ~]
       =/  block-num=@ud  (slav %ud i.t.t.path)
@@ -232,6 +217,19 @@
       :^  ~  ~  %noun
       !>  ^-  (unit update:uqbar-indexer)
       (serve-update query-type hash)
+    ::
+        [%x %slot ~]
+      :^  ~  ~  %noun
+      !>  ^-  (unit update:uqbar-indexer)
+      ?:  =(0 (lent slots))  ~
+      ?~  slot=(pry:sot:zig slots)  ~
+      `[%slot val.u.slot]
+    ::
+        [%x %slot-num @ ~]
+      =/  block-num=@ud  (slav %ud i.t.t.path)
+      :^  ~  ~  %noun
+      !>  ^-  (unit update:uqbar-indexer)
+      (serve-update %slot block-num)
     ::
         [%x %id @ ~]
         ::  search over from and to and return all hits
@@ -311,7 +309,7 @@
   ?~  source  ~
   :-  ~
   %+  %~  watch  pass:io
-  /chain-update  u.source  /fisherman/updates
+  /chain-update  u.source  /fisherman/updates  ::  TODO: do this right
 ::
 ++  leave-chain-source
   ^-  (unit card)
@@ -372,17 +370,14 @@
   |^  ^-  (unit update:uqbar-indexer)
   ?+    query-type  !!
   ::
-      %block
-    ?>  ?=(@ud query-payload)
-    (get-block-bundle query-payload)
-  ::
       %chunk
     ?>  ?=([@ @] query-payload)
     =/  update=(unit update:uqbar-indexer)
-      (get-block-bundle block-num.query-payload)
+      (get-slot block-num.query-payload)
     ?~  update  ~
-    ?>  ?=(%block -.u.update)
-    =*  chunks  q.block.bundle.u.update
+    ?>  ?=(%slot -.u.update)
+    ?~  q.slot.u.update  ~
+    =*  chunks  q.u.q.slot.u.update
     =/  chunk=(unit chunk:zig)
       (~(get by chunks) town-id.query-payload)
     ?~  chunk  ~
@@ -394,14 +389,18 @@
       ?(%block-hash %egg %from %grain %to)
     get-from-index
   ::
+      %slot
+    ?>  ?=(@ud query-payload)
+    (get-slot query-payload)
+  ::
   ==
   ::
-  ++  get-block-bundle
+  ++  get-slot
     |=  block-num=@ud
     ^-  (unit update:uqbar-indexer)
-    ?.  (lth block-num (lent blocks))  ~
-    ?~  bundle=(get:bl-on blocks block-num)  ~
-    `[%block u.bundle]
+    ?.  (lth block-num (lent slots))  ~
+    ?~  slot=(get:sot:zig slots block-num)  ~
+    `[%slot u.slot]
   ::
   ++  get-chunk-update
     ^-  (unit update:uqbar-indexer)
@@ -424,7 +423,7 @@
       ?>  =(1 (lent locations))
       =/  =location:uqbar-indexer  (snag 0 locations)
       ?>  ?=(@ location)
-      (get-block-bundle location)
+      (get-slot location)
     ::
         %grain
       =|  grains=(set [town-location:uqbar-indexer grain:smart])
@@ -491,9 +490,10 @@
   ++  get-chunk
     |=  [block-num=@ud town-id=@ud]
     ^-  (unit chunk:zig)
-    ?>  (lth block-num (lent blocks))
-    ?~  block-bundle=(get:bl-on blocks block-num)  ~
-    =*  chunks  q.block.u.block-bundle
+    ?>  (lth block-num (lent slots))
+    ?~  slot=(get:sot:zig slots block-num)  ~
+    ?~  block=q.u.slot  ~
+    =*  chunks  q.u.block
     (~(get by chunks) town-id)
   ::
   --
@@ -592,55 +592,52 @@
   |^  ^-  (quip card _state)
   ?+    -.update  !!  :: TODO: can we do better here?
   ::
-      %block
-    =*  block-num   num.header.bundle.update
-    =*  new-bundle  bundle.update
-    ?~  previous=(pry:bl-on blocks)
+      %slot
+    =*  block-num   num.p.slot.update
+    =*  new-slot    slot.update
+    ?~  previous=(pry:sot:zig slots)
       :-  ~
       ?:  =(0 block-num)
         %=  state
-            blocks
-              (put:bl-on blocks block-num new-bundle)
+            slots
+              (put:sot:zig slots block-num new-slot)
         ==
       %=  state
-          future-blocks
-            %^  put:bl-on
-            future-blocks  block-num  new-bundle
+          future-slots
+            %^  put:sot:zig
+            future-slots  block-num  new-slot
       ==
     =*  previous-block-num  key.u.previous
     ?:  (gth block-num +(previous-block-num))
       :-  ~
       %=  state
-          future-blocks
-            %^  put:bl-on
-            future-blocks  block-num  new-bundle
+          future-slots
+            %^  put:sot:zig
+            future-slots  block-num  new-slot
       ==
     ::
     ?:  (lth block-num +(previous-block-num))
-      ::  TODO: check if input block bundle has new
+      ::  TODO: check if input slot has new
       ::  data and if so, add to cache and index it
       `state
     ::
-    =*  previous-hash  (sham header.val.u.previous)  ::  TODO: keep up to date w current hashing method
-    =*  next-hash      prev-header-hash.header.new-bundle
+    =/  previous-hash  (sham p.val.u.previous)  ::  TODO: keep up to date w current hashing method
+    =*  next-hash      prev-header-hash.p.new-slot
     ?>  =(previous-hash next-hash)
     ::  store and index the new block
     ::
-    =+  [block-hash egg from grain to]=(parse-block block-num new-bundle)
+    ?>  ?=(^ q.new-slot)  ::  TODO: do better here
+    =+  [block-hash egg from grain to]=(parse-block block-num p.new-slot u.q.new-slot)
     =:  block-index  (~(gas ju block-index) block-hash)
         egg-index    (~(gas ju egg-index) egg)
         from-index   (~(gas ju from-index) from)
         grain-index  (~(gas ju grain-index) grain)
         to-index     (~(gas ju to-index) to)
     ==
-    ::  TODO: check over future-blocks to see if can now apply
-    ::  them now that we've added this new one; del from
-    ::  future-blocks and poke
-    ::
+    =^  cards  future-slots
+      (make-future-slots-cards block-num)
     ::  publish to subscribers
     ::
-    =^  cards  future-blocks
-      (make-future-blocks-cards block-num)
     =.  cards
       %-  zing
       :^    :_  ~  %+  fact:io
@@ -651,7 +648,7 @@
         cards
       ~
     :-  cards
-    state(blocks (put:bl-on blocks block-num new-bundle))
+    state(slots (put:sot:zig slots block-num new-slot))
   ::
   ::     %chunk
   ::   =*  block-num  block-num.location.update
@@ -667,21 +664,21 @@
   ::   ::  publish to subscribers
   ::   ::
   ::   :-  (make-all-sub-cards block-num)
-  ::   state(blocks (put:bl-on blocks block-num new-bundle))
+  ::   state(slots (put:sot:zig slots block-num new-slot))
   ::
   ==
   ::
-  ++  make-future-blocks-cards
+  ++  make-future-slots-cards
     |=  block-num=@ud
-    ^-  (quip card _future-blocks)
-    ?~  next-bundle=(get:bl-on future-blocks block-num)
-      `future-blocks
-    =+  [* new-future-blocks]=(del:bl-on future-blocks block-num)
-    :_  new-future-blocks
+    ^-  (quip card _future-slots)
+    ?~  next-slot=(get:sot:zig future-slots block-num)
+      `future-slots
+    =+  [* new-future-slots]=(del:sot:zig future-slots block-num)
+    :_  new-future-slots
     :_  ~
-    %-  %~  poke-self  pass:io  /future-blocks-poke
+    %-  %~  poke-self  pass:io  /future-slots-poke
     :-  %uqbar-indexer-update
-    !>(`update:uqbar-indexer`[%block u.next-bundle])
+    !>(`update:uqbar-indexer`[%slot u.next-slot])
   ::
   ++  make-all-sub-cards
     |=  block-num=@ud
@@ -728,53 +725,53 @@
     ~&  >  "uqbar-indexer: got block {<block-num>}"
     ~&  >  "uqbar-indexer:  with header {<header.update>}"
     ~&  >  "uqbar-indexer:  with hash {<(sham header.update)>}"
-    =/  new-bundle=block-bundle:uqbar-indexer
-      [header.update block.update]
-    ?~  previous=(pry:bl-on blocks)
+    =/  new-slot=slot:zig  [header.update `block.update]
+    ?~  previous=(pry:sot:zig slots)
       :-  ~
       ?:  =(0 block-num)
         ~&  >  "uqbar-indexer: 0"
         %=  state
-            blocks
-              (put:bl-on blocks block-num new-bundle)
+            slots
+              (put:sot:zig slots block-num new-slot)
         ==
       ~&  >  "uqbar-indexer: 1"
       %=  state
-          future-blocks
-            %^  put:bl-on
-            future-blocks  block-num  new-bundle
+          future-slots
+            %^  put:sot:zig
+            future-slots  block-num  new-slot
       ==
     =*  previous-block-num  key.u.previous
     ?:  (gth block-num +(previous-block-num))
       ~&  >  "uqbar-indexer: 2"
       :-  ~
       %=  state
-          future-blocks
-            %^  put:bl-on
-            future-blocks  block-num  new-bundle
+          future-slots
+            %^  put:sot:zig
+            future-slots  block-num  new-slot
       ==
     ::
     ?:  (lth block-num +(previous-block-num))
       ~&  >  "uqbar-indexer: 3"
-      ::  TODO: check if input block bundle has new
+      ::  TODO: check if input slot has new
       ::  data and if so, add to cache and index it
       `state
     ::
-    =*  previous-hash  (sham header.val.u.previous)  ::  TODO: keep up to date w current hashing method
-    =*  next-hash      prev-header-hash.header.new-bundle
+    =/  previous-hash  (sham p.val.u.previous)  ::  TODO: keep up to date w current hashing method
+    =*  next-hash      prev-header-hash.p.new-slot
     ?>  =(previous-hash next-hash)
     ~&  >  "uqbar-indexer: 4"
     ::  store and index the new block
     ::
-    =+  [block-hash egg from grain to]=(parse-block block-num new-bundle)
+    ?>  ?=(^ q.new-slot)  ::  TODO: do better here
+    =+  [block-hash egg from grain to]=(parse-block block-num p.new-slot u.q.new-slot)
     =:  block-index  (~(gas ju block-index) block-hash)
         egg-index    (~(gas ju egg-index) egg)
         from-index   (~(gas ju from-index) from)
         grain-index  (~(gas ju grain-index) grain)
         to-index     (~(gas ju to-index) to)
     ==
-    =^  cards  future-blocks
-      (make-future-blocks-cards block-num)
+    =^  cards  future-slots
+      (make-future-slots-cards block-num)
     ::  publish to subscribers
     ::
     =.  cards
@@ -782,13 +779,13 @@
       :^    :_  ~  %+  fact:io
               :-  %uqbar-indexer-update
               !>  ^-  update:uqbar-indexer
-              [%block [header.update block.update]]
+              [%slot [header.update `block.update]]
             ~[/block]
           (make-all-sub-cards block-num)
         cards
       ~
     :-  cards
-    state(blocks (put:bl-on blocks block-num new-bundle))
+    state(slots (put:sot:zig slots block-num new-slot))
   ::
   ::     %chunk
   ::   =*  block-num  block-num.location.update
@@ -804,21 +801,21 @@
   ::   ::  publish to subscribers
   ::   ::
   ::   :-  (make-all-sub-cards block-num)
-  ::   state(blocks (put:bl-on blocks block-num new-bundle))
+  ::   state(slots (put:sot:zig slots block-num new-slot))
   ::
   ==
   ::
-  ++  make-future-blocks-cards
+  ++  make-future-slots-cards
     |=  block-num=@ud
-    ^-  (quip card _future-blocks)
-    ?~  next-bundle=(get:bl-on future-blocks block-num)
-      `future-blocks
-    =+  [* new-future-blocks]=(del:bl-on future-blocks block-num)
-    :_  new-future-blocks
+    ^-  (quip card _future-slots)
+    ?~  next-slot=(get:sot:zig future-slots block-num)
+      `future-slots
+    =+  [* new-future-slots]=(del:sot:zig future-slots block-num)
+    :_  new-future-slots
     :_  ~
-    %-  %~  poke-self  pass:io  /future-blocks-poke
+    %-  %~  poke-self  pass:io  /future-slots-poke
     :-  %uqbar-indexer-update
-    !>(`update:uqbar-indexer`[%block u.next-bundle])
+    !>(`update:uqbar-indexer`[%slot u.next-slot])
   ::
   ++  make-all-sub-cards
     |=  block-num=@ud
