@@ -6,7 +6,7 @@
 +$  query-type
   ?(%block-hash %chunk %egg %from %grain %slot %to %hash)
 +$  query-payload
-  ?(hash=@ux block-num=@ud [block-num=@ud town-id=@ud])
+  ?(@ux block-location town-location)
 ::
 +$  location
   $?  block-location
@@ -14,11 +14,11 @@
       egg-location
   ==
 +$  block-location
-  block-num=@ud
+  [epoch-num=@ud block-num=@ud]
 +$  town-location
-  [block-num=@ud town-id=@ud]
+  [epoch-num=@ud block-num=@ud town-id=@ud]
 +$  egg-location
-  [block-num=@ud town-id=@ud egg-num=@ud]
+  [epoch-num=@ud block-num=@ud town-id=@ud egg-num=@ud]
 ::
 +$  update
   $%  [%chunk location=town-location =chunk:zig]
