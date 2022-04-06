@@ -29,10 +29,10 @@
 +$  update
   $%  [%epochs-catchup =epochs]
       [%blocks-catchup epoch-num=@ud =slots]
+      ::  TODO data availability here?
       [%new-block epoch-num=@ud header=block-header =block]
-      ::  todo: add data availability data
-      ::
       [%saw-block epoch-num=@ud header=block-header]
+      [%indexer-block epoch-num=@ud header=block-header blk=(unit block)]
   ==
 +$  sequencer-update
   $%  [%next-producer =ship]
@@ -42,7 +42,7 @@
 ::
 +$  chain-poke
   $%  [%set-addr =id:smart]
-      [%start mode=?(%fisherman %validator) history=epochs validators=(set ship) starting-state=town:smart]
+      [%start mode=?(%indexer %validator) history=epochs validators=(set ship) starting-state=town:smart]
       [%stop ~]
       [%new-epoch ~]
       [%receive-chunk town-id=@ud =chunk]
@@ -67,7 +67,7 @@
 +$  book  (map [town=@ud lord=id:smart salt=@] grain:smart)
 ::
 +$  wallet-poke
-  $%  [%populate ~]  :: populate wallet with fake data, for testing
+  $%  [%populate seed=@ux]  :: populate wallet with fake data, for testing
       [%import mnemonic=tape password=tape]
       [%create ~]
       ::  TODO add poke to spawn new keypair from seed

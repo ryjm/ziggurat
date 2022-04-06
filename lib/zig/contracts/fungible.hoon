@@ -96,7 +96,7 @@
         ::  create new rice for reciever and add it to state
         =+  (fry-rice to.args me.cart town-id.cart salt.p.germ.giv)
         =/  new=grain
-          [- me.cart to.args town-id.cart [%& salt.p.germ.giv [amount.args ~ metadata.giver]]]
+          [- me.cart to.args town-id.cart [%& salt.p.germ.giv [0 ~ metadata.giver]]]
         ::  continuation call: %give to rice we issued
         :^  %|  ~
           :+  me.cart  town-id.cart

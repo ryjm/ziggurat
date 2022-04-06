@@ -34,14 +34,19 @@ links to other desks, such as base-dev and garden-dev.
 ### To initialize a blockchain:
 
 1. Start by populating the wallet with the correct data (need to do this first, but with block explorer we can make wallet find this itself):
-`:wallet &zig-wallet-poke [%populate ~]`
+`:wallet &zig-wallet-poke [%populate 0xbeef]`
+*for testing: use `0xbeef` for ~zod, `0xdead` for next ship, `0xcafe` for 3rd*
 
 2. Give your validator agent a pubkey to match the data in the wallet:
 `:ziggurat &zig-chain-poke [%set-addr 0x2.e3c1.d19b.fd3e.43aa.319c.b816.1c89.37fb.b246.3a65.f84d.8562.155d.6181.8113.c85b]`
-*This is one of 3 addresses with zigs already added, and corresponds to the seed we generated in %populate*
+*This is one of 3 addresses with zigs already added, and corresponds to the seed `0xbeef`. to test with more, find matching pubkey in wallet*
 
 2. Start up a new main chain: *NOTE: this will take about 30 seconds, deploying a contract..*
 `:ziggurat|start-testnet now`
+
+(to add other ships, use poke `:ziggurat &zig-chain-poke [%start %validator ~ validators=(silt ~[~zod ~nec]) [~ ~]]`)
+
+where `~[~zod ~nec]` is the current set of validators including the one being added
 
 3. Start up a town that has the token contract deployed: *will also take about 30 seconds*
 `:sequencer|init 1`
