@@ -218,7 +218,8 @@
             [%x %grain @ ~]
             [%x %to @ ~]
         ==
-      =/  =query-type:uqbar-indexer  i.t.path
+      =/  =query-type:uqbar-indexer
+        ;;(query-type:uqbar-indexer i.t.path)
       =/  hash=@ux  (slav %ux i.t.t.path)
       :^  ~  ~  %noun
       !>  ^-  (unit update:uqbar-indexer)
@@ -378,10 +379,11 @@
   ?+    query-type  !!
   ::
       %chunk
-    ?>  ?=(town-location:uqbar-indexer query-payload)
+    ?.  ?=(town-location:uqbar-indexer query-payload)  ~
     =/  update=(unit update:uqbar-indexer)
       (get-slot epoch-num.query-payload block-num.query-payload)
     ?~  update  ~
+    ~|  "uqbar-indexer: trouble finding slot containing chunk"
     ?>  ?=(%slot -.u.update)
     ?~  q.slot.u.update  ~
     =*  chunks  q.u.q.slot.u.update
@@ -397,7 +399,7 @@
     get-from-index
   ::
       %slot
-    ?>  ?=(block-location:uqbar-indexer query-payload)
+    ?.  ?=(block-location:uqbar-indexer query-payload)  ~
     (get-slot query-payload)
   ::
   ==
@@ -413,23 +415,25 @@
     ^-  (unit update:uqbar-indexer)
     =/  locations=(list location:uqbar-indexer)
       ~(tap in get-locations)
+    ~|  "uqbar-indexer: chunk not unique"
     ?>  =(1 (lent locations))
     =/  =location:uqbar-indexer  (snag 0 locations)
-    ?>  ?=(town-location:uqbar-indexer location)
-    ?~  chunk=(get-chunk location)  ~
+    ?.  ?=(town-location:uqbar-indexer location)  ~
+    ?~  chunk=(get-chunk location)                ~
     `[%chunk location u.chunk]
   ::
   ++  get-from-index
     ^-  (unit update:uqbar-indexer)
-    ?>  ?=(@ux query-payload)
+    ?.  ?=(@ux query-payload)  ~
     =/  locations=(list location:uqbar-indexer)
       ~(tap in get-locations)
     ?+    query-type  !!
     ::
         %block-hash
+      ~|  "uqbar-indexer: block hash not unique"
       ?>  =(1 (lent locations))
       =/  =location:uqbar-indexer  (snag 0 locations)
-      ?>  ?=(block-location:uqbar-indexer location)
+      ?.  ?=(block-location:uqbar-indexer location)  ~
       (get-slot location)
     ::
         %grain
@@ -439,7 +443,7 @@
         ?~  grains  ~
         `[%grain grains]
       =*  location  i.locations
-      ?>  ?=(town-location:uqbar-indexer location)
+      ?.  ?=(town-location:uqbar-indexer location)  ~
       ?~  chunk=(get-chunk location)
         $(locations t.locations)  :: TODO: can we do better here?
       =*  granary  p.+.u.chunk
@@ -457,14 +461,21 @@
         ?~  eggs  ~
         `[%egg eggs]
       =*  location  i.locations
-      ?>  ?=(egg-location:uqbar-indexer location)
+      ?.  ?=(egg-location:uqbar-indexer location)
+        $(locations t.locations)
       ?~  chunk=(get-chunk epoch-num.location block-num.location town-id.location)
         $(locations t.locations)  :: TODO: can we do better here?
       =*  egg-num  egg-num.location
       =*  txs  -.u.chunk
-      ?>  (lth egg-num (lent txs))
+      ?.  (lth egg-num (lent txs))  $(locations t.locations)
       =+  [hash=@ux =egg:smart]=(snag egg-num txs)
-      ?>  =(query-payload hash)
+      ~|  "uqbar-indexer: location points to incorrect egg. query type, payload, hash, location, egg: {<query-type>}, {<query-payload>}, {<hash>}, {<location>}, {<egg>}"
+      ?>  ?|  =(query-payload hash)
+              ?:  ?=(id:smart from.p.egg)
+                =(query-payload from.p.egg)
+              =(query-payload id.from.p.egg)
+              =(query-payload to.p.egg)
+          ==
       %=  $
           locations  t.locations
           eggs       (~(put in eggs) [location egg])
