@@ -1,7 +1,7 @@
 ::  ziggurat [uqbar-dao]
 ::
 /+  *ziggurat, default-agent, dbug, verb
-/*  smart-lib  %noun  /lib/zig/sys/smart-lib/noun
+/*  smart-lib  %noun  /lib/zig/sys/smart-lib-2/noun
 =,  util
 |%
 +$  card  card:agent:gall
