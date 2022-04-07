@@ -317,8 +317,8 @@
   ?~  source  ~
   :-  ~
   %+  %~  watch  pass:io
-  /chain-update  u.source  /fisherman/updates  ::  TODO: do this right
-::
+  :: TODO: improve (maybe metadata from zig and chunks from seq?
+  /chain-update  u.source  /indexer/updates
 ++  leave-chain-source
   ^-  (unit card)
   ?~  chain-source  ~
@@ -745,13 +745,14 @@
   |^  ^-  (quip card _state)
   ?+    -.update  !!  :: TODO: can we do better here?
   ::
-      %new-block
+      %indexer-block
+    ?~  blk.update  `state  :: TODO: log block header?
     =*  epoch-num   epoch-num.update
     =*  block-num   num.header.update
     ~&  >  "uqbar-indexer: got block {<epoch-num>}:{<block-num>}"
     ~&  >  "uqbar-indexer:  with header {<header.update>}"
     ~&  >  "uqbar-indexer:  with hash {<(sham header.update)>}"
-    =/  new-slot=slot:zig  [header.update `block.update]
+    =/  new-slot=slot:zig  [header.update blk.update]
     =/  working-epoch=epoch:zig
       ?~  existing-epoch=(get:poc:zig epochs epoch-num)
         :^    num=epoch-num

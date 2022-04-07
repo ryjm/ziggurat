@@ -25,7 +25,11 @@
   ^-  (list card)
   ::  sends either a 'new-block' or 'saw-block' to fellow validators,
   ::  and sends an 'indexer-block' to indexers.
-  =+  !>([%indexer-block -.+.update -.+.+.update blk])
+  =+  ?:  ?=(%new-block -.update)
+        !>(`^update`[%indexer-block epoch-num.update header.update blk])
+      ?:  ?=(%saw-block -.update)
+        !>(`^update`[%indexer-block epoch-num.update header.update blk])
+      !!
   :~  [%give %fact ~[/validator/updates] %zig-update !>(update)]
       [%give %fact ~[/indexer/updates] %zig-update -]
   ==
