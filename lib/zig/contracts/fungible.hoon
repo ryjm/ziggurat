@@ -1,4 +1,3 @@
-/+  *zig-sys-smart
 ::
 ::  Fungible token standard. Any new token that wishes to use this standard
 ::  format can be issued through this contract. The contract uses an account

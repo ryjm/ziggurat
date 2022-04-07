@@ -12,11 +12,9 @@
   ++  our-block
     |=  data=chunks
     ^-  (quip card epoch)
-    ~&  >  "creating block"  ::  printout
     ::  TODO temporary: make a fake chunk if we have none
     =?  data  ?=(~ data)
       (malt ~[[777 [~ p=~ q=~]]])
-    ~&  >  "chunks in block: {<~(key by data)>}"
     :: TODO: check time and if necessary skip our own block
     :: (lth now.bowl (deadline:epo start-time.cur slot-num))
     =/  [last-num=@ud last-slot=(unit slot)]
@@ -37,7 +35,6 @@
     =/  =slot
       =/  hed=block-header  [next-num prev-hed-hash data-hash]
       [hed `[(sign:sig our now (sham hed)) data]]
-    ~&  >  "block size: {<(met 3 (jam slot))>} bytes"
     :_  cur(slots (put:sot slots.cur next-num slot))
     %+  weld
       (give-on-updates [%new-block num.cur p.slot (need q.slot)] q.slot)
@@ -71,7 +68,6 @@
   ++  their-block
     |=  [hed=block-header blk=(unit block)]
     ^-  (quip card epoch)
-    ~&  >  "it's {<src>}'s block"  ::  printout
     =/  [last-num=@ud last-slot=(unit slot)]
       (get-last-slot slots.cur)
     ::~&  num.hed^[last-num last-slot]

@@ -15,6 +15,7 @@
       tokens=(map pub=@ =book)
       metadata-store=(map =id:smart token-metadata)
       ::  TODO add block explorer hookup here, can subscribe for changes
+      indexer=(unit ship)
       ::  potential to do cool stuff with %pals integration here
   ==
 --
@@ -29,7 +30,7 @@
 +*  this  .
     def   ~(. (default-agent this %|) bowl)
 ::
-++  on-init  `this(state [%0 *byts ~ ~ ~ ~ ~])
+++  on-init  `this(state [%0 *byts ~ ~ ~ ~ ~ `our.bowl])
 ::
 ++  on-save  !>(state)
 ++  on-load
@@ -85,6 +86,10 @@
         %set-node
       `state(nodes (~(put by nodes) town.act ship.act))
     ::
+        %set-indexer
+      ::  defaults to our ship, so for testing, just run indexer on same ship
+      `state(indexer `ship.act)
+    ::
         %set-nonce  ::  for testing
       =+  acc=(~(got by nonces.state) address.act)
       `state(nonces (~(put by nonces) address.act (~(put by acc) town.act new.act)))
@@ -92,23 +97,29 @@
         %populate
       ::  populate wallet with fake data for testing
       ::  will WIPE previous wallet state!!
+      ::
+      ::  TODO replace this with a request to an indexer,
+      ::  which will provide all rice/grains associated with pubkey(s) in wallet
       =+  core=(from-seed:bip32 [64 seed.act])
       =+  pub=public-key:core
+      =/  id-0  (fry-rice:smart pub 0x0 0 `@`'zigs')
       =/  fake-0
         :-  [0 0x0 'zigs']
-        :*  (fry-rice:smart pub 0x0 0 `@`'zigs')
+        :*  id-0
             0x0  pub  0
             [%& `@`'zigs' [300.000.000 ~ `@ux`'zigs-metadata']]
         ==
+      =/  id-1  (fry-rice:smart pub `@ux`'fungible' 1 `@`'zigs')
       =/  fake-1
         :-  [1 `@ux`'fungible' 'zigs']
-        :*  (fry-rice:smart pub `@ux`'fungible' 1 `@`'zigs')
+        :*  id-1
             `@ux`'fungible'  pub  1
             [%& `@`'zigs' [100.000.000 ~ `@ux`'zigs-metadata']]
         ==
+      =/  id-2  (fry-rice:smart pub `@ux`'fungible' 1 `@`'wETH')
       =/  fake-2
         :-  [1 `@ux`'fungible' 'wETH']
-        :*  (fry-rice:smart pub `@ux`'fungible' 1 `@`'wETH')
+        :*  id-2
             `@ux`'fungible'  pub  1
             [%& `@`'wETH' [173.000 ~ `@ux`'wETH-metadata']]
         ==
@@ -134,7 +145,7 @@
             deployer=0x1234.5678
             salt=`@`'wETH'
         ==
-      :-  ~
+      :-  (create-asset-subscriptions ~[id-0 id-1 id-2] (need indexer.state))
       %=  state
         seed    [64 eny.bowl]
         keys    (malt ~[[pub private-key:core]])
@@ -192,13 +203,24 @@
               !>([%forward (silt ~[egg])])
       ==  ==
     ==
+  ++  create-asset-subscriptions
+    |=  [ids=(list id:smart) indexer=ship]
+    ^-  (list card)
+    %+  turn  ids
+    |=  =id:smart
+    =-  [%pass - %agent [indexer %uqbar-indexer] %watch -]
+    /grain/(scot %ux id)
   --
 ::
 ++  on-agent
-  ::  TODO provide subscribe paths for frontend,
-  ::  and update it on changes to wallet state.
-  ::  Changes will be provided by connecting to an indexer
-  on-agent:def
+  |=  [=wire =sign:agent:gall]
+  ^-  (quip card _this)
+  ?+    wire  (on-agent:def wire sign)
+      [%grain @ ~]
+    ::  update to a grain received
+    ~&  >  "wallet: got a grain update"
+    `this
+  ==
 ::
 ++  on-arvo  on-arvo:def
 ::
