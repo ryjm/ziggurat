@@ -92,7 +92,7 @@
         %populate
       ::  populate wallet with fake data for testing
       ::  will WIPE previous wallet state!!
-      =+  core=(from-seed:bip32 [64 0xbeef])
+      =+  core=(from-seed:bip32 [64 seed.act])
       =+  pub=public-key:core
       =/  fake-0
         :-  [0 0x0 'zigs']

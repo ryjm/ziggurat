@@ -21,6 +21,7 @@
 ::
 ++  fry-rice
   |=  [holder=id lord=id town=@ud salt=@]
+  ::  TODO remove town from this possibly, for cross-town transfers
   ^-  id
   ^-  @ux
   %^  cat  3
