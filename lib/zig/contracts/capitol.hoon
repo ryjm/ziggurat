@@ -1,4 +1,3 @@
-/+  *zig-sys-smart
 |_  =cart
 ::
 ::  capitol.hoon
