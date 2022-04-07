@@ -4,15 +4,17 @@
 ::
 |%
 +$  query-type
-  ?(%block-hash %chunk %egg %from %grain %slot %to %hash)
+  ?(%block-hash %chunk %egg %from %grain %holder %lord %slot %to %hash)
 +$  query-payload
-  ?(@ux block-location town-location)
+  ?(@ux location)
 ::
 +$  location
-  $?  block-location
+  $?  second-order-location
+      block-location
       town-location
       egg-location
   ==
++$  second-order-location  id:smart
 +$  block-location
   [epoch-num=@ud block-num=@ud]
 +$  town-location
