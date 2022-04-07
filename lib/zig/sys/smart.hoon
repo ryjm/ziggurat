@@ -2,6 +2,15 @@
 ::
 ::  smart contract functions
 ::
+:: TODO: this is nice but it doesn't work because
+:: grains don't keep rice status thru gate :/
+++  validate-rice
+  |*  [typ=mold =id me=id from=(map id grain)]
+  ^-  [grain typ]
+  =+  (~(got by from) id)
+  ?>  &(=(lord.- me) ?=(%& -.germ.-))
+  -^(hole typ data.p.germ.-)
+::
 ::  +hole: vase-checks your types for you
 ::
 ++  hole
