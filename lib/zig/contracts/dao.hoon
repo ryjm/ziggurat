@@ -1,31 +1,6 @@
-/+  *zig-sys-smart
-=>  |%
-    +$  badge  @tas
-    +$  role
-      [=badge desc=@t param=@tas]
-    +$  daoist
-      [=ship roles=(map badge role)]
-    +$  action
-      $%  [%add-owner =id]
-          [%remove-owner =id]        
-          [%edit-threshold new=@ud]
-          [%spawn =id subdao=dao-data]  ::  generate new subDAO
-          [%jettison =id]               ::  remove subDAO
-          [%join =id =daoist]           ::  add new member
-          [%exit =id]                   ::  remove member
-          [%edit =id =daoist]           ::  alter member roleset
-      ==
-    +$  dao-data
-      $:  name=@t
-          owners=(set id)          ::  merklized
-          threshold=@ud
-          proposals=(map @ux [act=action votes=(set id)])
-          daoists=(map id daoist)  ::  merklized
-          ::  set of rice that hold subDAO info. these
-          ::  rice must also fit the mold of $dao-data
-          subdaos=(set id)
-      ==
-    --
+/-  d=dao
+/+  *zig-sys-smart,
+    dao-lib=dao
 ::
 ::  DAO management contract
 ::
@@ -49,87 +24,106 @@
   ::
   ::  create a brand-new DAO
   ::
-  ?:  ?=(%create-dao -.u.args.inp)
+  ?:  ?=(%add-dao -.u.args.inp)
     ::  start a new 'root cell' for a new DAO
-    ::  expected args: name, initial owner set,
-    ::  initial threshold
-    ?.  ?=([name=@t thresh=@ud owners=*] args)  !!
-    =/  owners  ;;((set id) owners.args)
-    =/  new-dao-germ  [%& ~ [name.args owners thresh.args ~ ~ ~]]
-    =/  new-dao-id  (fry caller-id 0 new-dao-germ)
-    =-  [%& ~ (malt ~[[new-dao-id -]])]
-    [new-dao-id me.cart me.cart town-id.cart new-dao-germ]  
+    ::  expected args: dao
+    ::  of which the following may be null:
+    ::  (TODO: fill)
+    ?>  ?=(dao:d args)
+    :: ?.  ?=([name=@t thresh=@ud owners=*] args)  !!
+    :: =/  owners  ;;((set id) owners.args)
+    =/  new-dao-germ=germ  [%& args]
+    =/  new-dao-id=id  (fry caller-id 0 new-dao-germ)
+    =-  [%& (malt ~[[new-dao-id -]])]
+    :*  id=new-dao-id
+        lord=me.cart
+        holder=me.cart
+        town-id=town-id.cart
+        germ=new-dao-germ
+    ==
   ::
+  =/  dao-id=grain  -:~(key by owns.cart)
   =/  my-grain=grain  -:~(val by owns.cart)
   ?>  =(lord.my-grain me.cart)
   ?>  ?=(%& -.germ.my-grain)
-  =/  data  (hole dao-data data.p.germ.my-grain)
+  =/  dao  (hole dao:d data.p.germ.my-grain)
   ::
   ::  vote on a proposal
   ::
   ?:  ?=(%vote -.u.args.inp)
     ::  must be sent by owner
-    ?.  (~(has in owners.data) caller-id)  !!
+    ?>  %:  is-allowed:dao-lib
+            caller-id
+            grain-id
+            %write
+            members.dao
+            permissions.dao
+        ==
     ::  expected args: hash of proposal
-    ?.  ?=(id=@ux args)  !!
-    =/  prop  (~(got by proposals.data) id.args)
+    ?>  ?=(@ux args)
+    =/  prop  (~(got by proposals.dao) args)
     =.  prop  prop(votes (~(put in votes.prop) caller-id))
-    ?:  (gth threshold.data ~(wyt in votes.prop))
+    ?:  (gth threshold.dao ~(wyt in votes.prop))
       ::  if threshold is higher than current # of votes,
       ::  just register vote and update rice
-      [%& (malt ~[[id.my-grain my-grain(data.p.germ data)]]) ~]
+      [%& (malt ~[[id.my-grain my-grain(data.p.germ dao)]]) ~]
     ::  otherwise execute proposal and remove from rice
     =.  data.p.germ.my-grain
-      data(proposals (~(del by proposals.data) id.args))
-    $(inp [me.cart `act.prop grains.inp])
+      dao(proposals (~(del by proposals.dao) id.args))
+    $(inp [me.cart `update.prop grains.inp])
   ::
   ::  create a proposal
   ::
   ?:  ?=(%propose -.u.args.inp)
     ::  must be sent by owner
-    ?.  (~(has in owners.data) caller-id)  !!
-    ::  expected args: action
-    =/  act  ;;(action args)
-    =.  proposals.data
-      %+  ~(put by proposals.data)
-        (mug act)
-      [act (silt ~[caller-id])]
-    [%& (malt ~[[id.my-grain my-grain(data.p.germ data)]]) ~]
+    ?>  %:  is-allowed:dao-lib
+            caller-id
+            grain-id
+            %write
+            members.dao
+            permissions.dao
+        ==
+    ::  expected args: on-chain-update
+    ?>  ?=(on-chain-update:d args)
+    =/  update  ;;(on-chain-update:d args)
+    =.  proposals.dao
+      %+  ~(put by proposals.dao)
+        (mug update)
+      [update (silt ~[caller-id])]
+    [%& (malt ~[[id.my-grain my-grain(data.p.germ dao)]]) ~]
   ::
   ::  execute a proposal (called only by this contract)
   ::
   ?>  =(me.cart caller-id)
-  =/  act  ;;(action (need args.inp))
-  =.  data
-    ?-    -.act
-        %add-owner
-      data(owners (~(put in owners.data) id.act))
+  =/  update  ;;(on-chain-update:d (need args.inp))
+  =.  dao
+    ?-    -.update
+        %add-member
+      (~(add-member dao-lib dao) +.update)
     ::
-        %remove-owner
-      data(owners (~(del in owners.data) id.act))
+        %remove-member
+      (~(remove-member dao-lib dao) +.update)
     ::
-        %edit-threshold
-      ?:  (gth new.act ~(wyt in owners.data))  !!
-      data(threshold new.act)
+        %add-permissions
+      (~(add-permissions dao-lib dao) +.update)
     ::
-        %spawn
-      ::  actually need to issue rices here
-      data(subdaos (~(put in subdaos.data) id.act))
+        %remove-permissions
+      (~(remove-permissions dao-lib dao) +.update)
     ::
-        %jettison
-      data(subdaos (~(del in subdaos.data) id.act))
+        %add-subdao
+      (~(add-subdao dao-lib dao) +.update)
     ::
-        %join
-      data(daoists (~(put by daoists.data) id.act daoist.act))
+        %remove-subdao
+      (~(remove-subdao dao-lib dao) +.update)
     ::
-        %exit
-      data(daoists (~(del by daoists.data) id.act))
+        %add-roles
+      (~(add-roles dao-lib dao) +.update)
     ::
-        %edit
-      data(daoists (~(put by daoists.data) id.act daoist.act))
+        %remove-roles
+      (~(remove-roles dao-lib dao) +.update)
     ::
     ==
-  [%& (malt ~[[id.my-grain my-grain(data.p.germ data)]]) ~]
+  [%& (malt ~[[id.my-grain my-grain(data.p.germ dao)]]) ~]
 ::
 ++  read
   |=  inp=path
