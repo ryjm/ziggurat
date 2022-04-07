@@ -12,7 +12,7 @@
     (process jon)
     ++  process
       %-  of
-      :~  [%populate bo]
+      :~  [%populate parse-seed]
           [%import parse-import]
           [%create bo]
           [%delete parse-delete]
@@ -21,6 +21,8 @@
       ==
     ++  parse-import
       (ot ~[[%mnemonic sa] [%password sa]])
+    ++  parse-seed
+      (ot ~[[%seed (se %ux)]])
     ++  parse-delete
       (ot ~[[%pubkey (se %ux)]])
     ++  parse-set

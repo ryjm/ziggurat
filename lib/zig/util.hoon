@@ -21,10 +21,14 @@
   ==
 ::
 ++  give-on-updates
-  |=  =update
-  ^-  card
-  =-  [%give %fact - %zig-update !>(update)]
-  ~[/validator/updates /fisherman/updates]
+  |=  [=update blk=(unit block)]
+  ^-  (list card)
+  ::  sends either a 'new-block' or 'saw-block' to fellow validators,
+  ::  and sends an 'indexer-block' to indexers.
+  =+  !>([%indexer-block -.+.update -.+.+.update blk])
+  :~  [%give %fact ~[/validator/updates] %zig-update !>(update)]
+      [%give %fact ~[/indexer/updates] %zig-update -]
+  ==
 ::
 ++  notify-sequencer
   |=  =ship
@@ -44,7 +48,7 @@
     ^-  (unit card)
     ?.  ?|  ?=([%validator %updates *] wire)
             ?=([%sequencer %updates *] wire)
-            ?=([%fisherman %updates *] wire)
+            ?=([%indexer %updates *] wire)
         ==
       ~
     `[%pass wire %agent [ship term] %leave ~]

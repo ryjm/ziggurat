@@ -1,4 +1,5 @@
 ## How to create a compiled "smart library" for smart contract execution:
+*used to generate new versions of uHoon*
 
 `=trivial .^(@t %cx /=zig=/lib/zig/contracts/trivial/hoon)`
 
