@@ -1,3 +1,4 @@
+/+  *zig-sys-smart
 |_  =cart
 ::
 ::  capitol.hoon
@@ -15,85 +16,89 @@
   |=  inp=zygote
   ^-  chick
   |^
-  =/  caller-id  (pin caller.inp)
   ?~  args.inp  !!
-  =*  args  +.u.args.inp
-  ?+    -.u.args.inp  !!
-  ::  calls to create, join, or exit a town
+  (process (hole arguments u.args.inp) (pin caller.inp))
   ::
-      %init
-    =/  world-grain=grain  (~(got by owns.cart) `@ux`'world')
-    ?>  ?=(%& -.germ.world-grain)
-    =*  world  (hole world-mold data.p.germ.world-grain)
-    ::  start a new town if one with if that id doesn't exist
-    ?.  ?=([=sig town-id=@ud] args)  !!
-    ?:  (~(has by world) town-id.args)  !!
-    =.  data.p.germ.world-grain
-      (~(put by world) town-id.args (malt ~[[q.sig.args [caller-id sig.args]]]))
-    [%& (malt ~[[id.world-grain world-grain]]) ~]
+  ::  molds used by this contract
   ::
-      %join
-    =/  world-grain=grain  (~(got by owns.cart) `@ux`'world')
-    ?>  ?=(%& -.germ.world-grain)
-    =*  world  (hole world-mold data.p.germ.world-grain)
-    ::  become a sequencer on an existing town
-    ?.  ?=([=sig town-id=@ud] args)  !!
-    ?~  current=`(unit (map ship [id sig]))`(~(get by world) town-id.args)  !!
-    =/  new  (~(put by u.current) q.sig.args [caller-id sig.args])
-    =.  data.p.germ.world-grain
-      (~(put by world) town-id.args new)
-    [%& (malt ~[[id.world-grain world-grain]]) ~]
+  +$  sig       [p=@ux q=ship r=@ud]
+  +$  ziggurat  (map ship sig)
+  +$  world     (map town-id=@ud council=(map ship [id sig]))
   ::
-      %exit
-    =/  world-grain=grain  (~(got by owns.cart) `@ux`'world')
-    ?>  ?=(%& -.germ.world-grain)
-    =*  world  (hole world-mold data.p.germ.world-grain)
-    ::  leave a town that you're sequencing on
-    ?.  ?=([=sig town-id=@ud] args)  !!
-    ?~  current=`(unit (map ship [id sig]))`(~(get by world) town-id.args)  !!
-    =/  new  (~(del by u.current) q.sig.args)
-    =.  data.p.germ.world-grain
-      (~(put by world) town-id.args new)
-    [%& (malt ~[[id.world-grain world-grain]]) ~]
+  +$  arguments
+    $%  [%init =sig town=@ud]
+        [%join =sig town=@ud]
+        [%exit =sig town=@ud]
+        [%become-validator sig]
+        [%stop-validating sig]
+    ==
   ::
-  ::  calls to join/exit as a validator on the main chain
+  ::  process a call
   ::
-      %become-validator
-    =/  ziggurat-grain=grain  (~(got by owns.cart) `@ux`'ziggurat')
-    ?>  ?=(%& -.germ.ziggurat-grain)
-    =*  ziggurat  (hole ziggurat-mold data.p.germ.ziggurat-grain)
-    ::  join the chain
-    ?.  ?=(sig args)  !!
-    =.  data.p.germ.ziggurat-grain  (~(put by ziggurat) q.args args)
-    [%& (malt ~[[id.ziggurat-grain ziggurat-grain]]) ~]
-  ::
-      %stop-validating
-    =/  ziggurat-grain=grain  (~(got by owns.cart) `@ux`'ziggurat')
-    ?>  ?=(%& -.germ.ziggurat-grain)
-    =*  ziggurat  (hole ziggurat-mold data.p.germ.ziggurat-grain)
-    ::  leave the chain
-    ?.  ?=(sig args)  !!
-    =.  data.p.germ.ziggurat-grain  (~(del by ziggurat) q.args)
-    [%& (malt ~[[id.ziggurat-grain ziggurat-grain]]) ~]
-  ==
-  +$  sig  [p=@ux q=ship r=@ud]
-  ::
-  ::  validators on main chain
-  ::
-  +$  ziggurat-mold  (map ship sig)
-  ::
-  ::  existing towns and their halls
-  ::
-  +$  world-mold
-    (map town-id=@ud council=(map ship [id sig]))
+  ++  process
+    |=  [args=arguments caller-id=id]
+    ?-    -.args
+    ::
+    ::  calls to join/exit as a sequencer on a town, or make a new one
+    ::
+        %init
+      ::  start a new town if one with if that id doesn't exist
+      =/  worl=grain  (~(got by owns.cart) `@ux`'world')
+      ?>  ?=(%& -.germ.worl)
+      =/  =world  (hole world data.p.germ.worl)
+      ?:  (~(has by world) town.args)  !!
+      =.  data.p.germ.worl
+        (~(put by world) town.args (malt ~[[q.sig.args [caller-id sig.args]]]))
+      [%& (malt ~[[id.worl worl]]) ~]
+    ::
+        %join
+      ::  become a sequencer on an existing town
+      =/  worl=grain  (~(got by owns.cart) `@ux`'world')
+      ?>  ?=(%& -.germ.worl)
+      =/  =world  (hole world data.p.germ.worl)
+      ?~  current=`(unit (map ship [id sig]))`(~(get by world) town.args)  !!
+      =/  new  (~(put by u.current) q.sig.args [caller-id sig.args])
+      =.  data.p.germ.worl
+        (~(put by world) town.args new)
+      [%& (malt ~[[id.worl worl]]) ~]
+    ::
+        %exit
+      ::  leave a town that you're sequencing on
+      =/  worl=grain  (~(got by owns.cart) `@ux`'world')
+      ?>  ?=(%& -.germ.worl)
+      =/  =world  (hole world data.p.germ.worl)
+      ?~  current=`(unit (map ship [id sig]))`(~(get by world) town.args)  !!
+      =/  new  (~(del by u.current) q.sig.args)
+      =.  data.p.germ.worl
+        (~(put by world) town.args new)
+      [%& (malt ~[[id.worl worl]]) ~]
+    ::
+    ::  calls to join/exit as a validator on the main chain
+    ::
+        %become-validator
+      =/  zigg=grain  (~(got by owns.cart) `@ux`'ziggurat')
+      ?>  ?=(%& -.germ.zigg)
+      =/  =ziggurat  (hole ziggurat data.p.germ.zigg)
+      ?<  (~(has by ziggurat) q.args)
+      =.  data.p.germ.zigg  (~(put by ziggurat) q.args +.args)
+      [%& (malt ~[[id.zigg zigg]]) ~]
+    ::
+        %stop-validating
+      =/  zigg=grain  (~(got by owns.cart) `@ux`'ziggurat')
+      ?>  ?=(%& -.germ.zigg)
+      =/  =ziggurat  (hole ziggurat data.p.germ.zigg)
+      ?>  (~(has by ziggurat) q.args)
+      =.  data.p.germ.zigg  (~(del by ziggurat) q.args)
+      [%& (malt ~[[id.zigg zigg]]) ~]
+    ==
   --
 ::
-::  TBD
+::  not yet using these
 ::
 ++  read
   |=  inp=path
   ^-  *
-  %tbd
+  ~
 ::
 ++  event
   |=  inp=rooster
