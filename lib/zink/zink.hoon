@@ -16,12 +16,10 @@
   =^  sroot  cax  (hash s)
   =^  froot  cax  (hash f)
   =|  trace=(list [@ta *])
-  ::?~  formula-cost=(cost f bud)
-  ::  [~ 0]
-  ::=/  cos=@ud  u.formula-cost
-  =/  cos=@ud  0
-  ::?:  (lth bud cos)  [~ bud]
-  ::=.  bud  (sub bud cos)
+  ?~  formula-cost=(cost f bud)
+    `[cax hit 0]
+  ?:  (lth bud u.formula-cost)  `[cax hit 0]
+  =.  bud  (sub bud u.formula-cost)
   |^  ^-  book
   ?+    f
     ~&  f
