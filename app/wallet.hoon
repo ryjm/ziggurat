@@ -96,7 +96,7 @@
         %set-indexer
       ::  defaults to our ship, so for testing, just run indexer on same ship
       :_  state(indexer `ship.act)
-      ~&  >>  (create-asset-subscriptions tokens.state ship.act)
+      %+  weld  (clear-asset-subscriptions wex.bowl)
       (create-asset-subscriptions tokens.state ship.act)
     ::
         %set-nonce  ::  for testing
@@ -109,6 +109,7 @@
         .^((unit update:uqbar-indexer) %gx /(scot %p our.bowl)/uqbar-indexer/(scot %da now.bowl)/holder/(scot %ux pubkey.act)/noun)
       =+  ?~(our-grains ~ (indexer-update-to-books u.our-grains))
       :_  state(tokens -)
+      %+  weld  (clear-asset-subscriptions wex.bowl)
       (create-asset-subscriptions - (need indexer.state))
     ::
         %populate
@@ -137,7 +138,8 @@
         .^((unit update:uqbar-indexer) %gx /(scot %p our.bowl)/uqbar-indexer/(scot %da now.bowl)/holder/(scot %ux pub)/noun)
       ::  convert from update to book
       =+  ?~(our-grains ~ (indexer-update-to-books u.our-grains))
-      :-  (create-asset-subscriptions - (need indexer.state))
+      :-  %+  weld  (clear-asset-subscriptions wex.bowl)
+          (create-asset-subscriptions - (need indexer.state))
       %=  state
         seed    [64 eny.bowl]
         keys    (malt ~[[pub private-key:core]])
