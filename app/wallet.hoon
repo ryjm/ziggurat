@@ -3,6 +3,7 @@
 ::  Uqbar wallet agent. Stores private key and facilitates signing
 ::  transactions, holding nonce values, and keeping track of owned data.
 ::
+/-  uqbar-indexer
 /+  *ziggurat, default-agent, dbug, verb, bip32, bip39
 |%
 +$  card  card:agent:gall
@@ -14,7 +15,6 @@
       nonces=(map pub=@ (map town=@ud nonce=@ud))
       tokens=(map pub=@ =book)
       metadata-store=(map =id:smart token-metadata)
-      ::  TODO add block explorer hookup here, can subscribe for changes
       indexer=(unit ship)
       ::  potential to do cool stuff with %pals integration here
   ==
@@ -39,7 +39,14 @@
   =/  old-state  !<(state-0 old-vase)
   `this(state old-state)
 ::
-++  on-watch  on-watch:def
+++  on-watch
+  |=  =path
+  ^-  (quip card _this)
+  ?.  ?=([%book-updates ~] path)  !!
+    ?>  =(src.bowl our.bowl)
+    ::  send frontend updates along this path
+    :_  this
+    ~[[%give %fact ~ %zig-wallet-update !>([%new-book tokens.state])]]
 ::
 ++  on-poke
   |=  [=mark =vase]
@@ -103,26 +110,7 @@
       =+  core=(from-seed:bip32 [64 seed.act])
       =+  pub=public-key:core
       =/  id-0  (fry-rice:smart pub 0x0 0 `@`'zigs')
-      =/  fake-0
-        :-  [0 0x0 'zigs']
-        :*  id-0
-            0x0  pub  0
-            [%& `@`'zigs' [300.000.000 ~ `@ux`'zigs-metadata']]
-        ==
       =/  id-1  (fry-rice:smart pub `@ux`'fungible' 1 `@`'zigs')
-      =/  fake-1
-        :-  [1 `@ux`'fungible' 'zigs']
-        :*  id-1
-            `@ux`'fungible'  pub  1
-            [%& `@`'zigs' [100.000.000 ~ `@ux`'zigs-metadata']]
-        ==
-      =/  id-2  (fry-rice:smart pub `@ux`'fungible' 1 `@`'wETH')
-      =/  fake-2
-        :-  [1 `@ux`'fungible' 'wETH']
-        :*  id-2
-            `@ux`'fungible'  pub  1
-            [%& `@`'wETH' [173.000 ~ `@ux`'wETH-metadata']]
-        ==
       =/  zigs-metadata
         :*  name='Uqbar Tokens'
             symbol='ZIG'
@@ -134,25 +122,14 @@
             deployer=0x0
             salt=`@`'zigs'
         ==
-      =/  weth-metadata
-        :*  name='Wrapped Ether'
-            symbol='wETH'
-            decimals=18
-            supply=9.000.000.000.000.000.000.000.000
-            cap=~
-            mintable=%.n
-            minters=~
-            deployer=0x1234.5678
-            salt=`@`'wETH'
-        ==
-      :-  (create-asset-subscriptions ~[id-0 id-1 id-2] (need indexer.state))
+      :-  (create-asset-subscriptions ~[id-0 id-1] (need indexer.state))
       %=  state
         seed    [64 eny.bowl]
         keys    (malt ~[[pub private-key:core]])
         nodes   (malt ~[[0 ~zod] [1 ~zod] [2 ~zod]])
         nonces  (malt ~[[pub (malt ~[[0 0] [1 0] [2 0]])]])
-        tokens  (malt ~[[pub (malt ~[[fake-1] [fake-2] [fake-0]])]])
-        metadata-store  (malt ~[[`@ux`'zigs-metadata' zigs-metadata] [`@ux`'wETH-metadata' weth-metadata]])
+        tokens  (malt ~[[pub ~]])
+        metadata-store  (malt ~[[`@ux`'zigs-metadata' zigs-metadata]])
       ==        
     ::
         %submit
@@ -219,7 +196,24 @@
       [%grain @ ~]
     ::  update to a grain received
     ~&  >  "wallet: got a grain update"
-    `this
+    ?:  ?=(%watch-ack -.sign)  (on-agent:def wire sign)
+    ?.  ?=(%fact -.sign)       (on-agent:def wire sign)
+    ?.  ?=(%uqbar-indexer-update p.cage.sign)  (on-agent:def wire sign)
+    =/  update  !<(update:uqbar-indexer q.cage.sign)
+    ?.  ?=(%grain -.update)  `this
+    =/  new=grain:smart  +.-:~(tap in grains.update)
+    ?.  ?=(%& -.germ.new)
+      ::  stop watching this grain
+      ~[[%pass wire %agent [(need indexer.this) %uqbar-indexer] %leave ~]]^this
+    ?~  book=(~(get by tokens.this) holder.new)
+      ::  no longer tracking holder, stop watching this grain
+      ~[[%pass wire %agent [(need indexer.this) %uqbar-indexer] %leave ~]]^this
+    =.  u.book
+      (~(put by `^book`u.book) [town-id.new lord.new salt.p.germ.new] new)
+    ::  place new grain state in our personal tracker,
+    ::  and inform frontend of change
+    :_  this(tokens (~(put by tokens) holder.new u.book))
+    ~[[%give %fact ~[/book-updates] %zig-wallet-update !>([%new-book tokens.state])]]
   ==
 ::
 ++  on-arvo  on-arvo:def
@@ -253,9 +247,9 @@
     =/  pub  (slav %ux i.t.t.path)
     =/  town-id  (slav %ud i.t.t.t.path)
     =/  nonce  (~(gut by (~(got by nonces.state) pub)) town-id 0)
-    =/  zigs=id:smart
-      (fry-rice:smart pub 0x0 town-id 'zigs')
-    ``noun+!>(`account:smart`[pub nonce zigs])
+    =/  =book  (~(got by tokens.state) pub)
+    =/  zigs=grain:smart  (~(got by book) [town-id 0x0 `@`'zigs'])
+    ``noun+!>(`account:smart`[pub nonce id.zigs])
   ::
       [%book ~]
     ::  return entire book map for wallet frontend

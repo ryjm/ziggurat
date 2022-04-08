@@ -883,8 +883,8 @@
             lord-index    (~(gas ju *(jug @ux second-order-location:uqbar-indexer)) lord)
             to-index      (~(gas ju *(jug @ux egg-location:uqbar-indexer)) to)
         ==
-      ~&  >  "{<grain>}"
-      ~&  >  "{<(~(gas ju *(jug @ux town-location:uqbar-indexer)) grain)>}"
+      ::  ~&  >  "{<grain>}"
+      ::  ~&  >  "{<(~(gas ju *(jug @ux town-location:uqbar-indexer)) grain)>}"
       %-  zing
       :~  (make-sub-cards chunk-subs %ud `block-num %chunk /chunk serve-most-recent-update)
           (make-sub-cards id-subs %ux ~ %from /id serve-most-recent-update)

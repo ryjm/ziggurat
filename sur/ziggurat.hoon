@@ -66,6 +66,8 @@
 ::
 +$  book  (map [town=@ud lord=id:smart salt=@] grain:smart)
 ::
++$  wallet-update  [%new-book tokens=(map pub=id:smart =book)]
+::
 +$  wallet-poke
   $%  [%populate seed=@ux]  :: populate wallet with fake data, for testing
       [%import mnemonic=tape password=tape]
