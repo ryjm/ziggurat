@@ -1,5 +1,5 @@
 /-  *zink
-/+  *zock-pedersen, *zink-json
+/+  *zink-pedersen, *zink-json
 |%
 ::
 +$  body  (unit *)
