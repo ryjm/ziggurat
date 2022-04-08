@@ -10,10 +10,10 @@
 +$  state-0
   $:  %0
       seed=byts  ::  encrypted with password
-      keys=(map pub=@ priv=@)  ::  keys created from master seed
+      keys=(map pub=@ux priv=@ux)  ::  keys created from master seed
       nodes=(map town=@ud =ship)  ::  the sequencer you submit txs to for each town
-      nonces=(map pub=@ (map town=@ud nonce=@ud))
-      tokens=(map pub=@ =book)
+      nonces=(map pub=@ux (map town=@ud nonce=@ud))
+      tokens=(map pub=@ux =book)
       metadata-store=(map =id:smart token-metadata)
       indexer=(unit ship)
       ::  potential to do cool stuff with %pals integration here
@@ -95,11 +95,21 @@
     ::
         %set-indexer
       ::  defaults to our ship, so for testing, just run indexer on same ship
-      `state(indexer `ship.act)
+      :_  state(indexer `ship.act)
+      ~&  >>  (create-asset-subscriptions tokens.state ship.act)
+      (create-asset-subscriptions tokens.state ship.act)
     ::
         %set-nonce  ::  for testing
       =+  acc=(~(got by nonces.state) address.act)
       `state(nonces (~(put by nonces) address.act (~(put by acc) town.act new.act)))
+    ::
+        %fetch-our-rice
+      ::  temporary until we can subscribe to indexer by-holder
+      =/  our-grains
+        .^((unit update:uqbar-indexer) %gx /(scot %p our.bowl)/uqbar-indexer/(scot %da now.bowl)/holder/(scot %ux pubkey.act)/noun)
+      =+  ?~(our-grains ~ (indexer-update-to-books u.our-grains))
+      :_  state(tokens -)
+      (create-asset-subscriptions - (need indexer.state))
     ::
         %populate
       ::  populate wallet with fake data for testing
@@ -109,8 +119,8 @@
       ::  which will provide all rice/grains associated with pubkey(s) in wallet
       =+  core=(from-seed:bip32 [64 seed.act])
       =+  pub=public-key:core
-      =/  id-0  (fry-rice:smart pub 0x0 0 `@`'zigs')
-      =/  id-1  (fry-rice:smart pub `@ux`'fungible' 1 `@`'zigs')
+      ::  =/  id-0  (fry-rice:smart pub `@ux`'zigs-contract' 0 `@`'zigs')
+      ::  =/  id-1  (fry-rice:smart pub `@ux`'zigs-contract' 1 `@`'zigs')
       =/  zigs-metadata
         :*  name='Uqbar Tokens'
             symbol='ZIG'
@@ -122,13 +132,18 @@
             deployer=0x0
             salt=`@`'zigs'
         ==
-      :-  (create-asset-subscriptions ~[id-0 id-1] (need indexer.state))
+      ::  get grains we hold from indexer (must run on our ship for now)
+      =/  our-grains
+        .^((unit update:uqbar-indexer) %gx /(scot %p our.bowl)/uqbar-indexer/(scot %da now.bowl)/holder/(scot %ux pub)/noun)
+      ::  convert from update to book
+      =+  ?~(our-grains ~ (indexer-update-to-books u.our-grains))
+      :-  (create-asset-subscriptions - (need indexer.state))
       %=  state
         seed    [64 eny.bowl]
         keys    (malt ~[[pub private-key:core]])
         nodes   (malt ~[[0 ~zod] [1 ~zod] [2 ~zod]])
         nonces  (malt ~[[pub (malt ~[[0 0] [1 0] [2 0]])]])
-        tokens  (malt ~[[pub ~]])
+        tokens  -
         metadata-store  (malt ~[[`@ux`'zigs-metadata' zigs-metadata]])
       ==        
     ::
@@ -145,21 +160,20 @@
       =/  node=ship      (~(gut by nodes.state) town.act our.bowl)
       =/  =book  (~(got by tokens.state) from.act)
       =/  =caller:smart
-        ::  TODO fix
-        ?:  =(town.act 0)
-          [from.act +(nonce) id:(~(got by book) [town.act 0x0 `@`'zigs'])]
-        [from.act +(nonce) id:(~(got by book) [town.act `@ux`'fungible' `@`'zigs'])]
+        [from.act +(nonce) (fry-rice:smart from.act `@ux`'zigs-contract' town.act `@`'zigs')]
       ::  need to check transaction type and collect rice based on it
       ::  only supporting small subset of contract calls, for tokens and NFTs
       =/  formatted=[args=(unit *) our-grains=(set @ux) cont-grains=(set @ux)]
         ?-    -.args.act
             %give
-          ::  TODO use block explorer to find rice if it exists and restructure this
-          ::  to use known parameter to find other person's rice
           =/  metadata  (~(got by metadata-store.state) token.args.act)
           =/  our-account  (~(got by book) [town.act to.act salt.metadata])
-          =/  their-account-id  (fry-rice:smart to.args.act `@ux`'fungible' town.act salt.metadata)
-          :+  `[%give to.args.act `their-account-id amount.args.act]
+          ::  TODO use block explorer to find rice if it exists and restructure this
+          ::  to use known parameter to find other person's rice
+          =/  their-account-id  (fry-rice:smart to.args.act to.act town.act salt.metadata)
+          :+  ?:  =(to.act `@ux`'zigs-contract')  ::  zigs special case
+                `[%give to.args.act `their-account-id amount.args.act bud.gas.act]
+              `[%give to.args.act `their-account-id amount.args.act]
             (silt ~[id.our-account])
           (silt ~[their-account-id])
         ::
@@ -180,13 +194,50 @@
               !>([%forward (silt ~[egg])])
       ==  ==
     ==
+  ::
+  ++  indexer-update-to-books
+    |=  =update:uqbar-indexer
+    ::  get most recent version of the grain
+    ::  TODO replace this with a (way) more efficient strategy
+    ::  preferably adding a type to indexer that only contains
+    ::  most recent data
+    =/  tokens  *(map @ =book)
+    ?.  ?=(%grain -.update)  tokens
+    =/  grains-list  `(list [=town-location:uqbar-indexer =grain:smart])`~(tap in grains.update)
+    ^-  (map @ =book)
+    |-
+    ?~  grains-list  tokens
+    =/  =grain:smart  grain.i.grains-list
+    ::  currently only storing owned *rice*
+    ?.  ?=(%& -.germ.grain)  $(grains-list t.grains-list)
+    =/  =book  (~(gut by tokens) holder.grain ~)
+    %=  $
+      tokens  (~(put by tokens) holder.grain (~(put by book) [town-id.grain lord.grain salt.p.germ.grain] grain))
+      grains-list  t.grains-list
+    ==
+  ::
   ++  create-asset-subscriptions
-    |=  [ids=(list id:smart) indexer=ship]
+    |=  [tokens=(map @ux =book) indexer=ship]
     ^-  (list card)
-    %+  turn  ids
-    |=  =id:smart
+    %+  turn
+      ::  find every grain in all our books
+      ^-  (list grain:smart)
+      %-  zing
+      %+  turn  ~(tap by tokens)
+      |=  [@ux =book]
+      ~(val by book)
+    |=  =grain:smart
     =-  [%pass - %agent [indexer %uqbar-indexer] %watch -]
-    /grain/(scot %ux id)
+    /grain/(scot %ux id.grain)
+  ::
+  ++  clear-asset-subscriptions
+    |=  wex=boat:gall
+    ^-  (list card)
+    %+  murn  ~(tap by wex)
+    |=  [[=wire =ship =term] *]
+    ^-  (unit card)
+    ?.  ?=([%grain *] wire)  ~
+    `[%pass wire %agent [ship term] %leave ~]
   --
 ::
 ++  on-agent
@@ -247,9 +298,8 @@
     =/  pub  (slav %ux i.t.t.path)
     =/  town-id  (slav %ud i.t.t.t.path)
     =/  nonce  (~(gut by (~(got by nonces.state) pub)) town-id 0)
-    =/  =book  (~(got by tokens.state) pub)
-    =/  zigs=grain:smart  (~(got by book) [town-id 0x0 `@`'zigs'])
-    ``noun+!>(`account:smart`[pub nonce id.zigs])
+    =+  (fry-rice:smart pub `@ux`'zigs-contract' town-id `@`'zigs')
+    ``noun+!>(`account:smart`[pub nonce -])
   ::
       [%book ~]
     ::  return entire book map for wallet frontend

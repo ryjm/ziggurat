@@ -66,6 +66,7 @@
       ^-  ?
       ?.  ?=(account from.p.egg)                    %.n
       ?~  zigs=(~(get by granary) zigs.from.p.egg)  %.n
+      ?.  =(zigs-wheat-id lord.u.zigs)              %.n
       ?.  ?=(%& -.germ.u.zigs)                      %.n
       =/  acc  (hole token-account data.p.germ.u.zigs)
       (gth balance.acc budget.p.egg)
@@ -86,6 +87,7 @@
       ?~  zigs=(~(get by granary) zigs.miller)  granary
       ?.  ?=(%& -.germ.u.zigs)                  granary
       =/  acc  (hole token-account data.p.germ.u.zigs)
+      ?.  =(zigs-wheat-id metadata.acc)         granary
       =.  balance.acc  (add balance.acc total)
       =.  data.p.germ.u.zigs  acc
       (~(put by granary) zigs.miller u.zigs)

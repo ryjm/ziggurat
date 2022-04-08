@@ -27,6 +27,7 @@
 ::  I will heavily comment this contract in order to make it a good example
 ::  for others to use.
 ::
+::  /+  *zig-sys-smart
 |_  =cart
 ++  write
   |=  inp=zygote
@@ -125,6 +126,7 @@
       =/  giver=account  (hole account data.p.germ.giv)
       =/  allowance=@ud  (~(got by allowances.giver) caller-id)
       ::  assert caller is permitted to spend this amount of token
+      ?>  (gte balance.giver amount.args)
       ?>  (gte allowance amount.args)
       ?~  to-rice.args
         ::  create new rice for reciever and add it to state

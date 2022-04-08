@@ -70,6 +70,7 @@
 ::
 +$  wallet-poke
   $%  [%populate seed=@ux]  :: populate wallet with fake data, for testing
+      [%fetch-our-rice pubkey=@ux]
       [%import mnemonic=tape password=tape]
       [%create ~]
       ::  TODO add poke to spawn new keypair from seed

@@ -48,7 +48,7 @@
 ::  smart contract types
 ::
 +$  id             @ux  ::  pubkey
-++  zigs-wheat-id  0x0  ::  hardcoded "native" token contract
+++  zigs-wheat-id  `@ux`'zigs-contract'  ::  hardcoded "native" token contract
 ::
 +$  account    [=id nonce=@ud zigs=id]
 +$  caller     $@(id account)

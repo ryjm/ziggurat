@@ -34,31 +34,47 @@ links to other desks, such as base-dev and garden-dev.
 ### To initialize a blockchain:
 
 1. Start by populating the wallet with the correct data (need to do this first, but with block explorer we can make wallet find this itself):
-`:wallet &zig-wallet-poke [%populate 0xbeef]`
+```
+:wallet &zig-wallet-poke [%populate 0xbeef]
+```
 *for testing: use `0xbeef` for ~zod, `0xdead` for next ship, `0xcafe` for 3rd*
 
 2. Give your validator agent a pubkey to match the data in the wallet:
-`:ziggurat &zig-chain-poke [%set-addr 0x2.e3c1.d19b.fd3e.43aa.319c.b816.1c89.37fb.b246.3a65.f84d.8562.155d.6181.8113.c85b]`
+```
+:ziggurat &zig-chain-poke [%set-addr 0x2.e3c1.d19b.fd3e.43aa.319c.b816.1c89.37fb.b246.3a65.f84d.8562.155d.6181.8113.c85b]
+```
 *This is one of 3 addresses with zigs already added, and corresponds to the seed `0xbeef`. to test with more, find matching pubkey in wallet*
 
-2. Start up a new main chain: *NOTE: this will take about 30 seconds, deploying a contract..*
-`:ziggurat|start-testnet now`
-
-(to add other ships, use poke `:ziggurat &zig-chain-poke [%start %validator ~ validators=(silt ~[~zod ~nec]) [~ ~]]`)
-
-where `~[~zod ~nec]` is the current set of validators including the one being added
-
-3. Start up a town that has the token contract deployed: *will also take about 30 seconds*
-`:sequencer|init 1`
-(1 here is the town-id)
-
-4. The chain is now running. **NOTE: while the wallet should be configured to successfully submit transactions with 'zigs' (not yet the fake wETH), it will not recieve updates to the data it holds upon transaction completion. We'll need to get data from the block explorer to do that.**
-
-5. To start the indexer/block explorer backend, use:
+3. To start the indexer/block explorer backend, use:
 ```
 :uqbar-indexer &set-chain-source [our %ziggurat]
 ```
 where the argument `[our %ziggurat]` is a dock pointing to the ship running the `%ziggurat` agent to receive block updates from.
+
+4. Set the wallet to receive state updates from your ship's indexer:
+```
+:wallet &zig-wallet-poke [%set-indexer our]
+```
+
+5. Start up a new main chain: *NOTE: this will take about 30 seconds, deploying a contract..*
+```
+:ziggurat|start-testnet now
+```
+(to add other ships, follow above instructions with 2nd and 3rd seed/pubkey combos, but use poke `:ziggurat &zig-chain-poke [%start %validator ~ validators=(silt ~[~zod ~nec]) [~ ~]]`) here, where `~[~zod ~nec]` is the current set of validators including the one being added)
+
+6. To make the wallet aware of the assets spawned for you in the town and main chain you just launched, it's necessary to use a scry, like so:
+```
+:wallet &zig-wallet-poke [%fetch-our-rice 0x2.e3c1.d19b.fd3e.43aa.319c.b816.1c89.37fb.b246.3a65.f84d.8562.155d.6181.8113.c85b]
+```
+(the pubkey here should match the one you used in step 2. The ship running the wallet must also be running a block explorer.)
+
+7. Start up a town that has the token contract deployed. You have to do step 6 first, otherwise the sequencer agent won't have the data from the main chain it needs to set up a transaction. *will also take about 30 seconds*
+```
+:sequencer|init 1
+```
+(1 here is the town-id)
+
+Make sure to perform step (6) again if you need updated chain state in your wallet.
 
 ### To use the wallet
 
