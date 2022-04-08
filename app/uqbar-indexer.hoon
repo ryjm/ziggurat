@@ -493,7 +493,8 @@
       :-  ~
       %=  u.out
           grains
-            (~(uni in grains.u.out) grains.u.next-update)
+        (~(uni in grains.u.out) grains.u.next-update)
+      ::
       ==
     ==
   ::
@@ -605,13 +606,16 @@
     %=  $
         grains  t.grains
         parsed-grain
-          :_  parsed-grain
-          :-  grain-id
-          [epoch-num block-num town-id]
+      :_  parsed-grain
+      :-  grain-id
+      [epoch-num block-num town-id]
+    ::
         parsed-holder
-          [[holder-id grain-id] parsed-holder]
+      [[holder-id grain-id] parsed-holder]
+    ::
         parsed-lord
-          [[lord-id grain-id] parsed-lord]
+      [[lord-id grain-id] parsed-lord]
+    ::
     ==
   ::
   ++  parse-transactions
@@ -666,7 +670,12 @@
           order=~
         slots=(put:sot:zig *slots:zig block-num new-slot)
       %=  u.existing-epoch  ::  TODO: do more checks to avoid overwriting (unnecessary work)
-          slots  (put:sot:zig slots.u.existing-epoch block-num new-slot)
+          slots
+        %^    put:sot:zig
+            slots.u.existing-epoch
+          block-num
+        new-slot
+      ::
       ==
     ::  store and index the new block
     ::
