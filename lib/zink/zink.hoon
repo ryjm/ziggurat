@@ -29,6 +29,8 @@
   ::  formula is a cell; do distribution
   ::
       [^ *]
+    ?:  (lth bud 1)  `app
+    =.  bud  (sub bud 1)
     =^  hed=body  app
       $(f -.f)
     ?~  hed  `app
@@ -41,6 +43,8 @@
     [~ u.hed^u.tal]^app
   ::
       [%0 axis=@]
+    ?:  (lth bud 1)  `app
+    =.  bud  (sub bud 1)
     =^  part  bud
       (frag axis.f s bud)
     ?~  part  `app
@@ -51,12 +55,15 @@
     [~ u.u.part]^app
   ::
       [%1 const=*]
+    ?:  (lth bud 1)  `app
+    =.  bud  (sub bud 1)
     =^  hres  cax  (hash const.f)
     =.  hit  (put-hint [%1 hres])
     [~ const.f]^app
   ::
       [%2 sub=* for=*]
-    ~&  %2
+    ?:  (lth bud 1)  `app
+    =.  bud  (sub bud 1)
     =^  hsub  cax  (hash sub.f)
     =^  hfor  cax  (hash for.f)
     =^  subject=body  app
@@ -72,6 +79,8 @@
     $(s u.subject, f u.formula)
   ::
       [%3 arg=*]
+    ?:  (lth bud 1)  `app
+    =.  bud  (sub bud 1)
     =^  argument=body  app
       $(f arg.f)
     ?~  argument  `app
@@ -85,6 +94,8 @@
     [~ %.y]^app
   ::
       [%4 arg=*]
+    ?:  (lth bud 1)  `app
+    =.  bud  (sub bud 1)
     =^  argument=body  app
       $(f arg.f)
     =^  harg  cax  (hash arg.f)
@@ -94,6 +105,8 @@
     [~ .+(u.argument)]^app
   ::
       [%5 a=* b=*]
+    ?:  (lth bud 1)  `app
+    =.  bud  (sub bud 1)
     =^  ha  cax  (hash a.f)
     =^  hb  cax  (hash b.f)
     =^  a=body  app
@@ -106,6 +119,8 @@
     [~ =(u.a u.b)]^app
   ::
       [%6 test=* yes=* no=*]
+    ?:  (lth bud 1)  `app
+    =.  bud  (sub bud 1)
     =^  htest  cax  (hash test.f)
     =^  hyes   cax  (hash yes.f)
     =^  hno    cax  (hash no.f)
@@ -119,10 +134,12 @@
     ==
   ::
       [%7 subj=* next=*]
+    ?:  (lth bud 1)  `app
+    =.  bud  (sub bud 1)
     =^  hsubj  cax  (hash subj.f)
     =^  hnext  cax  (hash next.f)
     =^  subject=body  app
-      $(s subj.f)
+      $(f subj.f)
     ?~  subject  `app
     ::  TODO: check if crash here and do trace
     =.  hit  (put-hint [%7 hsubj hnext])
@@ -132,6 +149,8 @@
     ==
   ::
       [%8 head=* next=*]
+    ?:  (lth bud 1)  `app
+    =.  bud  (sub bud 1)
     =^  hhead  cax  (hash head.f)
     =^  hnext  cax  (hash next.f)
     =^  head=body  app
@@ -145,6 +164,8 @@
     ==
   ::
       [%9 axis=@ core=*]
+    ?:  (lth bud 1)  `app
+    =.  bud  (sub bud 1)
     =^  hcore  cax  (hash core.f)
     =^  core=body  app
       $(f core.f)
@@ -164,6 +185,8 @@
     ==
   ::
       [%10 [axis=@ value=*] target=*]
+    ?:  (lth bud 1)  `app
+    =.  bud  (sub bud 1)
     =^  hval  cax  (hash value.f)
     =^  htar  cax  (hash target.f)
     ?:  =(0 axis.f)  !!  ::  TODO: safety!
