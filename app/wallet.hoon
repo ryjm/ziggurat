@@ -136,13 +136,17 @@
       ::  get grains we hold from indexer (must run on our ship for now)
       =/  our-grains
         .^((unit update:uqbar-indexer) %gx /(scot %p our.bowl)/uqbar-indexer/(scot %da now.bowl)/holder/(scot %ux pub)/noun)
+      =/  keys  (malt ~[[pub private-key:core]])
       ::  convert from update to book
       =+  ?~(our-grains ~ (indexer-update-to-books u.our-grains))
-      :-  %+  weld  (clear-asset-subscriptions wex.bowl)
-          (create-asset-subscriptions - (need indexer.state))
+      :-  ;:  weld
+              (clear-asset-subscriptions wex.bowl)
+              (create-asset-subscriptions - (need indexer.state))
+              (create-pubkey-subscriptions ~(key by keys) (need indexer.state))
+          ==
       %=  state
         seed    [64 eny.bowl]
-        keys    (malt ~[[pub private-key:core]])
+        keys    keys
         nodes   (malt ~[[0 ~zod] [1 ~zod] [2 ~zod]])
         nonces  (malt ~[[pub (malt ~[[0 0] [1 0] [2 0]])]])
         tokens  -
@@ -218,6 +222,15 @@
       grains-list  t.grains-list
     ==
   ::
+  ++  create-pubkey-subscriptions
+    |=  [keys=(set @ux) indexer=ship]
+    ^-  (list card)
+    %+  turn
+      ~(tap in keys)
+    |=  k=@ux
+    =-  [%pass - %agent [indexer %uqbar-indexer] %watch -]
+    /id/(scot %ux k)
+  ::
   ++  create-asset-subscriptions
     |=  [tokens=(map @ux =book) indexer=ship]
     ^-  (list card)
@@ -248,12 +261,12 @@
   ?+    wire  (on-agent:def wire sign)
       [%grain @ ~]
     ::  update to a grain received
-    ~&  >  "wallet: got a grain update"
     ?:  ?=(%watch-ack -.sign)  (on-agent:def wire sign)
     ?.  ?=(%fact -.sign)       (on-agent:def wire sign)
     ?.  ?=(%uqbar-indexer-update p.cage.sign)  (on-agent:def wire sign)
     =/  update  !<(update:uqbar-indexer q.cage.sign)
     ?.  ?=(%grain -.update)  `this
+    ~&  >>  "wallet: got a grain update"
     =/  new=grain:smart  +.-:~(tap in grains.update)
     ?.  ?=(%& -.germ.new)
       ::  stop watching this grain
@@ -267,6 +280,18 @@
     ::  and inform frontend of change
     :_  this(tokens (~(put by tokens) holder.new u.book))
     ~[[%give %fact ~[/book-updates] %zig-wallet-update !>([%new-book tokens.state])]]
+  ::
+      [%id @ ~]
+    ::  update to a tracked account
+    ?:  ?=(%watch-ack -.sign)  (on-agent:def wire sign)
+    ?.  ?=(%fact -.sign)       (on-agent:def wire sign)
+    ?.  ?=(%uqbar-indexer-update p.cage.sign)  (on-agent:def wire sign)
+    =/  update  !<(update:uqbar-indexer q.cage.sign)
+    ?.  ?=(%egg -.update)  `this
+    ::  this will give us updates to transactions we send,
+    ::  specifically if they succeeded
+    ::  ~&  >>  "wallet: id update: {<update>}"
+    `this
   ==
 ::
 ++  on-arvo  on-arvo:def
