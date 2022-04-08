@@ -86,6 +86,8 @@
       chunk-subs=(jug town-id=@ud sub=@p)
       id-subs=(jug id-hash=@ux sub=@p)
       grain-subs=(jug grain-hash=@ux sub=@p)
+      holder-subs=(jug holder-hash=@ux sub=@p)
+      lord-subs=(jug lord-hash=@ux sub=@p)
   ==
 +$  indices-0
   $:  block-index=(jug @ux block-location:uqbar-indexer)
@@ -168,6 +170,14 @@
       =/  grain-hash  (slav %ux i.t.path)
       `this(grain-subs (~(put ju grain-subs) grain-hash src.bowl))
     ::
+        [%holder @ ~]
+      =/  holder-hash  (slav %ux i.t.path)
+      `this(holder-subs (~(put ju holder-subs) holder-hash src.bowl))
+    ::
+        [%lord @ ~]
+      =/  lord-hash  (slav %ux i.t.path)
+      `this(lord-subs (~(put ju lord-subs) lord-hash src.bowl))
+    ::
         [%slot ~]
       `this
     ::
@@ -189,6 +199,14 @@
         [%grain @ ~]
       =/  grain-hash  (slav %ux i.t.path)
       `this(grain-subs (~(del ju grain-subs) grain-hash src.bowl))
+    ::
+        [%holder @ ~]
+      =/  holder-hash  (slav %ux i.t.path)
+      `this(holder-subs (~(del ju holder-subs) holder-hash src.bowl))
+    ::
+        [%lord @ ~]
+      =/  lord-hash  (slav %ux i.t.path)
+      `this(lord-subs (~(del ju lord-subs) lord-hash src.bowl))
     ::
         [%slot ~]
       `this
@@ -872,6 +890,8 @@
           (make-sub-cards id-subs %ux ~ %from /id serve-most-recent-update)
           (make-sub-cards id-subs %ux ~ %to /id serve-most-recent-update)
           (make-sub-cards grain-subs %ux ~ %grain /grain serve-most-recent-update)
+          (make-sub-cards holder-subs %ux ~ %holder /holder serve-most-recent-update)
+          (make-sub-cards lord-subs %ux ~ %lord /lord serve-most-recent-update)
       ==
     ::
     ++  make-sub-cards
