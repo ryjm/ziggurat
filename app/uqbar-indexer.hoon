@@ -83,11 +83,6 @@
 +$  base-state-0
   $:  chain-source=(unit dock)
       =epochs:zig
-      chunk-subs=(jug town-id=@ud sub=@p)
-      id-subs=(jug id-hash=@ux sub=@p)
-      grain-subs=(jug grain-hash=@ux sub=@p)
-      holder-subs=(jug holder-hash=@ux sub=@p)
-      lord-subs=(jug lord-hash=@ux sub=@p)
   ==
 +$  indices-0
   $:  block-index=(jug @ux block-location:uqbar-indexer)
@@ -145,27 +140,13 @@
     ^-  (quip card _this)
     ?+    path  (on-watch:def path)
     ::
-        [%chunk @ ~]
-      =/  town-id=@ud  (slav %ud i.t.path)
-      `this(chunk-subs (~(put ju chunk-subs) town-id src.bowl))
-    ::
-        [%id @ ~]
-      =/  id-hash  (slav %ux i.t.path)
-      `this(id-subs (~(put ju id-subs) id-hash src.bowl))
-    ::
-        [%grain @ ~]
-      =/  grain-hash  (slav %ux i.t.path)
-      `this(grain-subs (~(put ju grain-subs) grain-hash src.bowl))
-    ::
-        [%holder @ ~]
-      =/  holder-hash  (slav %ux i.t.path)
-      `this(holder-subs (~(put ju holder-subs) holder-hash src.bowl))
-    ::
-        [%lord @ ~]
-      =/  lord-hash  (slav %ux i.t.path)
-      `this(lord-subs (~(put ju lord-subs) lord-hash src.bowl))
-    ::
-        [%slot ~]
+        $?  [%chunk @ ~]
+            [%id @ ~]
+            [%grain @ ~]
+            [%holder @ ~]
+            [%lord @ ~]
+            [%slot ~]
+        ==
       `this
     ::
     ==
@@ -175,27 +156,13 @@
     ^-  (quip card _this)
     ?+    path  (on-watch:def path)
     ::
-        [%chunk @ ~]
-      =/  town-id=@ud  (slav %ud i.t.path)
-      `this(chunk-subs (~(del ju chunk-subs) town-id src.bowl))
-    ::
-        [%id @ ~]
-      =/  id-hash  (slav %ux i.t.path)
-      `this(id-subs (~(del ju id-subs) id-hash src.bowl))
-    ::
-        [%grain @ ~]
-      =/  grain-hash  (slav %ux i.t.path)
-      `this(grain-subs (~(del ju grain-subs) grain-hash src.bowl))
-    ::
-        [%holder @ ~]
-      =/  holder-hash  (slav %ux i.t.path)
-      `this(holder-subs (~(del ju holder-subs) holder-hash src.bowl))
-    ::
-        [%lord @ ~]
-      =/  lord-hash  (slav %ux i.t.path)
-      `this(lord-subs (~(del ju lord-subs) lord-hash src.bowl))
-    ::
-        [%slot ~]
+        $?  [%chunk @ ~]
+            [%id @ ~]
+            [%grain @ ~]
+            [%holder @ ~]
+            [%lord @ ~]
+            [%slot ~]
+        ==
       `this
     ::
     ==
@@ -369,62 +336,76 @@
             to-index      (~(gas ju to-index) to)
         ==
         |^
-        =/  cards=(list card)
-          %-  zing
-          :+  :_  ~  %+  fact:io
-                :-  %uqbar-indexer-update
-                !>  ^-  update:uqbar-indexer
-                [%slot new-slot]
-              ~[/block]
-            (make-all-sub-cards block-num)
-          ~
-        [cards state]
+        [(make-all-sub-cards block-num) state]
+        ::
+        ++  make-sub-paths
+          ^-  (jug @tas @u)
+          %-  %~  gas  ju  *(jug @tas @u)
+          %+  turn  ~(val by sup.bowl)
+          |=  [ship sub-path=path]
+          ^-  [@tas @u]
+          :-  `@tas`-.sub-path
+          ?:  ?=(%slot -.sub-path)  0  ::  placeholder
+          ?:  ?=(%chunk -.sub-path)
+            (slav %ud -.+.sub-path)
+          (slav %ux -.+.sub-path)
+        ::
+        ++  make-serve-most-recent-update
+          ::  pass only most recent update to subs
+          ^-  _serve-update
+          %=  serve-update
+              block-index   (~(gas ju *(jug @ux block-location:uqbar-indexer)) block-hash)
+              egg-index     (~(gas ju *(jug @ux egg-location:uqbar-indexer)) egg)
+              from-index    (~(gas ju *(jug @ux egg-location:uqbar-indexer)) from)
+              grain-index   (~(gas ju *(jug @ux town-location:uqbar-indexer)) grain)
+              holder-index  (~(gas ju *(jug @ux second-order-location:uqbar-indexer)) holder)
+              lord-index    (~(gas ju *(jug @ux second-order-location:uqbar-indexer)) lord)
+              to-index      (~(gas ju *(jug @ux egg-location:uqbar-indexer)) to)
+          ==
         ::
         ++  make-all-sub-cards
           |=  block-num=@ud
           ^-  (list card)
-          ::  pass only most recent update to subs
-          ::
-          =/  serve-most-recent-update
-            %=  serve-update
-                block-index   (~(gas ju *(jug @ux block-location:uqbar-indexer)) block-hash)
-                egg-index     (~(gas ju *(jug @ux egg-location:uqbar-indexer)) egg)
-                from-index    (~(gas ju *(jug @ux egg-location:uqbar-indexer)) from)
-                grain-index   (~(gas ju *(jug @ux town-location:uqbar-indexer)) grain)
-                holder-index  (~(gas ju *(jug @ux second-order-location:uqbar-indexer)) holder)
-                lord-index    (~(gas ju *(jug @ux second-order-location:uqbar-indexer)) lord)
-                to-index      (~(gas ju *(jug @ux egg-location:uqbar-indexer)) to)
-            ==
+          =/  serve-most-recent-update=_serve-update
+            make-serve-most-recent-update
+          =/  sub-paths=(jug @tas @u)  make-sub-paths
+          |^
           %-  zing
-          :~  (make-sub-cards chunk-subs %ud `block-num %chunk /chunk serve-most-recent-update)
-              (make-sub-cards id-subs %ux ~ %from /id serve-most-recent-update)
-              (make-sub-cards id-subs %ux ~ %to /id serve-most-recent-update)
-              (make-sub-cards grain-subs %ux ~ %grain /grain serve-most-recent-update)
-              (make-sub-cards holder-subs %ux ~ %holder /holder serve-most-recent-update)
-              (make-sub-cards lord-subs %ux ~ %lord /lord serve-most-recent-update)
+          :~  (make-sub-cards %ud `block-num %chunk /chunk)
+              (make-sub-cards %ux ~ %from /id)
+              (make-sub-cards %ux ~ %to /id)
+              (make-sub-cards %ux ~ %grain /grain)
+              (make-sub-cards %ux ~ %holder /holder)
+              (make-sub-cards %ux ~ %lord /lord)
+              ?~  (~(get by sub-paths) %slot)  ~
+              :_  ~  %+  fact:io
+                :-  %uqbar-indexer-update
+                !>  ^-  update:uqbar-indexer
+                [%slot new-slot]
+              ~[/slot]
           ==
-        ::
-        ++  make-sub-cards
-          |=  $:  subs=(jug id=@u sub=@p)
-                  id-type=?(%ux %ud)
-                  payload-prefix=(unit @ud)
-                  =query-type:uqbar-indexer
-                  path-prefix=path
-                  serve-most-recent-update=_serve-update
-              ==
-          ^-  (list card)
-          %+  murn  ~(tap in ~(key by subs))
-          |=  id=@u
-          =/  payload=?(@u [@ud @u])
-            ?~  payload-prefix  id  [u.payload-prefix id]
-          =/  update=(unit update:uqbar-indexer)
-            (serve-most-recent-update query-type payload)
-          ?~  update  ~
-          :-  ~
-          %+  fact:io
-            :-  %uqbar-indexer-update
-            !>(`update:uqbar-indexer`u.update)
-          ~[(snoc path-prefix (scot id-type id))]
+          ::
+          ++  make-sub-cards
+            |=  $:  id-type=?(%ux %ud)
+                    payload-prefix=(unit @ud)
+                    =query-type:uqbar-indexer
+                    path-prefix=path
+                ==
+            ^-  (list card)
+            %+  murn  ~(tap in (~(get ju sub-paths) query-type))
+            |=  id=@u
+            =/  payload=?(@u [@ud @u])
+              ?~  payload-prefix  id  [u.payload-prefix id]
+            =/  update=(unit update:uqbar-indexer)
+              (serve-most-recent-update query-type payload)
+            ?~  update  ~
+            :-  ~
+            %+  fact:io
+              :-  %uqbar-indexer-update
+              !>(`update:uqbar-indexer`u.update)
+            ~[(snoc path-prefix (scot id-type id))]
+          ::
+          --
         ::
         --
       ::
