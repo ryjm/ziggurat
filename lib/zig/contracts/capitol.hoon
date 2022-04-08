@@ -1,4 +1,3 @@
-|_  =cart
 ::
 ::  capitol.hoon
 ::
@@ -11,6 +10,8 @@
 ::
 ::  TODO: verify ship signatures!
 ::
+/+  *zig-sys-smart
+|_  =cart
 ++  write
   |=  inp=zygote
   ^-  chick

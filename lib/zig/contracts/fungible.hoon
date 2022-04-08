@@ -27,6 +27,7 @@
 ::  I will heavily comment this contract in order to make it a good example
 ::  for others to use.
 ::
+/+  *zig-sys-smart
 |_  =cart
 ++  write
   |=  inp=zygote
@@ -227,8 +228,51 @@
       $(mints t.mints, changed-rice (~(put by changed-rice) id.grain grain))
     ::
         %deploy
-      !!
-    ::
+      ::  no rice expected as input, only arguments
+      ::  enforce 0 <= decimals <= 18
+      ?>  &((gte decimals.args 0) (lte decimals.args 18))
+      ::  if mintable, enforce minter set not empty
+      ?>  ?:(mintable.args ?=(^ minters.args) %.y)
+      ::  if !mintable, enforce distribution adds up to cap
+      ::  otherwise, enforce distribution < cap
+      =/  distribution-total  ^-  @ud
+        %.  add
+        %~  rep  in
+        ^-  (set @ud)
+        (~(run in distribution.args) |=([id bal=@ud] bal))
+      ?>  ?:  mintable.args
+            (gth cap.args distribution-total)
+          =(cap.args distribution-total)
+      ::  generate salt
+      =/  salt  (sham (cat 3 caller-id symbol.args))
+      ::  generate metadata
+      =/  metadata-grain  ^-  grain
+        :*  (fry-rice me.cart me.cart town-id.cart salt)
+            me.cart
+            me.cart
+            town-id.cart
+            :+  %&  salt
+            ^-  token-metadata
+            :*  name.args
+                symbol.args
+                decimals.args
+                supply=distribution-total
+                ?:(mintable.args `cap.args ~)
+                mintable.args
+                minters.args
+                deployer=caller-id
+                salt
+        ==  ==
+      ::  generate accounts
+      =/  accounts
+        %-  ~(gas by *(map id grain))
+        %+  turn  ~(tap in distribution.args)
+        |=  [=id bal=@ud]
+        =+  (fry-rice id me.cart town-id.cart salt)
+        :-  -
+        [- me.cart id town-id.cart [%& salt [bal ~ id.metadata-grain]]]
+      ::  big ol issued map
+      [%& ~ (~(put by accounts) id.metadata-grain metadata-grain)]
     ==
   --
 ::
