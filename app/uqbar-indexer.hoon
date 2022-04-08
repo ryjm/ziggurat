@@ -296,10 +296,10 @@
       =/  combined=(set [egg-location:uqbar-indexer egg:smart])
         %-  %~  gas  in  *(set [egg-location:uqbar-indexer egg:smart])
         %-  zing
-        %+  murn  updates
+        %+  turn  updates
         |=  update=(unit [%egg eggs=(set [egg-location:uqbar-indexer egg:smart])])
         ?~  update  ~
-        `~(tap in eggs.u.update)
+        ~(tap in eggs.u.update)
       `[%egg combined]
   --
   ::
