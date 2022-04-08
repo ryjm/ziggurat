@@ -202,7 +202,7 @@
   ::
   ++  on-peek
     |=  =path
-    ^-  (unit (unit cage))
+    |^  ^-  (unit (unit cage))
     ?+    path  (on-peek:def path)
         [%x %block-height ~]
       ?~  newest-epoch=(pry:poc:zig epochs)  ~
@@ -258,7 +258,7 @@
         (serve-update %to hash)
       :^  ~  ~  %noun
       !>  ^-  (unit update:uqbar-indexer)
-      %-  combine-update-sets:uic
+      %-  combine-update-sets
       ;;  %-  list
         %-  unit
         [%egg eggs=(set [egg-location:uqbar-indexer egg:smart])]
@@ -277,13 +277,31 @@
         (serve-update %to hash)
       :^  ~  ~  %noun
       !>  ^-  (unit update:uqbar-indexer)
-      %-  combine-update-sets:uic
+      %-  combine-update-sets
       ;;  %-  list
         %-  unit
         [%egg eggs=(set [egg-location:uqbar-indexer egg:smart])]
       ~[egg from to]
     ::
     ==
+    ::  TODO: make blocks and grains play nice with eggs
+    ::        so we can return all hits together
+    ::
+    :: https://github.com/uqbar-dao/ziggurat/blob/da1d37adf538ee908945557a68387d3c87e1c32e/app/uqbar-indexer.hoon#L361:
+    ::
+    ++  combine-update-sets
+      |=  updates=(list (unit [%egg eggs=(set [egg-location:uqbar-indexer egg:smart])]))
+      ^-  (unit update:uqbar-indexer)
+      ?~  updates  ~
+      =/  combined=(set [egg-location:uqbar-indexer egg:smart])
+        %-  %~  gas  in  *(set [egg-location:uqbar-indexer egg:smart])
+        %-  zing
+        %+  murn  updates
+        |=  update=(unit [%egg eggs=(set [egg-location:uqbar-indexer egg:smart])])
+        ?~  update  ~
+        `~(tap in eggs.u.update)
+      `[%egg combined]
+  --
   ::
   ++  on-agent
     |=  [=wire =sign:agent:gall]
@@ -337,23 +355,6 @@
   :_  state(chain-source `d)
   ?~  watch=(watch-chain-source `d)  ~
   ~[u.watch]
-::  TODO: make blocks and grains play nice with eggs
-::        so we can return all hits together
-:: 
-:: https://github.com/uqbar-dao/ziggurat/blob/da1d37adf538ee908945557a68387d3c87e1c32e/app/uqbar-indexer.hoon#L361:
-::
-++  combine-update-sets
-  |=  updates=(list (unit [%egg eggs=(set [egg-location:uqbar-indexer egg:smart])]))
-  ^-  (unit update:uqbar-indexer)
-  ?~  updates  ~
-  =/  combined=(set [egg-location:uqbar-indexer egg:smart])
-    %-  %~  gas  in  *(set [egg-location:uqbar-indexer egg:smart])
-    %-  zing
-    %+  murn  updates
-    |=  update=(unit [%egg eggs=(set [egg-location:uqbar-indexer egg:smart])])
-    ?~  update  ~
-    `~(tap in eggs.u.update)
-  `[%egg combined]
 ::
 ++  get-slot
   |=  [epoch-num=@ud block-num=@ud]
