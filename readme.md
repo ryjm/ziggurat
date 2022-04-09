@@ -54,6 +54,12 @@ where `~[~zod ~nec]` is the current set of validators including the one being ad
 
 4. The chain is now running. **NOTE: while the wallet should be configured to successfully submit transactions with 'zigs' (not yet the fake wETH), it will not recieve updates to the data it holds upon transaction completion. We'll need to get data from the block explorer to do that.**
 
+5. To start the indexer/block explorer backend, use:
+```
+:uqbar-indexer &set-chain-source [our %ziggurat]
+```
+where the argument `[our %ziggurat]` is a dock pointing to the ship running the `%ziggurat` agent to receive block updates from.
+
 ### To use the wallet
 
 2. Scry for a JSON dict of accounts, keyed by address, containing seed and nonces:
