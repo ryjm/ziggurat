@@ -1,3 +1,11 @@
+::  multisig.hoon  [uqbar-dao]
+::
+::  Smart contract to manage a simple multisig wallet.
+::  New multisigs can be generated through the %create
+::  argument, and are stored in account-controlled rice.
+::
+::  TODO totally rewrite
+::
 /+  *zig-sys-smart
 =>  |%
     +$  multisig-data

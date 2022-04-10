@@ -284,7 +284,7 @@
               =(lord lord.grain)
               ?:  ?=(%& -.germ.grain)
                 =(id (fry-rice holder.grain lord.grain town-id.grain salt.p.germ.grain))
-              =(id (fry-contract lord.grain town-id.grain germ.grain))
+              =(id (fry-contract lord.grain town-id.grain cont.p.germ.grain))
       ==  ==
     --
   --

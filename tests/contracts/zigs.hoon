@@ -93,7 +93,7 @@
     (~(write cont cart) zygote)
   =/  correct=chick
     [%& (malt ~[[id:`grain`updated-1 updated-1] [id:`grain`updated-2 updated-2]]) ~]
-  (expect-eq !>(res) !>(correct))
+  (expect-eq !>(correct) !>(res))
 ::
 ++  test-give-unknown-receiver  ^-  tang
   =/  =zygote
@@ -117,7 +117,7 @@
       :+  me.cart  town-id.cart
       [owner-1 `[%give 0xffff `new-id 30 10] (silt ~[0x1.beef]) (silt ~[new-id])]
     [~ (malt ~[[new-id new]])]
-  (expect-eq !>(res) !>(correct))
+  (expect-eq !>(correct) !>(res))
 ::
 ++  test-give-not-enough  ^-  tang
   =/  =zygote

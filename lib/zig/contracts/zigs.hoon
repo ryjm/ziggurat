@@ -1,3 +1,4 @@
+::  zigs.hoon [uqbar-dao]
 ::
 ::  Contract for 'zigs' (official name TBD) token, the gas-payment
 ::  token for the Uqbar network.

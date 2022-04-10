@@ -2,14 +2,44 @@
 ::
 ::  smart contract functions
 ::
-:: TODO: this is nice but it doesn't work because
-:: grains don't keep rice status thru gate :/
-++  validate-rice
-  |*  [typ=mold =id me=id from=(map id grain)]
-  ^-  [grain typ]
-  =+  (~(got by from) id)
-  ?>  &(=(lord.- me) ?=(%& -.germ.-))
-  -^(hole typ data.p.germ.-)
+::  unclear whether these are useful
+::
+::  ++  output
+::    |=  rice=(list [=grain data=(unit *) new=?])
+::    ^-  chick
+::    ::  produce a rooster
+::    =+  issued=*(map id grain)
+::    =+  changed=*(map id grain)
+::    |-  ^-  chick
+::    ?~  rice  [%& [changed issued]]
+::    ::  ignoring contracts for now
+::    ?.  ?=(%& -.germ.grain.i.rice)  $(rice t.rice)
+::    =+  ?~  data.i.rice  grain.i.rice
+::        grain.i.rice(data.p.germ u.data.i.rice)
+::    ?:  new.i.rice
+::      %=  $
+::        rice  t.rice
+::        issued  (~(put by issued) id.grain.i.rice -)
+::      ==
+::    %=  $
+::      rice  t.rice
+::      changed  (~(put by changed) id.grain.i.rice -)
+::    ==
+::  ::
+::  ++  continuation
+::    |=  $:  =cart
+::            =caller
+::            args=(unit *)
+::            inputs=[(set id) (set id)]
+::            rice=(list [=grain data=(unit *) new=?])
+::        ==
+::    ^-  chick
+::    ::  produce a hen
+::    =/  r=chick  (output rice)
+::    :^  %|  ~
+::      :+  me.cart  town-id.cart
+::      [caller args inputs]
+::    ?:  ?=(%& -.r)  p.r  [~ ~]
 ::
 ::  +hole: vase-checks your types for you
 ::
@@ -21,12 +51,11 @@
 ::  +fry: hash lord+town+germ to make contract grain pubkey
 ::
 ++  fry-contract
-  |=  [lord=id town=@ud =germ]
+  |=  [lord=id town=@ud nok=*]
   ^-  id
-  =-  `@ux`(sham (cat 3 lord (cat 3 town -)))
-  ?.  ?=(%| -.germ)
-    (jam germ)
-  (jam cont.p.germ)
+  =+  (jam nok)
+  `@ux`(sham (cat 3 lord (cat 3 town -)))
+  
 ::
 ++  fry-rice
   |=  [holder=id lord=id town=@ud salt=@]
@@ -56,6 +85,7 @@
 ::
 +$  germ   (each rice wheat)
 +$  rice   [salt=@ data=*]
+::  TODO introduce kelvin versioning to contracts
 +$  wheat  [cont=(unit *) owns=(set id)]
 +$  crop   [nok=* owns=(map id grain)]
 ::
