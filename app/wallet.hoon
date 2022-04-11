@@ -3,18 +3,20 @@
 ::  Uqbar wallet agent. Stores private key and facilitates signing
 ::  transactions, holding nonce values, and keeping track of owned data.
 ::
-/+  *ziggurat, default-agent, dbug, verb, bip32, bip39
+/-  uqbar-indexer
+/+  *ziggurat, *wallet-util, default-agent, dbug, verb, bip32, bip39
 |%
 +$  card  card:agent:gall
 +$  state-0
   $:  %0
       seed=byts  ::  encrypted with password
-      keys=(map pub=@ priv=@)  ::  keys created from master seed
+      keys=(map pub=@ux priv=@ux)  ::  keys created from master seed
       nodes=(map town=@ud =ship)  ::  the sequencer you submit txs to for each town
-      nonces=(map pub=@ (map town=@ud nonce=@ud))
-      tokens=(map pub=@ =book)
+      nonces=(map pub=@ux (map town=@ud nonce=@ud))
+      tokens=(map pub=@ux =book)
+      active-txs=(map @ux =egg:smart)
       metadata-store=(map =id:smart token-metadata)
-      ::  TODO add block explorer hookup here, can subscribe for changes
+      indexer=(unit ship)
       ::  potential to do cool stuff with %pals integration here
   ==
 --
@@ -29,7 +31,7 @@
 +*  this  .
     def   ~(. (default-agent this %|) bowl)
 ::
-++  on-init  `this(state [%0 *byts ~ ~ ~ ~ ~])
+++  on-init  `this(state [%0 *byts ~ ~ ~ ~ ~ ~ `our.bowl])
 ::
 ++  on-save  !>(state)
 ++  on-load
@@ -38,7 +40,21 @@
   =/  old-state  !<(state-0 old-vase)
   `this(state old-state)
 ::
-++  on-watch  on-watch:def
+++  on-watch
+  |=  =path
+  ^-  (quip card _this)
+  ?+    path  !!
+      [%book-updates ~]
+    ?>  =(src.bowl our.bowl)
+    ::  send frontend updates along this path
+    :_  this
+    ~[[%give %fact ~ %zig-wallet-update !>([%new-book tokens.state])]]
+  ::
+      [%tx-updates ~]
+    ?>  =(src.bowl our.bowl)
+    ::  provide updates about submitted transactions
+    `this
+  ==
 ::
 ++  on-poke
   |=  [=mark =vase]
@@ -85,33 +101,35 @@
         %set-node
       `state(nodes (~(put by nodes) town.act ship.act))
     ::
+        %set-indexer
+      ::  defaults to our ship, so for testing, just run indexer on same ship
+      :_  state(indexer `ship.act)
+      %+  weld  (clear-asset-subscriptions wex.bowl)
+      (create-asset-subscriptions tokens.state ship.act)
+    ::
         %set-nonce  ::  for testing
       =+  acc=(~(got by nonces.state) address.act)
       `state(nonces (~(put by nonces) address.act (~(put by acc) town.act new.act)))
     ::
+        %fetch-our-rice
+      ::  temporary until we can subscribe to indexer by-holder
+      =/  our-grains
+        .^((unit update:uqbar-indexer) %gx /(scot %p our.bowl)/uqbar-indexer/(scot %da now.bowl)/holder/(scot %ux pubkey.act)/noun)
+      =+  ?~(our-grains ~ (indexer-update-to-books u.our-grains))
+      :_  state(tokens -)
+      %+  weld  (clear-asset-subscriptions wex.bowl)
+      (create-asset-subscriptions - (need indexer.state))
+    ::
         %populate
       ::  populate wallet with fake data for testing
       ::  will WIPE previous wallet state!!
+      ::
+      ::  TODO replace this with a request to an indexer,
+      ::  which will provide all rice/grains associated with pubkey(s) in wallet
       =+  core=(from-seed:bip32 [64 seed.act])
       =+  pub=public-key:core
-      =/  fake-0
-        :-  [0 0x0 'zigs']
-        :*  (fry-rice:smart pub 0x0 0 `@`'zigs')
-            0x0  pub  0
-            [%& `@`'zigs' [300.000.000 ~ `@ux`'zigs-metadata']]
-        ==
-      =/  fake-1
-        :-  [1 `@ux`'fungible' 'zigs']
-        :*  (fry-rice:smart pub `@ux`'fungible' 1 `@`'zigs')
-            `@ux`'fungible'  pub  1
-            [%& `@`'zigs' [100.000.000 ~ `@ux`'zigs-metadata']]
-        ==
-      =/  fake-2
-        :-  [1 `@ux`'fungible' 'wETH']
-        :*  (fry-rice:smart pub `@ux`'fungible' 1 `@`'wETH')
-            `@ux`'fungible'  pub  1
-            [%& `@`'wETH' [173.000 ~ `@ux`'wETH-metadata']]
-        ==
+      ::  =/  id-0  (fry-rice:smart pub `@ux`'zigs-contract' 0 `@`'zigs')
+      ::  =/  id-1  (fry-rice:smart pub `@ux`'zigs-contract' 1 `@`'zigs')
       =/  zigs-metadata
         :*  name='Uqbar Tokens'
             symbol='ZIG'
@@ -123,25 +141,25 @@
             deployer=0x0
             salt=`@`'zigs'
         ==
-      =/  weth-metadata
-        :*  name='Wrapped Ether'
-            symbol='wETH'
-            decimals=18
-            supply=9.000.000.000.000.000.000.000.000
-            cap=~
-            mintable=%.n
-            minters=~
-            deployer=0x1234.5678
-            salt=`@`'wETH'
-        ==
-      :-  ~
+      ::  get grains we hold from indexer (must run on our ship for now)
+      =/  our-grains
+        .^((unit update:uqbar-indexer) %gx /(scot %p our.bowl)/uqbar-indexer/(scot %da now.bowl)/holder/(scot %ux pub)/noun)
+      =/  keys  (malt ~[[pub private-key:core]])
+      ::  convert from update to book
+      =+  ?~(our-grains ~ (indexer-update-to-books u.our-grains))
+      :-  ;:  weld
+              (clear-asset-subscriptions wex.bowl)
+              (create-asset-subscriptions - (need indexer.state))
+              (create-pubkey-subscriptions ~(key by keys) (need indexer.state))
+          ==
       %=  state
         seed    [64 eny.bowl]
-        keys    (malt ~[[pub private-key:core]])
+        keys    keys
         nodes   (malt ~[[0 ~zod] [1 ~zod] [2 ~zod]])
         nonces  (malt ~[[pub (malt ~[[0 0] [1 0] [2 0]])]])
-        tokens  (malt ~[[pub (malt ~[[fake-1] [fake-2] [fake-0]])]])
-        metadata-store  (malt ~[[`@ux`'zigs-metadata' zigs-metadata] [`@ux`'wETH-metadata' weth-metadata]])
+        tokens  -
+        active-txs  ~
+        metadata-store  (malt ~[[`@ux`'zigs-metadata' zigs-metadata]])
       ==        
     ::
         %submit
@@ -157,21 +175,20 @@
       =/  node=ship      (~(gut by nodes.state) town.act our.bowl)
       =/  =book  (~(got by tokens.state) from.act)
       =/  =caller:smart
-        ::  TODO fix
-        ?:  =(town.act 0)
-          [from.act +(nonce) id:(~(got by book) [town.act 0x0 `@`'zigs'])]
-        [from.act +(nonce) id:(~(got by book) [town.act `@ux`'fungible' `@`'zigs'])]
+        [from.act +(nonce) (fry-rice:smart from.act `@ux`'zigs-contract' town.act `@`'zigs')]
       ::  need to check transaction type and collect rice based on it
       ::  only supporting small subset of contract calls, for tokens and NFTs
       =/  formatted=[args=(unit *) our-grains=(set @ux) cont-grains=(set @ux)]
         ?-    -.args.act
             %give
-          ::  TODO use block explorer to find rice if it exists and restructure this
-          ::  to use known parameter to find other person's rice
           =/  metadata  (~(got by metadata-store.state) token.args.act)
           =/  our-account  (~(got by book) [town.act to.act salt.metadata])
-          =/  their-account-id  (fry-rice:smart to.args.act `@ux`'fungible' town.act salt.metadata)
-          :+  `[%give to.args.act `their-account-id amount.args.act]
+          ::  TODO use block explorer to find rice if it exists and restructure this
+          ::  to use known parameter to find other person's rice
+          =/  their-account-id  (fry-rice:smart to.args.act to.act town.act salt.metadata)
+          :+  ?:  =(to.act `@ux`'zigs-contract')  ::  zigs special case
+                `[%give to.args.act `their-account-id amount.args.act bud.gas.act]
+              `[%give to.args.act `their-account-id amount.args.act]
             (silt ~[id.our-account])
           (silt ~[their-account-id])
         ::
@@ -181,24 +198,77 @@
           %join  [`args.act ~ (silt ~[`@ux`'world'])]
           %exit  [`args.act ~ (silt ~[`@ux`'world'])]
         ==
-      =/  =yolk:smart    [caller args.formatted our-grains.formatted cont-grains.formatted]
-      =/  signer         (~(got by keys.state) from.act)
-      =/  sig            (ecdsa-raw-sign:secp256k1:secp:crypto (sham (jam yolk)) signer)
-      =/  =egg:smart     [[caller sig to.act rate.gas.act bud.gas.act town.act] yolk]
-      :_  state(nonces (~(put by nonces) from.act (~(put by our-nonces) town.act +(nonce))))
-      :~  :*  %pass  /submit-tx
+      =/  =yolk:smart   [caller args.formatted our-grains.formatted cont-grains.formatted]
+      =/  signer        (~(got by keys.state) from.act)
+      =/  sig           (ecdsa-raw-sign:secp256k1:secp:crypto (sham (jam yolk)) signer)
+      =/  =egg:smart    [[caller sig to.act rate.gas.act bud.gas.act town.act] yolk]
+      =/  egg-hash=@ux  (shax (jam egg))
+      :_  %=  state
+            active-txs  (~(put by active-txs) egg-hash egg)
+            nonces  (~(put by nonces) from.act (~(put by our-nonces) town.act +(nonce)))
+          ==
+      :~  (tx-update-card %tx-submitted egg-hash)
+          :*  %pass  /submit-tx/(scot %ux egg-hash)
               %agent  [node ?:(=(0 town.act) %ziggurat %sequencer)]
               %poke  %zig-weave-poke
               !>([%forward (silt ~[egg])])
-      ==  ==
+          ==
+      ==
     ==
   --
 ::
 ++  on-agent
-  ::  TODO provide subscribe paths for frontend,
-  ::  and update it on changes to wallet state.
-  ::  Changes will be provided by connecting to an indexer
-  on-agent:def
+  |=  [=wire =sign:agent:gall]
+  ^-  (quip card _this)
+  ?+    wire  (on-agent:def wire sign)
+      [%submit-tx @ ~]
+    ::  check to see if our tx was received by sequencer
+    =/  hash=@ux  (slav %ux i.t.wire)
+    ?.  (~(has by active-txs.state) hash)
+      `this  ::  unknown to us
+    ?:  ?=(%poke-ack -.sign)
+      ?~  p.sign
+        ::  got it
+        ~[(tx-update-card %tx-submitted hash)]^this
+      ::  failed
+      :-  ~[(tx-update-card %tx-rejected hash)]
+      this(active-txs (~(del by active-txs.state) hash))
+    `this
+  ::
+      [%grain @ ~]
+    ::  update to a grain received
+    ?:  ?=(%watch-ack -.sign)  (on-agent:def wire sign)
+    ?.  ?=(%fact -.sign)       (on-agent:def wire sign)
+    ?.  ?=(%uqbar-indexer-update p.cage.sign)  (on-agent:def wire sign)
+    =/  update  !<(update:uqbar-indexer q.cage.sign)
+    ?.  ?=(%grain -.update)  `this
+    ~&  >>  "wallet: got a grain update"
+    =/  new=grain:smart  +.-:~(tap in grains.update)
+    ?.  ?=(%& -.germ.new)
+      ::  stop watching this grain
+      ~[[%pass wire %agent [(need indexer.this) %uqbar-indexer] %leave ~]]^this
+    ?~  book=(~(get by tokens.this) holder.new)
+      ::  no longer tracking holder, stop watching this grain
+      ~[[%pass wire %agent [(need indexer.this) %uqbar-indexer] %leave ~]]^this
+    =.  u.book
+      (~(put by `^book`u.book) [town-id.new lord.new salt.p.germ.new] new)
+    ::  place new grain state in our personal tracker,
+    ::  and inform frontend of change
+    :_  this(tokens (~(put by tokens) holder.new u.book))
+    ~[[%give %fact ~[/book-updates] %zig-wallet-update !>([%new-book tokens.state])]]
+  ::
+      [%id @ ~]
+    ::  update to a tracked account
+    ?:  ?=(%watch-ack -.sign)  (on-agent:def wire sign)
+    ?.  ?=(%fact -.sign)       (on-agent:def wire sign)
+    ?.  ?=(%uqbar-indexer-update p.cage.sign)  (on-agent:def wire sign)
+    =/  update  !<(update:uqbar-indexer q.cage.sign)
+    ?.  ?=(%egg -.update)  `this
+    ::  this will give us updates to transactions we send,
+    ::  specifically if they succeeded
+    ~&  >>  "wallet: egg update: {<update>}"
+    `this
+  ==
 ::
 ++  on-arvo  on-arvo:def
 ::
@@ -231,9 +301,8 @@
     =/  pub  (slav %ux i.t.t.path)
     =/  town-id  (slav %ud i.t.t.t.path)
     =/  nonce  (~(gut by (~(got by nonces.state) pub)) town-id 0)
-    =/  zigs=id:smart
-      (fry-rice:smart pub 0x0 town-id 'zigs')
-    ``noun+!>(`account:smart`[pub nonce zigs])
+    =+  (fry-rice:smart pub `@ux`'zigs-contract' town-id `@`'zigs')
+    ``noun+!>(`account:smart`[pub nonce -])
   ::
       [%book ~]
     ::  return entire book map for wallet frontend

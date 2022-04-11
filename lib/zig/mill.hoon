@@ -7,6 +7,8 @@
   ::
   ::  +mill-all: mills all eggs in basket
   ::
+  ::  TODO: add ERROR CODES to results, possibly unit field in egg
+  ::
   ++  mill-all
     |=  [=town basket=(list egg)]
     =/  pending
@@ -66,6 +68,7 @@
       ^-  ?
       ?.  ?=(account from.p.egg)                    %.n
       ?~  zigs=(~(get by granary) zigs.from.p.egg)  %.n
+      ?.  =(zigs-wheat-id lord.u.zigs)              %.n
       ?.  ?=(%& -.germ.u.zigs)                      %.n
       =/  acc  (hole token-account data.p.germ.u.zigs)
       (gth balance.acc budget.p.egg)
@@ -86,6 +89,7 @@
       ?~  zigs=(~(get by granary) zigs.miller)  granary
       ?.  ?=(%& -.germ.u.zigs)                  granary
       =/  acc  (hole token-account data.p.germ.u.zigs)
+      ?.  =(zigs-wheat-id metadata.acc)         granary
       =.  balance.acc  (add balance.acc total)
       =.  data.p.germ.u.zigs  acc
       (~(put by granary) zigs.miller u.zigs)
@@ -282,7 +286,7 @@
               =(lord lord.grain)
               ?:  ?=(%& -.germ.grain)
                 =(id (fry-rice holder.grain lord.grain town-id.grain salt.p.germ.grain))
-              =(id (fry-contract lord.grain town-id.grain germ.grain))
+              =(id (fry-contract lord.grain town-id.grain cont.p.germ.grain))
       ==  ==
     --
   --
