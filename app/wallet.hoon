@@ -204,6 +204,7 @@
       =/  sig           (ecdsa-raw-sign:secp256k1:secp:crypto (sham (jam yolk)) signer)
       =/  =egg:smart    [[caller sig to.act rate.gas.act bud.gas.act town.act] yolk]
       =/  egg-hash=@ux  (shax (jam egg))
+      ~&  >>  "wallet: submitting tx"
       :_  %=  state
             active-txs  (~(put by active-txs) egg-hash egg)
             nonces  (~(put by nonces) from.act (~(put by our-nonces) town.act +(nonce)))
@@ -230,8 +231,10 @@
     ?:  ?=(%poke-ack -.sign)
       ?~  p.sign
         ::  got it
+        ~&  >>  "wallet: tx was received by sequencer"
         ~[(tx-update-card %tx-submitted hash)]^this
       ::  failed
+      ~&  >>>  "wallet: tx was rejected by sequencer"
       :-  ~[(tx-update-card %tx-rejected hash)]
       this(active-txs (~(del by active-txs.state) hash))
     `this
@@ -259,7 +262,7 @@
   ::
       [%id @ ~]
     ::  update to a tracked account
-    ~&  >>>  "wallet: id update: {<update>}"
+    ~&  >>>  "wallet: id update: {<sign>}"
     ?:  ?=(%watch-ack -.sign)  (on-agent:def wire sign)
     ?.  ?=(%fact -.sign)       (on-agent:def wire sign)
     ?.  ?=(%uqbar-indexer-update p.cage.sign)  (on-agent:def wire sign)
