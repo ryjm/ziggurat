@@ -83,11 +83,6 @@
 +$  base-state-0
   $:  chain-source=(unit dock)
       =epochs:zig
-      chunk-subs=(jug town-id=@ud sub=@p)
-      id-subs=(jug id-hash=@ux sub=@p)
-      grain-subs=(jug grain-hash=@ux sub=@p)
-      holder-subs=(jug holder-hash=@ux sub=@p)
-      lord-subs=(jug lord-hash=@ux sub=@p)
   ==
 +$  indices-0
   $:  block-index=(jug @ux block-location:uqbar-indexer)
@@ -125,7 +120,7 @@
       %0  `this(state old)
     ==
   ::
-  ++  on-poke  ::  on-poke:def
+  ++  on-poke
     |=  [=mark =vase]
     ^-  (quip card _this)
     =^  cards  state
@@ -134,21 +129,8 @@
           %set-chain-source
         ?>  (team:title our.bowl src.bowl)
         (set-chain-source:uic !<(dock vase))
-      ::
-        ::   %consume-indexer-update
-        :: ?>  (team:title our.bowl src.bowl)
-        :: %-  consume-indexer-update:uic
-        :: !<(update:uqbar-indexer vase)
-      ::
-      ::     %serve-update
-      ::   =/  update=(unit update:uqbar-indexer)
-      ::     %-  serve-update:uic
-      ::     !<  :-  query-type:uqbar-indexer
-      ::         query-payload:uqbar-index
-      ::     vase
-      ::   :_  this
-      ::   ?~  update  ~  update
-      ::  :: TODO: make this poke reply to src.bowl
+      ::  TODO: add %consume-update and %serve-update pokes
+      ::  https://github.com/uqbar-dao/ziggurat/blob/da1d37adf538ee908945557a68387d3c87e1c32e/app/uqbar-indexer.hoon#L138
       ::
       ==
     [cards this]
@@ -158,27 +140,13 @@
     ^-  (quip card _this)
     ?+    path  (on-watch:def path)
     ::
-        [%chunk @ ~]
-      =/  town-id=@ud  (slav %ud i.t.path)
-      `this(chunk-subs (~(put ju chunk-subs) town-id src.bowl))
-    ::
-        [%id @ ~]
-      =/  id-hash  (slav %ux i.t.path)
-      `this(id-subs (~(put ju id-subs) id-hash src.bowl))
-    ::
-        [%grain @ ~]
-      =/  grain-hash  (slav %ux i.t.path)
-      `this(grain-subs (~(put ju grain-subs) grain-hash src.bowl))
-    ::
-        [%holder @ ~]
-      =/  holder-hash  (slav %ux i.t.path)
-      `this(holder-subs (~(put ju holder-subs) holder-hash src.bowl))
-    ::
-        [%lord @ ~]
-      =/  lord-hash  (slav %ux i.t.path)
-      `this(lord-subs (~(put ju lord-subs) lord-hash src.bowl))
-    ::
-        [%slot ~]
+        $?  [%chunk @ ~]
+            [%id @ ~]
+            [%grain @ ~]
+            [%holder @ ~]
+            [%lord @ ~]
+            [%slot ~]
+        ==
       `this
     ::
     ==
@@ -188,34 +156,20 @@
     ^-  (quip card _this)
     ?+    path  (on-watch:def path)
     ::
-        [%chunk @ ~]
-      =/  town-id=@ud  (slav %ud i.t.path)
-      `this(chunk-subs (~(del ju chunk-subs) town-id src.bowl))
-    ::
-        [%id @ ~]
-      =/  id-hash  (slav %ux i.t.path)
-      `this(id-subs (~(del ju id-subs) id-hash src.bowl))
-    ::
-        [%grain @ ~]
-      =/  grain-hash  (slav %ux i.t.path)
-      `this(grain-subs (~(del ju grain-subs) grain-hash src.bowl))
-    ::
-        [%holder @ ~]
-      =/  holder-hash  (slav %ux i.t.path)
-      `this(holder-subs (~(del ju holder-subs) holder-hash src.bowl))
-    ::
-        [%lord @ ~]
-      =/  lord-hash  (slav %ux i.t.path)
-      `this(lord-subs (~(del ju lord-subs) lord-hash src.bowl))
-    ::
-        [%slot ~]
+        $?  [%chunk @ ~]
+            [%id @ ~]
+            [%grain @ ~]
+            [%holder @ ~]
+            [%lord @ ~]
+            [%slot ~]
+        ==
       `this
     ::
     ==
   ::
   ++  on-peek
     |=  =path
-    ^-  (unit (unit cage))
+    |^  ^-  (unit (unit cage))
     ?+    path  (on-peek:def path)
         [%x %block-height ~]
       ?~  newest-epoch=(pry:poc:zig epochs)  ~
@@ -271,7 +225,7 @@
         (serve-update %to hash)
       :^  ~  ~  %noun
       !>  ^-  (unit update:uqbar-indexer)
-      %-  combine-update-sets:uic
+      %-  combine-update-sets
       ;;  %-  list
         %-  unit
         [%egg eggs=(set [egg-location:uqbar-indexer egg:smart])]
@@ -282,30 +236,43 @@
         ::  TODO: make blocks and grains play nice with eggs
         ::        so we can return all hits together
       =/  hash=@ux  (slav %ux i.t.t.path)
-      :: =/  block-hash=(unit update:uqbar-indexer)
-      ::   (serve-update %block-hash hash)
       =/  egg=(unit update:uqbar-indexer)
         (serve-update %egg hash)
       =/  from=(unit update:uqbar-indexer)
         (serve-update %from hash)
-      :: =/  grain=(unit update:uqbar-indexer
-      ::   (serve-update %grain hash)
       =/  to=(unit update:uqbar-indexer)
         (serve-update %to hash)
       :^  ~  ~  %noun
       !>  ^-  (unit update:uqbar-indexer)
-      %-  combine-update-sets:uic
+      %-  combine-update-sets
       ;;  %-  list
         %-  unit
         [%egg eggs=(set [egg-location:uqbar-indexer egg:smart])]
       ~[egg from to]
-      :: (combine-update-sets:uic ~[block-hash egg from grain to])
     ::
     ==
+    ::  TODO: make blocks and grains play nice with eggs
+    ::        so we can return all hits together
+    ::
+    :: https://github.com/uqbar-dao/ziggurat/blob/da1d37adf538ee908945557a68387d3c87e1c32e/app/uqbar-indexer.hoon#L361:
+    ::
+    ++  combine-update-sets
+      |=  updates=(list (unit [%egg eggs=(set [egg-location:uqbar-indexer egg:smart])]))
+      ^-  (unit update:uqbar-indexer)
+      ?~  updates  ~
+      =/  combined=(set [egg-location:uqbar-indexer egg:smart])
+        %-  %~  gas  in  *(set [egg-location:uqbar-indexer egg:smart])
+        %-  zing
+        %+  turn  updates
+        |=  update=(unit [%egg eggs=(set [egg-location:uqbar-indexer egg:smart])])
+        ?~  update  ~
+        ~(tap in eggs.u.update)
+      `[%egg combined]
+  --
   ::
   ++  on-agent
     |=  [=wire =sign:agent:gall]
-    ^-  (quip card _this)
+    |^  ^-  (quip card _this)
     ?+    wire  (on-agent:def wire sign)
     ::
         [%chain-update ~]
@@ -318,13 +285,136 @@
       ::
           %fact
         =^  cards  state
-          %-  consume-ziggurat-update:uic
+          %-  consume-ziggurat-update
           !<(update:zig q.cage.sign)
         [cards this]
       ::
       ==
     ::
     ==
+    ::
+    :: +consume-indexer-update:
+    :: https://github.com/uqbar-dao/ziggurat/blob/da1d37adf538ee908945557a68387d3c87e1c32e/app/uqbar-indexer.hoon#L697
+    ::
+    ++  consume-ziggurat-update
+      |=  =update:zig
+      |^  ^-  (quip card _state)
+      ?+    -.update  !!  :: TODO: can we do better here?
+      ::
+          %indexer-block
+        ?~  blk.update  `state  :: TODO: log block header?
+        =*  epoch-num   epoch-num.update
+        =*  block-num   num.header.update
+        ~&  >  "uqbar-indexer: got block {<epoch-num>}:{<block-num>}"
+        ~&  >  "uqbar-indexer:  with header {<header.update>}"
+        ~&  >  "uqbar-indexer:  with hash {<(sham header.update)>}"
+        =/  new-slot=slot:zig  [header.update blk.update]
+        =/  working-epoch=epoch:zig
+          ?~  existing-epoch=(get:poc:zig epochs epoch-num)
+            :^    num=epoch-num
+                start-time=*time
+              order=~
+            slots=(put:sot:zig *slots:zig block-num new-slot)
+          %=  u.existing-epoch  ::  TODO: do more checks to avoid overwriting (unnecessary work)
+              slots
+            %^    put:sot:zig
+                slots.u.existing-epoch
+              block-num
+            new-slot
+          ::
+          ==
+        ::  store and index the new block
+        ::
+        =+  [block-hash egg from grain holder lord to]=((parse-block epoch-num block-num) new-slot)
+        =:  epochs        (put:poc:zig epochs epoch-num working-epoch)
+            block-index   (~(gas ju block-index) block-hash)
+            egg-index     (~(gas ju egg-index) egg)
+            from-index    (~(gas ju from-index) from)
+            grain-index   (~(gas ju grain-index) grain)
+            holder-index  (~(gas ju holder-index) holder)
+            lord-index    (~(gas ju lord-index) lord)
+            to-index      (~(gas ju to-index) to)
+        ==
+        |^
+        [(make-all-sub-cards block-num) state]
+        ::
+        ++  make-sub-paths
+          ^-  (jug @tas @u)
+          %-  %~  gas  ju  *(jug @tas @u)
+          %+  turn  ~(val by sup.bowl)
+          |=  [ship sub-path=path]
+          ^-  [@tas @u]
+          :-  `@tas`-.sub-path
+          ?:  ?=(%slot -.sub-path)  0  ::  placeholder
+          ?:  ?=(%chunk -.sub-path)
+            (slav %ud -.+.sub-path)
+          (slav %ux -.+.sub-path)
+        ::
+        ++  make-serve-most-recent-update
+          ::  pass only most recent update to subs
+          ^-  _serve-update
+          %=  serve-update
+              block-index   (~(gas ju *(jug @ux block-location:uqbar-indexer)) block-hash)
+              egg-index     (~(gas ju *(jug @ux egg-location:uqbar-indexer)) egg)
+              from-index    (~(gas ju *(jug @ux egg-location:uqbar-indexer)) from)
+              grain-index   (~(gas ju *(jug @ux town-location:uqbar-indexer)) grain)
+              holder-index  (~(gas ju *(jug @ux second-order-location:uqbar-indexer)) holder)
+              lord-index    (~(gas ju *(jug @ux second-order-location:uqbar-indexer)) lord)
+              to-index      (~(gas ju *(jug @ux egg-location:uqbar-indexer)) to)
+          ==
+        ::
+        ++  make-all-sub-cards
+          |=  block-num=@ud
+          ^-  (list card)
+          =/  serve-most-recent-update=_serve-update
+            make-serve-most-recent-update
+          =/  sub-paths=(jug @tas @u)  make-sub-paths
+          |^
+          %-  zing
+          :~  (make-sub-cards %ud `block-num %chunk /chunk)
+              (make-sub-cards %ux ~ %from /id)
+              (make-sub-cards %ux ~ %to /id)
+              (make-sub-cards %ux ~ %grain /grain)
+              (make-sub-cards %ux ~ %holder /holder)
+              (make-sub-cards %ux ~ %lord /lord)
+              ?~  (~(get by sub-paths) %slot)  ~
+              :_  ~  %+  fact:io
+                :-  %uqbar-indexer-update
+                !>  ^-  update:uqbar-indexer
+                [%slot new-slot]
+              ~[/slot]
+          ==
+          ::
+          ++  make-sub-cards
+            |=  $:  id-type=?(%ux %ud)
+                    payload-prefix=(unit @ud)
+                    =query-type:uqbar-indexer
+                    path-prefix=path
+                ==
+            ^-  (list card)
+            %+  murn  ~(tap in (~(get ju sub-paths) query-type))
+            |=  id=@u
+            =/  payload=?(@u [@ud @u])
+              ?~  payload-prefix  id  [u.payload-prefix id]
+            =/  update=(unit update:uqbar-indexer)
+              (serve-most-recent-update query-type payload)
+            ?~  update  ~
+            :-  ~
+            %+  fact:io
+              :-  %uqbar-indexer-update
+              !>(`update:uqbar-indexer`u.update)
+            ~[(snoc path-prefix (scot id-type id))]
+          ::
+          --
+        ::
+        --
+      ::
+      ::  add %chunk handling? see e.g.
+      ::  https://github.com/uqbar-dao/ziggurat/blob/da1d37adf538ee908945557a68387d3c87e1c32e/app/uqbar-indexer.hoon#L923
+      ==
+      --
+    --
+  ::
   ++  on-arvo  on-arvo:def
   ++  on-fail   on-fail:def
   ::
@@ -355,46 +445,6 @@
   :_  state(chain-source `d)
   ?~  watch=(watch-chain-source `d)  ~
   ~[u.watch]
-:: ::  TODO: make blocks and grains play nice with eggs
-:: ::        so we can return all hits together
-:: ::
-:: ++  combine-update-sets
-::   |*  updates=(list (unit update:uqbar-indexer))
-::   ^-  (unit update:uqbar-indexer)
-::   ?~  updates  ~
-::   =/  query-type=(unit @tas)
-::     %+  roll  updates
-::     |=  [update=(unit update:uqbar-indexer) query-type=(unit @tas)]
-::     ?~  update  query-type
-::     ?~  query-type  `-.u.update
-::     ?>  =(u.query-type -.u.update)
-::     u.query-type
-::   ?~  query-type  ~
-::   =/  combined
-::     %-  silt
-::     %-  zing
-::     %+  murn  updates
-::     |=  update=(unit update:uqbar-indexer)
-::     ?~  update  ~
-::     ?:  ?=(%egg -.u.update)
-::       `~(tap in eggs.u.update)
-::     ?:  ?=(%grain -.u.update)
-::       `~(tap in grains.u.update)
-::     ~
-::   `[u.query-type combined]
-::
-++  combine-update-sets
-  |=  updates=(list (unit [%egg eggs=(set [egg-location:uqbar-indexer egg:smart])]))
-  ^-  (unit update:uqbar-indexer)
-  ?~  updates  ~
-  =/  combined=(set [egg-location:uqbar-indexer egg:smart])
-    %-  %~  gas  in  *(set [egg-location:uqbar-indexer egg:smart])
-    %-  zing
-    %+  murn  updates
-    |=  update=(unit [%egg eggs=(set [egg-location:uqbar-indexer egg:smart])])
-    ?~  update  ~
-    `~(tap in eggs.u.update)
-  `[%egg combined]
 ::
 ++  get-slot
   |=  [epoch-num=@ud block-num=@ud]
@@ -461,7 +511,6 @@
     ?.  ?=(@ux query-payload)  ~
     =/  locations=(list location:uqbar-indexer)
       ~(tap in get-locations)
-    ~&  >  "uqbar-indexer: +get-from-index: locations: {<locations>}"
     ?+    query-type  !!
     ::
         %block-hash
@@ -534,22 +583,13 @@
       :-  ~
       %=  u.out
           grains
-            (~(uni in grains.u.out) grains.u.next-update)
+        (~(uni in grains.u.out) grains.u.next-update)
+      ::
       ==
-      ::%-  get-from-index(query-type %grain)
-      ::%~  tap  in
-      ::%+  roll  locations
-      ::|=  $:  grain-id=location:uqbar-indexer
-      ::        out=(set location:uqbar-indexer)
-      ::    ==
-      ::%-  %~  uni  in  out
-      ::get-locations(query-type %grain, query-payload grain-id)
-    ::
     ==
   ::
   ++  get-locations
     ^-  (set location:uqbar-indexer)
-    ~&  >  "uqbar-indexer: payload: {<query-payload>}"
     ?>  ?=(@ux query-payload)
     ?+    query-type  !!
     ::
@@ -656,13 +696,16 @@
     %=  $
         grains  t.grains
         parsed-grain
-          :_  parsed-grain
-          :-  grain-id
-          [epoch-num block-num town-id]
+      :_  parsed-grain
+      :-  grain-id
+      [epoch-num block-num town-id]
+    ::
         parsed-holder
-          [[holder-id grain-id] parsed-holder]
+      [[holder-id grain-id] parsed-holder]
+    ::
         parsed-lord
-          [[lord-id grain-id] parsed-lord]
+      [[lord-id grain-id] parsed-lord]
+    ::
     ==
   ::
   ++  parse-transactions
@@ -692,250 +735,5 @@
         parsed-to    [[to egg-location] parsed-to]
         egg-num      +(egg-num)
     ==
-  --
-::
-:: ++  consume-indexer-update
-::   |=  =update:uqbar-indexer
-::   |^  ^-  (quip card _state)
-::   ?+    -.update  !!  :: TODO: can we do better here?
-::   ::
-::       %slot
-::     =*  block-num   num.p.slot.update
-::     =*  new-slot    slot.update
-::     ?~  previous=(pry:sot:zig slots)
-::       :-  ~
-::       ?:  =(0 block-num)
-::         %=  state
-::             slots
-::               (put:sot:zig slots block-num new-slot)
-::         ==
-::       %=  state
-::           future-slots
-::             %^  put:sot:zig
-::             future-slots  block-num  new-slot
-::       ==
-::     =*  previous-block-num  key.u.previous
-::     ?:  (gth block-num +(previous-block-num))
-::       :-  ~
-::       %=  state
-::           future-slots
-::             %^  put:sot:zig
-::             future-slots  block-num  new-slot
-::       ==
-::     ::
-::     ?:  (lth block-num +(previous-block-num))
-::       ::  TODO: check if input slot has new
-::       ::  data and if so, add to cache and index it
-::       `state
-::     ::
-::     =/  previous-hash  (sham p.val.u.previous)  ::  TODO: keep up to date w current hashing method
-::     =*  next-hash      prev-header-hash.p.new-slot
-::     ?>  =(previous-hash next-hash)
-::     ::  store and index the new block
-::     ::
-::     ?>  ?=(^ q.new-slot)  ::  TODO: do better here
-::     =+  [block-hash egg from grain to]=(parse-block block-num p.new-slot u.q.new-slot)
-::     =:  block-index  (~(gas ju block-index) block-hash)
-::         egg-index    (~(gas ju egg-index) egg)
-::         from-index   (~(gas ju from-index) from)
-::         grain-index  (~(gas ju grain-index) grain)
-::         to-index     (~(gas ju to-index) to)
-::     ==
-::     =^  cards  future-slots
-::       (make-future-slots-cards block-num)
-::     ::  publish to subscribers
-::     ::
-::     =.  cards
-::       %-  zing
-::       :^    :_  ~  %+  fact:io
-::               :-  %uqbar-indexer-update
-::               !>(`update:uqbar-indexer`update)
-::             ~[/block]
-::           (make-all-sub-cards block-num)
-::         cards
-::       ~
-::     :-  cards
-::     state(slots (put:sot:zig slots block-num new-slot))
-::   ::
-::   ::     %chunk
-::   ::   =*  block-num  block-num.location.update
-::   ::   =*  town-id    town-id.location.update
-::   ::   =*  chunk      chunk.update
-::   ::   ::  TODO: chunk already exists?
-::   ::   =+  [egg from grain to]=(parse-chunk block-num town-id chunk)
-::   ::   =:  egg-index    (~(gas ju egg-index) egg)
-::   ::       from-index   (~(gas ju from-index) from)
-::   ::       grain-index  (~(gas ju grain-index) grain)
-::   ::       to-index     (~(gas ju to-index) to)
-::   ::   ==
-::   ::   ::  publish to subscribers
-::   ::   ::
-::   ::   :-  (make-all-sub-cards block-num)
-::   ::   state(slots (put:sot:zig slots block-num new-slot))
-::   ::
-::   ==
-::   ::
-::   ++  make-future-slots-cards
-::     |=  block-num=@ud
-::     ^-  (quip card _future-slots)
-::     ?~  next-slot=(get:sot:zig future-slots block-num)
-::       `future-slots
-::     =+  [* new-future-slots]=(del:sot:zig future-slots block-num)
-::     :_  new-future-slots
-::     :_  ~
-::     %-  %~  poke-self  pass:io  /future-slots-poke
-::     :-  %uqbar-indexer-update
-::     !>(`update:uqbar-indexer`[%slot u.next-slot])
-::   ::
-::   ++  make-all-sub-cards
-::     |=  block-num=@ud
-::     ^-  (list card)
-::     %-  zing
-::     :~  (make-sub-cards chunk-subs %ud `block-num %chunk /chunk)
-::         (make-sub-cards id-subs %ux ~ %from /id)
-::         (make-sub-cards id-subs %ux ~ %to /id)
-::         (make-sub-cards grain-subs %ux ~ %grain /grain)
-::     ==
-::   ::  TODO: if this is slow, could optimize by
-::   ::  passing in and searching over only newest
-::   ::  additions to index
-::   ::
-::   ++  make-sub-cards
-::     |=  $:  subs=(jug id=@u sub=@p)
-::             id-type=?(%ux %ud)
-::             payload-prefix=(unit @ud)
-::             =query-type:uqbar-indexer
-::             path-prefix=path
-::         ==
-::     ^-  (list card)
-::     %+  murn  ~(tap in ~(key by subs))
-::     |=  id=@u
-::     =/  payload=?(@u [@ud @u])
-::       ?~  payload-prefix  id  [u.payload-prefix id]
-::     ?~  update=(serve-update query-type payload)  ~
-::     :-  ~
-::     %+  fact:io
-::       :-  %uqbar-indexer-update
-::       !>(`update:uqbar-indexer`u.update)
-::     ~[(snoc path-prefix (scot id-type id))]
-::   ::
-::   --
-::  TODO: refactor and consolidate with +consume-indexer-update
-::
-++  consume-ziggurat-update
-  |=  =update:zig
-  |^  ^-  (quip card _state)
-  ?+    -.update  !!  :: TODO: can we do better here?
-  ::
-      %indexer-block
-    ?~  blk.update  `state  :: TODO: log block header?
-    =*  epoch-num   epoch-num.update
-    =*  block-num   num.header.update
-    ~&  >  "uqbar-indexer: got block {<epoch-num>}:{<block-num>}"
-    ~&  >  "uqbar-indexer:  with header {<header.update>}"
-    ~&  >  "uqbar-indexer:  with hash {<(sham header.update)>}"
-    =/  new-slot=slot:zig  [header.update blk.update]
-    =/  working-epoch=epoch:zig
-      ?~  existing-epoch=(get:poc:zig epochs epoch-num)
-        :^    num=epoch-num
-            start-time=*time
-          order=~
-        slots=(put:sot:zig *slots:zig block-num new-slot)
-      %=  u.existing-epoch  ::  TODO: do more checks to avoid overwriting (unnecessary work)
-          slots  (put:sot:zig slots.u.existing-epoch block-num new-slot)
-      ==
-    ::  store and index the new block
-    ::
-    =+  [block-hash egg from grain holder lord to]=((parse-block epoch-num block-num) new-slot)
-    =:  epochs        (put:poc:zig epochs epoch-num working-epoch)
-        block-index   (~(gas ju block-index) block-hash)
-        egg-index     (~(gas ju egg-index) egg)
-        from-index    (~(gas ju from-index) from)
-        grain-index   (~(gas ju grain-index) grain)
-        holder-index  (~(gas ju holder-index) holder)
-        lord-index    (~(gas ju lord-index) lord)
-        to-index      (~(gas ju to-index) to)
-    ==
-    |^
-    =/  cards=(list card)
-      %-  zing
-      :+  :_  ~  %+  fact:io
-            :-  %uqbar-indexer-update
-            !>  ^-  update:uqbar-indexer
-            [%slot new-slot]
-          ~[/block]
-        (make-all-sub-cards block-num)
-      ~
-    [cards state]
-    ::
-    ++  make-all-sub-cards
-      |=  block-num=@ud
-      ^-  (list card)
-      ::  pass only most recent update to subs
-      ::
-      =/  serve-most-recent-update
-        %=  serve-update
-            block-index   (~(gas ju *(jug @ux block-location:uqbar-indexer)) block-hash)
-            egg-index     (~(gas ju *(jug @ux egg-location:uqbar-indexer)) egg)
-            from-index    (~(gas ju *(jug @ux egg-location:uqbar-indexer)) from)
-            grain-index   (~(gas ju *(jug @ux town-location:uqbar-indexer)) grain)
-            holder-index  (~(gas ju *(jug @ux second-order-location:uqbar-indexer)) holder)
-            lord-index    (~(gas ju *(jug @ux second-order-location:uqbar-indexer)) lord)
-            to-index      (~(gas ju *(jug @ux egg-location:uqbar-indexer)) to)
-        ==
-      ::  ~&  >  "{<grain>}"
-      ::  ~&  >  "{<(~(gas ju *(jug @ux town-location:uqbar-indexer)) grain)>}"
-      %-  zing
-      :~  (make-sub-cards chunk-subs %ud `block-num %chunk /chunk serve-most-recent-update)
-          (make-sub-cards id-subs %ux ~ %from /id serve-most-recent-update)
-          (make-sub-cards id-subs %ux ~ %to /id serve-most-recent-update)
-          (make-sub-cards grain-subs %ux ~ %grain /grain serve-most-recent-update)
-          (make-sub-cards holder-subs %ux ~ %holder /holder serve-most-recent-update)
-          (make-sub-cards lord-subs %ux ~ %lord /lord serve-most-recent-update)
-      ==
-    ::
-    ++  make-sub-cards
-      |=  $:  subs=(jug id=@u sub=@p)
-              id-type=?(%ux %ud)
-              payload-prefix=(unit @ud)
-              =query-type:uqbar-indexer
-              path-prefix=path
-              serve-most-recent-update=_serve-update
-          ==
-      ^-  (list card)
-      %+  murn  ~(tap in ~(key by subs))
-      |=  id=@u
-      =/  payload=?(@u [@ud @u])
-        ?~  payload-prefix  id  [u.payload-prefix id]
-      =/  update=(unit update:uqbar-indexer)
-        (serve-most-recent-update query-type payload)
-      ?~  update  ~
-      :: ?~  update=(serve-update query-type payload)  ~
-      ~&  >  "uqbar-indexer: sub update: {<u.update>}"
-      :-  ~
-      %+  fact:io
-        :-  %uqbar-indexer-update
-        !>(`update:uqbar-indexer`u.update)
-      ~[(snoc path-prefix (scot id-type id))]
-    ::
-    --
-  ::
-  ::     %chunk
-  ::   =*  block-num  block-num.location.update
-  ::   =*  town-id    town-id.location.update
-  ::   =*  chunk      chunk.update
-  ::   ::  TODO: chunk already exists?
-  ::   =+  [egg from grain to]=(~(parse-chunk parse-block epoch-num block-num) town-id chunk)
-  ::   =:  egg-index    (~(gas ju egg-index) egg)
-  ::       from-index   (~(gas ju from-index) from)
-  ::       grain-index  (~(gas ju grain-index) grain)
-  ::       to-index     (~(gas ju to-index) to)
-  ::   ==
-  ::   ::  publish to subscribers
-  ::   ::
-  ::   :-  (make-all-sub-cards block-num)
-  ::   state(slots (put:sot:zig slots block-num new-slot))
-  ::
-  ==
   --
 --
