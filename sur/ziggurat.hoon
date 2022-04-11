@@ -66,7 +66,13 @@
 ::
 +$  book  (map [town=@ud lord=id:smart salt=@] grain:smart)
 ::
-+$  wallet-update  [%new-book tokens=(map pub=id:smart =book)]
++$  wallet-update
+  $%  [%new-book tokens=(map pub=id:smart =book)]
+      [%tx-submitted hash=@ux]  ::  received by wallet
+      [%tx-received hash=@ux]  ::  received by uqbar node
+      [%tx-rejected hash=@ux]  ::  rejected by uqbar node
+      [%tx-processed hash=@ux]  ::  tx visible in block explorer
+  ==
 ::
 +$  wallet-poke
   $%  [%populate seed=@ux]  :: populate wallet with fake data, for testing

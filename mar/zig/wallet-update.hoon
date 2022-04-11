@@ -1,4 +1,5 @@
 /-  *ziggurat
+=,  enjs:format
 |_  upd=wallet-update
 ++  grab
   |%
@@ -33,7 +34,16 @@
               ['metadata' (tape (scow %ux metadata.data))]
           ==
       ==
+    ::
+      $?  %tx-submitted
+          %tx-received
+          %tx-rejected
+          %tx-processed
+      ==  (hash hash.upd)
     ==
+  ++  hash
+    |=  h=@ux
+    (frond ['hash' [%s (scot %ux h)]])
   --
 ++  grad  %noun
 --

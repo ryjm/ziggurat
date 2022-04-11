@@ -4,7 +4,7 @@
 ::  transactions, holding nonce values, and keeping track of owned data.
 ::
 /-  uqbar-indexer
-/+  *ziggurat, default-agent, dbug, verb, bip32, bip39
+/+  *ziggurat, *wallet-util, default-agent, dbug, verb, bip32, bip39
 |%
 +$  card  card:agent:gall
 +$  state-0
@@ -14,6 +14,7 @@
       nodes=(map town=@ud =ship)  ::  the sequencer you submit txs to for each town
       nonces=(map pub=@ux (map town=@ud nonce=@ud))
       tokens=(map pub=@ux =book)
+      active-txs=(map @ux =egg:smart)
       metadata-store=(map =id:smart token-metadata)
       indexer=(unit ship)
       ::  potential to do cool stuff with %pals integration here
@@ -30,7 +31,7 @@
 +*  this  .
     def   ~(. (default-agent this %|) bowl)
 ::
-++  on-init  `this(state [%0 *byts ~ ~ ~ ~ ~ `our.bowl])
+++  on-init  `this(state [%0 *byts ~ ~ ~ ~ ~ ~ `our.bowl])
 ::
 ++  on-save  !>(state)
 ++  on-load
@@ -42,11 +43,18 @@
 ++  on-watch
   |=  =path
   ^-  (quip card _this)
-  ?.  ?=([%book-updates ~] path)  !!
+  ?+    path  !!
+      [%book-updates ~]
     ?>  =(src.bowl our.bowl)
     ::  send frontend updates along this path
     :_  this
     ~[[%give %fact ~ %zig-wallet-update !>([%new-book tokens.state])]]
+  ::
+      [%tx-updates ~]
+    ?>  =(src.bowl our.bowl)
+    ::  provide updates about submitted transactions
+    `this
+  ==
 ::
 ++  on-poke
   |=  [=mark =vase]
@@ -150,6 +158,7 @@
         nodes   (malt ~[[0 ~zod] [1 ~zod] [2 ~zod]])
         nonces  (malt ~[[pub (malt ~[[0 0] [1 0] [2 0]])]])
         tokens  -
+        active-txs  ~
         metadata-store  (malt ~[[`@ux`'zigs-metadata' zigs-metadata]])
       ==        
     ::
@@ -189,76 +198,43 @@
           %join  [`args.act ~ (silt ~[`@ux`'world'])]
           %exit  [`args.act ~ (silt ~[`@ux`'world'])]
         ==
-      =/  =yolk:smart    [caller args.formatted our-grains.formatted cont-grains.formatted]
-      =/  signer         (~(got by keys.state) from.act)
-      =/  sig            (ecdsa-raw-sign:secp256k1:secp:crypto (sham (jam yolk)) signer)
-      =/  =egg:smart     [[caller sig to.act rate.gas.act bud.gas.act town.act] yolk]
-      :_  state(nonces (~(put by nonces) from.act (~(put by our-nonces) town.act +(nonce))))
-      :~  :*  %pass  /submit-tx
+      =/  =yolk:smart   [caller args.formatted our-grains.formatted cont-grains.formatted]
+      =/  signer        (~(got by keys.state) from.act)
+      =/  sig           (ecdsa-raw-sign:secp256k1:secp:crypto (sham (jam yolk)) signer)
+      =/  =egg:smart    [[caller sig to.act rate.gas.act bud.gas.act town.act] yolk]
+      =/  egg-hash=@ux  (shax (jam egg))
+      :_  %=  state
+            active-txs  (~(put by active-txs) egg-hash egg)
+            nonces  (~(put by nonces) from.act (~(put by our-nonces) town.act +(nonce)))
+          ==
+      :~  (tx-update-card %tx-submitted egg-hash)
+          :*  %pass  /submit-tx/(scot %ux egg-hash)
               %agent  [node ?:(=(0 town.act) %ziggurat %sequencer)]
               %poke  %zig-weave-poke
               !>([%forward (silt ~[egg])])
-      ==  ==
+          ==
+      ==
     ==
-  ::
-  ++  indexer-update-to-books
-    |=  =update:uqbar-indexer
-    ::  get most recent version of the grain
-    ::  TODO replace this with a (way) more efficient strategy
-    ::  preferably adding a type to indexer that only contains
-    ::  most recent data
-    =/  tokens  *(map @ =book)
-    ?.  ?=(%grain -.update)  tokens
-    =/  grains-list  `(list [=town-location:uqbar-indexer =grain:smart])`~(tap in grains.update)
-    ^-  (map @ =book)
-    |-
-    ?~  grains-list  tokens
-    =/  =grain:smart  grain.i.grains-list
-    ::  currently only storing owned *rice*
-    ?.  ?=(%& -.germ.grain)  $(grains-list t.grains-list)
-    =/  =book  (~(gut by tokens) holder.grain ~)
-    %=  $
-      tokens  (~(put by tokens) holder.grain (~(put by book) [town-id.grain lord.grain salt.p.germ.grain] grain))
-      grains-list  t.grains-list
-    ==
-  ::
-  ++  create-pubkey-subscriptions
-    |=  [keys=(set @ux) indexer=ship]
-    ^-  (list card)
-    %+  turn
-      ~(tap in keys)
-    |=  k=@ux
-    =-  [%pass - %agent [indexer %uqbar-indexer] %watch -]
-    /id/(scot %ux k)
-  ::
-  ++  create-asset-subscriptions
-    |=  [tokens=(map @ux =book) indexer=ship]
-    ^-  (list card)
-    %+  turn
-      ::  find every grain in all our books
-      ^-  (list grain:smart)
-      %-  zing
-      %+  turn  ~(tap by tokens)
-      |=  [@ux =book]
-      ~(val by book)
-    |=  =grain:smart
-    =-  [%pass - %agent [indexer %uqbar-indexer] %watch -]
-    /grain/(scot %ux id.grain)
-  ::
-  ++  clear-asset-subscriptions
-    |=  wex=boat:gall
-    ^-  (list card)
-    %+  murn  ~(tap by wex)
-    |=  [[=wire =ship =term] *]
-    ^-  (unit card)
-    ?.  ?=([%grain *] wire)  ~
-    `[%pass wire %agent [ship term] %leave ~]
   --
 ::
 ++  on-agent
   |=  [=wire =sign:agent:gall]
   ^-  (quip card _this)
   ?+    wire  (on-agent:def wire sign)
+      [%submit-tx @ ~]
+    ::  check to see if our tx was received by sequencer
+    =/  hash=@ux  (slav %ux i.t.wire)
+    ?.  (~(has by active-txs.state) hash)
+      `this  ::  unknown to us
+    ?:  ?=(%poke-ack -.sign)
+      ?~  p.sign
+        ::  got it
+        ~[(tx-update-card %tx-submitted hash)]^this
+      ::  failed
+      :-  ~[(tx-update-card %tx-rejected hash)]
+      this(active-txs (~(del by active-txs.state) hash))
+    `this
+  ::
       [%grain @ ~]
     ::  update to a grain received
     ?:  ?=(%watch-ack -.sign)  (on-agent:def wire sign)
@@ -290,7 +266,7 @@
     ?.  ?=(%egg -.update)  `this
     ::  this will give us updates to transactions we send,
     ::  specifically if they succeeded
-    ::  ~&  >>  "wallet: id update: {<update>}"
+    ~&  >>  "wallet: egg update: {<update>}"
     `this
   ==
 ::

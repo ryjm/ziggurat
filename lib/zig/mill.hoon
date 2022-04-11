@@ -7,6 +7,8 @@
   ::
   ::  +mill-all: mills all eggs in basket
   ::
+  ::  TODO: add ERROR CODES to results, possibly unit field in egg
+  ::
   ++  mill-all
     |=  [=town basket=(list egg)]
     =/  pending
