@@ -302,52 +302,71 @@
       path  [sibling path]
     ==
   --
-::  hash-noun:  pederson hash noun
-::
-::++  hash-noun
-::  |=  n=*
-::  ^-  [phash (map * phash)]
-::  (~(hash zink ~) n)
 ::
 ::  eval-noun: evaluate nock with zink
 ::
 ++  eval-noun
   |=  [n=(pair) bud=@]
   ^-  book
+  =-  -
   %.  n
   %*  .  zink
     app  [~ ~ bud]
   ==
-::  =/  [[res=(unit *) bud=@] h=hints c=(map * phash)]
-::  =^  res=(pair (unit *) @)  cax
-::    (~(eval zink ~) p.n q.n bud)
-::  [[p.res q.res] cax]
-::  =-  [res (crip (en-json:html js)) cache]
-::  (create-hints n h)
+::
+::  eval-noun: evaluate nock with zink
+::
+++  eval-noun-with-cache
+  |=  [n=(pair) bud=@ cax=cache]
+  ^-  book
+  =-  -
+  %.  n
+  %*  .  zink
+    app  [cax ~ bud]
+  ==
+::
+::  eval-hoon-with-hints: eval hoon and return result w/hints as json
+::
+++  eval-hoon-with-hints
+  |=  [file=path gen=hoon bud=@]
+  ^-  [(unit *) json]
+  =/  src  .^(@t %cx file)
+  =/  gun  (slap !>(~) (ream src))
+  =/  han  (~(mint ut p.gun) %noun gen)
+  =-  [p (create-hints [q.gun q.han] hit.q)]
+  (eval-noun [q.gun q.han] bud)
 ::  eval-hoon: compile a hoon file and evaluate it with zink
 ::
 ++  eval-hoon
-  |=  [file=path gen=hoon bud=@]
+  |=  [file=path lib=(unit path) gen=hoon bud=@]
   ^-  book
-::  =/  clib
-::    ?~  lib  !>(~)
-::    =/  libsrc  .^(@t %cx lib)
-::    (slap !>(~) (ream libsrc))
+  =/  clib
+    ?~  lib  !>(~)
+    =/  libsrc  .^(@t %cx lib)
+    (slap !>(~) (ream libsrc))
   =/  src  .^(@t %cx file)
-  =/  gun  (slap !>(~) (ream src))
+  =/  gun  (slap clib (ream src))
   =/  han  (~(mint ut p.gun) %noun gen)
   (eval-noun [q.gun q.han] bud)
 ::  create-hints: create full hint json
 ::
-::++  create-hints
-::  |=  [n=^ h=hints]
-::  ^-  [js=json cache=(map * phash)]
-::  =^  hs  cax  (~(hash zink h) -.n)
-::  =^  hf  cax  (~(hash zink h) +.n)
-::  :_  cax
-::  %-  pairs:enjs:format
-::  :~  ['subject' s+(num:enjs hs)]
-::      ['formula' s+(num:enjs hf)]
-::      ['hints' (all:enjs h)]
-::  ==
+++  create-hints
+  |=  [n=^ h=hints]
+  ^-  js=json
+  =/  hs  (hash -.n)
+  =/  hf  (hash +.n)
+  %-  pairs:enjs:format
+  :~  ['subject' s+(num:enjs hs)]
+      ['formula' s+(num:enjs hf)]
+      ['hints' (all:enjs h)]
+  ==
+::
+++  hash
+  |=  n=*
+  ^-  phash
+  ?@  n
+    (hash:pedersen n 0)
+  =/  hh  $(n -.n)
+  =/  ht  $(n +.n)
+  (hash:pedersen hh ht)
 --
