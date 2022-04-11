@@ -68,10 +68,7 @@
 ::
 +$  wallet-update
   $%  [%new-book tokens=(map pub=id:smart =book)]
-      [%tx-submitted hash=@ux]  ::  received by wallet
-      [%tx-received hash=@ux]  ::  received by uqbar node
-      [%tx-rejected hash=@ux]  ::  rejected by uqbar node
-      [%tx-processed hash=@ux]  ::  tx visible in block explorer
+      [%tx-status status=tape hash=@ux]  ::  "submitted", "received", "rejected", "processed"
   ==
 ::
 +$  wallet-poke

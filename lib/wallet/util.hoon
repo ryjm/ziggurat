@@ -4,9 +4,9 @@
     --
 |%
 ++  tx-update-card
-  |=  [type=@tas hash=@ux]
+  |=  [status=tape hash=@ux]
   ^-  card
-  [%give %fact ~[/tx-updates] %zig-wallet-update !>([type hash])]
+  [%give %fact ~[/tx-updates] %zig-wallet-update !>([%tx-status status hash])]
 ::
 ++  create-pubkey-subscriptions
   |=  [keys=(set @ux) indexer=ship]

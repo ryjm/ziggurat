@@ -220,6 +220,10 @@
         ^-  [(unit (each (each * chick) (list tank))) @ud]
         ::  TODO figure out how to pre-cue this and get good results
         =/  =contract  (hole contract [nok +:(cue q.q.smart-lib)])
+        ::  ~&  >>  "cart: {<cart>}"
+        ::  ~&  "========================"
+        ::  ~&  >  "inp: {<inp>}"
+        ::  ~&  "========================"
         |^
         ?:  ?=(%| -.inp)
           ::  event

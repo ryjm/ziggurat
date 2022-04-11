@@ -117,8 +117,11 @@
         .^((unit update:uqbar-indexer) %gx /(scot %p our.bowl)/uqbar-indexer/(scot %da now.bowl)/holder/(scot %ux pubkey.act)/noun)
       =+  ?~(our-grains ~ (indexer-update-to-books u.our-grains))
       :_  state(tokens -)
-      %+  weld  (clear-asset-subscriptions wex.bowl)
-      (create-asset-subscriptions - (need indexer.state))
+      ;:  welp
+        (clear-asset-subscriptions wex.bowl)
+        (create-asset-subscriptions - (need indexer.state))
+        ~[[%give %fact ~[/book-updates] %zig-wallet-update !>([%new-book -])]]
+      ==
     ::
         %populate
       ::  populate wallet with fake data for testing
@@ -147,10 +150,11 @@
       =/  keys  (malt ~[[pub private-key:core]])
       ::  convert from update to book
       =+  ?~(our-grains ~ (indexer-update-to-books u.our-grains))
-      :-  ;:  weld
+      :-  ;:  welp
               (clear-asset-subscriptions wex.bowl)
               (create-asset-subscriptions - (need indexer.state))
               (create-pubkey-subscriptions ~(key by keys) (need indexer.state))
+              ~[[%give %fact ~[/book-updates] %zig-wallet-update !>([%new-book -])]]
           ==
       %=  state
         seed    [64 eny.bowl]
@@ -209,7 +213,7 @@
             active-txs  (~(put by active-txs) egg-hash egg)
             nonces  (~(put by nonces) from.act (~(put by our-nonces) town.act +(nonce)))
           ==
-      :~  (tx-update-card %tx-submitted egg-hash)
+      :~  (tx-update-card "submitted" egg-hash)
           :*  %pass  /submit-tx/(scot %ux egg-hash)
               %agent  [node ?:(=(0 town.act) %ziggurat %sequencer)]
               %poke  %zig-weave-poke
@@ -232,10 +236,10 @@
       ?~  p.sign
         ::  got it
         ~&  >>  "wallet: tx was received by sequencer"
-        ~[(tx-update-card %tx-submitted hash)]^this
+        ~[(tx-update-card "received" hash)]^this
       ::  failed
       ~&  >>>  "wallet: tx was rejected by sequencer"
-      :-  ~[(tx-update-card %tx-rejected hash)]
+      :-  ~[(tx-update-card "rejected" hash)]
       this(active-txs (~(del by active-txs.state) hash))
     `this
   ::
@@ -262,10 +266,10 @@
   ::
       [%id @ ~]
     ::  update to a tracked account
-    ~&  >>>  "wallet: id update: {<sign>}"
     ?:  ?=(%watch-ack -.sign)  (on-agent:def wire sign)
     ?.  ?=(%fact -.sign)       (on-agent:def wire sign)
     ?.  ?=(%uqbar-indexer-update p.cage.sign)  (on-agent:def wire sign)
+    ~&  >>>  "wallet: id update: {<sign>}"
     =/  update  !<(update:uqbar-indexer q.cage.sign)
     ?.  ?=(%egg -.update)  `this
     ::  this will give us updates to transactions we send,

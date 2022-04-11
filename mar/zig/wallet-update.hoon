@@ -35,15 +35,12 @@
           ==
       ==
     ::
-      $?  %tx-submitted
-          %tx-received
-          %tx-rejected
-          %tx-processed
-      ==  (hash hash.upd)
+        %tx-status
+      %-  pairs
+      :~  ['status' (tape status.upd)]
+          ['hash' (tape (scow %ux hash.upd))]
+      ==
     ==
-  ++  hash
-    |=  h=@ux
-    (frond ['hash' [%s (scot %ux h)]])
   --
 ++  grad  %noun
 --
