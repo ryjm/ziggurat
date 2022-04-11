@@ -197,7 +197,6 @@
     ?.  ?=(%fact -.sign)                   (on-agent:def wire sign)
     ?.  ?=(%zig-chunk-update p.cage.sign)  (on-agent:def wire sign)
     =/  update  !<(chunk-update q.cage.sign)
-    ~&  >>  "got new chunk state"
     ?~  hall.state  !!
     ?>  (~(has by council.u.hall.state) src.bowl)
     ::  TODO add some validation of the new chunk here so we can reject bad ones
@@ -213,7 +212,6 @@
         %new-hall
       ::  receive this at beginning of epoch, update our hall-state
       ::  shuffle with root of globe / something each epoch
-      ~&  >>  "received hall update"
       ?.  (~(has by council.update) our.bowl)
         ::  if we're not in the hall, set our status to inactive
         `this(hall ~, town [~ ~])
@@ -248,10 +246,8 @@
         %+  ~(mill-all mil me (need town-id.state) 0 now.bowl)
           town.state
         ~(tap in basket.state)
-      ~&  >>  "chunk size: {<(met 3 (jam our-chunk))>} bytes"
       ::  currently clearing mempool with every chunk, but
       ::  this is not necessary: we forward our basket
-      ~&  >>  "submitting chunk to producer {<ship.update>}"
       :_  this(basket ~, town +.our-chunk)
       :~  :*  %pass  /chunk-gossip
               %agent  [ship.update %ziggurat]  %poke

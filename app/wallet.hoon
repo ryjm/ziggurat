@@ -182,6 +182,7 @@
         ?-    -.args.act
             %give
           =/  metadata  (~(got by metadata-store.state) token.args.act)
+          ~|  "wallet can't find our zigs account for that town!"
           =/  our-account  (~(got by book) [town.act to.act salt.metadata])
           ::  TODO use block explorer to find rice if it exists and restructure this
           ::  to use known parameter to find other person's rice
@@ -242,7 +243,6 @@
     ?.  ?=(%uqbar-indexer-update p.cage.sign)  (on-agent:def wire sign)
     =/  update  !<(update:uqbar-indexer q.cage.sign)
     ?.  ?=(%grain -.update)  `this
-    ~&  >>  "wallet: got a grain update"
     =/  new=grain:smart  +.-:~(tap in grains.update)
     ?.  ?=(%& -.germ.new)
       ::  stop watching this grain
@@ -259,6 +259,7 @@
   ::
       [%id @ ~]
     ::  update to a tracked account
+    ~&  >>>  "wallet: id update: {<update>}"
     ?:  ?=(%watch-ack -.sign)  (on-agent:def wire sign)
     ?.  ?=(%fact -.sign)       (on-agent:def wire sign)
     ?.  ?=(%uqbar-indexer-update p.cage.sign)  (on-agent:def wire sign)
@@ -266,7 +267,6 @@
     ?.  ?=(%egg -.update)  `this
     ::  this will give us updates to transactions we send,
     ::  specifically if they succeeded
-    ~&  >>  "wallet: egg update: {<update>}"
     `this
   ==
 ::

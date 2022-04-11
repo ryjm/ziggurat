@@ -110,10 +110,15 @@ Make sure to perform step (6) again if you need updated chain state in your wall
 # where 'token' is address of token metadata rice, 'to' is pubkey receiving tokens.
 {submit:
   {from: "0x2.e3c1.d19b.fd3e.43aa.319c.b816.1c89.37fb.b246.3a65.f84d.8562.155d.6181.8113.c85b",
-   to: "0x656c.6269.676e.7566",
+   to: "0x74.6361.7274.6e6f.632d.7367.697a",
    town: 1,
    gas: {rate: 1, bud: 10000},
    args: {give: {token: "0x61.7461.6461.7465.6d2d.7367.697a", to: "0x3.4cdd.5f53.b551.e62f.2238.6eb3.8abd.3e91.a546.fad3.2940.ff2d.c316.50dd.8d38.e609", amount: 777}}
    }
 }
+```
+
+(an example poke that will work upon chain initialization in dojo):
+```
+:wallet &zig-wallet-poke [%submit 0x2.e3c1.d19b.fd3e.43aa.319c.b816.1c89.37fb.b246.3a65.f84d.8562.155d.6181.8113.c85b 0x74.6361.7274.6e6f.632d.7367.697a 1 [1 10.000] [%give 0x61.7461.6461.7465.6d2d.7367.697a 0x3.4cdd.5f53.b551.e62f.2238.6eb3.8abd.3e91.a546.fad3.2940.ff2d.c316.50dd.8d38.e609 777]]
 ```

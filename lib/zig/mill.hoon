@@ -89,7 +89,7 @@
       ?~  zigs=(~(get by granary) zigs.miller)  granary
       ?.  ?=(%& -.germ.u.zigs)                  granary
       =/  acc  (hole token-account data.p.germ.u.zigs)
-      ?.  =(zigs-wheat-id metadata.acc)         granary
+      ?.  =(`@ux`'zigs-metadata' metadata.acc)  granary
       =.  balance.acc  (add balance.acc total)
       =.  data.p.germ.u.zigs  acc
       (~(put by granary) zigs.miller u.zigs)
@@ -112,7 +112,6 @@
     ++  incubate
       |=  =egg
       ^-  [(unit rooster) @ud]
-      ~&  >>  "incubating"
       |^
       =/  args  (fertilize q.egg)
       ?~  stalk=(germinate to.p.egg cont-grains.q.egg)
@@ -209,8 +208,7 @@
         =+  [res bud]=(barn nok.crop inp cart budget)
         ~&  >>  "res: {<res>}"
         ?~  res               `bud
-        ?:  ?=(%| -.u.res)  
-          ~&  >>>  p.u.res    `bud
+        ?:  ?=(%| -.u.res)    `bud
         ?:  ?=(%& -.p.u.res)  `bud
         ::  write or event result
         [`p.p.u.res bud]
@@ -223,19 +221,15 @@
         ::  TODO figure out how to pre-cue this and get good results
         =/  =contract  (hole contract [nok +:(cue q.q.smart-lib)])
         |^
-        ~&  >>  "inp: {<inp>}"
-        ~&  >  "cart: {<cart>}"
         ?:  ?=(%| -.inp)
           ::  event
           =/  res  (event p.inp)
-          ::~&  >>>  "res: {<res>}"
           ?~  -.res  `+.res
           ?:  ?=(%& -.u.-.res)
             [`[%& %| p.u.-.res] +.res]
           [`[%| p.u.-.res] +.res]
         ::  write
         =/  res  (write p.inp)
-        ::~&  >>>  "res: {<res>}"
         ?~  -.res  `+.res
         ?:  ?=(%& -.u.-.res)
           [`[%& %| p.u.-.res] +.res]
