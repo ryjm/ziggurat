@@ -354,6 +354,19 @@
   =/  gun  (slap clib (ream src))
   =/  han  (~(mint ut p.gun) %noun gen)
   (eval-noun [q.gun q.han] bud)
+::  eval-hoon-with-cache: compile a hoon file and evaluate it with zink
+::
+++  eval-hoon-with-cache
+  |=  [file=path lib=(unit path) gen=hoon bud=@ cax=cache]
+  ^-  book
+  =/  clib
+    ?~  lib  !>(~)
+    =/  libsrc  .^(@t %cx lib)
+    (slap !>(~) (ream libsrc))
+  =/  src  .^(@t %cx file)
+  =/  gun  (slap clib (ream src))
+  =/  han  (~(mint ut p.gun) %noun gen)
+  (eval-noun-with-cache [q.gun q.han] bud cax)
 ::  create-hints: create full hint json
 ::
 ++  create-hints
