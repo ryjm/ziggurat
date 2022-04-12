@@ -1,3 +1,4 @@
+/+  *mip
 |%
 +$  child  *
 +$  parent  *
@@ -33,7 +34,7 @@
       ::[%jet core=phash sample=* jet=@t]
   ==
 :: subject -> formula -> hint
-+$  hints  (map phash (map phash cairo-hint))
++$  hints  (mip phash phash cairo-hint)
 ::  map of a noun's merkle children. root -> [left right]
 +$  merk-tree  (map phash [phash phash])
 ::

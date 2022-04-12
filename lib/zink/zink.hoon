@@ -212,11 +212,7 @@
     ^-  hints
     =^  sroot  cax  (hash s)
     =^  froot  cax  (hash f)
-    =/  inner=(map phash cairo-hint)
-      (~(gut by hit) sroot ~)
-    %+  ~(put by hit)
-      sroot
-    (~(put by inner) froot hin)
+    (~(put bi hit) sroot froot hin)
   --
   ::
   ++  frag
