@@ -62,7 +62,7 @@ where the argument `[our %ziggurat]` is a dock pointing to the ship running the 
 ```
 (to add other ships, follow above instructions with 2nd and 3rd seed/pubkey combos, but use poke `:ziggurat &zig-chain-poke [%start %validator ~ validators=(silt ~[~zod ~nec]) [~ ~]]`) here, where `~[~zod ~nec]` is the current set of validators including the one being added)
 
-6. To make the wallet aware of the assets spawned for you in the town and main chain you just launched, it's necessary to use a scry, like so:
+6. To make the wallet aware of the assets spawned for you in the town and main chain you just launched, it's necessary to use a scry. Wait until the indexer has a chance to observe a new block, then use this poke:
 ```
 :wallet &zig-wallet-poke [%fetch-our-rice 0x2.e3c1.d19b.fd3e.43aa.319c.b816.1c89.37fb.b246.3a65.f84d.8562.155d.6181.8113.c85b]
 ```

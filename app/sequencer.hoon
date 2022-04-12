@@ -6,7 +6,7 @@
 /+  *ziggurat, default-agent, dbug, verb
 ::  Choose which library smart contracts are executed against here
 ::
-/*  smart-lib  %noun  /lib/zig/sys/smart-lib-2/noun
+/*  smart-lib  %noun  /lib/zig/compiled/smart-lib/noun
 |%
 +$  card  card:agent:gall
 +$  state-0

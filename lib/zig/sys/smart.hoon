@@ -82,7 +82,7 @@
 +$  result        chick
 +$  final-result  [%& rooster]
 +$  continuation  [%| hen]
-+$  parcel  ::  ??wtf to call this: grain that's proven rice
++$  parcel  ::  ?? wtf to call this: grain that's proven rice
   $:  =id
       lord=id
       holder=id
@@ -153,8 +153,7 @@
 ::  4: lack zigs to fulfill budget
 ::  5: couldn't find contract
 ::  6: crash in contract execution
-::  7: validation of changed rice failed
-::  8: validation of issued rice failed
+::  7: validation of changed/issued rice failed
 ::
 ::  NOTE: continuation calls generate their own eggs, which
 ::  could potentially fail at one of these error points too.

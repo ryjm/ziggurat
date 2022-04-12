@@ -1,5 +1,5 @@
 /+  *bink, smart=zig-sys-smart
-/*  smart-lib  %noun  /lib/zig/sys/smart-lib-2/noun
+/*  smart-lib  %noun  /lib/zig/compiled/smart-lib/noun
 =,  smart
 |_  library=*
 ++  mill

@@ -1,6 +1,6 @@
 /-  *ziggurat
 /+  smart=zig-sys-smart, deploy=zig-deploy, sig=zig-sig
-/*  capitol-contract  %txt  /lib/zig/contracts/capitol/hoon
+/*  capitol-contract  %noun  /lib/zig/compiled/capitol/noun
 :-  %say
 |=  [[now=@da eny=@uvJ bek=beak] [=start=time ~] ~]
 :-  %zig-chain-poke
@@ -81,8 +81,9 @@
       0               ::  town-id
       :-  %|          ::  germ
       ^-  wheat:smart
-      =/  cont  (of-wain:format capitol-contract)
-      :-  `(~(text-deploy deploy p.bek now) cont)
+      ::  =/  cont  (of-wain:format capitol-contract)
+      ::  :-  `(~(text-deploy deploy p.bek now) cont)
+      :-  `(cue q.q.capitol-contract)
       ~
   ==
 =/  fake-granary
