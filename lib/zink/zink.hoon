@@ -1,5 +1,5 @@
 /-  *zink
-/+  *zink-pedersen, *zink-json
+/+  *zink-pedersen, *zink-json, *mip
 |%
 ::
 +$  body  (unit *)
@@ -13,8 +13,6 @@
   |=  [s=* f=*]
   ::  TODO: must return trace on crash
   |^
-  =^  sroot  cax  (hash s)
-  =^  froot  cax  (hash f)
   =|  trace=(list [@ta *])
   ?~  formula-cost=(cost f bud)
     `[cax hit 0]
@@ -212,6 +210,8 @@
   ++  put-hint
     |=  hin=cairo-hint
     ^-  hints
+    =^  sroot  cax  (hash s)
+    =^  froot  cax  (hash f)
     =/  inner=(map phash cairo-hint)
       (~(gut by hit) sroot ~)
     %+  ~(put by hit)
