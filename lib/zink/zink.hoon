@@ -346,7 +346,7 @@
   ^-  book
   =/  clib
     ?~  lib  !>(~)
-    =/  libsrc  .^(@t %cx lib)
+    =/  libsrc  .^(@t %cx u.lib)
     (slap !>(~) (ream libsrc))
   =/  src  .^(@t %cx file)
   =/  gun  (slap clib (ream src))
