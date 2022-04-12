@@ -206,7 +206,7 @@
       =/  =yolk:smart   [caller args.formatted our-grains.formatted cont-grains.formatted]
       =/  signer        (~(got by keys.state) from.act)
       =/  sig           (ecdsa-raw-sign:secp256k1:secp:crypto (sham (jam yolk)) signer)
-      =/  =egg:smart    [[caller sig to.act rate.gas.act bud.gas.act town.act] yolk]
+      =/  =egg:smart    [[caller sig to.act rate.gas.act bud.gas.act town.act 0] yolk]
       =/  egg-hash=@ux  (shax (jam egg))
       ~&  >>  "wallet: submitting tx"
       :_  %=  state
