@@ -314,7 +314,6 @@
 ++  eval-noun
   |=  [n=(pair) bud=@]
   ^-  book
-  =-  -
   %.  n
   %*  .  zink
     app  [~ ~ bud]
@@ -325,7 +324,6 @@
 ++  eval-noun-with-cache
   |=  [n=(pair) bud=@ cax=cache]
   ^-  book
-  =-  -
   %.  n
   %*  .  zink
     app  [cax ~ bud]
