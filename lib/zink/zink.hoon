@@ -37,7 +37,7 @@
     ?~  tal  `app
     =^  hhed  cax  (hash -.f)
     =^  htal  cax  (hash +.f)
-    ::=.  hit  (put-hint [%cons hhed htal])
+    =.  hit  (put-hint [%cons hhed htal])
     [~ u.hed^u.tal]^app
   ::
       [%0 axis=@]
@@ -73,7 +73,6 @@
     ?~  formula  `app
     ::  TODO: need to add a check to ensure no crash
     =.  hit  (put-hint [%2 hsub hfor])
-    ~&  %two-done
     $(s u.subject, f u.formula)
   ::
       [%3 arg=*]
@@ -200,6 +199,13 @@
       (edit axis.f u.target u.value bud)
     ?~  mutant  `app
     ?~  u.mutant  !!  ::  TODO: SAFETY!
+    =^  oldleaf  bud
+      (frag axis.f u.target bud)
+    ?~  oldleaf  `app
+    ?~  u.oldleaf  !!  ::  TODO: SAFETY
+    =^  holdleaf  cax  (hash u.u.oldleaf)
+    =^  sibs  cax  (merk-sibs u.target axis.f)
+    =.  hit  (put-hint [%10 axis.f hval htar holdleaf sibs])
     [~ u.u.mutant]^app
   ==
   ::
