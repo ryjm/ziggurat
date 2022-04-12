@@ -76,6 +76,20 @@
 ::
 ::  smart contract types
 ::
+::  semantic aliases
++$  info          cart
++$  input         zygote
++$  result        chick
++$  final-result  [%& rooster]
++$  continuation  [%| hen]
++$  parcel  ::  ??wtf to call this: grain that's proven rice
+  $:  =id
+      lord=id
+      holder=id
+      town-id=@ud
+      germ=[%& rice]
+  ==
+::
 +$  id             @ux  ::  pubkey
 ++  zigs-wheat-id  `@ux`'zigs-contract'  ::  hardcoded "native" token contract
 ::
@@ -129,6 +143,24 @@
   --
 ::  transaction types, fed into contract
 ::
+::  egg error codes:
+::  code can be anything upon submission,
+::  gets set for chunk inclusion in +mill
+::  0: successfully performed
+::  1: submitted with raw id / no account info
+::  2: bad signature
+::  3: incorrect nonce
+::  4: lack zigs to fulfill budget
+::  5: couldn't find contract
+::  6: crash in contract execution
+::  7: validation of changed rice failed
+::  8: validation of issued rice failed
+::
+::  NOTE: continuation calls generate their own eggs, which
+::  could potentially fail at one of these error points too.
+::  currently keeping this simple, but could try to differentiate
+::  between first-call errors and continuation-call errors later
+::
 +$  egg  (pair shell yolk)
 +$  shell
   $:  from=caller
@@ -137,6 +169,7 @@
       rate=@ud
       budget=@ud
       town-id=@ud
+      status=@ud  ::  error code
   ==
 +$  yolk
   $:  =caller

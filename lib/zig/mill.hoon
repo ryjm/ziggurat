@@ -20,10 +20,11 @@
     ^-  [(list [@ux egg]) ^town]
     ?~  pending
       [processed town(p (~(pay tax p.town) reward))]
-    =+  [res fee]=(mill town i.pending)
+    =+  [res fee err]=(mill town i.pending)
+    =+  i.pending(status.p err)
     %_  $
       pending    t.pending
-      processed  [[`@ux`(shax (jam i.pending)) i.pending] processed]
+      processed  [[`@ux`(shax (jam -)) -] processed]
       town       res
       reward     (add reward fee)
     ==
@@ -31,25 +32,24 @@
   ::
   ++  mill
     |=  [=town =egg]
-    ^-  [^town fee=@ud]
-    ?.  ?=(account from.p.egg)  [town 0]
+    ^-  [^town fee=@ud errorcode=@ud]
+    ?.  ?=(account from.p.egg)  [town 0 1]
     ::  validate transaction signature
     ::  using ecdsa-raw-sign in wallet, TODO review this
     ::  comment this out for tests
     =/  point  (ecdsa-raw-recover:secp256k1:secp:crypto (sham (jam q.egg)) sig.p.egg)
     ?.  =(id.from.p.egg (compress-point:secp256k1:secp:crypto point))
-      [town 0]  ::  signed tx doesn't match account
-    ?~  curr-nonce=(~(get by q.town) id.from.p.egg)
-      [town 0]  ::  missing account
-    ?.  =(nonce.from.p.egg +(u.curr-nonce))
+      [town 0 2]  ::  signed tx doesn't match account
+    =/  curr-nonce=@ud  (~(gut by q.town) id.from.p.egg 0)
+    ?.  =(nonce.from.p.egg +(curr-nonce))
       ~&  >>>  "tx rejected; bad nonce"
-      [town 0]  ::  bad nonce
+      [town 0 3]  ::  bad nonce
     ?.  (~(audit tax p.town) egg)
       ~&  >>>  "tx rejected; not enough budget"
-      [town 0]  ::  can't afford gas
-    =+  [gan rem]=(~(work farm p.town) egg)
+      [town 0 4]  ::  can't afford gas
+    =+  [gan rem err]=(~(work farm p.town) egg)
     =/  fee=@ud   (sub budget.p.egg rem)
-    :_  fee
+    :_  [fee err]
     :-  (~(charge tax ?~(gan p.town u.gan)) from.p.egg fee)
     (~(put by q.town) id.from.p.egg nonce.from.p.egg)
   ::
@@ -102,7 +102,7 @@
     ::
     ++  work
       |=  =egg
-      ^-  [(unit ^granary) @ud]
+      ^-  [(unit ^granary) rem=@ud errorcode=@ud]
       =/  hatchling
         (incubate egg(budget.p (div budget.p.egg rate.p.egg)))
       :_  +.hatchling
@@ -111,12 +111,12 @@
     ::
     ++  incubate
       |=  =egg
-      ^-  [(unit rooster) @ud]
+      ^-  [(unit rooster) rem=@ud errorcode=@ud]
       |^
       =/  args  (fertilize q.egg)
       ?~  stalk=(germinate to.p.egg cont-grains.q.egg)
         ~&  >>>  "failed to germinate"
-        `budget.p.egg
+        [~ budget.p.egg 5]
       (grow u.stalk args egg)
       ::
       ++  fertilize
@@ -166,58 +166,40 @@
     ++  grow
       |=  [=crop =zygote =egg]
       ~>  %bout
-      ^-  [(unit rooster) @ud]
+      ^-  [(unit rooster) rem=@ud errorcode=@ud]
       |^
-      =+  [chick rem]=(weed crop to.p.egg [%& zygote] ~ budget.p.egg)
-      ?~  chick  `rem
+      =+  [chick rem err]=(weed crop to.p.egg [%& zygote] ~ budget.p.egg)
+      ?~  chick  [~ rem err]
       ?:  ?=(%& -.u.chick)
         ::  rooster result, finished growing
-        [`p.u.chick rem]
+        [`p.u.chick rem err]
       ::  hen result, continuation
       |-
       =*  next  next.p.u.chick
       =*  mem   mem.p.u.chick
       ::  make it so continuation calls can alter grains, this is important
       ?~  gan=(harvest roost.p.u.chick to.p.egg from.p.egg)
-        `rem
+        [~ rem 7]
       =.  granary  u.gan 
-      =^  child  rem
-        (incubate egg(from.p to.p.egg, to.p to.next, budget.p rem, q args.next))
-      ?~  child  `rem
-      ::  =/  gan  (harvest u.child to.p.egg from.p.egg)
-      ::  ?~  gan  `rem
-      [child rem]
-      ::  this event trigger phase actually wipes the result of continuations,
-      ::  no bueno. need to move the event trigger inside the above loop.
-      ::  above always returns a result, anyways.
-      ::  =.  granary  u.gan
-      ::  =^  eve  rem
-      ::    (weed crop to.p.egg [%| u.child] mem rem)
-      ::  ?~  eve  `rem
-      ::  ?:  ?=(%& -.u.eve)
-      ::    [`p.u.eve rem]
-      ::  %_  $
-      ::    next.p.u.chick  next.p.u.eve
-      ::    mem.p.u.chick   mem.p.u.eve
-      ::  ==
+      (incubate egg(from.p to.p.egg, to.p to.next, budget.p rem, q args.next))
       ::
       ++  weed
         |=  [=^crop to=id inp=embryo mem=(unit vase) budget=@ud]
-        ^-  [(unit chick) @ud]
+        ^-  [(unit chick) rem=@ud errorcode=@ud]
         =/  cart  [mem to blocknum town-id owns.crop]
-        =+  [res bud]=(barn nok.crop inp cart budget)
+        =+  [res bud err]=(barn nok.crop inp cart budget)
         ~&  >>  "res: {<res>}"
-        ?~  res               `bud
-        ?:  ?=(%| -.u.res)    `bud
-        ?:  ?=(%& -.p.u.res)  `bud
+        ?~  res               [~ bud err]
+        ?:  ?=(%| -.u.res)    [~ bud err]
+        ?:  ?=(%& -.p.u.res)  [~ bud err]
         ::  write or event result
-        [`p.p.u.res bud]
+        [`p.p.u.res bud err]
       ::
       ::  +barn: run contract formula with arguments and memory, bounded by bud
       ::  [note: contract reads are scrys performed in sequencer]
       ++  barn
         |=  [nok=* inp=embryo =cart bud=@ud]
-        ^-  [(unit (each (each * chick) (list tank))) @ud]
+        ^-  [(unit (each (each * chick) (list tank))) rem=@ud errorcode=@ud]
         ::  TODO figure out how to pre-cue this and get good results
         =/  =contract  (hole contract [nok +:(cue q.q.smart-lib)])
         ::  ~&  >>  "cart: {<cart>}"
@@ -228,16 +210,16 @@
         ?:  ?=(%| -.inp)
           ::  event
           =/  res  (event p.inp)
-          ?~  -.res  `+.res
+          ?~  -.res  [~ +.res 0]
           ?:  ?=(%& -.u.-.res)
-            [`[%& %| p.u.-.res] +.res]
-          [`[%| p.u.-.res] +.res]
+            [`[%& %| p.u.-.res] +.res 0]
+          [`[%| p.u.-.res] +.res 6]
         ::  write
         =/  res  (write p.inp)
-        ?~  -.res  `+.res
+        ?~  -.res  [~ +.res 0]
         ?:  ?=(%& -.u.-.res)
-          [`[%& %| p.u.-.res] +.res]
-        [`[%| p.u.-.res] +.res]
+          [`[%& %| p.u.-.res] +.res 0]
+        [`[%| p.u.-.res] +.res 6]
         ::
         ++  write
           |=  =^zygote
