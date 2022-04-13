@@ -14,7 +14,7 @@
       nodes=(map town=@ud =ship)  ::  the sequencer you submit txs to for each town
       nonces=(map pub=@ux (map town=@ud nonce=@ud))
       tokens=(map pub=@ux =book)
-      active-txs=(map @ux =egg:smart)
+      transaction-store=(map @ux [=egg:smart args=supported-args])
       metadata-store=(map =id:smart token-metadata)
       indexer=(unit ship)
       ::  potential to do cool stuff with %pals integration here
@@ -162,18 +162,18 @@
         nodes   (malt ~[[0 ~zod] [1 ~zod] [2 ~zod]])
         nonces  (malt ~[[pub (malt ~[[0 0] [1 0] [2 0]])]])
         tokens  -
-        active-txs  ~
+        transaction-store  ~
         metadata-store  (malt ~[[`@ux`'zigs-metadata' zigs-metadata]])
-      ==        
+      ==
     ::
         %submit
       ::  submit a transaction
       ::  create an egg and sign it, then poke a sequencer
       ::
       ::  things to expose on frontend:
-      ::  'from' address, contract 'to' address, town select, 
+      ::  'from' address, contract 'to' address, town select,
       ::  gas (rate & budget), transaction type (acquired from ABI..?)
-      ::  
+      ::
       =/  our-nonces     (~(gut by nonces.state) from.act ~)
       =/  nonce=@ud      (~(gut by our-nonces) town.act 0)
       =/  node=ship      (~(gut by nodes.state) town.act our.bowl)
@@ -210,7 +210,7 @@
       =/  egg-hash=@ux  (shax (jam egg))
       ~&  >>  "wallet: submitting tx"
       :_  %=  state
-            active-txs  (~(put by active-txs) egg-hash egg)
+            transaction-store  (~(put by transaction-store) egg-hash [egg args.act])
             nonces  (~(put by nonces) from.act (~(put by our-nonces) town.act +(nonce)))
           ==
       :~  (tx-update-card "submitted" egg-hash)
@@ -230,7 +230,7 @@
       [%submit-tx @ ~]
     ::  check to see if our tx was received by sequencer
     =/  hash=@ux  (slav %ux i.t.wire)
-    ?.  (~(has by active-txs.state) hash)
+    ?.  (~(has by transaction-store.state) hash)
       `this  ::  unknown to us
     ?:  ?=(%poke-ack -.sign)
       ?~  p.sign
@@ -239,8 +239,7 @@
         ~[(tx-update-card "received" hash)]^this
       ::  failed
       ~&  >>>  "wallet: tx was rejected by sequencer"
-      :-  ~[(tx-update-card "rejected" hash)]
-      this(active-txs (~(del by active-txs.state) hash))
+      ~[(tx-update-card "rejected" hash)]^this
     `this
   ::
       [%grain @ ~]
@@ -356,6 +355,40 @@
         ['mintable' [%b mintable.d]]
         ['deployer' (tape (scow %ux deployer.d))]
         ['salt' (tape (scow %ux salt.d))]
+    ==
+  ::
+      [%transactions ~]
+    ::  return entire transaction store
+    =;  =json  ``json+!>(json)
+    =,  enjs:format
+    %-  pairs
+    %+  turn  ~(tap by transaction-store.state)
+    |=  [hash=@ux [t=egg:smart args=supported-args]]
+    ?.  ?=(account:smart from.p.t)  !!
+    :-  (scot %ux hash)
+    %-  pairs
+    :~  ['from' (tape (scow %ux id.from.p.t))]
+        ['nonce' (numb nonce.from.p.t)]
+        ['to' (tape (scow %ux to.p.t))]
+        ['rate' (numb rate.p.t)]
+        ['budget' (numb budget.p.t)]
+        ['town' (numb town-id.p.t)]
+        ['status' (numb status.p.t)]  ::  just 0 for now
+        :-  (scot %tas -.args)
+        %-  pairs
+        ?-    -.args
+            %give
+          :~  ['token' (tape (scow %ux token.args))]
+              ['to' (tape (scow %ux to.args))]
+              ['amount' (numb amount.args)]
+          ==
+        ::
+            ?(%become-validator %stop-validating)
+          ~[['signature' (tape (scow %p q.signature.args))]]
+        ::
+            ?(%init %join %exit)
+          ~[['signature' (tape (scow %p q.signature.args))] ['town' (numb town.args)]]
+        ==
     ==
   ==
 ::
