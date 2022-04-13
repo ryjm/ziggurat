@@ -1,4 +1,4 @@
-/-  *ziggurat, uqbar-indexer
+/-  *uqbar-wallet, uqbar-indexer
 =>  |%
     +$  card  card:agent:gall
     --

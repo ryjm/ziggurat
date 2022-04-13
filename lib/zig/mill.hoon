@@ -7,8 +7,6 @@
   ::
   ::  +mill-all: mills all eggs in basket
   ::
-  ::  TODO: add ERROR CODES to results, possibly unit field in egg
-  ::
   ++  mill-all
     |=  [=town basket=(list egg)]
     =/  pending
@@ -28,6 +26,7 @@
       town       res
       reward     (add reward fee)
     ==
+  ::
   ::  +mill: processes a single egg and returns updated town
   ::
   ++  mill
