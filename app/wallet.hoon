@@ -374,6 +374,8 @@
         ['budget' (numb budget.p.t)]
         ['town' (numb town-id.p.t)]
         ['status' (numb status.p.t)]  ::  just 0 for now
+        :-  'args'
+        %-  frond
         :-  (scot %tas -.args)
         %-  pairs
         ?-    -.args
