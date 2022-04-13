@@ -91,13 +91,9 @@
       data(threshold new-thresh.args)
     ==
   [%& (malt ~[[id.my-grain my-grain]]) ~]
+::
 ++  read
   |=  inp=path
   ^-  *
-  ::  TODO scrys
-  69
-++  event
-  |=  inp=rooster
-  ^-  chick
-  *chick
+  ~
 --

@@ -168,7 +168,7 @@
       ~>  %bout
       ^-  [(unit rooster) rem=@ud errorcode=@ud]
       |^
-      =+  [chick rem err]=(weed crop to.p.egg [%& zygote] ~ budget.p.egg)
+      =+  [chick rem err]=(weed to.p.egg ~ budget.p.egg)
       ?~  chick  [~ rem err]
       ?:  ?=(%& -.u.chick)
         ::  rooster result, finished growing
@@ -176,65 +176,32 @@
       ::  hen result, continuation
       |-
       =*  next  next.p.u.chick
-      =*  mem   mem.p.u.chick
-      ::  make it so continuation calls can alter grains, this is important
+      =*  mem   mem.p.u.chick  :: FIX! USE THIS SOMEWHERE??
+      ::  continuation calls can alter grains
       ?~  gan=(harvest roost.p.u.chick to.p.egg from.p.egg)
         [~ rem 7]
       =.  granary  u.gan 
       (incubate egg(from.p to.p.egg, to.p to.next, budget.p rem, q args.next))
       ::
+      ::  +weed: run contract formula with arguments and memory, bounded by bud
+      ::
       ++  weed
-        |=  [=^crop to=id inp=embryo mem=(unit vase) budget=@ud]
+        |=  [to=id mem=(unit vase) budget=@ud]
         ^-  [(unit chick) rem=@ud errorcode=@ud]
         =/  cart  [mem to blocknum town-id owns.crop]
-        =+  [res bud err]=(barn nok.crop inp cart budget)
-        ~&  >>  "res: {<res>}"
-        ?~  res               [~ bud err]
-        ?:  ?=(%| -.u.res)    [~ bud err]
-        ?:  ?=(%& -.p.u.res)  [~ bud err]
-        ::  write or event result
-        [`p.p.u.res bud err]
-      ::
-      ::  +barn: run contract formula with arguments and memory, bounded by bud
-      ::  [note: contract reads are scrys performed in sequencer]
-      ++  barn
-        |=  [nok=* inp=embryo =cart bud=@ud]
-        ^-  [(unit (each (each * chick) (list tank))) rem=@ud errorcode=@ud]
         ::  TODO figure out how to pre-cue this and get good results
-        =/  =contract  (hole contract [nok +:(cue q.q.smart-lib)])
-        ::  ~&  >>  "cart: {<cart>}"
-        ::  ~&  "========================"
-        ::  ~&  >  "inp: {<inp>}"
-        ::  ~&  "========================"
-        |^
-        ?:  ?=(%| -.inp)
-          ::  event
-          =/  res  (event p.inp)
-          ?~  -.res  [~ +.res 0]
-          ?:  ?=(%& -.u.-.res)
-            [`[%& %| p.u.-.res] +.res 0]
-          [`[%| p.u.-.res] +.res 6]
-        ::  write
-        =/  res  (write p.inp)
-        ?~  -.res  [~ +.res 0]
-        ?:  ?=(%& -.u.-.res)
-          [`[%& %| p.u.-.res] +.res 0]
-        [`[%| p.u.-.res] +.res 6]
         ::
-        ++  write
-          |=  =^zygote
-          ^-  [(unit (each chick (list tank))) @ud]
-          ::  need jet dashboard to run bull
+        =/  =contract  (hole contract [nok.crop +:(cue q.q.smart-lib)])
+        =/  res
+          ::  need jet dashboard to run bull:
           ::  (bull |.(;;(chick (~(write contract cart) zygote))) bud)
-          :_  (sub bud 7)
-          `(mule |.(;;(chick (~(write contract cart) zygote))))
-        ++  event
-          |=  =rooster
-          ^-  [(unit (each chick (list tank))) @ud]
-          ::  (bull |.(;;(chick (~(event contract cart) rooster))) bud)
-          :_  (sub bud 8)
-          `(mule |.(;;(chick (~(event contract cart) rooster))))
-        --
+          (mule |.(;;(chick (~(write contract cart) zygote))))^(sub budget 7)
+        ~&  >>  "write result: {<res>}"
+        ?:  ?=(%| -.-.res)
+          ::  error in contract execution
+          [~ budget 6]
+        ::  chick result
+        [`p.-.res budget 0]
       --
     ::
     ++  harvest

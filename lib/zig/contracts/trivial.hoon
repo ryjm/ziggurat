@@ -1,15 +1,11 @@
 |_  =cart
 ++  write
-  |=  inp=zygote
+  |=  =zygote
   ^-  chick
-  =/  a  (dec 100)
+  =+  (dec 100)
   [%& ~ ~]
 ++  read
-  |=  inp=path
-  ^-  noun
+  |=  =path
+  ^-  *
   ~
-++  event
-  |=  inp=rooster
-  ^-  chick
-  [%& ~ ~]
 --

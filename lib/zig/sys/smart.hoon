@@ -2,45 +2,6 @@
 ::
 ::  smart contract functions
 ::
-::  unclear whether these are useful
-::
-::  ++  output
-::    |=  rice=(list [=grain data=(unit *) new=?])
-::    ^-  chick
-::    ::  produce a rooster
-::    =+  issued=*(map id grain)
-::    =+  changed=*(map id grain)
-::    |-  ^-  chick
-::    ?~  rice  [%& [changed issued]]
-::    ::  ignoring contracts for now
-::    ?.  ?=(%& -.germ.grain.i.rice)  $(rice t.rice)
-::    =+  ?~  data.i.rice  grain.i.rice
-::        grain.i.rice(data.p.germ u.data.i.rice)
-::    ?:  new.i.rice
-::      %=  $
-::        rice  t.rice
-::        issued  (~(put by issued) id.grain.i.rice -)
-::      ==
-::    %=  $
-::      rice  t.rice
-::      changed  (~(put by changed) id.grain.i.rice -)
-::    ==
-::  ::
-::  ++  continuation
-::    |=  $:  =cart
-::            =caller
-::            args=(unit *)
-::            inputs=[(set id) (set id)]
-::            rice=(list [=grain data=(unit *) new=?])
-::        ==
-::    ^-  chick
-::    ::  produce a hen
-::    =/  r=chick  (output rice)
-::    :^  %|  ~
-::      :+  me.cart  town-id.cart
-::      [caller args inputs]
-::    ?:  ?=(%& -.r)  p.r  [~ ~]
-::
 ::  +hole: vase-checks your types for you
 ::
 ++  hole
@@ -54,8 +15,7 @@
   |=  [lord=id town=@ud nok=*]
   ^-  id
   =+  (jam nok)
-  `@ux`(sham (cat 3 lord (cat 3 town -)))
-  
+  `@ux`(sham (cat 3 lord (cat 3 town -))) 
 ::
 ++  fry-rice
   |=  [holder=id lord=id town=@ud salt=@]
@@ -67,6 +27,7 @@
   (end [3 8] (sham (cat 3 town (cat 3 lord salt))))
 ::
 ::  +pin: get ID from caller
+::
 ++  pin
   |=  =caller
   ^-  id
@@ -76,20 +37,6 @@
 ::
 ::  smart contract types
 ::
-::  semantic aliases
-+$  info          cart
-+$  input         zygote
-+$  result        chick
-+$  final-result  [%& rooster]
-+$  continuation  [%| hen]
-+$  parcel  ::  ?? wtf to call this: grain that's proven rice
-  $:  =id
-      lord=id
-      holder=id
-      town-id=@ud
-      germ=[%& rice]
-  ==
-::
 +$  id             @ux  ::  pubkey
 ++  zigs-wheat-id  `@ux`'zigs-contract'  ::  hardcoded "native" token contract
 ::
@@ -97,25 +44,21 @@
 +$  caller     $@(id account)
 +$  signature  [r=@ux s=@ux type=?(%schnorr %ecdsa)]
 ::
+::  a grain holds either rice (data) or wheat (functions)
+::
++$  grain  [=id lord=id holder=id town-id=@ud =germ]
 +$  germ   (each rice wheat)
+::
 +$  rice   [salt=@ data=*]
-::  TODO introduce kelvin versioning to contracts
 +$  wheat  [cont=(unit *) owns=(set id)]
-+$  crop   [nok=* owns=(map id grain)]
++$  crop   [nok=* owns=(map id grain)]  ::  wheat that's been processed by mill.hoon
 ::
-+$  grain
-  $:  =id
-      lord=id
-      holder=id
-      town-id=@ud
-      =germ
-  ==
-::
-+$  granary   (map id grain)  ::  TODO: replace with +merk
++$  granary   (map id grain)  ::  TODO: replace with +merk(?)
 +$  populace  (map id @ud)
 +$  town      (pair granary populace)
 +$  land      (map @ud town)
-::  state accessible by contract
+::
+::  cart: state accessible by contract
 ::
 +$  cart
   $:  mem=(unit vase)
@@ -124,6 +67,7 @@
       town-id=@ud
       owns=(map id grain)
   ==
+::
 ::  contract definition
 ::
 +$  contract
@@ -136,10 +80,6 @@
   ++  read
     |~  path
     *noun
-  ::  getting rid of this
-  ++  event
-    |~  rooster
-    *chick
   --
 ::  transaction types, fed into contract
 ::
@@ -158,7 +98,7 @@
 ::  NOTE: continuation calls generate their own eggs, which
 ::  could potentially fail at one of these error points too.
 ::  currently keeping this simple, but could try to differentiate
-::  between first-call errors and continuation-call errors later
+::  between first-call and continuation-call errors later
 ::
 +$  egg  (pair shell yolk)
 +$  shell
@@ -176,13 +116,12 @@
       my-grains=(set id)
       cont-grains=(set id)
   ==
+::  yolk that's been "fertilized" with data by execution engine
 +$  zygote
   $:  =caller
       args=(unit *)
       grains=(map id grain)
   ==
-::
-+$  embryo   (each zygote rooster)
 ::
 +$  chick    (each rooster hen)
 ::  add "crowing": list of [@tas json]

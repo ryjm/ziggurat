@@ -284,9 +284,4 @@
   |=  inp=path
   ^-  *
   ~
-::
-++  event
-  |=  =rooster
-  ^-  result
-  *result
 --
