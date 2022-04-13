@@ -37,9 +37,9 @@
     ::  validate transaction signature
     ::  using ecdsa-raw-sign in wallet, TODO review this
     ::  comment this out for tests
-    ::  =/  point  (ecdsa-raw-recover:secp256k1:secp:crypto (sham (jam q.egg)) sig.p.egg)
-    ::  ?.  =(id.from.p.egg (compress-point:secp256k1:secp:crypto point))
-    ::    [town 0 2]  ::  signed tx doesn't match account
+    =/  point  (ecdsa-raw-recover:secp256k1:secp:crypto (sham (jam q.egg)) sig.p.egg)
+    ?.  =(id.from.p.egg (compress-point:secp256k1:secp:crypto point))
+      [town 0 2]  ::  signed tx doesn't match account
     =/  curr-nonce=@ud  (~(gut by q.town) id.from.p.egg 0)
     ?.  =(nonce.from.p.egg +(curr-nonce))
       ~&  >>>  "tx rejected; bad nonce"
