@@ -116,7 +116,7 @@
           data.p.germ.rec  receiver(balance (add balance.receiver amount.args))
       ==
       ::  return the result: two changed grains
-      [%& (malt ~[[id.giv giv] [id.rec rec]]) ~]
+      [%& (malt ~[[id.giv giv] [id.rec rec]]) ~]  :: crow here
     ::
         %take
       ::  %take expects the account that will be taken from in owns.cart

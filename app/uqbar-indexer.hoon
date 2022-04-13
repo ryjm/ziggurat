@@ -392,7 +392,11 @@
                     path-prefix=path
                 ==
             ^-  (list card)
-            %+  murn  ~(tap in (~(get ju sub-paths) query-type))
+            ::  NOTE: Nick, I added this to handle /id/[@ux] subscriptions
+            ::  which weren't getting stuff since this was looking for /from and /to subs
+            =/  path-label=@tas
+              ?:  ?=(?(%from %to) query-type)  %id  query-type
+            %+  murn  ~(tap in (~(get ju sub-paths) path-label))
             |=  id=@u
             =/  payload=?(@u [@ud @u])
               ?~  payload-prefix  id  [u.payload-prefix id]

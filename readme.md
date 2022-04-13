@@ -56,7 +56,7 @@ where the argument `[our %ziggurat]` is a dock pointing to the ship running the 
 :wallet &zig-wallet-poke [%set-indexer our]
 ```
 
-5. Start up a new main chain: *NOTE: this will take about 30 seconds, deploying a contract..*
+5. Start up a new main chain:
 ```
 :ziggurat|start-testnet now
 ```
@@ -68,7 +68,7 @@ where the argument `[our %ziggurat]` is a dock pointing to the ship running the 
 ```
 (the pubkey here should match the one you used in step 2. The ship running the wallet must also be running a block explorer.)
 
-7. Start up a town that has the token contract deployed. You have to do step 6 first, otherwise the sequencer agent won't have the data from the main chain it needs to set up a transaction. *will also take about 30 seconds*
+7. Start up a town that has the token contract deployed. You have to do step 6 first, otherwise the sequencer agent won't have the data from the main chain it needs to set up a transaction.
 ```
 :sequencer|init 1
 ```
@@ -122,3 +122,4 @@ Make sure to perform step (6) again if you need updated chain state in your wall
 ```
 :wallet &zig-wallet-poke [%submit 0x2.e3c1.d19b.fd3e.43aa.319c.b816.1c89.37fb.b246.3a65.f84d.8562.155d.6181.8113.c85b 0x74.6361.7274.6e6f.632d.7367.697a 1 [1 10.000] [%give 0x61.7461.6461.7465.6d2d.7367.697a 0x3.4cdd.5f53.b551.e62f.2238.6eb3.8abd.3e91.a546.fad3.2940.ff2d.c316.50dd.8d38.e609 777]]
 ```
+If this fails with an error "wallet can't find our zigs account for that town!", use the fetch-rice poke then try again.

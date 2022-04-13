@@ -301,25 +301,30 @@
       ``noun+!>(~)
     ``noun+!>(`rice:smart`p.germ.u.res)
   ::
-      [%wheat @ @ta ~]
+      [%wheat @ @ta ^]
     ::  call read arm of contract
     =/  id  (slav %ux i.t.t.path)
     =/  arg=^path  [i.t.t.t.path ~]
+    =/  contract-rice=(list @ux)
+      %+  turn  t.t.t.t.path
+      |=(addr=@ (slav %ux addr))
     ?~  res=(~(get by p.town.state) id)  ``noun+!>(~)
     ?.  ?=(%| -.germ.u.res)              ``noun+!>(~)
     ?~  cont.p.germ.u.res                ``noun+!>(~)
     ::  TODO make way for reads to get some rice input!
-    ::  =/  owns
-    ::    %-  ~(gas by *(map:smart id:smart grain:smart))
-    ::    %+  murn  ~(tap in owns.p.germ.u.res)
-    ::    |=  find=id:smart
-    ::    ?~  found=(~(get by p.town.state) find)  ~
-    ::    ?.  ?=(%& -.germ.u.found)                ~
-    ::    ?.  =(lord.u.found id)                   ~
-    ::    `[find u.res]
+    =/  owns
+      ::  make unit map, fail if some missing
+      ::  make output of a scry a (unit *)
+      %-  ~(gas by *(map id:smart grain:smart))
+      %+  murn  contract-rice
+      |=  find=id:smart
+      ?~  found=(~(get by p.town.state) find)  ~
+      ?.  ?=(%& -.germ.u.found)                ~
+      ?.  =(lord.u.found id)                   ~
+      `[find u.res]
     =/  cont  (hole:smart contract:smart u.cont.p.germ.u.res)
-    =/  cart  [~ id 0 (need town-id.state) ~] ::  TODO blocknum
-    ``noun+!>((~(read cont cart) path))
+    =/  cart  [~ id 0 (need town-id.state) owns] ::  TODO blocknum
+    ``noun+!>(`(~(read cont cart) path))
   ::
       [%sizeof @ ~]
     ::  give size of item in town granary

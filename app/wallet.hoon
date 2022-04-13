@@ -14,7 +14,7 @@
       nodes=(map town=@ud =ship)  ::  the sequencer you submit txs to for each town
       nonces=(map pub=@ux (map town=@ud nonce=@ud))
       tokens=(map pub=@ux =book)
-      transaction-store=(map @ux [=egg:smart args=supported-args])
+      transaction-store=(map pub=@ux [sent=(map @ux [=egg:smart args=supported-args]) received=(map @ux =egg:smart)])
       metadata-store=(map =id:smart token-metadata)
       indexer=(unit ship)
       ::  potential to do cool stuff with %pals integration here
@@ -153,7 +153,7 @@
       :-  ;:  welp
               (clear-asset-subscriptions wex.bowl)
               (create-asset-subscriptions - (need indexer.state))
-              (create-pubkey-subscriptions ~(key by keys) (need indexer.state))
+              (create-id-subscriptions ~(key by keys) (need indexer.state))
               ~[[%give %fact ~[/book-updates] %zig-wallet-update !>([%new-book -])]]
           ==
       %=  state
@@ -208,9 +208,13 @@
       =/  sig           (ecdsa-raw-sign:secp256k1:secp:crypto (sham (jam yolk)) signer)
       =/  =egg:smart    [[caller sig to.act rate.gas.act bud.gas.act town.act 0] yolk]
       =/  egg-hash=@ux  (shax (jam egg))
+      =/  our-txs
+        ?~  o=(~(get by transaction-store) from.act)
+          [(malt ~[[egg-hash [egg args.act]]]) ~]
+        u.o(sent (~(put by sent.u.o) egg-hash [egg args.act]))
       ~&  >>  "wallet: submitting tx"
       :_  %=  state
-            transaction-store  (~(put by transaction-store) egg-hash [egg args.act])
+            transaction-store  (~(put by transaction-store) from.act our-txs)
             nonces  (~(put by nonces) from.act (~(put by our-nonces) town.act +(nonce)))
           ==
       :~  (tx-update-card "submitted" egg-hash)
@@ -230,8 +234,6 @@
       [%submit-tx @ ~]
     ::  check to see if our tx was received by sequencer
     =/  hash=@ux  (slav %ux i.t.wire)
-    ?.  (~(has by transaction-store.state) hash)
-      `this  ::  unknown to us
     ?:  ?=(%poke-ack -.sign)
       ?~  p.sign
         ::  got it
@@ -268,12 +270,47 @@
     ?:  ?=(%watch-ack -.sign)  (on-agent:def wire sign)
     ?.  ?=(%fact -.sign)       (on-agent:def wire sign)
     ?.  ?=(%uqbar-indexer-update p.cage.sign)  (on-agent:def wire sign)
-    ~&  >>>  "wallet: id update: {<sign>}"
     =/  update  !<(update:uqbar-indexer q.cage.sign)
+    ~&  >>>  "wallet: id update: {<update>}"
     ?.  ?=(%egg -.update)  `this
-    ::  this will give us updates to transactions we send,
-    ::  specifically if they succeeded
-    `this
+    ::  this will give us updates to transactions we send
+    ::
+    =/  our-id=@ux  (slav %ux i.t.wire)
+    =+  our-txs=(~(gut by transaction-store.state) our-id [sent=~ received=~])
+    =/  eggs=(list [@ux =egg:smart])
+      %~  tap  in
+      ^-  (set [@ux =egg:smart])
+      %-  ~(run in eggs.update)
+      |=  [=egg-location:uqbar-indexer =egg:smart]
+      [`@ux`(shax (jam egg)) egg]
+    =^  tx-status-cards=(list card)  our-txs
+      %^  spin  eggs  our-txs
+      |=  [[hash=@ux =egg:smart] _our-txs]
+      ?.  =(our-id (pin:smart from.p.egg))
+        ~&  >>  our-id
+        ~&  >  from.p.egg
+        ::  this is a transaction sent to us / not from us
+        ^-  [card _our-txs]
+        :-  (tx-update-card "sent-to-us" hash)
+        our-txs(received (~(put by received.our-txs) hash egg))
+      ::  tx sent by us, update status code and send to frontend
+      ::  following error code spec in smart.hoon, eventually
+      ^-  [card _our-txs]
+      =/  status
+        ?+  status.p.egg  (scow %ud status.p.egg)
+          %0  "succeeded"
+          ::  fill this in later
+        ==
+      :-  (tx-update-card status hash)
+      %=    our-txs
+          sent
+        %+  ~(jab by sent.our-txs)  hash
+        |=([p=egg:smart q=supported-args] [p(status.p status.p.egg) q])
+      ==
+    ~&  tx-status-cards
+    :_  this(transaction-store (~(put by transaction-store) our-id our-txs))
+    %+  snoc  tx-status-cards
+    [%pass /fetch-rice %agent [our.bowl %wallet] %poke %zig-wallet-poke !>([%fetch-our-rice our-id])]
   ==
 ::
 ++  on-arvo  on-arvo:def
@@ -357,12 +394,15 @@
         ['salt' (tape (scow %ux salt.d))]
     ==
   ::
-      [%transactions ~]
-    ::  return entire transaction store
+      [%transactions @ ~]
+    ::  return transaction store for given pubkey
+    =/  pub  (slav %ux i.t.t.path)
+    =/  our-txs=(map @ux [=egg:smart args=supported-args])
+      -:(~(gut by transaction-store.state) pub [~ ~])
     =;  =json  ``json+!>(json)
     =,  enjs:format
     %-  pairs
-    %+  turn  ~(tap by transaction-store.state)
+    %+  turn  ~(tap by our-txs)
     |=  [hash=@ux [t=egg:smart args=supported-args]]
     ?.  ?=(account:smart from.p.t)  !!
     :-  (scot %ux hash)

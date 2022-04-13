@@ -136,7 +136,7 @@
   ++  read
     |~  path
     *noun
-  ::
+  ::  getting rid of this
   ++  event
     |~  rooster
     *chick
@@ -185,6 +185,7 @@
 +$  embryo   (each zygote rooster)
 ::
 +$  chick    (each rooster hen)
+::  add "crowing": list of [@tas json]
 +$  rooster  [changed=(map id grain) issued=(map id grain)]
 +$  hen      [mem=(unit vase) next=[to=id town-id=@ud args=yolk] roost=rooster]
 --

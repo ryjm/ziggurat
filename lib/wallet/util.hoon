@@ -8,7 +8,7 @@
   ^-  card
   [%give %fact ~[/tx-updates] %zig-wallet-update !>([%tx-status status hash])]
 ::
-++  create-pubkey-subscriptions
+++  create-id-subscriptions
   |=  [keys=(set @ux) indexer=ship]
   ^-  (list card)
   %+  turn
