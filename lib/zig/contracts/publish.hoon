@@ -50,9 +50,4 @@
   |=  inp=path
   ^-  *
   ~
-::
-++  event
-  |=  inp=rooster
-  ^-  chick
-  *chick
 --

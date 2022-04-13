@@ -107,15 +107,9 @@
     ==
   --
 ::
-::  not yet using these
-::
 ++  read
   |=  inp=path
   ^-  *
+  ::  TODO support reads such as 'get-balance' and 'get-allowances'
   ~
-::
-++  event
-  |=  inp=rooster
-  ^-  chick
-  *chick
 --

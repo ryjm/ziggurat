@@ -62,7 +62,7 @@
         zigs-wheat-id:smart  ::  holders
         town-id              ::  town-id
         :+    %|             ::  germ
-          `(~(text-deploy deploy ~zod ~2022.4.12..00.22.32..456b) cont)
+          `(~(text-deploy deploy ~zod ~2022.4.13..22.58.15..3862) cont)
         ~  ::  (silt ~[0x1.beef 0x1.dead 0x1.cafe])
     ==
   ++  fake-granary

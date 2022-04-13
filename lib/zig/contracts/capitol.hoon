@@ -10,6 +10,7 @@
 ::
 ::  TODO: verify ship signatures!
 ::
+::  /+  *zig-sys-smart
 |_  =cart
 ++  write
   |=  inp=zygote
@@ -92,15 +93,9 @@
     ==
   --
 ::
-::  not yet using these
-::
 ++  read
   |=  inp=path
   ^-  *
+  ::  TODO support reads such as 'get-validators' and 'get-sequencers' on given town
   ~
-::
-++  event
-  |=  inp=rooster
-  ^-  chick
-  *chick
 --
