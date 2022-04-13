@@ -95,3 +95,21 @@ where `~[~zod ~nec]` is the current set of validators including the one being ad
    }
 }
 ```
+
+# Testing Zink
+
+```
+=z -build-file /=zig=/lib/zink/zink/hoon
+=r (~(eval-hoon zink:z ~) /=zig=/lib/zink/stdlib/hoon /=zig=/lib/zink/test/hoon %test '3')
+-.r     # product
++<.r    # json hints
++>.r    # pedersen hash cache
+# once you've run this once so you have a cache you should pass it in every time
+# You can pass ~ for library if you don't have one
+> =r (~(eval-hoon zink:z +>.r) ~ /=zig=/lib/zink/fib/hoon %fib '5')
+# +<.r is the hint json. You need to write it out to disk so you can pass it to cairo.
+@fib-5/json +<.r
+# Now fib-5.json is in PIER/.urb/put and you can pass it to cairo.
+# hash-noun will give you just a hash
+> =r (~(hash-noun zink:z +>.r) [1 2 3])
+```
