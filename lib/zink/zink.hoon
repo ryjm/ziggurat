@@ -19,6 +19,8 @@
   ?:  (lth bud u.formula-cost)  `[cax hit 0]
   =.  bud  (sub bud u.formula-cost)
   |^  ^-  book
+  ::~&  >  "s={<s>}"
+  ::~&  >  "f={<f>}"
   ?+    f
     ~&  f
     !!
@@ -144,6 +146,9 @@
     ==
   ::
       [%8 head=* next=*]
+    ::~&  >  "f={<f>}"
+    =^  mj  app  (jet head.f next.f)
+    ~&  >  "jet={<mj>}"
     ?:  (lth bud 1)  `app
     =.  bud  (sub bud 1)
     =^  hhead  cax  (hash head.f)
@@ -206,6 +211,27 @@
     =.  hit  (put-hint [%10 axis.f hval htar holdleaf sibs])
     [~ u.u.mutant]^app
   ==
+  :: Check if we are calling an arm in a core and if so lookup the axis
+  :: in the jet map
+  :: Calling convention is
+  :: [8 [9 JET-AXIS 0 CORE-AXIS] 9 2 10 [6 MAKE-SAMPLE] 0 2]
+  :: If we match this then look up JET-AXIS in the jet map to see if we're
+  :: calling a jetted arm.
+  ::
+  :: Note that this arm should only be called on an 8
+  :: TODO Figure out what CORE-AXIS should be
+  ++  jet
+    |=  [head=* next=*]
+    ^-  [(unit [@t *]) appendix]
+    ?.  ?=([%9 arm-axis=@ %0 core-axis=@] head)  ~^app
+    ?.  ?=([%9 %2 %10 [%6 sam=*] %0 %2] next)  ~^app
+    =/  mjet  (~(get by jets) arm-axis.head)
+    ?@  mjet  ~^app
+    =^  sub=body  app  ^$(f head)
+    ?@  sub  ~^app
+    =^  arg=body  app  ^$(s sub^s, f sam.next)
+    ?@  arg  ~^app
+    (both mjet arg)^app
   ::
   ++  put-hint
     |=  hin=cairo-hint
