@@ -6,7 +6,13 @@
 ::
 +$  wallet-update
   $%  [%new-book tokens=(map pub=id:smart =book)]
-      [%tx-status status=tape hash=@ux]  ::  "submitted", "received", "rejected", "processed"
+      [%tx-status status=tape hash=@ux]
+      ::  TX status codes:
+      ::  100: transaction submitted from wallet to sequencer
+      ::  101: transaction received by sequencer
+      ::  103: failure: transaction rejected by sequencer
+      ::  105: alert: transaction sent *to our address*
+      ::  0-7: see smart.hoon -- contract execution error codes
   ==
 ::
 +$  wallet-poke

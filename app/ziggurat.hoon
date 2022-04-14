@@ -561,10 +561,13 @@
       [~ ~]
     ``noun+!>(`rice:smart`p.germ.u.res)
   ::
-      [%wheat @ @ta ~]
+      [%wheat @ @ta ^]
     ::  call read arm of contract
     =/  id  (slav %ux i.t.t.path)
     =/  arg=^path  [i.t.t.t.path ~]
+    =/  contract-rice=(list @ux)
+      %+  turn  t.t.t.t.path
+      |=(addr=@ (slav %ux addr))
     ?~  res=(~(get by p.globe.state) id)  [~ ~]
     ?.  ?=(%| -.germ.u.res)               [~ ~]
     ?~  cont.p.germ.u.res                 [~ ~]

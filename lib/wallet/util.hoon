@@ -4,7 +4,7 @@
     --
 |%
 ++  tx-update-card
-  |=  [status=tape hash=@ux]
+  |=  [status=@ud hash=@ux]
   ^-  card
   [%give %fact ~[/tx-updates] %zig-wallet-update !>([%tx-status status hash])]
 ::

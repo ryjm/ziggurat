@@ -1,21 +1,5 @@
 ##  State of Uqbar contracts
 
-- Concepts that need to be explained
-  - contract architecture (split between data and functions)
-    - "a contract is a stateless bundle of functions"
-  - chain architecture explainer (hands-on)
-  - contract execution explainer
-  - glossary of plain-language type explanations
-
-- After context above is shared, can explain contract writing hands-on
-  - how to design a data model
-  - how to perform chains of calls
-  - how to design arguments
-  - how to deploy & test contract
-    - write a test file
-    - use deploy script
-
-
 We're actively building contracts, both in order to run the testnet and explore the ergonomics of our data/execution model.
 
 For a contract to be 'ready', it must compile and pass tests for every supported call type. Then, we can store a compiled nock version of it in a folder (TODO: do this). From there, we can hardcode it into a town initialization generator and test it on-chain.
@@ -47,6 +31,8 @@ General TODOs for contracts & contract language ("uHoon"):
 - Define set of jets used in uHoon and define subset of `hoon.hoon` to include
 
 - Continue identifying areas in contract-writing which need standard helper functions, or possibly custom data types
+
+- Need to think about how to verify ship signatures in a contract such as `capitol.hoon`
 
 - Figure out best way to include external libraries in contracts at compile-time
 

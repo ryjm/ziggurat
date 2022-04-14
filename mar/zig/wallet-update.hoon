@@ -37,7 +37,7 @@
     ::
         %tx-status
       %-  pairs
-      :~  ['status' (tape status.upd)]
+      :~  ['status' (tape (scow %ud status.upd))]
           ['hash' (tape (scow %ux hash.upd))]
       ==
     ==

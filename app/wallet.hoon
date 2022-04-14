@@ -217,7 +217,7 @@
             transaction-store  (~(put by transaction-store) from.act our-txs)
             nonces  (~(put by nonces) from.act (~(put by our-nonces) town.act +(nonce)))
           ==
-      :~  (tx-update-card "submitted" egg-hash)
+      :~  (tx-update-card 100 egg-hash)
           :*  %pass  /submit-tx/(scot %ux egg-hash)
               %agent  [node ?:(=(0 town.act) %ziggurat %sequencer)]
               %poke  %zig-weave-poke
@@ -238,10 +238,10 @@
       ?~  p.sign
         ::  got it
         ~&  >>  "wallet: tx was received by sequencer"
-        ~[(tx-update-card "received" hash)]^this
+        ~[(tx-update-card 101 hash)]^this
       ::  failed
       ~&  >>>  "wallet: tx was rejected by sequencer"
-      ~[(tx-update-card "rejected" hash)]^this
+      ~[(tx-update-card 103 hash)]^this
     `this
   ::
       [%grain @ ~]
@@ -291,17 +291,12 @@
         ~&  >  from.p.egg
         ::  this is a transaction sent to us / not from us
         ^-  [card _our-txs]
-        :-  (tx-update-card "sent-to-us" hash)
+        :-  (tx-update-card 105 hash)
         our-txs(received (~(put by received.our-txs) hash egg))
       ::  tx sent by us, update status code and send to frontend
       ::  following error code spec in smart.hoon, eventually
       ^-  [card _our-txs]
-      =/  status
-        ?+  status.p.egg  (scow %ud status.p.egg)
-          %0  "succeeded"
-          ::  fill this in later
-        ==
-      :-  (tx-update-card status hash)
+      :-  (tx-update-card status.p.egg hash)
       %=    our-txs
           sent
         %+  ~(jab by sent.our-txs)  hash
