@@ -58,7 +58,7 @@
           [caller.inp `[%give to.args `id.new amount.args budget.args] (silt ~[id.giv]) (silt ~[id.new])]
         [~ (malt ~[[id.new new]])]
       =/  rec=grain  (~(got by owns.cart) u.to-rice.args)
-      ?>  ?=(%& -.germ.rec)
+      ?>  &(=(holder.rec to.args) ?=(%& -.germ.rec))
       =/  receiver=account  (hole account data.p.germ.rec)
       ?>  =(metadata.receiver metadata.giver)
       =:  data.p.germ.giv  giver(balance (sub balance.giver amount.args))
@@ -76,18 +76,15 @@
       ?~  to-rice.args
         =+  (fry-rice to.args me.cart town-id.cart salt.p.germ.giv)
         =/  new=grain
-          [- me.cart to.args town-id.cart [%& salt.p.germ.giv [amount.args ~ metadata.giver]]]
+          [- me.cart to.args town-id.cart [%& salt.p.germ.giv [0 ~ metadata.giver]]]
         :^  %|  ~
           :+  me.cart  town-id.cart
           [caller.inp `[%take to.args `id.new id.giv amount.args] ~ (silt ~[id.giv id.new])]
         [~ (malt ~[[id.new new]])]
       =/  rec=grain  (~(got by owns.cart) u.to-rice.args)
-      ?>  ?=(%& -.germ.rec)
+      ?>  &(=(holder.rec to.args) ?=(%& -.germ.rec))
       =/  receiver=account  (hole account data.p.germ.rec)
       ?>  =(metadata.receiver metadata.giver)
-      =.  allowances.giver
-        %+  ~(jab by allowances.giver)  caller-id
-        |=(old=@ud (sub old amount.args))
       =:  data.p.germ.rec  receiver(balance (add balance.receiver amount.args))
           data.p.germ.giv
         %=  giver
@@ -99,6 +96,7 @@
     ::
         %set-allowance
       =/  acc=grain  -:~(val by grains.inp)
+      ?>  !=(who.args holder.acc)
       ?>  &(=(lord.acc me.cart) ?=(%& -.germ.acc))
       =/  =account  (hole account data.p.germ.acc)
       =.  data.p.germ.acc
