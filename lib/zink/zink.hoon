@@ -146,11 +146,10 @@
     ==
   ::
       [%8 head=* next=*]
-    ::~&  >  "f={<f>}"
-    =^  mj  app  (jet head.f next.f)
-    ~&  >  "jet={<mj>}"
     ?:  (lth bud 1)  `app
     =.  bud  (sub bud 1)
+    =^  jax  app  (jet head.f next.f)
+    ?^  jax  jax^app
     =^  hhead  cax  (hash head.f)
     =^  hnext  cax  (hash next.f)
     =^  head=body  app
@@ -222,16 +221,57 @@
   :: TODO Figure out what CORE-AXIS should be
   ++  jet
     |=  [head=* next=*]
-    ^-  [(unit [@t *]) appendix]
-    ?.  ?=([%9 arm-axis=@ %0 core-axis=@] head)  ~^app
-    ?.  ?=([%9 %2 %10 [%6 sam=*] %0 %2] next)  ~^app
+    ^-  book
+    =^  mj  app  (match-jet head next)
+    ?@  mj  `app
+    (run-jet u.mj)
+  ::
+  ++  match-jet
+    |=  [head=* next=*]
+    ^-  [(unit [@tas *]) appendix]
+    ?:  (lth bud 1)  `app
+    =.  bud  (sub bud 1)
+    ?.  ?=([%9 arm-axis=@ %0 core-axis=@] head)  `app
+    ?.  ?=([%9 %2 %10 [%6 sam=*] %0 %2] next)  `app
     =/  mjet  (~(get by jets) arm-axis.head)
-    ?@  mjet  ~^app
+    ?@  mjet  `app
     =^  sub=body  app  ^$(f head)
-    ?@  sub  ~^app
+    ?@  sub  `app
     =^  arg=body  app  ^$(s sub^s, f sam.next)
-    ?@  arg  ~^app
+    ?@  arg  `app
     (both mjet arg)^app
+  ::
+  ++  run-jet
+    |=  [arm=@tas sam=*]
+    ^-  book
+    ?+  arm  `app
+    ::
+        %dec
+      ?:  (lth bud 1)  `app
+      =.  bud  (sub bud 1)
+      ::?:  .?(sam)  `app
+      ?.  ?=(@ sam)  `app
+      (some (dec sam))^app
+    ::
+        %add
+      ?:  (lth bud 1)  `app
+      =.  bud  (sub bud 1)
+      ?.  ?=([x=@ud y=@ud] sam)  `app
+      (some (add x.sam y.sam))^app
+    ::
+        %mul
+      ?:  (lth bud 1)  `app
+      =.  bud  (sub bud 1)
+      ?.  ?=([x=@ud y=@ud] sam)  `app
+      (some (mul x.sam y.sam))^app
+    ::
+        %double
+      ?:  (lth bud 1)  `app
+      =.  bud  (sub bud 1)
+      ::?:  .?(sam)  `app
+      ?.  ?=(@ sam)  `app
+      (some (mul 2 sam))^app
+    ==
   ::
   ++  put-hint
     |=  hin=cairo-hint
