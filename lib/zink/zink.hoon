@@ -19,8 +19,6 @@
   ?:  (lth bud u.formula-cost)  `[cax hit 0]
   =.  bud  (sub bud u.formula-cost)
   |^  ^-  book
-  ::~&  >  "s={<s>}"
-  ::~&  >  "f={<f>}"
   ?+    f
     ~&  f
     !!
@@ -37,7 +35,7 @@
     ?~  tal  `app
     =^  hhed  cax  (hash -.f)
     =^  htal  cax  (hash +.f)
-    =.  hit  (put-hint [%cons hhed htal])
+    =.  app  (put-hint [%cons hhed htal])
     [~ u.hed^u.tal]^app
   ::
       [%0 axis=@]
@@ -49,14 +47,14 @@
     ?~  u.part  !!  ::  TODO: safety
     =^  hpart  cax  (hash u.u.part)
     =^  hsibs  cax  (merk-sibs s axis.f)
-    =.  hit  (put-hint [%0 axis.f hpart hsibs])
+    =.  app  (put-hint [%0 axis.f hpart hsibs])
     [~ u.u.part]^app
   ::
       [%1 const=*]
     ?:  (lth bud 1)  `app
     =.  bud  (sub bud 1)
     =^  hres  cax  (hash const.f)
-    =.  hit  (put-hint [%1 hres])
+    =.  app  (put-hint [%1 hres])
     [~ const.f]^app
   ::
       [%2 sub=* for=*]
@@ -72,7 +70,7 @@
       $(f for.f)
     ?~  formula  `app
     ::  TODO: need to add a check to ensure no crash
-    =.  hit  (put-hint [%2 hsub hfor])
+    =.  app  (put-hint [%2 hsub hfor])
     $(s u.subject, f u.formula)
   ::
       [%3 arg=*]
@@ -83,11 +81,11 @@
     ?~  argument  `app
     =^  harg  cax  (hash arg.f)
     ?@  u.argument
-      =.  hit  (put-hint [%3 harg %atom u.argument])
+      =.  app  (put-hint [%3 harg %atom u.argument])
       [~ %.n]^app
     =^  hhash  cax  (hash -.u.argument)
     =^  thash  cax  (hash +.u.argument)
-    =.  hit  (put-hint [%3 harg %cell hhash thash])
+    =.  app  (put-hint [%3 harg %cell hhash thash])
     [~ %.y]^app
   ::
       [%4 arg=*]
@@ -98,7 +96,7 @@
     =^  harg  cax  (hash arg.f)
     ?~  argument  `app
     ?>  ?=(@ u.argument)  ::  TODO: safely return trace
-    =.  hit  (put-hint [%4 harg u.argument])
+    =.  app  (put-hint [%4 harg u.argument])
     [~ .+(u.argument)]^app
   ::
       [%5 a=* b=*]
@@ -112,7 +110,7 @@
     =^  b=body  app
       $(f b.f)
     ?~  b  `app
-    =.  hit  (put-hint [%5 ha hb])
+    =.  app  (put-hint [%5 ha hb])
     [~ =(u.a u.b)]^app
   ::
       [%6 test=* yes=* no=*]
@@ -124,7 +122,7 @@
     =^  result=(unit *)  app
       $(f test.f)
     ?~  result  `app
-    =.  hit  (put-hint [%6 htest hyes hno])
+    =.  app  (put-hint [%6 htest hyes hno])
     ?+  u.result  !!  ::  TODO: safely do trace
       %&  $(f yes.f)
       %|  $(f no.f)
@@ -139,7 +137,7 @@
       $(f subj.f)
     ?~  subject  `app
     ::  TODO: check if crash here and do trace
-    =.  hit  (put-hint [%7 hsubj hnext])
+    =.  app  (put-hint [%7 hsubj hnext])
     %=  $
       s  u.subject
       f  next.f
@@ -156,7 +154,7 @@
       $(f head.f)
     ?~  head  `app
     ::  TODO: check if head crashes
-    =.  hit  (put-hint [%8 hhead hnext])
+    =.  app  (put-hint [%8 hhead hnext])
     %=  $
       s  [u.head s]
       f  next.f
@@ -177,7 +175,7 @@
     ?~  u.arm  !!
     =^  harm  cax  (hash u.u.arm)
     =^  sibs  cax  (merk-sibs u.core axis.f)
-    =.  hit   (put-hint [%9 axis.f hcore harm sibs])
+    =.  app  (put-hint [%9 axis.f hcore harm sibs])
     %=  $
       s  u.core
       f  u.u.arm
@@ -207,7 +205,7 @@
     ?~  u.oldleaf  !!  ::  TODO: SAFETY
     =^  holdleaf  cax  (hash u.u.oldleaf)
     =^  sibs  cax  (merk-sibs u.target axis.f)
-    =.  hit  (put-hint [%10 axis.f hval htar holdleaf sibs])
+    =.  app  (put-hint [%10 axis.f hval htar holdleaf sibs])
     [~ u.u.mutant]^app
   ==
   :: Check if we are calling an arm in a core and if so lookup the axis
@@ -223,8 +221,8 @@
     |=  [head=* next=*]
     ^-  book
     =^  mj  app  (match-jet head next)
-    ?@  mj  `app
-    (run-jet u.mj)
+    ?~  mj  `app
+    (run-jet u.mj)^app
   ::
   ++  match-jet
     |=  [head=* next=*]
@@ -233,52 +231,52 @@
     =.  bud  (sub bud 1)
     ?.  ?=([%9 arm-axis=@ %0 core-axis=@] head)  `app
     ?.  ?=([%9 %2 %10 [%6 sam=*] %0 %2] next)  `app
-    =/  mjet  (~(get by jets) arm-axis.head)
-    ?@  mjet  `app
-    =^  sub=body  app  ^$(f head)
-    ?@  sub  `app
-    =^  arg=body  app  ^$(s sub^s, f sam.next)
-    ?@  arg  `app
+    ?~  mjet=(~(get by jets) arm-axis.head)  `app
+    =^  sub=body  app
+      ^$(f head)
+    ?~  sub  `app
+    =^  arg=body  app
+      ^$(s sub^s, f sam.next)
+    =/  len2  (lent ~(val by cax))
     (both mjet arg)^app
   ::
   ++  run-jet
     |=  [arm=@tas sam=*]
-    ^-  book
-    ?+  arm  `app
+    ^-  body
+    ?+  arm  ~
     ::
         %dec
-      ?:  (lth bud 1)  `app
+      ?:  (lth bud 1)  ~
       =.  bud  (sub bud 1)
-      ::?:  .?(sam)  `app
-      ?.  ?=(@ sam)  `app
-      (some (dec sam))^app
+      ?.  ?=(@ sam)  ~
+      (some (dec sam))
     ::
         %add
-      ?:  (lth bud 1)  `app
+      ?:  (lth bud 1)  ~
       =.  bud  (sub bud 1)
-      ?.  ?=([x=@ud y=@ud] sam)  `app
-      (some (add x.sam y.sam))^app
+      ?.  ?=([x=@ud y=@ud] sam)  ~
+      (some (add x.sam y.sam))
     ::
         %mul
-      ?:  (lth bud 1)  `app
+      ?:  (lth bud 1)  ~
       =.  bud  (sub bud 1)
-      ?.  ?=([x=@ud y=@ud] sam)  `app
-      (some (mul x.sam y.sam))^app
+      ?.  ?=([x=@ud y=@ud] sam)  ~
+      (some (mul x.sam y.sam))
     ::
         %double
-      ?:  (lth bud 1)  `app
+      ?:  (lth bud 1)  ~
       =.  bud  (sub bud 1)
-      ::?:  .?(sam)  `app
-      ?.  ?=(@ sam)  `app
-      (some (mul 2 sam))^app
+      ?.  ?=(@ sam)  ~
+      (some (mul 2 sam))
     ==
   ::
   ++  put-hint
     |=  hin=cairo-hint
-    ^-  hints
+    ^-  appendix
     =^  sroot  cax  (hash s)
     =^  froot  cax  (hash f)
-    (~(put bi hit) sroot froot hin)
+    =.  hit  (~(put bi hit) sroot froot hin)
+    app
   --
   ::
   ++  frag
@@ -317,14 +315,13 @@
     ==
   ::  hash:
   ::  if x is an atom then hash(x)=h(x, 0)
-  ::  else hash([x y])=h(h(x), h(y))
+  ::  else hash([x y])=h(hash(x), hash(y))
   ::  where h = pedersen hash
   ++  hash
     |=  n=*
     ^-  [phash cache]
     =/  mh  (~(get by cax) n)
-    ?.  ?=(~ mh)
-      [u.mh cax]
+    ?^  mh  [u.mh cax]
     ?@  n
       =/  h  (hash:pedersen n 0)
       [h (~(put by cax) n h)]
