@@ -31,7 +31,7 @@
 /+  *zig-sys-smart
 |_  =cart
 ++  write
-  |=  inp=input
+  |=  inp=zygote
   ^-  chick
   |^
   ?~  args.inp  !!
