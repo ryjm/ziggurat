@@ -1,4 +1,4 @@
-/-  *ziggurat
+/-  *ziggurat, *uqbar-wallet
 =,  dejs:format
 |_  act=wallet-poke
 ++  grab

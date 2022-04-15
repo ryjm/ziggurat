@@ -6,7 +6,7 @@
 ::
 +$  wallet-update
   $%  [%new-book tokens=(map pub=id:smart =book)]
-      [%tx-status status=tape hash=@ux]
+      [%tx-status status=@ud hash=@ux]
       ::  TX status codes:
       ::  100: transaction submitted from wallet to sequencer
       ::  101: transaction received by sequencer

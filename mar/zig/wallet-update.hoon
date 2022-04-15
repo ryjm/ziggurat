@@ -1,4 +1,4 @@
-/-  *ziggurat
+/-  *ziggurat, *uqbar-wallet
 =,  enjs:format
 |_  upd=wallet-update
 ++  grab
