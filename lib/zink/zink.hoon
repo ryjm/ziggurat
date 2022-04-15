@@ -237,7 +237,6 @@
     ?~  sub  `app
     =^  arg=body  app
       ^$(s sub^s, f sam.next)
-    =/  len2  (lent ~(val by cax))
     (both mjet arg)^app
   ::
   ++  run-jet
