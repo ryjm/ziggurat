@@ -146,8 +146,8 @@
       [%8 head=* next=*]
     ?:  (lth bud 1)  `app
     =.  bud  (sub bud 1)
-    =^  jax  app  (jet head.f next.f)
-    ?^  jax  jax^app
+    ::=^  jax  app  (jet head.f next.f)
+    ::?^  jax  jax^app
     =^  hhead  cax  (hash head.f)
     =^  hnext  cax  (hash next.f)
     =^  head=body  app
@@ -312,22 +312,11 @@
       %2  [``[u.u.mutant +.target] bud]
       %3  [``[-.target u.u.mutant] bud]
     ==
-  ::  hash:
-  ::  if x is an atom then hash(x)=h(x, 0)
-  ::  else hash([x y])=h(hash(x), hash(y))
-  ::  where h = pedersen hash
+  ::
   ++  hash
     |=  n=*
     ^-  [phash cache]
-    =/  mh  (~(get by cax) n)
-    ?^  mh  [u.mh cax]
-    ?@  n
-      =/  h  (hash:pedersen n 0)
-      [h (~(put by cax) n h)]
-    =^  hh  cax  $(n -.n)
-    =^  ht  cax  $(n +.n)
-    =/  h  (hash:pedersen hh ht)
-    [h (~(put by cax) n h)]
+    (^hash n cax)
   ::
   ++  cost                                              ::  gas cost of noun
     |^
@@ -395,7 +384,7 @@
   =/  src  .^(@t %cx file)
   =/  gun  (slap !>(~) (ream src))
   =/  han  (~(mint ut p.gun) %noun gen)
-  =-  [p (create-hints [q.gun q.han] hit.q)]
+  =-  [p (create-hints [q.gun q.han] hit.q ~)]
   (eval-noun [q.gun q.han] bud)
 ::  eval-hoon: compile a hoon file and evaluate it with zink
 ::
@@ -423,25 +412,49 @@
   =/  gun  (slap clib (ream src))
   =/  han  (~(mint ut p.gun) %noun gen)
   (eval-noun-with-cache [q.gun q.han] bud cax)
+::
+::  eval-hoon-with-cache-and-hints: eval hoon and return result w/ hints
+::  as json and with cache
+++  eval-hoon-with-cache-and-hints
+  |=  [file=path lib=(unit path) gen=hoon bud=@ cax=cache]
+  ^-  [book @t]
+  =/  clib
+    ?~  lib  !>(~)
+    =/  libsrc  .^(@t %cx u.lib)
+    (slap !>(~) (ream libsrc))
+  =/  src  .^(@t %cx file)
+  =/  gun  (slap clib (ream src))
+  =/  han  (~(mint ut p.gun) %noun gen)
+  =/  bok  (eval-noun-with-cache [q.gun q.han] bud cax)
+  =/  js  (create-hints [q.gun q.han] hit.q.bok cax)
+  bok^(crip (en-json:html js))
 ::  create-hints: create full hint json
 ::
 ++  create-hints
-  |=  [n=^ h=hints]
+  |=  [n=^ h=hints cax=cache]
   ^-  js=json
-  =/  hs  (hash -.n)
-  =/  hf  (hash +.n)
+  =^  hs  cax  (hash -.n cax)
+  =^  hf  cax  (hash +.n cax)
   %-  pairs:enjs:format
   :~  ['subject' s+(num:enjs hs)]
       ['formula' s+(num:enjs hf)]
       ['hints' (all:enjs h)]
   ==
 ::
+::  hash:
+::  if x is an atom then hash(x)=h(x, 0)
+::  else hash([x y])=h(hash(x), hash(y))
+::  where h = pedersen hash
 ++  hash
-  |=  n=*
-  ^-  phash
+  |=  [n=* cax=cache]
+  ^-  [phash cache]
+  =/  mh  (~(get by cax) n)
+  ?^  mh  [u.mh cax]
   ?@  n
-    (hash:pedersen n 0)
-  =/  hh  $(n -.n)
-  =/  ht  $(n +.n)
-  (hash:pedersen hh ht)
+    =/  h  (hash:pedersen n 0)
+    [h (~(put by cax) n h)]
+  =^  hh  cax  $(n -.n)
+  =^  ht  cax  $(n +.n)
+  =/  h  (hash:pedersen hh ht)
+  [h (~(put by cax) n h)]
 --
