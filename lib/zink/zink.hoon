@@ -223,7 +223,7 @@
     ^-  book
     =^  mj  app  (match-jet head next)
     ?~  mj  `app
-    =/  jar=(unit [res=* arg=json])  (run-jet nam.u.mj sam.u.mj)
+    =^  jar=(unit [res=* arg=json])  app  (run-jet nam.u.mj sam.u.mj)
     ?~  jar  `app
     =^  hhead  cax  (hash head)
     =^  hnext  cax  (hash next)
@@ -260,22 +260,24 @@
   ::
   ++  run-jet
     |=  [arm=@tas sam=*]
-    ^-  (unit [* json])
-    ?+  arm  ~
+    ^-  [(unit [* json]) appendix]
+    ?+  arm  ~^app
     ::
         %dec
-      ?:  (lth bud 1)  ~
+      ?:  (lth bud 1)  ~^app
       =.  bud  (sub bud 1)
-      ?.  ?=(@ sam)  ~
+      ?.  ?=(@ sam)  ~^app
+      :_  app
       %-  some
       :-  (dec sam)
       %-  pairs:enjs:format
       ~[['arg1' s+(num:enjs sam)]]
     ::
         %add
-      ?:  (lth bud 1)  ~
+      ?:  (lth bud 1)  ~^app
       =.  bud  (sub bud 1)
-      ?.  ?=([x=@ud y=@ud] sam)  ~
+      ?.  ?=([x=@ud y=@ud] sam)  ~^app
+      :_  app
       %-  some
       :-  (add x.sam y.sam)
       %-  pairs:enjs:format
@@ -284,9 +286,10 @@
       ==
     ::
         %mul
-      ?:  (lth bud 1)  ~
+      ?:  (lth bud 1)  ~^app
       =.  bud  (sub bud 1)
-      ?.  ?=([x=@ud y=@ud] sam)  ~
+      ?.  ?=([x=@ud y=@ud] sam)  ~^app
+      :_  app
       %-  some
       :-  (mul x.sam y.sam)
       %-  pairs:enjs:format
@@ -295,9 +298,10 @@
       ==
     ::
         %double
-      ?:  (lth bud 1)  ~
+      ?:  (lth bud 1)  ~^app
       =.  bud  (sub bud 1)
-      ?.  ?=(@ sam)  ~
+      ?.  ?=(@ sam)  ~^app
+      :_  app
       %-  some
       :-  (mul 2 sam)
       %-  pairs:enjs:format
