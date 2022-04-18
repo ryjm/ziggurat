@@ -146,8 +146,8 @@
       [%8 head=* next=*]
     ?:  (lth bud 1)  `app
     =.  bud  (sub bud 1)
-    ::=^  jax  app  (jet head.f next.f)
-    ::?^  jax  jax^app
+    =^  jax  app  (jet head.f next.f)
+    ?^  jax  jax^app
     =^  hhead  cax  (hash head.f)
     =^  hnext  cax  (hash next.f)
     =^  head=body  app
@@ -217,16 +217,32 @@
   ::
   :: Note that this arm should only be called on an 8
   :: TODO Figure out what CORE-AXIS should be
+  +$  jax  [nam=@tas arm-axis=@ core-axis=@ sam=*]
   ++  jet
     |=  [head=* next=*]
     ^-  book
     =^  mj  app  (match-jet head next)
     ?~  mj  `app
-    (run-jet u.mj)^app
+    =/  jar=(unit [res=* arg=json])  (run-jet nam.u.mj sam.u.mj)
+    ?~  jar  `app
+    =^  hhead  cax  (hash head)
+    =^  hnext  cax  (hash next)
+    =^  hsam  cax  (hash sam.u.mj)
+    =.  app
+    %-  put-hint
+    :*  %jet
+        hhead
+        hnext
+        arm-axis.u.mj
+        core-axis.u.mj
+        hsam
+        arg.u.jar
+    ==
+    (some res.u.jar)^app
   ::
   ++  match-jet
     |=  [head=* next=*]
-    ^-  [(unit [@tas *]) appendix]
+    ^-  [(unit jax) appendix]
     ?:  (lth bud 1)  `app
     =.  bud  (sub bud 1)
     ?.  ?=([%9 arm-axis=@ %0 core-axis=@] head)  `app
@@ -237,36 +253,55 @@
     ?~  sub  `app
     =^  arg=body  app
       ^$(s sub^s, f sam.next)
-    (both mjet arg)^app
+    :_  app
+    %+  bind  (both mjet arg)
+    |=  [j=@tas a=*]
+    [j arm-axis.head core-axis.head a]
   ::
   ++  run-jet
     |=  [arm=@tas sam=*]
-    ^-  body
+    ^-  (unit [* json])
     ?+  arm  ~
     ::
         %dec
       ?:  (lth bud 1)  ~
       =.  bud  (sub bud 1)
       ?.  ?=(@ sam)  ~
-      (some (dec sam))
+      %-  some
+      :-  (dec sam)
+      %-  pairs:enjs:format
+      ~[['arg1' s+(num:enjs sam)]]
     ::
         %add
       ?:  (lth bud 1)  ~
       =.  bud  (sub bud 1)
       ?.  ?=([x=@ud y=@ud] sam)  ~
-      (some (add x.sam y.sam))
+      %-  some
+      :-  (add x.sam y.sam)
+      %-  pairs:enjs:format
+      :~  ['arg1' s+(num:enjs x.sam)]
+          ['arg2' s+(num:enjs y.sam)]
+      ==
     ::
         %mul
       ?:  (lth bud 1)  ~
       =.  bud  (sub bud 1)
       ?.  ?=([x=@ud y=@ud] sam)  ~
-      (some (mul x.sam y.sam))
+      %-  some
+      :-  (mul x.sam y.sam)
+      %-  pairs:enjs:format
+      :~  ['arg1' s+(num:enjs x.sam)]
+          ['arg2' s+(num:enjs y.sam)]
+      ==
     ::
         %double
       ?:  (lth bud 1)  ~
       =.  bud  (sub bud 1)
       ?.  ?=(@ sam)  ~
-      (some (mul 2 sam))
+      %-  some
+      :-  (mul 2 sam)
+      %-  pairs:enjs:format
+      ~[['arg1' s+(num:enjs sam)]]
     ==
   ::
   ++  put-hint
@@ -432,7 +467,7 @@
 ::
 ++  create-hints
   |=  [n=^ h=hints cax=cache]
-  ^-  js=json
+  ^-  json
   =^  hs  cax  (hash -.n cax)
   =^  hf  cax  (hash +.n cax)
   %-  pairs:enjs:format
