@@ -73,7 +73,7 @@
       ?~  account.args
         =+  (fry-rice to.args me.cart town-id.cart salt.p.germ.giv)
         =/  new=grain
-          [- me.cart to.args town-id.cart [%& salt.p.germ.giv [metadata.giver ~ ~]]]
+          [- me.cart to.args town-id.cart [%& salt.p.germ.giv [metadata.giver ~ ~ ~]]]
         :^  %|  ~
           :+  me.cart  town-id.cart
           [caller.inp `[%give to.args `id.new item-id.args] (silt ~[id.giv]) (silt ~[id.new])]
@@ -83,7 +83,7 @@
       =/  receiver=account  (hole account data.p.germ.rec)
       ?>  =(metadata.receiver metadata.giver)
       =:  data.p.germ.giv  giver(items (~(del by items.giver) item-id.args))
-          data.p.germ.rec  receiver(items (~(put by items.giver) item-id.args item))
+          data.p.germ.rec  receiver(items (~(put by items.receiver) item-id.args item))
       ==
       [%& (malt ~[[id.giv giv] [id.rec rec]]) ~]
     ::
