@@ -221,23 +221,14 @@
   ++  jet
     |=  [head=* next=*]
     ^-  book
-    ~&  >  'jet'
     =^  mj  app  (match-jet head next)
     ?~  mj  `app
-    ~&  >  'jet2'
     =^  jar=(unit [res=* arg=json])  app
       (run-jet nam.u.mj arg.u.mj)
     ?~  jar  `app
-    ~&  >  'jet2'
-    ~&  >  'jet3'
     =^  hhead  cax  (hash head)
     =^  hnext  cax  (hash next)
     =^  hsam  cax  (hash sam.u.mj)
-    ~&  >  "sam={<sam.u.mj>}"
-    ~&  >  "next={<next>}"
-    ~&  >  "hnext={<hnext>}"
-    ~&  >  "hsam={<hsam>}"
-    ~&  >  "hhead={<hhead>}"
     =.  app
     %-  put-hint
     :*  %jet
@@ -266,9 +257,6 @@
     =^  h  cax  (hash u.sub^s)
     =^  hsub  cax  (hash u.sub)
     =^  hs  cax  (hash s)
-    ~&  >  "hash(sub)={<hsub>}"
-    ~&  >  "hash(s)={<hs>}"
-    ~&  >  "hash(sub^s)={<h>}"
     :_  app
     %+  bind  (both mjet arg)
     |=  [j=@tas a=*]
@@ -277,7 +265,6 @@
   ++  run-jet
     |=  [arm=@tas sam=*]
     ^-  [(unit [* json]) appendix]
-    ~&  >  "run-jet arm={<arm>} sam={<sam>}"
     ?+  arm  ~^app
     ::
         %dec
