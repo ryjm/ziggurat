@@ -217,17 +217,27 @@
   ::
   :: Note that this arm should only be called on an 8
   :: TODO Figure out what CORE-AXIS should be
-  +$  jax  [nam=@tas arm-axis=@ core-axis=@ sam=*]
+  +$  jax  [nam=@tas arm-axis=@ core-axis=@ sam=* arg=*]
   ++  jet
     |=  [head=* next=*]
     ^-  book
+    ~&  >  'jet'
     =^  mj  app  (match-jet head next)
     ?~  mj  `app
-    =^  jar=(unit [res=* arg=json])  app  (run-jet nam.u.mj sam.u.mj)
+    ~&  >  'jet2'
+    =^  jar=(unit [res=* arg=json])  app
+      (run-jet nam.u.mj arg.u.mj)
     ?~  jar  `app
+    ~&  >  'jet2'
+    ~&  >  'jet3'
     =^  hhead  cax  (hash head)
     =^  hnext  cax  (hash next)
     =^  hsam  cax  (hash sam.u.mj)
+    ~&  >  "sam={<sam.u.mj>}"
+    ~&  >  "next={<next>}"
+    ~&  >  "hnext={<hnext>}"
+    ~&  >  "hsam={<hsam>}"
+    ~&  >  "hhead={<hhead>}"
     =.  app
     %-  put-hint
     :*  %jet
@@ -252,15 +262,22 @@
       ^$(f head)
     ?~  sub  `app
     =^  arg=body  app
-      ^$(s sub^s, f sam.next)
+      ^$(s u.sub^s, f sam.next)
+    =^  h  cax  (hash u.sub^s)
+    =^  hsub  cax  (hash u.sub)
+    =^  hs  cax  (hash s)
+    ~&  >  "hash(sub)={<hsub>}"
+    ~&  >  "hash(s)={<hs>}"
+    ~&  >  "hash(sub^s)={<h>}"
     :_  app
     %+  bind  (both mjet arg)
     |=  [j=@tas a=*]
-    [j arm-axis.head core-axis.head a]
+    [j arm-axis.head core-axis.head sam.next a]
   ::
   ++  run-jet
     |=  [arm=@tas sam=*]
     ^-  [(unit [* json]) appendix]
+    ~&  >  "run-jet arm={<arm>} sam={<sam>}"
     ?+  arm  ~^app
     ::
         %dec
