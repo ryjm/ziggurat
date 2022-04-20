@@ -1,4 +1,4 @@
-::  Tests for fungible.hoon (token contract)
+::  Tests for nft.hoon (non-fungible token contract)
 ::  to test, make sure to add library import at top of contract
 ::  (remove again before compiling for deployment)
 ::

@@ -17,7 +17,6 @@
       transaction-store=(map pub=@ux [sent=(map @ux [=egg:smart args=supported-args]) received=(map @ux =egg:smart)])
       metadata-store=(map =id:smart token-metadata)
       indexer=(unit ship)
-      ::  potential to do cool stuff with %pals integration here
   ==
 --
 ::
@@ -271,7 +270,7 @@
     ?.  ?=(%fact -.sign)       (on-agent:def wire sign)
     ?.  ?=(%uqbar-indexer-update p.cage.sign)  (on-agent:def wire sign)
     =/  update  !<(update:uqbar-indexer q.cage.sign)
-    ~&  >>>  "wallet: id update: {<update>}"
+    ::  ~&  >>>  "wallet: id update: {<update>}"
     ?.  ?=(%egg -.update)  `this
     ::  this will give us updates to transactions we send
     ::
@@ -287,8 +286,8 @@
       %^  spin  eggs  our-txs
       |=  [[hash=@ux =egg:smart] _our-txs]
       ?.  =(our-id (pin:smart from.p.egg))
-        ~&  >>  our-id
-        ~&  >  from.p.egg
+        ::  ~&  >>  our-id
+        ::  ~&  >  from.p.egg
         ::  this is a transaction sent to us / not from us
         ^-  [card _our-txs]
         :-  (tx-update-card 105 hash)
@@ -302,7 +301,6 @@
         %+  ~(jab by sent.our-txs)  hash
         |=([p=egg:smart q=supported-args] [p(status.p status.p.egg) q])
       ==
-    ~&  tx-status-cards
     :_  this(transaction-store (~(put by transaction-store) our-id our-txs))
     %+  snoc  tx-status-cards
     [%pass /fetch-rice %agent [our.bowl %wallet] %poke %zig-wallet-poke !>([%fetch-our-rice our-id])]

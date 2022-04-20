@@ -1,9 +1,9 @@
-::  fungible.hoon [uqbar-dao]
+::  nft.hoon [uqbar-dao]
 ::
 ::  NFT standard. Provides abilities similar to ERC-721 tokens, also ability
 ::  to deploy and mint new sets of tokens.
 ::
-/+  *zig-sys-smart
+::  /+  *zig-sys-smart
 |_  =cart
 ++  write
   |=  inp=zygote

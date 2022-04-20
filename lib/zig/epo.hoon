@@ -15,6 +15,7 @@
     ::  TODO temporary: make a fake chunk if we have none
     =?  data  ?=(~ data)
       (malt ~[[777 [~ p=~ q=~]]])
+    ~&  >>  "chunks in block: {<~(key by data)>}"
     :: TODO: check time and if necessary skip our own block
     :: (lth now.bowl (deadline:epo start-time.cur slot-num))
     =/  [last-num=@ud last-slot=(unit slot)]

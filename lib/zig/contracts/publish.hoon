@@ -3,8 +3,8 @@
 ::  Smart contract that processes deployment and upgrades
 ::  for other smart contracts. Automatically (?) inserted
 ::  on any town that wishes to allow contract production.
-::  TODO totally untested
-/+  *zig-sys-smart
+::
+::  /+  *zig-sys-smart
 |_  =cart
 ++  write
   |=  inp=zygote
@@ -14,7 +14,7 @@
   (process (hole arguments u.args.inp) (pin caller.inp))
   ::
   +$  arguments
-    $%  ::  TODO add kelvin versioning to contracts
+    $%  ::  add kelvin versioning to contracts?
         [%deploy mutable=? nok=* owns=(list rice)]
         [%upgrade to-upgrade=id new-nok=*]  ::  not yet real
     ==
@@ -24,7 +24,7 @@
     ?-    -.args
         %deploy
       ::  0x0 denotes immutable contract
-      =/  lord=id  ?~(mutable.args 0x0 caller-id)
+      =/  lord=id  ?.(mutable.args 0x0 caller-id)
       =+  our-id=(fry-contract lord town-id.cart nok.args)
       ::  generate grains out of new rice we spawn
       =/  produced=(map id grain)
@@ -40,7 +40,15 @@
       [%& ~ (~(put by produced) our-id our-grain)]
     ::
         %upgrade
-      !!
+      ::  expect wheat of contract-to-upgrade in grains.input
+      ::  caller must be lord and holder
+      =/  contract  (~(got by grains.inp) to-upgrade.args)
+      ?>  ?&  =(lord.contract caller-id)
+              =(holder.contract caller-id)
+              ?=(%| -.germ.contract)
+          ==
+      =.  cont.p.germ.contract  `new-nok.args
+      [%& (malt ~[[id.contract contract]]) ~]
     ==
   --
 ::
