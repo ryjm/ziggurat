@@ -101,3 +101,35 @@ where the argument `[our %ziggurat]` is a dock pointing to the ship running the 
    }
 }
 ```
+
+### Build DAO contractS
+
+If run on a fakezod located at `~/urbit/zod`, the following will create the compiled DAO contract at `~/urbit/zod/.urb/put/dao.noun`:`
+```
+=h .^(@t %cx /(scot %p our)/base/(scot %da now)/sys/hoon/hoon)
+=a .^(@t %cx /(scot %p our)/base/(scot %da now)/sys/arvo/hoon)
+=l .^(@t %cx /(scot %p our)/base/(scot %da now)/sys/lull/hoon)
+=s .^(@t %cx /(scot %p our)/zig/(scot %da now)/lib/zig/sys/smart/hoon)
+=c .^(@t %cx /(scot %p our)/zig/(scot %da now)/lib/zig/contracts/dao/hoon)
+
+=hh (slap !>(~) (ream h))
+=hha (slap hh (ream a))
+=hhal (slap hha (ream l))
+=hhals (slap hhal (ream s))
+=cont (slap hhals (ream c))
+.dao/noun cont
+```
+
+### DAO set up
+
+1. Start the chain and the indexer (i.e. see "To initialize a blockchain" section above).
+
+2. Tell the DAO agent to watch our indexer:
+```
+:dao &set-indexer [our %uqbar-indexer]
+```
+
+3. Create the off-chain DAO with us as owner:
+```
+-zig!create-dao-comms [[our %uqbar-dao] 'Uqbar DAO' 0xef44.5e1e.2113.c21d.7560.c831.6056.d984 0x2.e3c1.d19b.fd3e.43aa.319c.b816.1c89.37fb.b246.3a65.f84d.8562.155d.6181.8113.c85b ~ ~]
+```
