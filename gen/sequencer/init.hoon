@@ -1,11 +1,93 @@
-/-  *ziggurat
-/+  smart=zig-sys-smart, deploy=zig-deploy
+/-  *ziggurat,
+    d=dao
+/+  deploy=zig-deploy,
+    smart=zig-sys-smart
 /*  fungible-contract  %txt  /lib/zig/contracts/fungible/hoon
+/*  dao-contract  %noun  /lib/zig/compiled/dao/noun
 =/  pubkey-1  0x2.e3c1.d19b.fd3e.43aa.319c.b816.1c89.37fb.b246.3a65.f84d.8562.155d.6181.8113.c85b
 =/  pubkey-2  0x3.4cdd.5f53.b551.e62f.2238.6eb3.8abd.3e91.a546.fad3.2940.ff2d.c316.50dd.8d38.e609
 =/  pubkey-3  0x3.9452.264c.57a5.1b54.d380.70b0.7e0c.934d.15c0.6692.fa9c.7f35.eaf9.eb52.b925.1b7d
+=>
+  |%
+  ::
+  ++  make-dao-self
+    |=  [name=@tas dao-id=id:smart our-id=id:smart our=ship]
+    ^-  dao:d
+    |^
+    =|  =dao:d
+    =:  name.dao         name
+        permissions.dao  (make-permissions dao-id)
+        members.dao      make-members
+        id-to-ship.dao   (make-id-to-ship our-id our)
+        ship-to-id.dao   (make-ship-to-id our-id our)
+    ==
+    dao
+    ::
+    ++  make-permissions
+      |=  dao-id=id:smart
+      ^-  permissions:d
+      %+  %~  put  by  *permissions:d
+        name=%write
+      %+  %~  put  ju  *(jug address:d role:d)
+      dao-id  %owner
+    ::
+    ++  make-members
+      ^-  members:d
+      %+  %~  put  ju  *members:d
+      our-id  %owner
+    ::
+    ++  make-id-to-ship
+      |=  [our-id=id:smart our=ship]
+      ^-  id-to-ship:d
+      (~(put by *id-to-ship:d) our-id our)
+    ::
+    ++  make-ship-to-id
+      |=  [our-id=id:smart our=ship]
+      ^-  ship-to-id:d
+      (~(put by *ship-to-id:d) our our-id)
+    ::
+    --
+  ::
+  --
 :-  %say
 |=  [[now=@da eny=@uvJ bek=beak] [town-id=@ud ~] ~]
+=/  dao-contract-id=id:smart  `@ux`'dao'
+=/  dao-salt=@  `@`'uqbar-dao'
+=/  uqbar-dao-id=id:smart
+  %:  fry-rice:smart
+      dao-contract-id
+      dao-contract-id
+      town-id
+      dao-salt
+  ==
+~&  >  "uqbar-dao-id: {<uqbar-dao-id>}"
+=*  our  p.bek
+=/  uqbar-dao=dao:d
+  (make-dao-self 'Uqbar DAO' uqbar-dao-id pubkey-1 our)
+=/  uqbar-dao-grain  ::  ~zod
+  ^-  grain:smart
+  :*  uqbar-dao-id
+      dao-contract-id
+      dao-contract-id
+      town-id
+      [%& dao-salt uqbar-dao]
+  ==
+::  store only contract code, insert into shared subject
+=/  dao-contract-wheat
+  ^-  wheat:smart
+  :: =/  cont  (of-wain:format dao-contract)
+  :: :-  `(~(text-deploy deploy p.bek now) cont)
+  :-  `(cue q.q.dao-contract)
+  (silt ~[uqbar-dao-id])
+=/  dao-contract-grain
+  ^-  grain:smart
+  :*  dao-contract-id          ::  id
+      dao-contract-id          ::  lord
+      dao-contract-id          ::  holder
+      town-id                  ::  town-id
+      [%| dao-contract-wheat]  ::  germ
+  ==
+::
 =/  zigs-1  (fry-rice:smart pubkey-1 `@ux`'fungible' town-id `@`'zigs')
 =/  zigs-2  (fry-rice:smart pubkey-2 `@ux`'fungible' town-id `@`'zigs')
 =/  zigs-3  (fry-rice:smart pubkey-3 `@ux`'fungible' town-id `@`'zigs')
@@ -75,6 +157,8 @@
         [zigs-1 beef-zigs-grain]
         [zigs-2 dead-zigs-grain]
         [zigs-3 cafe-zigs-grain]
+        [dao-contract-id dao-contract-grain]
+        [uqbar-dao-id uqbar-dao-grain]
     ==
   (~(gas by:smart *(map:smart id:smart grain:smart)) grains)
 =/  fake-populace

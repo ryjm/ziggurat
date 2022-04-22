@@ -295,12 +295,12 @@
       |=  =update:uqbar-indexer
       ^-  [id:smart dao:d]
       ?>  ?=(%grain -.update)
-      =/  grains=(list [location:uqbar-indexer grain:smart])
+      =/  grains=(list [town-location:uqbar-indexer grain:smart])
         ~(tap in grains.update)
       ?>  =(1 (lent grains))
       =/  [* dao-grain=grain:smart]  (snag 0 grains)
       ?>  ?=(%& -.germ.dao-grain)
-      [id.dao-grain ;;(dao:d p.germ.dao-grain)]
+      [id.dao-grain ;;(dao:d data.p.germ.dao-grain)]
     ::
     ++  start-host-change-ted
       |=  $:  old-dao-rid=(unit resource:res)
