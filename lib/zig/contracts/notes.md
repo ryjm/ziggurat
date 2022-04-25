@@ -22,7 +22,7 @@ Contracts in the repo and their current state (will be keeping this updated):
 
 - `dao.hoon`: Currently out-of-date, used to manage DAOs. Will be used for EScape DAO product.
 
-- `nft.hoon`: A contract that should be made soon.
+- `nft.hoon`: Uqbar's NFT standard
 
 ====================
 

@@ -14,13 +14,15 @@
       %-  of
       :~  [%populate parse-seed]
           [%import parse-import]
-          [%create bo]
+          [%create parse-create]
           [%delete parse-delete]
           [%set-node parse-set]
           [%submit parse-submit]
       ==
     ++  parse-import
       (ot ~[[%mnemonic sa] [%password sa]])
+    ++  parse-create
+      (ot ~[[%password sa]])
     ++  parse-seed
       (ot ~[[%seed (se %ux)]])
     ++  parse-delete
@@ -41,12 +43,19 @@
     ++  parse-args
       %-  of
       :~  [%give parse-give]
+          [%give-nft parse-nft]
       ==
     ++  parse-give
       %-  ot
       :~  [%token (se %ux)]
           [%to (se %ux)]
           [%amount ni]
+      ==
+    ++  parse-nft
+      %-  ot
+      :~  [%token (se %ux)]
+          [%to (se %ux)]
+          [%item-id ni]
       ==
     --
   --

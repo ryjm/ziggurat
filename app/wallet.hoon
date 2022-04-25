@@ -9,13 +9,13 @@
 +$  card  card:agent:gall
 +$  state-0
   $:  %0
-      seed=byts  ::  encrypted with password
+      seed=[mnem=tape pass=tape]
       keys=(map pub=@ux priv=@ux)  ::  keys created from master seed
       nodes=(map town=@ud =ship)  ::  the sequencer you submit txs to for each town
       nonces=(map pub=@ux (map town=@ud nonce=@ud))
       tokens=(map pub=@ux =book)
-      transaction-store=(map pub=@ux [sent=(map @ux [=egg:smart args=supported-args]) received=(map @ux =egg:smart)])
-      metadata-store=(map =id:smart token-metadata)
+      =transaction-store
+      =metadata-store
       indexer=(unit ship)
   ==
 --
@@ -30,7 +30,7 @@
 +*  this  .
     def   ~(. (default-agent this %|) bowl)
 ::
-++  on-init  `this(state [%0 *byts ~ ~ ~ ~ ~ ~ `our.bowl])
+++  on-init  `this(state [%0 ["" ""] ~ ~ ~ ~ ~ ~ `our.bowl])
 ::
 ++  on-save  !>(state)
 ++  on-load
@@ -79,15 +79,16 @@
       =+  seed=(to-seed:bip39 mnemonic.act password.act)
       =+  core=(from-seed:bip32 [64 seed])
       ::  TODO look on block explorer for pubkeys associated with this seed!
-      `state(seed [64 seed], keys (malt ~[[public-key:core private-key:core]]))
+      `state(seed [mnemonic.act password.act], keys (malt ~[[public-key:core private-key:core]]))
     ::
         %create
       ::  will lose seed in current wallet, should warn on frontend!
       ::  creates a new wallet from entropy derived on-urbit
       ::  TODO set up password here, currently bad
-      =+  core=(from-seed:bip32 [64 eny.bowl])
+      =+  mnem=(from-entropy:bip39 [32 eny.bowl])
+      =+  core=(from-seed:bip32 [64 (to-seed:bip39 mnem password.act)])
       ::  TODO look on block explorer for pubkeys associated with this seed!
-      `state(seed [64 eny.bowl], keys (malt ~[[public-key:core private-key:core]]))
+      `state(seed [mnem password.act], keys (malt ~[[public-key:core private-key:core]]))
     ::
         %delete
       ::  can recover by re-deriving same path
@@ -114,7 +115,7 @@
       ::  temporary until we can subscribe to indexer by-holder
       =/  our-grains
         .^((unit update:uqbar-indexer) %gx /(scot %p our.bowl)/uqbar-indexer/(scot %da now.bowl)/holder/(scot %ux pubkey.act)/noun)
-      =+  ?~(our-grains ~ (indexer-update-to-books u.our-grains))
+      =+  ?~(our-grains ~ (indexer-update-to-books u.our-grains metadata-store.state))
       :_  state(tokens -)
       ;:  welp
         (clear-asset-subscriptions wex.bowl)
@@ -128,7 +129,8 @@
       ::
       ::  TODO replace this with a request to an indexer,
       ::  which will provide all rice/grains associated with pubkey(s) in wallet
-      =+  core=(from-seed:bip32 [64 seed.act])
+      =+  mnem=(from-entropy:bip39 [32 seed.act])
+      =+  core=(from-seed:bip32 [64 (to-seed:bip39 mnem "")])
       =+  pub=public-key:core
       ::  =/  id-0  (fry-rice:smart pub `@ux`'zigs-contract' 0 `@`'zigs')
       ::  =/  id-1  (fry-rice:smart pub `@ux`'zigs-contract' 1 `@`'zigs')
@@ -143,12 +145,13 @@
             deployer=0x0
             salt=`@`'zigs'
         ==
+      =+  metadata-store=(malt ~[[`@ux`'zigs-metadata' [%token zigs-metadata]]])
       ::  get grains we hold from indexer (must run on our ship for now)
       =/  our-grains
         .^((unit update:uqbar-indexer) %gx /(scot %p our.bowl)/uqbar-indexer/(scot %da now.bowl)/holder/(scot %ux pub)/noun)
       =/  keys  (malt ~[[pub private-key:core]])
       ::  convert from update to book
-      =+  ?~(our-grains ~ (indexer-update-to-books u.our-grains))
+      =+  ?~(our-grains ~ (indexer-update-to-books u.our-grains metadata-store))
       :-  ;:  welp
               (clear-asset-subscriptions wex.bowl)
               (create-asset-subscriptions - (need indexer.state))
@@ -156,13 +159,51 @@
               ~[[%give %fact ~[/book-updates] %zig-wallet-update !>([%new-book -])]]
           ==
       %=  state
-        seed    [64 eny.bowl]
+        seed    [mnem ""]
         keys    keys
         nodes   (malt ~[[0 ~zod] [1 ~zod] [2 ~zod]])
         nonces  (malt ~[[pub (malt ~[[0 0] [1 0] [2 0]])]])
         tokens  -
         transaction-store  ~
-        metadata-store  (malt ~[[`@ux`'zigs-metadata' zigs-metadata]])
+        metadata-store  metadata-store
+      ==
+    ::
+        %submit-custom
+      =/  our-nonces     (~(gut by nonces.state) from.act ~)
+      =/  nonce=@ud      (~(gut by our-nonces) town.act 0)
+      =/  node=ship      (~(gut by nodes.state) town.act our.bowl)
+      =/  =caller:smart
+        [from.act +(nonce) (fry-rice:smart from.act `@ux`'zigs-contract' town.act `@`'zigs')]
+      ::  submit a transaction, with frontend-defined everything
+      =/  =yolk:smart   [caller `(ream args.act) my-grains.act cont-grains.act]          
+      =/  =egg:smart
+        :_  yolk
+        :*  caller
+            %+  ecdsa-raw-sign:secp256k1:secp:crypto
+              (sham (jam yolk))
+            (~(got by keys.state) from.act)
+            to.act
+            rate.gas.act
+            bud.gas.act
+            town.act
+            0
+        ==
+      =/  egg-hash=@ux  (shax (jam egg))
+      =/  our-txs
+        ?~  o=(~(get by transaction-store) from.act)
+          [(malt ~[[egg-hash [egg [%custom args.act]]]]) ~]
+        u.o(sent (~(put by sent.u.o) egg-hash [egg [%custom args.act]]))
+      ~&  >>  "wallet: submitting tx"
+      :_  %=  state
+            transaction-store  (~(put by transaction-store) from.act our-txs)
+            nonces  (~(put by nonces) from.act (~(put by our-nonces) town.act +(nonce)))
+          ==
+      :~  (tx-update-card status=100 egg-hash)
+          :*  %pass  /submit-tx/(scot %ux egg-hash)
+              %agent  [node ?:(=(0 town.act) %ziggurat %sequencer)]
+              %poke  %zig-weave-poke
+              !>([%forward (silt ~[egg])])
+          ==
       ==
     ::
         %submit
@@ -184,9 +225,10 @@
       =/  formatted=[args=(unit *) our-grains=(set @ux) cont-grains=(set @ux)]
         ?-    -.args.act
             %give
+          ~|  "wallet can't find metadata for that token!"
           =/  metadata  (~(got by metadata-store.state) token.args.act)
           ~|  "wallet can't find our zigs account for that town!"
-          =/  our-account  (~(got by book) [town.act to.act salt.metadata])
+          =/  our-account=grain:smart  +:(~(got by book) [town.act to.act salt.metadata])
           ::  TODO use block explorer to find rice if it exists and restructure this
           ::  to use known parameter to find other person's rice
           =/  their-account-id  (fry-rice:smart to.args.act to.act town.act salt.metadata)
@@ -195,12 +237,26 @@
               `[%give to.args.act `their-account-id amount.args.act]
             (silt ~[id.our-account])
           (silt ~[their-account-id])
+        ::  ONLT difference between this and token give is amount vs. item-id.
+        ::  therefore should figure out way to just unify them.
+            %give-nft
+          ~|  "wallet can't find metadata for that token!"
+          =/  metadata  (~(got by metadata-store.state) token.args.act)
+          ~|  "wallet can't find our zigs account for that town!"
+          =/  our-account=grain:smart  +:(~(got by book) [town.act to.act salt.metadata])
+          ::  TODO use block explorer to find rice if it exists and restructure this
+          ::  to use known parameter to find other person's rice
+          =/  their-account-id  (fry-rice:smart to.args.act to.act town.act salt.metadata)
+          :+  `[%give to.args.act `their-account-id item-id.args.act]
+            (silt ~[id.our-account])
+          (silt ~[their-account-id])
         ::
           %become-validator  [`args.act ~ (silt ~[`@ux`'ziggurat'])]
           %stop-validating   [`args.act ~ (silt ~[`@ux`'ziggurat'])]
           %init  [`args.act ~ (silt ~[`@ux`'world'])]
           %join  [`args.act ~ (silt ~[`@ux`'world'])]
           %exit  [`args.act ~ (silt ~[`@ux`'world'])]
+          %custom  !!
         ==
       =/  =yolk:smart   [caller args.formatted our-grains.formatted cont-grains.formatted]
       =/  signer        (~(got by keys.state) from.act)
@@ -216,7 +272,7 @@
             transaction-store  (~(put by transaction-store) from.act our-txs)
             nonces  (~(put by nonces) from.act (~(put by our-nonces) town.act +(nonce)))
           ==
-      :~  (tx-update-card 100 egg-hash)
+      :~  (tx-update-card status=100 egg-hash)
           :*  %pass  /submit-tx/(scot %ux egg-hash)
               %agent  [node ?:(=(0 town.act) %ziggurat %sequencer)]
               %poke  %zig-weave-poke
@@ -237,10 +293,10 @@
       ?~  p.sign
         ::  got it
         ~&  >>  "wallet: tx was received by sequencer"
-        ~[(tx-update-card 101 hash)]^this
+        ~[(tx-update-card status=101 hash)]^this
       ::  failed
       ~&  >>>  "wallet: tx was rejected by sequencer"
-      ~[(tx-update-card 103 hash)]^this
+      ~[(tx-update-card status=103 hash)]^this
     `this
   ::
       [%grain @ ~]
@@ -258,7 +314,7 @@
       ::  no longer tracking holder, stop watching this grain
       ~[[%pass wire %agent [(need indexer.this) %uqbar-indexer] %leave ~]]^this
     =.  u.book
-      (~(put by `^book`u.book) [town-id.new lord.new salt.p.germ.new] new)
+      (~(put by `^book`u.book) [town-id.new lord.new salt.p.germ.new] [%unknown new])
     ::  place new grain state in our personal tracker,
     ::  and inform frontend of change
     :_  this(tokens (~(put by tokens) holder.new u.book))
@@ -290,7 +346,7 @@
         ::  ~&  >  from.p.egg
         ::  this is a transaction sent to us / not from us
         ^-  [card _our-txs]
-        :-  (tx-update-card 105 hash)
+        :-  (tx-update-card status=105 hash)
         our-txs(received (~(put by received.our-txs) hash egg))
       ::  tx sent by us, update status code and send to frontend
       ::  following error code spec in smart.hoon, eventually
@@ -314,6 +370,14 @@
   ?.  =(%x -.path)  ~
   ::  TODO move JSON parsing stuff into a helper lib
   ?+    +.path  (on-peek:def path)
+      [%seed ~]
+    =;  =json  ``json+!>(json)
+    =,  enjs:format
+    %-  pairs
+    :~  ['mnemonic' (tape mnem.seed.state)]
+        ['password' (tape pass.seed.state)]
+    ==
+  ::
       [%accounts ~]
     =;  =json  ``json+!>(json)
     =,  enjs:format
@@ -350,22 +414,41 @@
     :-  (scot %ux pub)
     %-  pairs
     %+  turn  ~(tap by book)
-    |=  [* =grain:smart]
+    |=  [* [=token-type =grain:smart]]
     ?.  ?=(%& -.germ.grain)  !!
-    =/  data  ;;(token-account data.p.germ.grain)
     :-  (scot %ux id.grain)
     %-  pairs
     :~  ['id' (tape (scow %ux id.grain))]
         ['lord' (tape (scow %ux lord.grain))]
         ['holder' (tape (scow %ux holder.grain))]
         ['town' (numb town-id.grain)]
-        ::  note: need to use 'token standard' here
-        ::  to guarantee properly parsed data
+        ['token_type' (tape (scow %tas token-type))]
         :-  'data'
         %-  pairs
-        :~  ['balance' (numb balance.data)]
-            ['metadata' (tape (scow %ux metadata.data))]
+        ?-    token-type
+            %token
+          =+  ;;(token-account data.p.germ.grain)
+          :~  ['balance' (numb balance.-)]
+              ['metadata' (tape (scow %ux metadata.-))]
+          ==
+            %nft
+          =+  ;;(nft-account data.p.germ.grain)
+          :~  ['metadata' (tape (scow %ux metadata.-))]
+              :-  'items'
+              %-  pairs
+              %+  turn  ~(tap by items.-)
+              |=  [id=@ud =item]
+              :-  (scot %ud id)
+              %-  pairs
+              :~  ['desc' (tape desc.item)]
+                  ['URI' (tape uri.item)]
+              ==
+          ==
+            %unknown
+          :~  ['unknown_data_structure' (tape "?")]
+          ==
         ==
+        
     ==
   ::
       [%token-metadata ~]
@@ -374,7 +457,7 @@
     =,  enjs:format
     %-  pairs
     %+  turn  ~(tap by metadata-store.state)
-    |=  [id=@ux d=token-metadata]
+    |=  [id=@ux [=token-type d=token-metadata]]
     :-  (scot %ux id)
     %-  pairs
     :~  ['name' (tape (trip name.d))]
@@ -417,12 +500,20 @@
               ['to' (tape (scow %ux to.args))]
               ['amount' (numb amount.args)]
           ==
+            %give-nft
+          :~  ['token' (tape (scow %ux token.args))]
+              ['to' (tape (scow %ux to.args))]
+              ['item-id' (numb item-id.args)]
+          ==
         ::
             ?(%become-validator %stop-validating)
           ~[['signature' (tape (scow %p q.signature.args))]]
         ::
             ?(%init %join %exit)
           ~[['signature' (tape (scow %p q.signature.args))] ['town' (numb town.args)]]
+        ::
+            %custom
+          ~[['args' (tape (scow %t args.args))]]
         ==
     ==
   ==

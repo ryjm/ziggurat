@@ -36,8 +36,8 @@
     ==
   ::
   +$  arguments
-    $%  [%give to=id to-rice=(unit id) amount=@ud budget=@ud]
-        [%take to=id to-rice=(unit id) from-rice=id amount=@ud]
+    $%  [%give to=id account=(unit id) amount=@ud budget=@ud]
+        [%take to=id account=(unit id) from-account=id amount=@ud]
         [%set-allowance who=id amount=@ud]  ::  (to revoke, call with amount=0)
     ==
   ::
@@ -49,7 +49,8 @@
       ?>  &(=(lord.giv me.cart) ?=(%& -.germ.giv))
       =/  giver=account  (hole account data.p.germ.giv)
       ?>  (gte balance.giver (add amount.args budget.args))
-      ?~  to-rice.args
+      ?~  account.args
+        ::  if receiver doesn't have an account, must produce one for them
         =+  (fry-rice to.args me.cart town-id.cart salt.p.germ.giv)
         =/  new=grain
           [- me.cart to.args town-id.cart [%& salt.p.germ.giv [0 ~ metadata.giver]]]
@@ -57,7 +58,8 @@
           :+  me.cart  town-id.cart
           [caller.inp `[%give to.args `id.new amount.args budget.args] (silt ~[id.giv]) (silt ~[id.new])]
         [~ (malt ~[[id.new new]])]
-      =/  rec=grain  (~(got by owns.cart) u.to-rice.args)
+      ::  otherwise, add to the existing account for that pubkey
+      =/  rec=grain  (~(got by owns.cart) u.account.args)
       ?>  &(=(holder.rec to.args) ?=(%& -.germ.rec))
       =/  receiver=account  (hole account data.p.germ.rec)
       ?>  =(metadata.receiver metadata.giver)
@@ -67,13 +69,13 @@
       [%& (malt ~[[id.giv giv] [id.rec rec]]) ~]
     ::
         %take
-      =/  giv=grain  (~(got by owns.cart) from-rice.args)
+      =/  giv=grain  (~(got by owns.cart) from-account.args)
       ?>  ?=(%& -.germ.giv)
       =/  giver=account  (hole account data.p.germ.giv)
       =/  allowance=@ud  (~(got by allowances.giver) caller-id)
       ?>  (gte balance.giver amount.args)
       ?>  (gte allowance amount.args)
-      ?~  to-rice.args
+      ?~  account.args
         =+  (fry-rice to.args me.cart town-id.cart salt.p.germ.giv)
         =/  new=grain
           [- me.cart to.args town-id.cart [%& salt.p.germ.giv [0 ~ metadata.giver]]]
@@ -81,7 +83,7 @@
           :+  me.cart  town-id.cart
           [caller.inp `[%take to.args `id.new id.giv amount.args] ~ (silt ~[id.giv id.new])]
         [~ (malt ~[[id.new new]])]
-      =/  rec=grain  (~(got by owns.cart) u.to-rice.args)
+      =/  rec=grain  (~(got by owns.cart) u.account.args)
       ?>  &(=(holder.rec to.args) ?=(%& -.germ.rec))
       =/  receiver=account  (hole account data.p.germ.rec)
       ?>  =(metadata.receiver metadata.giver)

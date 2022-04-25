@@ -22,12 +22,12 @@
   ^-  (list card)
   %+  turn
     ::  find every grain in all our books
-    ^-  (list grain:smart)
+    ^-  (list [=token-type grain:smart])
     %-  zing
     %+  turn  ~(tap by tokens)
     |=  [@ux =book]
     ~(val by book)
-  |=  =grain:smart
+  |=  [=token-type =grain:smart]
   =-  [%pass - %agent [indexer %uqbar-indexer] %watch -]
   /grain/(scot %ux id.grain)
 ::
@@ -41,7 +41,7 @@
   `[%pass wire %agent [ship term] %leave ~]
 ::
 ++  indexer-update-to-books
-  |=  =update:uqbar-indexer
+  |=  [=update:uqbar-indexer =metadata-store]
   ::  get most recent version of the grain
   ::  TODO replace this with a (way) more efficient strategy
   ::  preferably adding a type to indexer that only contains
@@ -55,9 +55,20 @@
   =/  =grain:smart  grain.i.grains-list
   ::  currently only storing owned *rice*
   ?.  ?=(%& -.germ.grain)  $(grains-list t.grains-list)
-  =/  =book  (~(gut by tokens) holder.grain ~)
-  %=  $
-    tokens  (~(put by tokens) holder.grain (~(put by book) [town-id.grain lord.grain salt.p.germ.grain] grain))
+  ::  determine type token/nft/unknown
+  ::  TODO: ..how do we do this better..
+  =/  =token-type
+    ?~  stored=(~(get by metadata-store) ;;(@ux -.data.p.germ.grain))
+      %unknown
+    token-type.u.stored 
+  %=    $
+      tokens
+    %+  ~(put by tokens)
+      holder.grain
+    %+  ~(put by `book`(~(gut by tokens) holder.grain ~))
+      [town-id.grain lord.grain salt.p.germ.grain]
+    [token-type grain]
+    ::
     grains-list  t.grains-list
   ==
 --
