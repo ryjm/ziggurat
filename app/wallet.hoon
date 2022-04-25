@@ -313,8 +313,13 @@
     ?~  book=(~(get by tokens.this) holder.new)
       ::  no longer tracking holder, stop watching this grain
       ~[[%pass wire %agent [(need indexer.this) %uqbar-indexer] %leave ~]]^this
+    ::  TEMPORARY grab old designation
+    =/  =token-type  
+      ?~  known=(~(get by `^book`u.book) [town-id.new lord.new salt.p.germ.new])
+        %unknown
+      token-type.u.known
     =.  u.book
-      (~(put by `^book`u.book) [town-id.new lord.new salt.p.germ.new] [%unknown new])
+      (~(put by `^book`u.book) [town-id.new lord.new salt.p.germ.new] [token-type new])
     ::  place new grain state in our personal tracker,
     ::  and inform frontend of change
     :_  this(tokens (~(put by tokens) holder.new u.book))
@@ -448,7 +453,6 @@
           :~  ['unknown_data_structure' (tape "?")]
           ==
         ==
-        
     ==
   ::
       [%token-metadata ~]

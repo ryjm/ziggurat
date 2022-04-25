@@ -17,23 +17,41 @@
       :-  (scot %ux pub)
       %-  pairs
       %+  turn  ~(tap by book)
-      |=  [* =grain:smart]
+      |=  [* [=token-type =grain:smart]]
       ?.  ?=(%& -.germ.grain)  !!
-      =/  data  ;;(token-account data.p.germ.grain)
       :-  (scot %ux id.grain)
       %-  pairs
       :~  ['id' (tape (scow %ux id.grain))]
-          ['lord' (tape (scow %ux lord.grain))]
-          ['holder' (tape (scow %ux holder.grain))]
-          ['town' (numb town-id.grain)]
-          ::  note: need to use 'token standard' here
-          ::  to guarantee properly parsed data
-          :-  'data'
-          %-  pairs
-          :~  ['balance' (numb balance.data)]
-              ['metadata' (tape (scow %ux metadata.data))]
+        ['lord' (tape (scow %ux lord.grain))]
+        ['holder' (tape (scow %ux holder.grain))]
+        ['town' (numb town-id.grain)]
+        ['token_type' (tape (scow %tas token-type))]
+        :-  'data'
+        %-  pairs
+        ?-    token-type
+            %token
+          =+  ;;(token-account data.p.germ.grain)
+          :~  ['balance' (numb balance.-)]
+              ['metadata' (tape (scow %ux metadata.-))]
           ==
-      ==
+            %nft
+          =+  ;;(nft-account data.p.germ.grain)
+          :~  ['metadata' (tape (scow %ux metadata.-))]
+              :-  'items'
+              %-  pairs
+              %+  turn  ~(tap by items.-)
+              |=  [id=@ud =item]
+              :-  (scot %ud id)
+              %-  pairs
+              :~  ['desc' (tape desc.item)]
+                  ['URI' (tape uri.item)]
+              ==
+          ==
+            %unknown
+          :~  ['unknown_data_structure' (tape "?")]
+          ==
+        ==
+    ==
     ::
         %tx-status
       %-  pairs

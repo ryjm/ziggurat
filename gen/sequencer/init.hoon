@@ -4,9 +4,9 @@
 /*  nft-contract  %noun  /lib/zig/compiled/nft/noun
 /*  publish-contract  %noun  /lib/zig/compiled/publish/noun
 /*  fungible-contract  %txt  /lib/zig/contracts/fungible/hoon
-=/  pubkey-1  0x2.e3c1.d19b.fd3e.43aa.319c.b816.1c89.37fb.b246.3a65.f84d.8562.155d.6181.8113.c85b
-=/  pubkey-2  0x3.4cdd.5f53.b551.e62f.2238.6eb3.8abd.3e91.a546.fad3.2940.ff2d.c316.50dd.8d38.e609
-=/  pubkey-3  0x3.9452.264c.57a5.1b54.d380.70b0.7e0c.934d.15c0.6692.fa9c.7f35.eaf9.eb52.b925.1b7d
+=/  pubkey-1  0x3.e87b.0cbb.431d.0e8a.2ee2.ac42.d9da.cab8.063d.6bb6.2ff9.b2aa.e1b9.0f56.9c3f.3423
+=/  pubkey-2  0x2.eaea.cffd.2bbe.e0c0.02dd.b5f8.dd04.e63f.297f.14cf.d809.b616.2137.126c.da9e.8d3d
+=/  pubkey-3  0x2.4a1c.4643.b429.dc12.6f3b.03f3.f519.aebb.5439.08d3.e0bf.8fc3.cb52.b92c.9802.636e
 :-  %say
 |=  [[now=@da eny=@uvJ bek=beak] [town-id=@ud ~] ~]
 =/  zigs-1  (fry-rice:smart pubkey-1 zigs-wheat-id:smart town-id `@`'zigs')
@@ -104,8 +104,8 @@
 =/  nft-acc-grain
   :*  nft-acc-id
       0xcafe.babe
-      0xbeef
-      1
+      pubkey-1
+      town-id
       [%& `@`'nftsalt' [`@ux`'nft' (malt ~[[1 item-1]]) ~ ~]]
   ==
 =/  nft-wheat
@@ -126,13 +126,13 @@
   =/  grains=(list:smart (pair:smart id:smart grain:smart))
     :~  [id.zigs-wheat-grain zigs-wheat-grain]
         [id.zigs-metadata-grain zigs-metadata-grain]
-        ::  [id.nft-wheat-grain nft-wheat-grain]
-        ::  [id.nft-metadata-grain nft-metadata-grain]
-        ::  [id.publish-grain publish-grain]
+        [id.nft-wheat-grain nft-wheat-grain]
+        [id.nft-metadata-grain nft-metadata-grain]
+        [id.publish-grain publish-grain]
         [zigs-1 beef-zigs-grain]
         [zigs-2 dead-zigs-grain]
         [zigs-3 cafe-zigs-grain]
-        ::  [nft-acc-id nft-acc-grain]
+        [nft-acc-id nft-acc-grain]
     ==
   (~(gas by:smart *(map:smart id:smart grain:smart)) grains)
 =/  fake-populace

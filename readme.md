@@ -41,7 +41,7 @@ links to other desks, such as base-dev and garden-dev.
 
 2. Give your validator agent a pubkey to match the data in the wallet:
 ```
-:ziggurat &zig-chain-poke [%set-addr 0x2.e3c1.d19b.fd3e.43aa.319c.b816.1c89.37fb.b246.3a65.f84d.8562.155d.6181.8113.c85b]
+:ziggurat &zig-chain-poke [%set-addr 0x3.e87b.0cbb.431d.0e8a.2ee2.ac42.d9da.cab8.063d.6bb6.2ff9.b2aa.e1b9.0f56.9c3f.3423]
 ```
 *This is one of 3 addresses with zigs already added, and corresponds to the seed `0xbeef`. to test with more, find matching pubkey in wallet*
 
@@ -64,7 +64,7 @@ where the argument `[our %ziggurat]` is a dock pointing to the ship running the 
 
 6. To make the wallet aware of the assets spawned for you in the town and main chain you just launched, it's necessary to use a scry. Wait until the indexer has a chance to observe a new block, then use this poke:
 ```
-:wallet &zig-wallet-poke [%fetch-our-rice 0x2.e3c1.d19b.fd3e.43aa.319c.b816.1c89.37fb.b246.3a65.f84d.8562.155d.6181.8113.c85b]
+:wallet &zig-wallet-poke [%fetch-our-rice 0x3.e87b.0cbb.431d.0e8a.2ee2.ac42.d9da.cab8.063d.6bb6.2ff9.b2aa.e1b9.0f56.9c3f.3423]
 ```
 (the pubkey here should match the one you used in step 2. The ship running the wallet must also be running a block explorer.)
 
@@ -109,17 +109,17 @@ Make sure to perform step (6) again if you need updated chain state in your wall
 # currently only concerned with token sends following this format,
 # where 'token' is address of token metadata rice, 'to' is pubkey receiving tokens.
 {submit:
-  {from: "0x2.e3c1.d19b.fd3e.43aa.319c.b816.1c89.37fb.b246.3a65.f84d.8562.155d.6181.8113.c85b",
+  {from: "0x3.e87b.0cbb.431d.0e8a.2ee2.ac42.d9da.cab8.063d.6bb6.2ff9.b2aa.e1b9.0f56.9c3f.3423",
    to: "0x74.6361.7274.6e6f.632d.7367.697a",
    town: 1,
    gas: {rate: 1, bud: 10000},
-   args: {give: {token: "0x61.7461.6461.7465.6d2d.7367.697a", to: "0x3.4cdd.5f53.b551.e62f.2238.6eb3.8abd.3e91.a546.fad3.2940.ff2d.c316.50dd.8d38.e609", amount: 777}}
+   args: {give: {token: "0x61.7461.6461.7465.6d2d.7367.697a", to: "0x2.eaea.cffd.2bbe.e0c0.02dd.b5f8.dd04.e63f.297f.14cf.d809.b616.2137.126c.da9e.8d3d", amount: 777}}
    }
 }
 ```
 
 (an example poke that will work upon chain initialization in dojo):
 ```
-:wallet &zig-wallet-poke [%submit 0x2.e3c1.d19b.fd3e.43aa.319c.b816.1c89.37fb.b246.3a65.f84d.8562.155d.6181.8113.c85b 0x74.6361.7274.6e6f.632d.7367.697a 1 [1 10.000] [%give 0x61.7461.6461.7465.6d2d.7367.697a 0x3.4cdd.5f53.b551.e62f.2238.6eb3.8abd.3e91.a546.fad3.2940.ff2d.c316.50dd.8d38.e609 777]]
+:wallet &zig-wallet-poke [%submit 0x3.e87b.0cbb.431d.0e8a.2ee2.ac42.d9da.cab8.063d.6bb6.2ff9.b2aa.e1b9.0f56.9c3f.3423 0x74.6361.7274.6e6f.632d.7367.697a 1 [1 10.000] [%give 0x61.7461.6461.7465.6d2d.7367.697a 0x2.eaea.cffd.2bbe.e0c0.02dd.b5f8.dd04.e63f.297f.14cf.d809.b616.2137.126c.da9e.8d3d 777]]
 ```
 If this fails with an error "wallet can't find our zigs account for that town!", use the fetch-rice poke then try again.
