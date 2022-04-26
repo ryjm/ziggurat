@@ -4,15 +4,14 @@
 ::
 +$  book  (map [town=@ud lord=id:smart salt=@] [=token-type =grain:smart])
 +$  transaction-store  (map pub=@ux [sent=(map @ux [=egg:smart args=supported-args]) received=(map @ux =egg:smart)])
-+$  metadata-store  (map =id:smart [=token-type token-metadata])
-+$  type-store  (map @ token-type)
++$  metadata-store  (map @ asset-metadata)  ::  metadata is keyed by SALT of grains associated.
 ::
 +$  token-type  @tas
 ::
 +$  wallet-update
   $%  [%new-book tokens=(map pub=id:smart =book)]
       [%tx-status status=@ud hash=@ux]
-      ::  TX status codes: 
+      ::  TX status codes:
       ::  100: transaction submitted from wallet to sequencer
       ::  101: transaction received by sequencer
       ::  103: failure: transaction rejected by sequencer
@@ -22,7 +21,7 @@
 ::
 +$  wallet-poke
   $%  [%populate seed=@ux]  :: populate wallet with fake data, for testing
-      [%fetch-our-rice pubkey=@ux]
+      [%fetch-metadata id=@ux type=token-type]
       [%import mnemonic=tape password=tape]
       [%create password=tape]
       ::  TODO add poke to spawn new keypair from seed
@@ -63,6 +62,10 @@
       [%custom args=@t]
   ==
 ::
++$  asset-metadata
+  $%  [%token token-metadata]
+      [%nft nft-metadata]
+  ==
 +$  token-metadata
   $:  name=@t
       symbol=@t

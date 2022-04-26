@@ -106,7 +106,7 @@
       0xcafe.babe
       pubkey-1
       town-id
-      [%& `@`'nftsalt' [`@ux`'nft' (malt ~[[1 item-1]]) ~ ~]]
+      [%& `@`'nftsalt' [`@ux`'nft-metadata' (malt ~[[1 item-1]]) ~ ~]]
   ==
 =/  nft-wheat
   ^-  wheat:smart

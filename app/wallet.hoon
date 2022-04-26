@@ -16,7 +16,6 @@
       tokens=(map pub=@ux =book)
       =transaction-store
       =metadata-store
-      =type-store
       indexer=(unit ship)
   ==
 --
@@ -31,7 +30,7 @@
 +*  this  .
     def   ~(. (default-agent this %|) bowl)
 ::
-++  on-init  `this(state [%0 ["" ""] ~ ~ ~ ~ ~ ~ ~ `our.bowl])
+++  on-init  `this(state [%0 ["" ""] ~ ~ ~ ~ ~ ~ `our.bowl])
 ::
 ++  on-save  !>(state)
 ++  on-load
@@ -112,13 +111,21 @@
       =+  acc=(~(got by nonces.state) address.act)
       `state(nonces (~(put by nonces) address.act (~(put by acc) town.act new.act)))
     ::
-        %fetch-our-rice
-      ::  temporary until we can subscribe to indexer by-holder
-      =/  our-grains
-        .^((unit update:uqbar-indexer) %gx /(scot %p our.bowl)/uqbar-indexer/(scot %da now.bowl)/holder/(scot %ux pubkey.act)/noun)
-      =+  ?~(our-grains ~ (indexer-update-to-books u.our-grains type-store.state))
-      :_  state(tokens -)
-      ~[[%give %fact ~[/book-updates] %zig-wallet-update !>([%new-book -])]]
+        %fetch-metadata
+      ::  manually import metadata for a token
+      ~&  >>>  "fetching..."
+      =/  upd=update:uqbar-indexer
+        (need .^((unit update:uqbar-indexer) %gx /(scot %p our.bowl)/uqbar-indexer/(scot %da now.bowl)/grain/(scot %ux id.act)/noun))
+      ?>  ?=(%grain -.upd)
+      =/  meta-grain=grain:smart  +.-:~(tap in grains.upd)  
+      ?>  ?=(%& -.germ.meta-grain)
+      =/  =asset-metadata
+        ?+  type.act  !!
+          %token  [type.act ;;(token-metadata data.p.germ.meta-grain)]
+          %nft    [type.act ;;(nft-metadata data.p.germ.meta-grain)]
+        ==
+      ?>  =(salt.p.germ.meta-grain salt.asset-metadata)
+      `state(metadata-store (~(put by metadata-store.state) salt.asset-metadata asset-metadata))
     ::
         %populate
       ::  populate wallet with fake data for testing
@@ -151,7 +158,6 @@
         tokens  ~
         transaction-store  ~
         metadata-store  (malt ~[[`@ux`'zigs-metadata' [%token zigs-metadata]]])
-        type-store  (malt ~[[`@`'zigs' `@tas`%token] [`@`'nftsalt' `@tas`%nft]])
       ==
     ::
         %submit-custom
@@ -289,9 +295,14 @@
     ?:  ?=(%watch-ack -.sign)  (on-agent:def wire sign)
     ?.  ?=(%fact -.sign)       (on-agent:def wire sign)
     ?.  ?=(%uqbar-indexer-update p.cage.sign)  (on-agent:def wire sign)
+    =+  pub=(slav %ux i.t.wire)
     =/  update  !<(update:uqbar-indexer q.cage.sign)
-    =+  (indexer-update-to-books update type-store.state)
+    =/  found=book
+      (indexer-update-to-books update pub metadata-store.state)
+    =+  (~(put by tokens.state) pub found)
+    ~&  >>  -
     :_  this(tokens -)
+    %+  welp  (find-new-metadata found our.bowl metadata-store.state)
     ~[[%give %fact ~[/book-updates] %zig-wallet-update !>([%new-book -])]]
   ::
       [%id @ ~]
@@ -428,12 +439,15 @@
     =,  enjs:format
     %-  pairs
     %+  turn  ~(tap by metadata-store.state)
-    |=  [id=@ux [=token-type d=token-metadata]]
+    |=  [id=@ux d=asset-metadata]
     :-  (scot %ux id)
     %-  pairs
     :~  ['name' (tape (trip name.d))]
         ['symbol' (tape (trip symbol.d))]
-        ['decimals' (numb decimals.d)]
+        ?-  -.d
+          %token  ['decimals' (numb decimals.d)]
+          %nft  ['traits' (tape "TODO...")]
+        ==
         ['supply' (numb supply.d)]
         ['cap' (numb (fall cap.d 0))]
         ['mintable' [%b mintable.d]]

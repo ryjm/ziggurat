@@ -50,33 +50,53 @@
   `[%pass wire %agent [ship term] %leave ~]
 ::
 ++  indexer-update-to-books
-  |=  [=update:uqbar-indexer =type-store]
+  |=  [=update:uqbar-indexer our=@ux =metadata-store]
   ::  get most recent version of the grain
   ::  TODO replace this with a (way) more efficient strategy
   ::  preferably adding a type to indexer that only contains
   ::  most recent data
-  =/  tokens  *(map @ =book)
-  ?.  ?=(%grain -.update)  tokens
+  =/  =book  *book
+  ?.  ?=(%grain -.update)  book
   =/  grains-list  `(list [=town-location:uqbar-indexer =grain:smart])`~(tap in grains.update)
-  ^-  (map @ =book)
-  |-
-  ?~  grains-list  tokens
+  |-  ^-  ^book
+  ?~  grains-list  book
   =/  =grain:smart  grain.i.grains-list
   ::  currently only storing owned *rice*
   ?.  ?=(%& -.germ.grain)  $(grains-list t.grains-list)
   ::  determine type token/nft/unknown
   =/  =token-type
-    ?~  stored=(~(get by type-store) salt.p.germ.grain)
+    ?~  stored=(~(get by metadata-store) salt.p.germ.grain)
       %unknown
-    u.stored 
+    -.u.stored
   %=    $
-      tokens
-    %+  ~(put by tokens)
-      holder.grain
-    %+  ~(put by `book`(~(gut by tokens) holder.grain ~))
+      book
+    %+  ~(put by book)
       [town-id.grain lord.grain salt.p.germ.grain]
     [token-type grain]
     ::
     grains-list  t.grains-list
   ==
+::
+++  find-new-metadata
+  |=  [=book our=ship =metadata-store]
+  =/  book=(list [[town=@ud lord=id:smart salt=@] [=token-type =grain:smart]])  ~(tap by book)
+  ~&  "searching for metadata"
+  |-  ^-  (list card)
+  ?~  book  ~
+  ?:  (~(has by metadata-store) salt.i.book)  $(book t.book)
+  ::  if we don't know the type of an asset, we need to try and fit it to
+  ::  a mold we know of. this is not great and should be eventually provided
+  ::  from some central authority
+  ?.  ?=(%& -.germ.grain.i.book)  $(book t.book)
+  =*  data  data.p.germ.grain.i.book
+  =/  tok  (mule |.(;;(token-account data)))
+  ?:  ?=(%& -.tok)
+    :_  $(book t.book)
+    [%pass /find/(scot %u salt.i.book) %agent [our %wallet] %poke %zig-wallet-poke !>([%fetch-metadata metadata.p.tok %token])]
+  =/  nft  (mule |.(;;(nft-account data)))
+  ~&  >>>  nft
+  ?:  ?=(%& -.nft)
+    :_  $(book t.book)
+    [%pass /find/(scot %u salt.i.book) %agent [our %wallet] %poke %zig-wallet-poke !>([%fetch-metadata metadata.p.nft %nft])]
+  $(book t.book)
 --
