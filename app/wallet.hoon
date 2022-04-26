@@ -16,6 +16,7 @@
       tokens=(map pub=@ux =book)
       =transaction-store
       =metadata-store
+      =type-store
       indexer=(unit ship)
   ==
 --
@@ -30,7 +31,7 @@
 +*  this  .
     def   ~(. (default-agent this %|) bowl)
 ::
-++  on-init  `this(state [%0 ["" ""] ~ ~ ~ ~ ~ ~ `our.bowl])
+++  on-init  `this(state [%0 ["" ""] ~ ~ ~ ~ ~ ~ ~ `our.bowl])
 ::
 ++  on-save  !>(state)
 ++  on-load
@@ -115,25 +116,17 @@
       ::  temporary until we can subscribe to indexer by-holder
       =/  our-grains
         .^((unit update:uqbar-indexer) %gx /(scot %p our.bowl)/uqbar-indexer/(scot %da now.bowl)/holder/(scot %ux pubkey.act)/noun)
-      =+  ?~(our-grains ~ (indexer-update-to-books u.our-grains metadata-store.state))
+      =+  ?~(our-grains ~ (indexer-update-to-books u.our-grains type-store.state))
       :_  state(tokens -)
-      ;:  welp
-        (clear-asset-subscriptions wex.bowl)
-        (create-asset-subscriptions - (need indexer.state))
-        ~[[%give %fact ~[/book-updates] %zig-wallet-update !>([%new-book -])]]
-      ==
+      ~[[%give %fact ~[/book-updates] %zig-wallet-update !>([%new-book -])]]
     ::
         %populate
       ::  populate wallet with fake data for testing
       ::  will WIPE previous wallet state!!
       ::
-      ::  TODO replace this with a request to an indexer,
-      ::  which will provide all rice/grains associated with pubkey(s) in wallet
       =+  mnem=(from-entropy:bip39 [32 seed.act])
       =+  core=(from-seed:bip32 [64 (to-seed:bip39 mnem "")])
       =+  pub=public-key:core
-      ::  =/  id-0  (fry-rice:smart pub `@ux`'zigs-contract' 0 `@`'zigs')
-      ::  =/  id-1  (fry-rice:smart pub `@ux`'zigs-contract' 1 `@`'zigs')
       =/  zigs-metadata
         :*  name='Uqbar Tokens'
             symbol='ZIG'
@@ -145,27 +138,20 @@
             deployer=0x0
             salt=`@`'zigs'
         ==
-      =+  metadata-store=(malt ~[[`@ux`'zigs-metadata' [%token zigs-metadata]]])
-      ::  get grains we hold from indexer (must run on our ship for now)
-      =/  our-grains
-        .^((unit update:uqbar-indexer) %gx /(scot %p our.bowl)/uqbar-indexer/(scot %da now.bowl)/holder/(scot %ux pub)/noun)
       =/  keys  (malt ~[[pub private-key:core]])
-      ::  convert from update to book
-      =+  ?~(our-grains ~ (indexer-update-to-books u.our-grains metadata-store))
       :-  ;:  welp
-              (clear-asset-subscriptions wex.bowl)
-              (create-asset-subscriptions - (need indexer.state))
+              (create-holder-subscriptions (silt ~[pub]) (need indexer.state))
               (create-id-subscriptions ~(key by keys) (need indexer.state))
-              ~[[%give %fact ~[/book-updates] %zig-wallet-update !>([%new-book -])]]
           ==
       %=  state
         seed    [mnem ""]
         keys    keys
         nodes   (malt ~[[0 ~zod] [1 ~zod] [2 ~zod]])
         nonces  (malt ~[[pub (malt ~[[0 0] [1 0] [2 0]])]])
-        tokens  -
+        tokens  ~
         transaction-store  ~
-        metadata-store  metadata-store
+        metadata-store  (malt ~[[`@ux`'zigs-metadata' [%token zigs-metadata]]])
+        type-store  (malt ~[[`@`'zigs' `@tas`%token] [`@`'nftsalt' `@tas`%nft]])
       ==
     ::
         %submit-custom
@@ -299,31 +285,14 @@
       ~[(tx-update-card status=103 hash)]^this
     `this
   ::
-      [%grain @ ~]
-    ::  update to a grain received
+      [%holder @ ~]
     ?:  ?=(%watch-ack -.sign)  (on-agent:def wire sign)
     ?.  ?=(%fact -.sign)       (on-agent:def wire sign)
     ?.  ?=(%uqbar-indexer-update p.cage.sign)  (on-agent:def wire sign)
     =/  update  !<(update:uqbar-indexer q.cage.sign)
-    ?.  ?=(%grain -.update)  `this
-    =/  new=grain:smart  +.-:~(tap in grains.update)
-    ?.  ?=(%& -.germ.new)
-      ::  stop watching this grain
-      ~[[%pass wire %agent [(need indexer.this) %uqbar-indexer] %leave ~]]^this
-    ?~  book=(~(get by tokens.this) holder.new)
-      ::  no longer tracking holder, stop watching this grain
-      ~[[%pass wire %agent [(need indexer.this) %uqbar-indexer] %leave ~]]^this
-    ::  TEMPORARY grab old designation
-    =/  =token-type  
-      ?~  known=(~(get by `^book`u.book) [town-id.new lord.new salt.p.germ.new])
-        %unknown
-      token-type.u.known
-    =.  u.book
-      (~(put by `^book`u.book) [town-id.new lord.new salt.p.germ.new] [token-type new])
-    ::  place new grain state in our personal tracker,
-    ::  and inform frontend of change
-    :_  this(tokens (~(put by tokens) holder.new u.book))
-    ~[[%give %fact ~[/book-updates] %zig-wallet-update !>([%new-book tokens.state])]]
+    =+  (indexer-update-to-books update type-store.state)
+    :_  this(tokens -)
+    ~[[%give %fact ~[/book-updates] %zig-wallet-update !>([%new-book -])]]
   ::
       [%id @ ~]
     ::  update to a tracked account
@@ -430,12 +399,13 @@
         ['token_type' (tape (scow %tas token-type))]
         :-  'data'
         %-  pairs
-        ?-    token-type
+        ?+    token-type  ~[['unknown_data_structure' (tape "?")]]
             %token
           =+  ;;(token-account data.p.germ.grain)
           :~  ['balance' (numb balance.-)]
               ['metadata' (tape (scow %ux metadata.-))]
           ==
+        ::
             %nft
           =+  ;;(nft-account data.p.germ.grain)
           :~  ['metadata' (tape (scow %ux metadata.-))]
@@ -448,9 +418,6 @@
               :~  ['desc' (tape desc.item)]
                   ['URI' (tape uri.item)]
               ==
-          ==
-            %unknown
-          :~  ['unknown_data_structure' (tape "?")]
           ==
         ==
     ==

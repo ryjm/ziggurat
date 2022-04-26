@@ -5,13 +5,14 @@
 +$  book  (map [town=@ud lord=id:smart salt=@] [=token-type =grain:smart])
 +$  transaction-store  (map pub=@ux [sent=(map @ux [=egg:smart args=supported-args]) received=(map @ux =egg:smart)])
 +$  metadata-store  (map =id:smart [=token-type token-metadata])
++$  type-store  (map @ token-type)
 ::
-+$  token-type  ?(%token %nft %unknown)
++$  token-type  @tas
 ::
 +$  wallet-update
   $%  [%new-book tokens=(map pub=id:smart =book)]
       [%tx-status status=@ud hash=@ux]
-      ::  TX status codes:
+      ::  TX status codes: 
       ::  100: transaction submitted from wallet to sequencer
       ::  101: transaction received by sequencer
       ::  103: failure: transaction rejected by sequencer

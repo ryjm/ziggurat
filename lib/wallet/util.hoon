@@ -17,6 +17,15 @@
   =-  [%pass - %agent [indexer %uqbar-indexer] %watch -]
   /id/(scot %ux k)
 ::
+++  create-holder-subscriptions
+  |=  [pubkeys=(set @ux) indexer=ship]
+  ^-  (list card)
+  %+  turn
+    ~(tap in pubkeys)
+  |=  k=@ux
+  =-  [%pass - %agent [indexer %uqbar-indexer] %watch -]
+  /holder/(scot %ux k)
+::
 ++  create-asset-subscriptions
   |=  [tokens=(map @ux =book) indexer=ship]
   ^-  (list card)
@@ -41,7 +50,7 @@
   `[%pass wire %agent [ship term] %leave ~]
 ::
 ++  indexer-update-to-books
-  |=  [=update:uqbar-indexer =metadata-store]
+  |=  [=update:uqbar-indexer =type-store]
   ::  get most recent version of the grain
   ::  TODO replace this with a (way) more efficient strategy
   ::  preferably adding a type to indexer that only contains
@@ -56,11 +65,10 @@
   ::  currently only storing owned *rice*
   ?.  ?=(%& -.germ.grain)  $(grains-list t.grains-list)
   ::  determine type token/nft/unknown
-  ::  TODO: ..how do we do this better..
   =/  =token-type
-    ?~  stored=(~(get by metadata-store) ;;(@ux -.data.p.germ.grain))
+    ?~  stored=(~(get by type-store) salt.p.germ.grain)
       %unknown
-    token-type.u.stored 
+    u.stored 
   %=    $
       tokens
     %+  ~(put by tokens)

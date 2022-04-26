@@ -28,12 +28,13 @@
         ['token_type' (tape (scow %tas token-type))]
         :-  'data'
         %-  pairs
-        ?-    token-type
+        ?+    token-type  ~[['unknown_data_structure' (tape "?")]]
             %token
           =+  ;;(token-account data.p.germ.grain)
           :~  ['balance' (numb balance.-)]
               ['metadata' (tape (scow %ux metadata.-))]
           ==
+        ::
             %nft
           =+  ;;(nft-account data.p.germ.grain)
           :~  ['metadata' (tape (scow %ux metadata.-))]
@@ -46,9 +47,6 @@
               :~  ['desc' (tape desc.item)]
                   ['URI' (tape uri.item)]
               ==
-          ==
-            %unknown
-          :~  ['unknown_data_structure' (tape "?")]
           ==
         ==
     ==

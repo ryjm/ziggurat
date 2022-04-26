@@ -62,32 +62,28 @@ where the argument `[our %ziggurat]` is a dock pointing to the ship running the 
 ```
 (to add other ships, follow above instructions with 2nd and 3rd seed/pubkey combos, but use poke `:ziggurat &zig-chain-poke [%start %validator ~ validators=(silt ~[~zod ~nec]) [~ ~]]`) here, where `~[~zod ~nec]` is the current set of validators including the one being added)
 
-6. To make the wallet aware of the assets spawned for you in the town and main chain you just launched, it's necessary to use a scry. Wait until the indexer has a chance to observe a new block, then use this poke:
-```
-:wallet &zig-wallet-poke [%fetch-our-rice 0x3.e87b.0cbb.431d.0e8a.2ee2.ac42.d9da.cab8.063d.6bb6.2ff9.b2aa.e1b9.0f56.9c3f.3423]
-```
-(the pubkey here should match the one you used in step 2. The ship running the wallet must also be running a block explorer.)
-
 7. Start up a town that has the token contract deployed. You have to do step 6 first, otherwise the sequencer agent won't have the data from the main chain it needs to set up a transaction.
 ```
 :sequencer|init 1
 ```
 (1 here is the town-id)
 
-Make sure to perform step (6) again if you need updated chain state in your wallet.
-
 ### To use the wallet
 
-2. Scry for a JSON dict of accounts, keyed by address, containing seed and nonces:
+1. Scry for a JSON dict of accounts, keyed by address, containing seed and nonces:
 `.^(@ux %gx /=wallet=/accounts/noun)`
 
-3. Scry for a JSON dict of known assets (rice), keyed by address, then by rice address:
+2. Scry for a JSON dict of known assets (rice), keyed by address, then by rice address:
 `.^(json %gx /=wallet=/book/json)`
 
-4. Scry for JSON dict of token metadata we're aware of:
+3. Scry for JSON dict of token metadata we're aware of:
 `.^(json %gx /=wallet=/token-metadata/json)`
 
-4. Wallet pokes available:
+4. Scry for seed phrase and password (todo separate these):
+`.^(json %gx /=wallet=/seed/json)`
+
+
+Wallet pokes available:
 (only those with JSON support shown)
 ```
 {populate: true}
