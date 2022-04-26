@@ -2,7 +2,10 @@
 /+  *zink-pedersen, *zink-json, *mip
 |%
 ::
-+$  body  (unit *)
++$  good  (unit *)
++$  fail  (list [@ta *])
+::
++$  body  (each good fail)
 +$  cache  (map * phash)
 +$  appendix  [cax=cache hit=hints bud=@]
 +$  book  (pair body appendix)
@@ -10,203 +13,212 @@
 ++  zink
   =|  appendix
   =*  app  -
+  =|  trace=fail
   |=  [s=* f=*]
-  ::  TODO: must return trace on crash
+  ^-  book
   |^
-  =|  trace=(list [@ta *])
   ?~  formula-cost=(cost f bud)
-    `[cax hit 0]
-  ?:  (lth bud u.formula-cost)  `[cax hit 0]
+    [%&^~ [cax hit 0]]
+  ?:  (lth bud u.formula-cost)  [%&^~ [cax hit 0]]
   =.  bud  (sub bud u.formula-cost)
-  |^  ^-  book
+  |-
   ?+    f
     ~&  f
-    !!
+    [%|^trace app]
   ::  formula is a cell; do distribution
   ::
       [^ *]
-    ?:  (lth bud 1)  `app
+    ?:  (lth bud 1)  [%&^~ app]
     =.  bud  (sub bud 1)
     =^  hed=body  app
       $(f -.f)
-    ?~  hed  `app
+    ?:  ?=(%| -.hed)  [%|^trace app]
+    ?~  p.hed  [%&^~ app]
     =^  tal=body  app
       $(f +.f)
-    ?~  tal  `app
+    ?:  ?=(%| -.tal)  [%|^trace app]
+    ?~  p.tal  [%&^~ app]
     =^  hhed  cax  (hash -.f)
     =^  htal  cax  (hash +.f)
     =.  app  (put-hint [%cons hhed htal])
-    [~ u.hed^u.tal]^app
+    [%& ~ u.p.hed^u.p.tal]^app
   ::
       [%0 axis=@]
-    ?:  (lth bud 1)  `app
+    ?:  (lth bud 1)  [%&^~ app]
     =.  bud  (sub bud 1)
     =^  part  bud
       (frag axis.f s bud)
-    ?~  part  `app
-    ?~  u.part  !!  ::  TODO: safety
+    ?~  part  [%&^~ app]
+    ?~  u.part  [%|^trace app]
     =^  hpart  cax  (hash u.u.part)
     =^  hsibs  cax  (merk-sibs s axis.f)
     =.  app  (put-hint [%0 axis.f hpart hsibs])
-    [~ u.u.part]^app
+    [%& ~ u.u.part]^app
   ::
       [%1 const=*]
-    ?:  (lth bud 1)  `app
+    ?:  (lth bud 1)  [%&^~ app]
     =.  bud  (sub bud 1)
     =^  hres  cax  (hash const.f)
     =.  app  (put-hint [%1 hres])
-    [~ const.f]^app
+    [%& ~ const.f]^app
   ::
       [%2 sub=* for=*]
-    ?:  (lth bud 1)  `app
+    ?:  (lth bud 1)  [%&^~ app]
     =.  bud  (sub bud 1)
     =^  hsub  cax  (hash sub.f)
     =^  hfor  cax  (hash for.f)
     =^  subject=body  app
       $(f sub.f)
-    ?~  subject  `app
-    ::  TODO: need to add a check to ensure no crash
+    ?:  ?=(%| -.subject)  [%|^trace app]
+    ?~  p.subject  [%&^~ app]
     =^  formula=body  app
       $(f for.f)
-    ?~  formula  `app
-    ::  TODO: need to add a check to ensure no crash
+    ?:  ?=(%| -.formula)  [%|^trace app]
+    ?~  p.formula  [%&^~ app]
     =.  app  (put-hint [%2 hsub hfor])
-    $(s u.subject, f u.formula)
+    $(s u.p.subject, f u.p.formula)
   ::
       [%3 arg=*]
-    ?:  (lth bud 1)  `app
+    ?:  (lth bud 1)  [%&^~ app]
     =.  bud  (sub bud 1)
     =^  argument=body  app
       $(f arg.f)
-    ?~  argument  `app
+    ?:  ?=(%| -.argument)  [%|^trace app]
+    ?~  p.argument  [%&^~ app]
     =^  harg  cax  (hash arg.f)
-    ?@  u.argument
-      =.  app  (put-hint [%3 harg %atom u.argument])
-      [~ %.n]^app
-    =^  hhash  cax  (hash -.u.argument)
-    =^  thash  cax  (hash +.u.argument)
+    ?@  u.p.argument
+      =.  app  (put-hint [%3 harg %atom u.p.argument])
+      [%& ~ %.n]^app
+    =^  hhash  cax  (hash -.u.p.argument)
+    =^  thash  cax  (hash +.u.p.argument)
     =.  app  (put-hint [%3 harg %cell hhash thash])
-    [~ %.y]^app
+    [%& ~ %.y]^app
   ::
       [%4 arg=*]
-    ?:  (lth bud 1)  `app
+
+    ?:  (lth bud 1)  [%&^~ app]
     =.  bud  (sub bud 1)
     =^  argument=body  app
       $(f arg.f)
+    ?:  ?=(%| -.argument)  [%|^trace app]
     =^  harg  cax  (hash arg.f)
-    ?~  argument  `app
-    ?>  ?=(@ u.argument)  ::  TODO: safely return trace
-    =.  app  (put-hint [%4 harg u.argument])
-    [~ .+(u.argument)]^app
+    ?~  p.argument  [%&^~ app]
+    ?^  u.p.argument  [%|^trace app]
+    =.  app  (put-hint [%4 harg u.p.argument])
+    [%& ~ .+(u.p.argument)]^app
   ::
       [%5 a=* b=*]
-    ?:  (lth bud 1)  `app
+    ?:  (lth bud 1)  [%&^~ app]
     =.  bud  (sub bud 1)
     =^  ha  cax  (hash a.f)
     =^  hb  cax  (hash b.f)
     =^  a=body  app
       $(f a.f)
-    ?~  a  `app
+    ?:  ?=(%| -.a)  [%|^trace app]
+    ?~  p.a  [%&^~ app]
     =^  b=body  app
       $(f b.f)
-    ?~  b  `app
+    ?:  ?=(%| -.b)  [%|^trace app]
+    ?~  p.b  [%&^~ app]
     =.  app  (put-hint [%5 ha hb])
-    [~ =(u.a u.b)]^app
+    [%& ~ =(u.p.a u.p.b)]^app
   ::
       [%6 test=* yes=* no=*]
-    ?:  (lth bud 1)  `app
+    ?:  (lth bud 1)  [%&^~ app]
     =.  bud  (sub bud 1)
     =^  htest  cax  (hash test.f)
     =^  hyes   cax  (hash yes.f)
     =^  hno    cax  (hash no.f)
-    =^  result=(unit *)  app
+    =^  result=body  app
       $(f test.f)
-    ?~  result  `app
+    ?:  ?=(%| -.result)  [%|^trace app]
+    ?~  p.result  [%&^~ app]
     =.  app  (put-hint [%6 htest hyes hno])
-    ?+  u.result  !!  ::  TODO: safely do trace
+    ?+  u.p.result  [%|^trace app]
       %&  $(f yes.f)
       %|  $(f no.f)
     ==
   ::
       [%7 subj=* next=*]
-    ?:  (lth bud 1)  `app
+    ?:  (lth bud 1)  [%&^~ app]
     =.  bud  (sub bud 1)
     =^  hsubj  cax  (hash subj.f)
     =^  hnext  cax  (hash next.f)
     =^  subject=body  app
       $(f subj.f)
-    ?~  subject  `app
-    ::  TODO: check if crash here and do trace
+    ?:  ?=(%| -.subject)  [%|^trace app]
+    ?~  p.subject  [%&^~ app]
     =.  app  (put-hint [%7 hsubj hnext])
     %=  $
-      s  u.subject
+      s  u.p.subject
       f  next.f
     ==
   ::
       [%8 head=* next=*]
-    ?:  (lth bud 1)  `app
+    ?:  (lth bud 1)  [%&^~ app]
     =.  bud  (sub bud 1)
-    =^  jax  app  (jet head.f next.f)
-    ?^  jax  jax^app
+    =^  jax=body  app
+      (jet head.f next.f)
+    ?:  ?=(%| -.jax)  [%|^trace app]
+    ?^  p.jax  [%& p.jax]^app
     =^  hhead  cax  (hash head.f)
     =^  hnext  cax  (hash next.f)
     =^  head=body  app
       $(f head.f)
-    ?~  head  `app
-    ::  TODO: check if head crashes
+    ?:  ?=(%| -.head)  [%|^trace app]
+    ?~  p.head  [%&^~ app]
     =.  app  (put-hint [%8 hhead hnext])
     %=  $
-      s  [u.head s]
+      s  [u.p.head s]
       f  next.f
     ==
   ::
       [%9 axis=@ core=*]
-    ?:  (lth bud 1)  `app
+    ?:  (lth bud 1)  [%&^~ app]
     =.  bud  (sub bud 1)
     =^  hcore  cax  (hash core.f)
     =^  core=body  app
       $(f core.f)
-    ?~  core  `app
-    ::  TODO: check if core crashed
+    ?:  ?=(%| -.core)  [%|^trace app]
+    ?~  p.core  [%&^~ app]
     =^  arm  bud
-      (frag axis.f u.core bud)
-    ?~  arm  `app
-    ::  TODO: check if arm crashed
-    ?~  u.arm  !!
+      (frag axis.f u.p.core bud)
+    ?~  arm  [%&^~ app]
+    ?~  u.arm  [%|^trace app]
     =^  harm  cax  (hash u.u.arm)
-    =^  sibs  cax  (merk-sibs u.core axis.f)
+    =^  sibs  cax  (merk-sibs u.p.core axis.f)
     =.  app  (put-hint [%9 axis.f hcore harm sibs])
     %=  $
-      s  u.core
+      s  u.p.core
       f  u.u.arm
     ==
   ::
       [%10 [axis=@ value=*] target=*]
-    ?:  (lth bud 1)  `app
+    ?:  (lth bud 1)  [%&^~ app]
     =.  bud  (sub bud 1)
     =^  hval  cax  (hash value.f)
     =^  htar  cax  (hash target.f)
-    ?:  =(0 axis.f)  !!  ::  TODO: safety!
+    ?:  =(0 axis.f)  [%|^trace app]
     =^  target=body  app
       $(f target.f)
-    ?~  target  `app
-    ::  TODO: safety!
+    ?:  ?=(%| -.target)  [%|^trace app]
+    ?~  p.target  [%&^~ app]
     =^  value=body  app
       $(f value.f)
-    ?~  value  `app
-    ::  TODO: safety!
+    ?:  ?=(%| -.value)  [%|^trace app]
+    ?~  p.value  [%&^~ app]
     =^  mutant=(unit (unit *))  bud
-      (edit axis.f u.target u.value bud)
-    ?~  mutant  `app
-    ?~  u.mutant  !!  ::  TODO: SAFETY!
+      (edit axis.f u.p.target u.p.value bud)
+    ?~  mutant  [%&^~ app]
+    ?~  u.mutant  [%|^trace app]
     =^  oldleaf  bud
-      (frag axis.f u.target bud)
-    ?~  oldleaf  `app
-    ?~  u.oldleaf  !!  ::  TODO: SAFETY
+      (frag axis.f u.p.target bud)
+    ?~  oldleaf  [%&^~ app]
+    ?~  u.oldleaf  [%|^trace app]
     =^  holdleaf  cax  (hash u.u.oldleaf)
-    =^  sibs  cax  (merk-sibs u.target axis.f)
+    =^  sibs  cax  (merk-sibs u.p.target axis.f)
     =.  app  (put-hint [%10 axis.f hval htar holdleaf sibs])
-    [~ u.u.mutant]^app
+    [%& ~ u.u.mutant]^app
   ==
   :: Check if we are calling an arm in a core and if so lookup the axis
   :: in the jet map
@@ -221,7 +233,7 @@
     |=  [head=* next=*]
     ^-  book
     =^  mj  app  (match-jet head next)
-    ?~  mj  `app
+    ?~  mj  [%&^~ app]
     (run-jet u.mj)^app
   ::
   ++  match-jet
@@ -234,39 +246,45 @@
     ?~  mjet=(~(get by jets) arm-axis.head)  `app
     =^  sub=body  app
       ^$(f head)
-    ?~  sub  `app
+    ?:  ?=(%| -.sub)  `app
+    ?~  p.sub  `app
     =^  arg=body  app
       ^$(s sub^s, f sam.next)
-    (both mjet arg)^app
+    ?:  ?=(%| -.arg)  `app
+    ?~  p.arg  `app
+    [~ u.mjet u.p.arg]^app
   ::
   ++  run-jet
     |=  [arm=@tas sam=*]
     ^-  body
-    ?+  arm  ~
+    ?+  arm  %|^trace
     ::
         %dec
-      ?:  (lth bud 1)  ~
+      ?:  (lth bud 1)  %&^~
       =.  bud  (sub bud 1)
-      ?.  ?=(@ sam)  ~
-      (some (dec sam))
+      ?.  ?=(@ sam)  %|^trace
+      ::  TODO: probably unsustainable to need to include assertions to
+      ::  make all jets crash safe
+      ?.  (gth sam 0)  %|^trace
+      %&^(some (dec sam))
     ::
         %add
-      ?:  (lth bud 1)  ~
+      ?:  (lth bud 1)  %&^~
       =.  bud  (sub bud 1)
-      ?.  ?=([x=@ud y=@ud] sam)  ~
-      (some (add x.sam y.sam))
+      ?.  ?=([x=@ud y=@ud] sam)  %|^trace
+      %&^(some (add x.sam y.sam))
     ::
         %mul
-      ?:  (lth bud 1)  ~
+      ?:  (lth bud 1)  %&^~
       =.  bud  (sub bud 1)
-      ?.  ?=([x=@ud y=@ud] sam)  ~
-      (some (mul x.sam y.sam))
+      ?.  ?=([x=@ud y=@ud] sam)  %|^trace
+      %&^(some (mul x.sam y.sam))
     ::
         %double
-      ?:  (lth bud 1)  ~
+      ?:  (lth bud 1)  %&^~
       =.  bud  (sub bud 1)
-      ?.  ?=(@ sam)  ~
-      (some (mul 2 sam))
+      ?.  ?=(@ sam)  %|^trace
+      %&^(some (mul 2 sam))
     ==
   ::
   ++  put-hint
@@ -276,7 +294,6 @@
     =^  froot  cax  (hash f)
     =.  hit  (~(put bi hit) sroot froot hin)
     app
-  --
   ::
   ++  frag
     |=  [axis=@ noun=* bud=@ud]
@@ -391,12 +408,13 @@
 ::
 ++  eval-hoon-with-hints
   |=  [file=path gen=hoon bud=@]
-  ^-  [(unit *) json]
+  ^-  [body json]
   =/  src  .^(@t %cx file)
   =/  gun  (slap !>(~) (ream src))
   =/  han  (~(mint ut p.gun) %noun gen)
   =-  [p (create-hints [q.gun q.han] hit.q)]
   (eval-noun [q.gun q.han] bud)
+::
 ::  eval-hoon: compile a hoon file and evaluate it with zink
 ::
 ++  eval-hoon
@@ -410,6 +428,7 @@
   =/  gun  (slap clib (ream src))
   =/  han  (~(mint ut p.gun) %noun gen)
   (eval-noun [q.gun q.han] bud)
+::
 ::  eval-hoon-with-cache: compile a hoon file and evaluate it with zink
 ::
 ++  eval-hoon-with-cache
@@ -423,6 +442,7 @@
   =/  gun  (slap clib (ream src))
   =/  han  (~(mint ut p.gun) %noun gen)
   (eval-noun-with-cache [q.gun q.han] bud cax)
+::
 ::  create-hints: create full hint json
 ::
 ++  create-hints
