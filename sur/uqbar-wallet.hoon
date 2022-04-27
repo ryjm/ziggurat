@@ -51,8 +51,8 @@
   ==
 ::
 +$  supported-args
-  $%  [%give token=id:smart to=id:smart amount=@ud]
-      [%give-nft token=id:smart to=id:smart item-id=@ud]
+  $%  [%give salt=@ to=id:smart amount=@ud]
+      [%give-nft salt=@ to=id:smart item-id=@ud]
       ::  only used on backend for validators/sequencers
       [%become-validator =signature]
       [%stop-validating =signature]

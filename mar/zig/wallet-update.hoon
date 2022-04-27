@@ -33,11 +33,13 @@
           =+  ;;(token-account data.p.germ.grain)
           :~  ['balance' (numb balance.-)]
               ['metadata' (tape (scow %ux metadata.-))]
+              ['salt' (tape (scow %u salt.p.germ.grain))]
           ==
         ::
             %nft
           =+  ;;(nft-account data.p.germ.grain)
           :~  ['metadata' (tape (scow %ux metadata.-))]
+              ['salt' (tape (scow %u salt.p.germ.grain))]
               :-  'items'
               %-  pairs
               %+  turn  ~(tap by items.-)

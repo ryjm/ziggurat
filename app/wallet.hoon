@@ -218,12 +218,15 @@
         ?-    -.args.act
             %give
           ~|  "wallet can't find metadata for that token!"
-          =/  metadata  (~(got by metadata-store.state) token.args.act)
+          =/  metadata  (~(got by metadata-store.state) salt.args.act)
           ~|  "wallet can't find our zigs account for that town!"
           =/  our-account=grain:smart  +:(~(got by book) [town.act to.act salt.metadata])
-          ::  TODO use block explorer to find rice if it exists and restructure this
-          ::  to use known parameter to find other person's rice
           =/  their-account-id  (fry-rice:smart to.args.act to.act town.act salt.metadata)
+          =/  exists  .^((unit update:uqbar-indexer) %gx /(scot %p our.bowl)/uqbar-indexer/(scot %da now.bowl)/grain/(scot %ux their-account-id)/noun)
+          ?~  exists
+            ?:  =(to.act `@ux`'zigs-contract')  ::  zigs special case
+              [`[%give to.args.act ~ amount.args.act bud.gas.act] (silt ~[id.our-account]) ~]
+            [`[%give to.args.act ~ amount.args.act] (silt ~[id.our-account]) ~]
           :+  ?:  =(to.act `@ux`'zigs-contract')  ::  zigs special case
                 `[%give to.args.act `their-account-id amount.args.act bud.gas.act]
               `[%give to.args.act `their-account-id amount.args.act]
@@ -233,12 +236,13 @@
         ::  therefore should figure out way to just unify them.
             %give-nft
           ~|  "wallet can't find metadata for that token!"
-          =/  metadata  (~(got by metadata-store.state) token.args.act)
+          =/  metadata  (~(got by metadata-store.state) salt.args.act)
           ~|  "wallet can't find our zigs account for that town!"
           =/  our-account=grain:smart  +:(~(got by book) [town.act to.act salt.metadata])
-          ::  TODO use block explorer to find rice if it exists and restructure this
-          ::  to use known parameter to find other person's rice
           =/  their-account-id  (fry-rice:smart to.args.act to.act town.act salt.metadata)
+          =/  exists  .^((unit update:uqbar-indexer) %gx /(scot %p our.bowl)/uqbar-indexer/(scot %da now.bowl)/grain/(scot %ux their-account-id)/noun)
+          ?~  exists
+            [`[%give to.args.act ~ item-id.args.act] (silt ~[id.our-account]) ~]
           :+  `[%give to.args.act `their-account-id item-id.args.act]
             (silt ~[id.our-account])
           (silt ~[their-account-id])
@@ -300,7 +304,6 @@
     =/  found=book
       (indexer-update-to-books update pub metadata-store.state)
     =+  (~(put by tokens.state) pub found)
-    ~&  >>  -
     :_  this(tokens -)
     %+  welp  (find-new-metadata found our.bowl metadata-store.state)
     ~[[%give %fact ~[/book-updates] %zig-wallet-update !>([%new-book -])]]
@@ -342,9 +345,8 @@
         %+  ~(jab by sent.our-txs)  hash
         |=([p=egg:smart q=supported-args] [p(status.p status.p.egg) q])
       ==
-    :_  this(transaction-store (~(put by transaction-store) our-id our-txs))
-    %+  snoc  tx-status-cards
-    [%pass /fetch-rice %agent [our.bowl %wallet] %poke %zig-wallet-poke !>([%fetch-our-rice our-id])]
+    :-  tx-status-cards
+    this(transaction-store (~(put by transaction-store) our-id our-txs))
   ==
 ::
 ++  on-arvo  on-arvo:def
@@ -415,11 +417,13 @@
           =+  ;;(token-account data.p.germ.grain)
           :~  ['balance' (numb balance.-)]
               ['metadata' (tape (scow %ux metadata.-))]
+              ['salt' (tape (scow %u salt.p.germ.grain))]
           ==
         ::
             %nft
           =+  ;;(nft-account data.p.germ.grain)
           :~  ['metadata' (tape (scow %ux metadata.-))]
+              ['salt' (tape (scow %u salt.p.germ.grain))]
               :-  'items'
               %-  pairs
               %+  turn  ~(tap by items.-)
@@ -481,12 +485,12 @@
         %-  pairs
         ?-    -.args
             %give
-          :~  ['token' (tape (scow %ux token.args))]
+          :~  ['salt' (tape (scow %ux salt.args))]
               ['to' (tape (scow %ux to.args))]
               ['amount' (numb amount.args)]
           ==
             %give-nft
-          :~  ['token' (tape (scow %ux token.args))]
+          :~  ['salt' (tape (scow %ux salt.args))]
               ['to' (tape (scow %ux to.args))]
               ['item-id' (numb item-id.args)]
           ==
