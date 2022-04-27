@@ -211,7 +211,6 @@
       =-  ?.  -  
             ~&  >>>  "harvest checks failed"
             ~
-          ~&  >  "harvest checks passed"
           `(~(uni by granary) (~(uni by changed.res) issued.res))
       ?&  %-  ~(all in changed.res)
           |=  [=id =grain]
@@ -219,7 +218,6 @@
           ::  all changed grains must already exist AND
           ::  no changed grains may also have been issued at same time AND
           ::  only grains that proclaim us lord may be changed
-          ~&  >>>  "{<id.grain>}: {<(~(has by granary) id.grain)>}"
           ?&  =(id id.grain)
               (~(has by granary) id.grain)
               !(~(has by issued.res) id.grain)

@@ -180,7 +180,7 @@
             town.act
             0
         ==
-      =/  egg-hash=@ux  (shax (jam egg))
+      =+  egg-hash=(hash-egg egg)
       =/  our-txs
         ?~  o=(~(get by transaction-store) from.act)
           [(malt ~[[egg-hash [egg [%custom args.act]]]]) ~]
@@ -258,7 +258,7 @@
       =/  signer        (~(got by keys.state) from.act)
       =/  sig           (ecdsa-raw-sign:secp256k1:secp:crypto (sham (jam yolk)) signer)
       =/  =egg:smart    [[caller sig to.act rate.gas.act bud.gas.act town.act 0] yolk]
-      =/  egg-hash=@ux  (shax (jam egg))
+      =+  egg-hash=(hash-egg egg)
       =/  our-txs
         ?~  o=(~(get by transaction-store) from.act)
           [(malt ~[[egg-hash [egg args.act]]]) ~]
@@ -325,7 +325,7 @@
       ^-  (set [@ux =egg:smart])
       %-  ~(run in eggs.update)
       |=  [=egg-location:uqbar-indexer =egg:smart]
-      [`@ux`(shax (jam egg)) egg]
+      [(hash-egg egg) egg]
     =^  tx-status-cards=(list card)  our-txs
       %^  spin  eggs  our-txs
       |=  [[hash=@ux =egg:smart] _our-txs]
@@ -342,6 +342,7 @@
       :-  (tx-update-card status.p.egg hash)
       %=    our-txs
           sent
+        ?.  (~(has by sent.our-txs) hash)  sent
         %+  ~(jab by sent.our-txs)  hash
         |=([p=egg:smart q=supported-args] [p(status.p status.p.egg) q])
       ==
