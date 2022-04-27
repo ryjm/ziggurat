@@ -104,18 +104,18 @@
       ^-  [(unit ^granary) rem=@ud errorcode=@ud]
       =/  hatchling
         (incubate egg(budget.p (div budget.p.egg rate.p.egg)))
-      :_  +.hatchling
-      ?~  -.hatchling  ~
-      (harvest u.-.hatchling to.p.egg from.p.egg)
+      ?~  final.hatchling
+        [~ rem.hatchling errorcode.hatchling]
+      +.hatchling
     ::
     ++  incubate
       |=  =egg
-      ^-  [(unit rooster) rem=@ud errorcode=@ud]
+      ^-  [(unit rooster) final=(unit ^granary) rem=@ud errorcode=@ud]
       |^
       =/  args  (fertilize q.egg)
       ?~  stalk=(germinate to.p.egg cont-grains.q.egg)
         ~&  >>>  "failed to germinate"
-        [~ budget.p.egg 5]
+        [~ ~ budget.p.egg 5]
       (grow u.stalk args egg)
       ::
       ++  fertilize
@@ -165,22 +165,24 @@
     ++  grow
       |=  [=crop =zygote =egg]
       ~>  %bout
-      ^-  [(unit rooster) rem=@ud errorcode=@ud]
+      ^-  [(unit rooster) final=(unit ^granary) rem=@ud errorcode=@ud]
       |^
       =+  [chick rem err]=(weed to.p.egg ~ budget.p.egg)
-      ?~  chick  [~ rem err]
+      ?~  chick  [~ ~ rem err]
       ?:  ?=(%& -.u.chick)
         ::  rooster result, finished growing
-        [`p.u.chick rem err]
+        ?~  gan=(harvest p.u.chick to.p.egg from.p.egg)
+          [~ ~ rem 7]
+        [`p.u.chick gan rem err]
       ::  hen result, continuation
-      |-
       =*  next  next.p.u.chick
       =*  mem   mem.p.u.chick  :: FIX! USE THIS SOMEWHERE??
       ::  continuation calls can alter grains
       ?~  gan=(harvest roost.p.u.chick to.p.egg from.p.egg)
-        [~ rem 7]
-      =.  granary  u.gan 
-      (incubate egg(from.p to.p.egg, to.p to.next, budget.p rem, q args.next))
+        [~ ~ rem 7]
+      ::  =.  granary  u.gan  ::  ??
+      %-  ~(incubate farm u.gan)
+      egg(from.p to.p.egg, to.p to.next, budget.p rem, q args.next)
       ::
       ::  +weed: run contract formula with arguments and memory, bounded by bud
       ::
@@ -207,8 +209,9 @@
       |=  [res=rooster lord=id from=caller]
       ^-  (unit ^granary)
       =-  ?.  -  
-            ~&  >>>  "harvest checks failed"  
+            ~&  >>>  "harvest checks failed"
             ~
+          ~&  >  "harvest checks passed"
           `(~(uni by granary) (~(uni by changed.res) issued.res))
       ?&  %-  ~(all in changed.res)
           |=  [=id =grain]
@@ -216,6 +219,7 @@
           ::  all changed grains must already exist AND
           ::  no changed grains may also have been issued at same time AND
           ::  only grains that proclaim us lord may be changed
+          ~&  >>>  "{<id.grain>}: {<(~(has by granary) id.grain)>}"
           ?&  =(id id.grain)
               (~(has by granary) id.grain)
               !(~(has by issued.res) id.grain)
