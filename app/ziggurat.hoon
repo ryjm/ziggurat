@@ -246,6 +246,7 @@
     ::
         %receive-chunk
       ?>  (allowed-participant [src our now]:bowl)
+      ~&  "ziggurat: received chunk {<town-id.act>} from {<src.bowl>}"
       ::  only accept chunks from sequencers in on-chain council
       ~|  "error: ziggurat couldn't find hall on chain"
       =/  found  (~(got by p.globe.state) `@ux`'world')
@@ -396,10 +397,11 @@
         ::  the new block is from an epoch beyond what we have as current,
         ::  determine who and whether to try and catch up
         =/  validators=(list ship)
-          ?:  (gth 2 (lent order.cur))
+          ?.  (gth 2 (lent order.cur))
             ::  in a 2-ship testnet, this results in empty validator set -> crash
             ~(tap in (~(del in (~(del in (silt order.cur)) our.bowl)) src.bowl))
           ~(tap in (~(del in (silt order.cur)) our.bowl))
+        ~&  >>  validators
         ?>  ?=(^ validators)
         :_  state
         (start-epoch-catchup i.validators num.cur)^~
@@ -411,8 +413,9 @@
       ?.  =(next-slot-num (dec (lent order.cur)))
         state(epochs (put:poc epochs num.cur cur))
       ::  update globe state if last block in epoch
-      =-  state(epochs (put:poc epochs num.cur cur), globe -)
-      +:(~(got by `^chunks`+.block.update) 0)
+      ?~  new=(~(get by `^chunks`+.block.update) 0)
+        state(epochs (put:poc epochs num.cur cur))
+      state(epochs (put:poc epochs num.cur cur), globe +.u.new)
     ::
         %saw-block
       :_  state

@@ -113,7 +113,7 @@
     ::
         %fetch-metadata
       ::  manually import metadata for a token
-      ~&  >>>  "fetching..."
+      ~&  "wallet: fetching metadata..."
       =/  upd=update:uqbar-indexer
         (need .^((unit update:uqbar-indexer) %gx /(scot %p our.bowl)/uqbar-indexer/(scot %da now.bowl)/grain/(scot %ux id.act)/noun))
       ?>  ?=(%grain -.upd)
@@ -134,17 +134,6 @@
       =+  mnem=(from-entropy:bip39 [32 seed.act])
       =+  core=(from-seed:bip32 [64 (to-seed:bip39 mnem "")])
       =+  pub=public-key:core
-      =/  zigs-metadata
-        :*  name='Uqbar Tokens'
-            symbol='ZIG'
-            decimals=18
-            supply=1.000.000.000.000.000.000.000.000
-            cap=~
-            mintable=%.n
-            minters=~
-            deployer=0x0
-            salt=`@`'zigs'
-        ==
       =/  keys  (malt ~[[pub private-key:core]])
       :-  ;:  welp
               (create-holder-subscriptions (silt ~[pub]) (need indexer.state))
@@ -157,7 +146,7 @@
         nonces  (malt ~[[pub (malt ~[[0 0] [1 0] [2 0]])]])
         tokens  ~
         transaction-store  ~
-        metadata-store  (malt ~[[`@ux`'zigs-metadata' [%token zigs-metadata]]])
+        metadata-store  ~
       ==
     ::
         %submit-custom
@@ -290,6 +279,7 @@
         ::  got it
         ~&  >>  "wallet: tx was received by sequencer"
         ~[(tx-update-card status=101 hash)]^this
+        ::  TODO fix fix fix 
       ::  failed
       ~&  >>>  "wallet: tx was rejected by sequencer"
       ~[(tx-update-card status=103 hash)]^this
@@ -479,7 +469,7 @@
         ['rate' (numb rate.p.t)]
         ['budget' (numb budget.p.t)]
         ['town' (numb town-id.p.t)]
-        ['status' (numb status.p.t)]  ::  just 0 for now
+        ['status' (numb status.p.t)]
         :-  'args'
         %-  frond
         :-  (scot %tas -.args)

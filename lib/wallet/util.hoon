@@ -86,7 +86,6 @@
 ++  find-new-metadata
   |=  [=book our=ship =metadata-store]
   =/  book=(list [[town=@ud lord=id:smart salt=@] [=token-type =grain:smart]])  ~(tap by book)
-  ~&  "searching for metadata"
   |-  ^-  (list card)
   ?~  book  ~
   ?:  (~(has by metadata-store) salt.i.book)  $(book t.book)
@@ -100,7 +99,6 @@
     :_  $(book t.book)
     [%pass /find/(scot %u salt.i.book) %agent [our %wallet] %poke %zig-wallet-poke !>([%fetch-metadata metadata.p.tok %token])]
   =/  nft  (mule |.(;;(nft-account data)))
-  ~&  >>>  nft
   ?:  ?=(%& -.nft)
     :_  $(book t.book)
     [%pass /find/(scot %u salt.i.book) %agent [our %wallet] %poke %zig-wallet-poke !>([%fetch-metadata metadata.p.nft %nft])]

@@ -44,9 +44,8 @@
   |=  =path
   ^-  (quip card _this)
   ?.  ?=([%new-chunk ~] path)  !!
-    ::  only sequencers in our hall can watch
     ?~  hall.state  !!
-    ?>  (~(has by council.u.hall.state) src.bowl)
+    ?>  (allowed-participant:util [src our now]:bowl)
     `this
 ::
 ++  on-poke
@@ -170,6 +169,11 @@
                       [rate.gas.act bud.gas.act]
                       [%exit sig u.town-id.state]
                   ==
+          ==
+          :*  %pass  /clear
+              %agent  [our.bowl %sequencer]
+              %poke  %zig-hall-poke
+              !>([%clear-state ~])
       ==  ==
     ::
         %clear-state
@@ -217,7 +221,7 @@
         `this(hall ~, town [~ ~])
       =/  sequencers  ~(key by council.update)
       =/  not-yet-subbed  (~(del in sequencers) our.bowl)
-      :_  this(hall `[council.update ~(tap in sequencers)])
+      :_  this(hall `[council.update ~(tap in sequencers)]) ::  NOT SHUFFLED ATM
       ?~  sub=~(tap in not-yet-subbed)  ~
       ::  subscribe to other sequencers in town
       ^-  (list card)
@@ -236,9 +240,10 @@
       ?:  ?|  ?=(~ hall.this)
               !=(our.bowl (snag (mod slot-num (lent order.u.hall.this)) order.u.hall.this))
           ==
-        ~&  >>  "ignoring request"
+        ~&  >>  "sequencer: ignoring request"
         `this
       ::  create and send our chunk to them
+      ~&  >>  "sequencer: attempting to produce a chunk"
       =/  our-address  .^((unit id:smart) %gx (weld z /address/noun))
       =+  /(scot %p our.bowl)/wallet/(scot %da now.bowl)/account
       =/  me  .^(account:smart %gx (weld - /(scot %ux (need our-address))/(scot %ud (need town-id.state))/noun))

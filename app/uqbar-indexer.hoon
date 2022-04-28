@@ -306,8 +306,8 @@
         =*  epoch-num   epoch-num.update
         =*  block-num   num.header.update
         ~&  >  "uqbar-indexer: got block {<epoch-num>}:{<block-num>}"
-        ~&  >  "uqbar-indexer:  with header {<header.update>}"
-        ~&  >  "uqbar-indexer:  with hash {<(sham header.update)>}"
+        ::  ~&  >  "uqbar-indexer:  with header {<header.update>}"
+        ::  ~&  >  "uqbar-indexer:  with hash {<(sham header.update)>}"
         =/  new-slot=slot:zig  [header.update blk.update]
         =/  working-epoch=epoch:zig
           ?~  existing-epoch=(get:poc:zig epochs epoch-num)

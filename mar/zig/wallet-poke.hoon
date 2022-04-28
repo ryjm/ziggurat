@@ -18,6 +18,7 @@
           [%delete parse-delete]
           [%set-node parse-set]
           [%submit parse-submit]
+          [%submit-custom parse-custom]
       ==
     ++  parse-import
       (ot ~[[%mnemonic sa] [%password sa]])
@@ -31,6 +32,16 @@
       %-  ot
       :~  [%town ni]
           [%ship (se %p)]
+      ==
+    ++  parse-custom
+      %-  ot
+      :~  [%from (se %ux)]
+          [%to (se %ux)]
+          [%town ni]
+          [%gas (ot ~[[%rate ni] [%bud ni]])]
+          [%args (se %t)]
+          [%my-grains (ar (se %ux))]
+          [%cont-grains (ar (se %ux))]
       ==
     ++  parse-submit
       %-  ot

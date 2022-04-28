@@ -12,12 +12,7 @@
   ++  our-block
     |=  data=chunks
     ^-  (quip card epoch)
-    ::  TODO temporary: make a fake chunk if we have none
-    =?  data  ?=(~ data)
-      (malt ~[[777 [~ p=~ q=~]]])
     ~&  >>  "chunks in block: {<~(key by data)>}"
-    :: TODO: check time and if necessary skip our own block
-    :: (lth now.bowl (deadline:epo start-time.cur slot-num))
     =/  [last-num=@ud last-slot=(unit slot)]
       (get-last-slot slots.cur)
     ?<  ?&((gth (lent (tap:sot slots.cur)) 1) ?=(~ last-slot))
@@ -25,6 +20,12 @@
     ~|  "we must be a validator in this epoch and it must be our turn"
     =/  our-num=@ud  (need (find our^~ order.cur))
     ?>  =(our-num next-num)
+    ::  check time and if necessary skip our own block
+    ?:  ?|  (gth now (deadline:epo start-time.cur our-num))
+            ?=(~ data)
+        ==
+      ~&  >>  "skipping our own block"
+      skip-block
     ::  TODO: use full sha-256 instead of half sha-256 (sham)
     ::
     =/  prev-hed-hash
