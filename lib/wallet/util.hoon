@@ -10,9 +10,10 @@
   (shax (jam [from.p.egg sig.p.egg town-id.p.egg]))
 ::
 ++  tx-update-card
-  |=  [status=@ud hash=@ux]
+  |=  [=egg:smart args=(unit supported-args)]
   ^-  card
-  [%give %fact ~[/tx-updates] %zig-wallet-update !>([%tx-status status hash])]
+  =+  [%tx-status (hash-egg egg) egg args]
+  [%give %fact ~[/tx-updates] %zig-wallet-update !>(-)]
 ::
 ++  create-id-subscriptions
   |=  [keys=(set @ux) indexer=ship]

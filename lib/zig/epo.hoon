@@ -37,6 +37,7 @@
     =/  =slot
       =/  hed=block-header  [next-num prev-hed-hash data-hash]
       [hed `[(sign:sig our now (sham hed)) data]]
+    ~&  "producing a block at {<now>}"
     :_  cur(slots (put:sot slots.cur next-num slot))
     %+  weld
       (give-on-updates [%new-block num.cur p.slot (need q.slot)] q.slot)

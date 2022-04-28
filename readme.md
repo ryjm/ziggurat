@@ -42,6 +42,9 @@ links to other desks, such as base-dev and garden-dev.
 2. Give your validator agent a pubkey to match the data in the wallet:
 ```
 :ziggurat &zig-chain-poke [%set-addr 0x3.e87b.0cbb.431d.0e8a.2ee2.ac42.d9da.cab8.063d.6bb6.2ff9.b2aa.e1b9.0f56.9c3f.3423]
+
+0xdead  0x2.eaea.cffd.2bbe.e0c0.02dd.b5f8.dd04.e63f.297f.14cf.d809.b616.2137.126c.da9e.8d3d
+0xcafe  0x2.4a1c.4643.b429.dc12.6f3b.03f3.f519.aebb.5439.08d3.e0bf.8fc3.cb52.b92c.9802.636e
 ```
 *This is one of 3 addresses with zigs already added, and corresponds to the seed `0xbeef`. to test with more, find matching pubkey in wallet*
 
@@ -51,16 +54,11 @@ links to other desks, such as base-dev and garden-dev.
 ```
 where the argument `[our %ziggurat]` is a dock pointing to the ship running the `%ziggurat` agent to receive block updates from.
 
-4. Set the wallet to receive state updates from your ship's indexer:
-```
-:wallet &zig-wallet-poke [%set-indexer our]
-```
-
-5. Start up a new main chain:
+4. Start up a new main chain:
 ```
 :ziggurat|start-testnet now
 ```
-(to add other ships, follow above instructions with 2nd and 3rd seed/pubkey combos, but use poke `:ziggurat &zig-chain-poke [%start %validator ~ validators=(silt ~[~zod ~nec]) [~ ~]]`) here, where `~[~zod ~nec]` is the current set of validators including the one being added)
+(to add other ships, follow above instructions with 2nd and 3rd seed/pubkey combos, but use poke `:ziggurat &zig-chain-poke [%start %validator ~ validators=(silt ~[~zod ~nec]) [~ ~]]`) here, where `~[~zod ~nec]` is some set of ships validating (you only need one that's not you)
 
 6. Start up a town that has the token contract deployed. You have to do step 6 first, otherwise the sequencer agent won't have the data from the main chain it needs to set up a transaction.
 ```

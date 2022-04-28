@@ -19,7 +19,7 @@
       ::  associated seed: 0xbeef
       pubkey-1
       town-id
-      [%& `@`'zigs' [300.000 ~ `@ux`'zigs-metadata']]
+      [%& `@`'zigs' [10.321.055.000.000.000.000 ~ `@ux`'zigs-metadata']]
   ==
 =/  dead-zigs-grain  ::  ~bus
   ^-  grain:smart
@@ -28,7 +28,7 @@
       ::  associated seed: 0xdead
       pubkey-2
       town-id
-      [%& `@`'zigs' [200.000 ~ `@ux`'zigs-metadata']]
+      [%& `@`'zigs' [50.000.000.000.000.000.000 ~ `@ux`'zigs-metadata']]
   ==
 =/  cafe-zigs-grain  ::  ~nec
   ^-  grain:smart
@@ -37,7 +37,7 @@
       ::  associated seed: 0xcafe
       pubkey-3
       town-id
-      [%& `@`'zigs' [100.000 ~ `@ux`'zigs-metadata']]
+      [%& `@`'zigs' [50.000.000.000.000.000.000 ~ `@ux`'zigs-metadata']]
   ==
 =/  zigs-metadata-grain
   ^-  grain:smart

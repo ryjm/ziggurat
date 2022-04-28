@@ -57,7 +57,7 @@
 ::    ##  Pokes
 ::
 ::    %set-chain-source:
-::      Set source and subscribe to it for new blocks.
+::      Subscribe to source for new blocks.
 ::
 ::    %consume-indexer-update:
 ::      Add a block or chunk to the index.
@@ -81,8 +81,7 @@
   ==
 ::
 +$  base-state-0
-  $:  chain-source=(unit dock)
-      =epochs:zig
+  $:  =epochs:zig
   ==
 +$  indices-0
   $:  block-index=(jug @ux block-location:uqbar-indexer)
@@ -280,8 +279,10 @@
       ::
           %kick
         :_  this
-        =/  wcs=(unit card)  (watch-chain-source:uic ~)
-        ?~  wcs  ~  ~[u.wcs]
+        =/  old-source=(unit dock)
+          (get-wex-dock-by-wire:uic wire)
+        ?~  old-source  ~
+        ~[(watch-chain-source:uic u.old-source)]
       ::
           %fact
         =^  cards  state
@@ -392,11 +393,7 @@
                     path-prefix=path
                 ==
             ^-  (list card)
-            ::  NOTE: Nick, I added this to handle /id/[@ux] subscriptions
-            ::  which weren't getting stuff since this was looking for /from and /to subs
-            =/  path-label=@tas
-              ?:  ?=(?(%from %to) query-type)  %id  query-type
-            %+  murn  ~(tap in (~(get ju sub-paths) path-label))
+            %+  murn  ~(tap in (~(get ju sub-paths) query-type))
             |=  id=@u
             =/  payload=?(@u [@ud @u])
               ?~  payload-prefix  id  [u.payload-prefix id]
@@ -427,28 +424,52 @@
 |_  =bowl:gall
 +*  io   ~(. agentio bowl)
 ::
+++  chain-update-wire
+  ^-  wire
+  /chain-update
+::
 ++  watch-chain-source
-  |=  d=(unit dock)
-  ^-  (unit card)
-  =/  source=(unit dock)  (mate d chain-source)
-  ?~  source  ~
-  :-  ~
+  |=  d=dock
+  ^-  card
   %+  %~  watch  pass:io
   :: TODO: improve (maybe metadata from zig and chunks from seq?
-  /chain-update  u.source  /indexer/updates
+  chain-update-wire  d  /indexer/updates
+::
+++  get-wex-dock-by-wire
+  |=  w=wire
+  ^-  (unit dock)
+  ?:  =(0 ~(wyt by wex.bowl))  ~
+  =/  wexs=(list [w=wire s=ship t=term])
+    ~(tap in ~(key by wex.bowl))
+  |-
+  ?~  wexs  ~
+  =*  wex  i.wexs
+  ?.  =(w w.wex)
+    $(wexs t.wexs)
+  :-  ~
+  [s.wex t.wex]
+::
 ++  leave-chain-source
+  ::  will only leave first chain-update wire;
+  ::  should only ever be subscribed to one;
+  ::  should we generalize anyways just in case?
   ^-  (unit card)
-  ?~  chain-source  ~
+  =/  old-source=(unit dock)
+    (get-wex-dock-by-wire chain-update-wire)
+  ?~  old-source  ~
   :-  ~
   %-  %~  leave  pass:io
-  /chain-update  u.chain-source
+  chain-update-wire  u.old-source
 ::
 ++  set-chain-source  :: TODO: is this properly generalized?
   |=  d=dock
   ^-  (quip card _state)
-  :_  state(chain-source `d)
-  ?~  watch=(watch-chain-source `d)  ~
-  ~[u.watch]
+  =/  watch-card=card  (watch-chain-source d)
+  :_  state
+  =/  leave-card=(unit card)  leave-chain-source
+  ?~  leave-card
+    ~[watch-card]
+  ~[u.leave-card watch-card]
 ::
 ++  get-slot
   |=  [epoch-num=@ud block-num=@ud]

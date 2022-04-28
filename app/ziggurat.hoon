@@ -204,12 +204,12 @@
         (need (bind (pry:sot slots.cur) head))
       =/  prev-hash
         (got-hed-hash last-slot-num epochs cur)
-      ::  BIG change: reading validator set from capitol contract
-      ::
+      ?~  found=(~(get by p.globe.state) `@ux`'ziggurat')
+        ::  haven't received global state yet, sit tight
+        `state
       =/  new-validator-set
-        =/  found  (~(got by p.globe.state) `@ux`'ziggurat')
-        ?.  ?=(%& -.germ.found)  !!
-        ~(key by (hole:smart ,(map ship [@ux @p life]) data.p.germ.found))
+        ?.  ?=(%& -.germ.u.found)  !!
+        ~(key by (hole:smart ,(map ship [@ux @p life]) data.p.germ.u.found))
       ~&  >  "new validator set: {<new-validator-set>}"
       ::  if we're no longer in validator set, leave the chain
       ?.  (~(has in new-validator-set) our.bowl)
@@ -391,6 +391,7 @@
       (got-hed-hash next-slot-num epochs cur)
     ?+    -.update  !!
         %new-block
+      ~&  "received a block from {<src.bowl>} at {<now.bowl>}"
       ~|  "new blocks cannot be applied to past epochs"
       ?<  (lth epoch-num.update num.cur)
       ?:  (gth epoch-num.update num.cur)
@@ -401,7 +402,6 @@
             ::  in a 2-ship testnet, this results in empty validator set -> crash
             ~(tap in (~(del in (~(del in (silt order.cur)) our.bowl)) src.bowl))
           ~(tap in (~(del in (silt order.cur)) our.bowl))
-        ~&  >>  validators
         ?>  ?=(^ validators)
         :_  state
         (start-epoch-catchup i.validators num.cur)^~
@@ -505,8 +505,9 @@
       ::  we are responsible for producing a block in this slot
       ?.  =(our.bowl (rear order.cur))
         ::  normal block
+        =+  (~(put by chunks.state) relay-town-id [~ globe.state])
         =^  cards  cur
-          (~(our-block epo cur prev-hash [our now src]:bowl) chunks.state)
+          (~(our-block epo cur prev-hash [our now src]:bowl) -)
         [cards state(epochs (put:poc epochs num.cur cur), chunks ~)]
       ::  if this is the last block in the epoch,
       ::  perform global-level transactions
