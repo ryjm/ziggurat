@@ -47,13 +47,13 @@
       ==
     ++  parse-give
       %-  ot
-      :~  [%salt (se %u)]
+      :~  [%salt (se %ud)]
           [%to (se %ux)]
           [%amount ni]
       ==
     ++  parse-nft
       %-  ot
-      :~  [%salt (se %u)]
+      :~  [%salt (se %ud)]
           [%to (se %ux)]
           [%item-id ni]
       ==

@@ -178,7 +178,7 @@
             rate.gas.act
             bud.gas.act
             town.act
-            0
+            100
         ==
       =+  egg-hash=(hash-egg egg)
       =/  our-txs
@@ -257,7 +257,7 @@
       =/  =yolk:smart   [caller args.formatted our-grains.formatted cont-grains.formatted]
       =/  signer        (~(got by keys.state) from.act)
       =/  sig           (ecdsa-raw-sign:secp256k1:secp:crypto (sham (jam yolk)) signer)
-      =/  =egg:smart    [[caller sig to.act rate.gas.act bud.gas.act town.act 0] yolk]
+      =/  =egg:smart    [[caller sig to.act rate.gas.act bud.gas.act town.act 100] yolk]
       =+  egg-hash=(hash-egg egg)
       =/  our-txs
         ?~  o=(~(get by transaction-store) from.act)

@@ -62,7 +62,7 @@ where the argument `[our %ziggurat]` is a dock pointing to the ship running the 
 ```
 (to add other ships, follow above instructions with 2nd and 3rd seed/pubkey combos, but use poke `:ziggurat &zig-chain-poke [%start %validator ~ validators=(silt ~[~zod ~nec]) [~ ~]]`) here, where `~[~zod ~nec]` is the current set of validators including the one being added)
 
-7. Start up a town that has the token contract deployed. You have to do step 6 first, otherwise the sequencer agent won't have the data from the main chain it needs to set up a transaction.
+6. Start up a town that has the token contract deployed. You have to do step 6 first, otherwise the sequencer agent won't have the data from the main chain it needs to set up a transaction.
 ```
 :sequencer|init 1
 ```
@@ -86,7 +86,7 @@ where the argument `[our %ziggurat]` is a dock pointing to the ship running the 
 Wallet pokes available:
 (only those with JSON support shown)
 ```
-{populate: true}
+{populate: {seed: "0xbeef"}}
 
 {import: {mnemonic: "12-24 word phrase", password: "password"}}
 
