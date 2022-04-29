@@ -3,7 +3,6 @@
 ::  NFT standard. Provides abilities similar to ERC-721 tokens, also ability
 ::  to deploy and mint new sets of tokens.
 ::
-::  /+  *zig-sys-smart
 |_  =cart
 ++  write
   |=  inp=zygote
@@ -15,8 +14,7 @@
   +$  collection-metadata
     $:  name=@t
         symbol=@t
-        ::  WHOA!  GOTTA GET RID OF THIS! BRINGS WHOLE HOON INTO RICE!
-        item-mold=mold  ::  provide the shape of each NFT, traits, etc
+        attributes=(set @t)
         supply=@ud
         cap=(unit @ud)  ::  (~ if mintable is false)
         mintable=?      ::  automatically set to %.n if supply == cap
@@ -35,9 +33,9 @@
   ::  item id is # in collection (<=supply)
   +$  item  [id=@ud item-contents]  
   +$  item-contents
-    $:  data=*     ::  must fit item-mold in metadata
-        desc=tape  ::  is this needed?
-        uri=tape   ::  path?
+    $:  data=(set [@t @t])  ::  must fit attributes in metadata
+        desc=tape
+        uri=tape
         transferrable=?
     ==
   ::
@@ -57,7 +55,7 @@
             minters=(set id)
             name=@t
             symbol=@t
-            item-mold=mold
+            attributes=(set @t)
             cap=@ud
             mintable=?
     ==  ==
@@ -152,6 +150,7 @@
       ?>  &(mintable.meta ?=(^ cap.meta) ?=(^ minters.meta))
       ::  check if mint will surpass supply cap
       ?>  (gth u.cap.meta (add supply.meta ~(wyt in mints.args)))
+      ::  TODO validate attributes
       ::  cleared to execute!
       =/  next-item-id  supply.meta
       ::  for accounts which we know rice of, find in owns.cart
@@ -232,7 +231,7 @@
             ^-  collection-metadata
             :*  name.args
                 symbol.args
-                item-mold.args
+                attributes.args
                 supply=distribution-total
                 ?:(mintable.args `cap.args ~)
                 mintable.args

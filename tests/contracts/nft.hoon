@@ -13,7 +13,7 @@
           :+  %&  `@`'salt'
           :*  name='Simple NFT'
               symbol='SNFT'
-              item-mold=[hair=@t eyes=@t mouth=@t]
+              attributes=(silt ~['hair' 'eyes' 'mouth'])
               supply=3
               cap=~
               mintable=%.n
@@ -24,18 +24,18 @@
     ::
     +$  item  [id=@ud item-contents]  
     +$  item-contents
-      $:  data=*     ::  must fit item-mold in metadata
+      $:  data=(set [@t @t])
           desc=tape  ::  is this needed?
           uri=tape   ::  path?
           transferrable=?
       ==
     ::
     ++  item-1  ^-  item
-      [1 [hair='red' eyes='blue' mouth='smile'] "a smiling face" "ipfs://fake1" %.y]
+      [1 (silt ~[['hair' 'red'] ['eyes' 'blue'] ['mouth' 'smile']]) "a smiling face" "ipfs://fake1" %.y]
     ++  item-2  ^-  item
-      [2 [hair='brown' eyes='green' mouth='smile'] "a smiling face" "ipfs://fake2" %.y]
+      [2 (silt ~[['hair' 'brown'] ['eyes' 'green'] ['mouth' 'frown']]) "a frowny face" "ipfs://fake2" %.y]
     ++  item-3  ^-  item
-      [3 [hair='grey' eyes='brown' mouth='frown'] "a frowny face" "ipfs://fake3" %.n]
+      [3 (silt ~[['hair' 'grey'] ['eyes' 'black'] ['mouth' 'squiggle']]) "a weird face" "ipfs://fake3" %.n]
     ::
     ++  account-1  ^-  grain
       :*  0x1.beef

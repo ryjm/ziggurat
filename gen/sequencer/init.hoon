@@ -89,8 +89,7 @@
       :+  %&  `@`'nftsalt'
       :*  name='Monkey JPEGs'
           symbol='BADART'
-          ::  REMOVE
-          item-mold=[hair=@t eyes=@t mouth=@t]
+          attributes=(silt ~['hair' 'eyes' 'mouth'])
           supply=1
           cap=~
           mintable=%.n
@@ -99,7 +98,7 @@
           salt=`@`'nftsalt'
   ==  ==
 =/  item-1
-  [1 [hair='red' eyes='blue' mouth='smile'] "a smiling monkey" "ipfs://QmUbFVTm113tJEuJ4hZY2Hush4Urzx7PBVmQGjv1dXdSV9" %.y]
+  [1 (silt ~[['hair' 'red'] ['eyes' 'blue'] ['mouth' 'smile']]) "a smiling monkey" "ipfs://QmUbFVTm113tJEuJ4hZY2Hush4Urzx7PBVmQGjv1dXdSV9" %.y]
 =/  nft-acc-id  (fry-rice:smart pubkey-1 0xcafe.babe town-id `@`'nftsalt')
 =/  nft-acc-grain
   :*  nft-acc-id
@@ -127,12 +126,12 @@
     :~  [id.zigs-wheat-grain zigs-wheat-grain]
         [id.zigs-metadata-grain zigs-metadata-grain]
         [id.nft-wheat-grain nft-wheat-grain]
-        ::  [id.nft-metadata-grain nft-metadata-grain]
+        [id.nft-metadata-grain nft-metadata-grain]
         [id.publish-grain publish-grain]
         [zigs-1 beef-zigs-grain]
         [zigs-2 dead-zigs-grain]
         [zigs-3 cafe-zigs-grain]
-        ::  [nft-acc-id nft-acc-grain]
+        [nft-acc-id nft-acc-grain]
     ==
   (~(gas by:smart *(map:smart id:smart grain:smart)) grains)
 =/  fake-populace

@@ -34,6 +34,7 @@
             :-  (scot %ud id)
             %-  pairs
             :~  ['desc' (tape desc.item)]
+                ['attributes' (tape "TODO...")]
                 ['URI' (tape uri.item)]
             ==
         ==

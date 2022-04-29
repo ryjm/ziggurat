@@ -417,7 +417,7 @@
         ['symbol' (tape (trip symbol.d))]
         ?-  -.d
           %token  ['decimals' (numb decimals.d)]
-          %nft  ['traits' (tape "TODO...")]
+          %nft  ['attributes' (tape "TODO...")]
         ==
         ['supply' (numb supply.d)]
         ['cap' (numb (fall cap.d 0))]

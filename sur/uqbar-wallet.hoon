@@ -81,7 +81,7 @@
 +$  nft-metadata
   $:  name=@t
       symbol=@t
-      item-mold=mold
+      attributes=(set @t)
       supply=@ud
       cap=(unit @ud)
       mintable=?
@@ -104,7 +104,7 @@
   ==
 +$  item
   $:  id=@ud
-      data=*
+      data=(set [@t @t])
       desc=tape
       uri=tape
       transferrable=?
