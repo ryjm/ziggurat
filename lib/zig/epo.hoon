@@ -9,44 +9,44 @@
   ::
   ::  +our-block: produce a block during our slot
   ::
-  ::  TODO: we really can't ever crash in here. skip-block if we must.
   ++  our-block
     |=  data=chunks
     ^-  (quip card epoch)
     =/  [last-num=@ud last-slot=(unit slot)]
       (get-last-slot slots.cur)
-    ?<  ?&((gth (lent (tap:sot slots.cur)) 1) ?=(~ last-slot))
     =/  next-num  ?~(last-slot 0 +(last-num))
-    ~|  "we must be a validator in this epoch and it must be our turn"
-    =/  our-num=@ud  (need (find our^~ order.cur))
-    ?>  =(our-num next-num)
-    ::  check time and if necessary skip our own block
-    ?:  ?|  (gth now (deadline:epo start-time.cur our-num))
+    ?:  ?&(?=(^ (tap:sot slots.cur)) ?=(~ last-slot))
+    ::  ?:  ?&((gth (lent (tap:sot slots.cur)) 1) ?=(~ last-slot))
+      ~&  >>>  "%ziggurat: skipping own block, invalid slot configuration"
+      skip-block
+    ?~  our-num=(find our^~ order.cur)
+      ~&  >>>  "%ziggurat: skipping own block, we're not included in this epoch"
+      skip-block
+    ?.  =(u.our-num next-num)
+      ~&  >>>  "%ziggurat: skipping own block, it's not our turn"
+      skip-block
+    ?:  ?|  (gth now (deadline:epo start-time.cur u.our-num))
             ?=(~ data)
         ==
-      ~&  >>  "skipping our own block"
+      ~&  >>>  "%ziggurat: skipping own block, we're late or have no chunks to package"
       skip-block
     ::  TODO: use full sha-256 instead of half sha-256 (sham)
     ::
     =/  prev-hed-hash
       ?~  last-slot  prev-hash
       (sham p.u.last-slot)
-    ~|  "we must have at least one chunk to produce a block"
-    ?>  ?=(^ data)
     =/  data-hash  (sham data)
     =/  =slot
-      =/  hed=block-header  [next-num prev-hed-hash data-hash]
+      =+  hed=[next-num prev-hed-hash data-hash]
       [hed `[(sign:sig our now (sham hed)) data]]
     ~&  "producing a block size={<(met 3 (jam slot))>} at {<now>}"
     :_  cur(slots (put:sot slots.cur next-num slot))
     %+  weld
       (give-on-updates [%new-block num.cur p.slot (need q.slot)] q.slot)
-    =+  l=(lent order.cur)
-    ?.  =(l +(next-num))
-      (notify-sequencer (snag +(next-num) order.cur))^~
-    ::  start new epoch
-    ::
-    (poke-new-epoch our +(num.cur))^~
+    ::  if we're the final slot in epoch, trigger new one
+    ?:  =((lent order.cur) +(next-num))
+      (poke-new-epoch our +(num.cur))^~
+    (notify-sequencer (snag +(next-num) order.cur))^~
   ::
   ::  +skip-slot: occurs when someone misses their turn
   ::
@@ -73,43 +73,46 @@
     ^-  (quip card epoch)
     =/  [last-num=@ud last-slot=(unit slot)]
       (get-last-slot slots.cur)
-    ::~&  num.hed^[last-num last-slot]
-    ?<  ?&((gth (lent (tap:sot slots.cur)) 1) ?=(~ last-slot))
     =/  next-num  ?~(last-slot 0 +(last-num))
+    ?:  ?&(?=(^ (tap:sot slots.cur)) ?=(~ last-slot))
+    ::  ?:  ?&((gth (lent (tap:sot slots.cur)) 1) ?=(~ last-slot))
+      ~&  >>>  "%ziggurat: ignoring their block, invalid slot configuration"
+      skip-block
     =/  prev-hed-hash
       ?~  last-slot  prev-hash
       (sham p.u.last-slot)
-    ~|  "must not be submitted past the deadline!"
-    ?>  (lth now (deadline start-time.cur num.hed))
-    ~|  "everyone must take their turn in order!"
-    ?>  =(next-num num.hed)
-    ~|  "each ship must take their own turn"
-    ?>  =(src (snag num.hed order.cur))
-    ~|  "transmitted blocks must have data or have been skipped!"
-    ?>  ?|  ?=(~ blk)
+    ?.  (lth now (deadline start-time.cur num.hed))
+      ~&  >>>  "%ziggurat: ignoring their block, it was submitted late"
+      skip-block
+    ?.  =(next-num num.hed)
+      ~&  >>>  "%ziggurat: ignoring their block, it was submitted out-of-order"
+      skip-block
+    ?.  =(src (snag num.hed order.cur))
+      ~&  >>>  "%ziggurat: ignoring their block, it was submitted out-of-turn"
+      skip-block
+    ?.  ?|  ?=(~ blk)
             ?=(^ q.u.blk)
         ==
-    ~|  "their data hash must be valid!"
-    =/  blk-hash  ?~(blk (sham ~) (sham q.u.blk))
-    ?>  ?&  =(blk-hash data-hash.hed)
+      ~&  >>>  "%ziggurat: ignoring their block, it was empty!"
+      skip-block
+    ?.  ?&  =(?~(blk (sham ~) (sham q.u.blk)) data-hash.hed)
             ?|(?=(~ blk) !=(data-hash.hed (sham ~)))
         ==
+      ~&  >>>  "%ziggurat: ignoring their block, header hash was invalid"
+      skip-block
     ::  TODO: replace with pubkeys in a helix
     ::~|  "their signature must be valid!"
     ::?>  ?~(blk %& (validate:sig our p.u.blk (sham hed) now))
-    ~|  "their previous header hash must equal our previous header hash!"
     ?.  =(prev-hed-hash prev-header-hash.hed)
-      :_  cur
-      (start-epoch-catchup src num.cur)^~
+      ~&  >>>  "%ziggurat: received mismatching header hash, starting epoch catchup"
+      [(start-epoch-catchup src num.cur)^~ cur]
     :_  cur(slots (put:sot slots.cur next-num [hed blk]))
-    %+  weld  
-      ::  send block header to others
+    %+  weld
+      ::  notify others we saw this block
       (give-on-updates [%saw-block num.cur hed] blk)
-    =+  l=(lent order.cur)
-    ?.  =(l +(next-num))
+    ::  if that was the final slot in epoch, trigger new one
+    ?.  =((lent order.cur) +(next-num))
       (notify-sequencer (snag +(next-num) order.cur))^~
-    ::  start new epoch
-    ::
     (poke-new-epoch our +(num.cur))^~
   ::
   ::  +see-block: occurs when we are notified that a validator
@@ -119,11 +122,13 @@
     |=  [epoch-num=@ud hed=block-header]
     ^-  (list card)
     ?:  (gth epoch-num num.cur)
+      ~&  >>>  "%ziggurat: saw block from future epoch, starting epoch catchup"
       (start-epoch-catchup src epoch-num)^~
     =/  slot=(unit slot)  (get:sot slots.cur num.hed)
     ?:  (lth epoch-num num.cur)  ~
     ?~  slot                     ~
     ?:  =(p.u.slot hed)          ~
+    ~&  >>>  "%ziggurat: saw mismatching header hash, starting epoch catchup"
     (start-epoch-catchup src num.cur)^~
   --
 --

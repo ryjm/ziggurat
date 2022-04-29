@@ -366,6 +366,7 @@
         %new-block
       ~&  "received a block from {<src.bowl>} at {<now.bowl>}"
       ~|  "new blocks cannot be applied to past epochs"
+      ::  getting crash here on catchup from downtime -- todo address this
       ?<  (lth epoch-num.update num.cur)
       ?:  (gth epoch-num.update num.cur)
         ::  the new block is from an epoch beyond what we have as current,

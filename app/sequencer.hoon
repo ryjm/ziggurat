@@ -205,7 +205,6 @@
       ?:  ?|  ?=(~ hall.this)
               !=(our.bowl (snag (mod slot-num (lent order.u.hall.this)) order.u.hall.this))
           ==
-        ~&  >>  "sequencer: ignoring request"
         `this
       ::  create and send our chunk to them
       ~&  >>  "sequencer: attempting to produce a chunk"
