@@ -142,33 +142,32 @@
       ::  joining the existing blockchain
       ::  give ourselves a dummy epoch, but immediately start
       ::  %epoch-catchup from one of the other known validators
-      ~&  >  "attempting to join main chain"
-      =/  dummy=^epochs
-        (gas:poc ~ [0 [0 *@da ~(tap in validators.act) ~]]^~)
-      =/  sig  (sign:zig-sig our.bowl now.bowl 'attestation')
-      :_  state(mode %validator, globe starting-state.act, epochs dummy)
+      ~&  >  "%ziggurat: attempting to join relay chain"
+      =+  sig=become-validator+(sign:zig-sig our.bowl now.bowl 'attestation')
+      =+  (gas:poc ~ [0 [0 *@da ~(tap in validators.act) ~]]^~)
+      :_  state(mode %validator, epochs -)
       ::  make tx to add ourselves, send to another validator
       %-  zing
       :~  (subscriptions-cleanup wex.bowl sup.bowl)
           (watch-updates validators.act)
-          ~[(start-epoch-catchup i.others 0)]
           :~  :*  %pass  /set-node
                   %agent  [our.bowl %wallet]
                   %poke  %zig-wallet-poke
                   !>([%set-node 0 i.others])
               ==
-              (poke-capitol our.bowl u.address.state [1 100.000] [%become-validator sig])
+              (start-epoch-catchup i.others 0)
+              (poke-capitol our.bowl u.address.state [1 100.000] sig)
           ==
       ==
     ::
         %stop
       ?>  =(src.bowl our.bowl)
       ?~  address.state
-        ~|("ziggurat requires an associated public key" !!)
-      =/  sig  (sign:zig-sig our.bowl now.bowl 'attestation')
+        ~|("%ziggurat: error: requires an associated public key" !!)
+      =+  stop-validating+(sign:zig-sig our.bowl now.bowl 'attestation')
       :_  state
       %+  snoc  (subscriptions-cleanup wex.bowl sup.bowl)
-      (poke-capitol our.bowl u.address.state [rate.gas.act bud.gas.act] [%stop-validating sig])
+      (poke-capitol our.bowl u.address.state [rate.gas.act bud.gas.act] -)
     ::
         %new-epoch
       ?>  =(src.bowl our.bowl)
@@ -179,56 +178,58 @@
         (got-hed-hash last-slot-num epochs cur)
       ?~  found=(~(get by p.globe.state) `@ux`'ziggurat')
         ::  haven't received global state yet, sit tight
+        ~&  >>>  "%ziggurat: waiting to receive relay state"
         `state
-      =/  new-validator-set
-        ?.  ?=(%& -.germ.u.found)  !!
+      =/  validator-set
+        ?>  ?=(%& -.germ.u.found)
         ~(key by (hole:smart ,(map ship [@ux @p life]) data.p.germ.u.found))
-      ~&  >  "new validator set: {<new-validator-set>}"
+      ~&  "%ziggurat: known validators: {<validator-set>}"
       ::  if we're no longer in validator set, leave the chain
-      ?.  (~(has in new-validator-set) our.bowl)
+      ?.  (~(has in validator-set) our.bowl)
         :-  (subscriptions-cleanup wex.bowl sup.bowl)
         state(mode %none, epochs ~, chunks ~, basket ~, globe [~ ~])
       =/  new-epoch=epoch
         :^    +(num.cur)
             (deadline start-time.cur (dec (lent order.cur)))
-          (shuffle new-validator-set (mug prev-hash))
+          (shuffle validator-set (sham prev-hash))
         ~
       =/  validators=(list ship)
-        ~(tap in (~(del in new-validator-set) our.bowl))
+        ~(tap in (~(del in validator-set) our.bowl))
       ?:  ?&  ?=(^ validators)
               %+  lth  start-time.new-epoch
               (sub now.bowl (mul +((lent order.new-epoch)) epoch-interval))
           ==
-        ::  there are other validators, and we're behind them, must catch up
+        ~&  >>>  "%ziggurat: attempting to catch up with known validators"
         :_  state
         (start-epoch-catchup i.validators num.cur)^~
       ::  either on-time to start epoch, or solo validator
-      ~&  num.new-epoch^(sham epochs)
+      ~&  new-epoch+num.new-epoch^(sham epochs)
       ::  set our timers for all the slots in this epoch,
       ::  subscribe to all the other validator ships,
       ::  and alert subscribing sequencers of the next block producer
       :_  state(epochs (put:poc epochs num.new-epoch new-epoch))
       =/  town-id  .^((unit @ud) %gx /(scot %p our.bowl)/sequencer/(scot %da now.bowl)/town-id/noun)
       %-  zing
-        :~  ?~  hall-card=(hall-update-card town-id)
-              ~[(notify-sequencer -.order.new-epoch)]
-            ~[u.hall-card (notify-sequencer -.order.new-epoch)]
-            (watch-updates (silt (murn order.new-epoch filter-by-wex)))
-            (new-epoch-timers new-epoch our.bowl)
-        ==
+      :~  ?~  hall-card=(hall-update-card town-id)
+            ~[(notify-sequencer -.order.new-epoch)]
+          ~[(notify-sequencer -.order.new-epoch) u.hall-card]
+          (watch-updates (silt (murn order.new-epoch filter-by-wex)))
+          (new-epoch-timers new-epoch our.bowl)
+      ==
     ::
         %receive-chunk
       ?>  (allowed-participant [src our now]:bowl)
       ~&  "ziggurat: received chunk {<town-id.act>} from {<src.bowl>}"
       ::  only accept chunks from sequencers in on-chain council
-      ~|  "error: ziggurat couldn't find hall on chain"
+      ~|  "ziggurat: error: couldn't find that town on chain"
       =/  found  (~(got by p.globe.state) `@ux`'world')
-      ?.  ?=(%& -.germ.found)                 !!
-      =/  world  (hole:smart ,(map @ud (map ship [@ux [@ux @p life]])) data.p.germ.found)
-      ?~  hall=(~(get by world) town-id.act)  !!
-      ~|  "only registered sequencers are allowed to submit a chunk!"
-      ?.  (~(has by u.hall) src.bowl)         !!
+      ?.  ?=(%& -.germ.found)             !!
+      =+  (hole:smart ,(map @ud (map ship [@ux [@ux @p life]])) data.p.germ.found)
+      ?~  hall=(~(get by -) town-id.act)  !!
+      ~|  "ziggurat: error: only registered sequencers are allowed to submit a chunk"
+      ?.  (~(has by u.hall) src.bowl)     !!
       =/  cur=epoch  +:(need (pry:poc epochs))
+      ~|  "ziggurat: rejecting chunk, we're not block producer"
       ?>  ?~  slot-num=(bind (pry:sot slots.cur) head)
             =(our.bowl -.order.cur)
           =(our.bowl (snag +(u.slot-num) order.cur))
@@ -238,17 +239,17 @@
   ++  poke-basket
     |=  act=weave-poke
     ^-  (quip card _state)
+    ~|  "ziggurat: rejected relay chain transaction"
+    ?>  (allowed-participant [src our now]:bowl)
+    =/  cur=epoch  +:(need (pry:poc epochs))
     ?-    -.act
         %forward
       ::  only accepts transactions from possible validators/sequencers
-      ~&  >  "received egg"
-      ?>  (allowed-participant our.bowl our.bowl now.bowl)
       =.  eggs.act  (filter eggs.act |=(=egg:smart =(relay-town-id town-id.p.egg)))
-      =/  cur=epoch  +:(need (pry:poc epochs))
-      =/  final-producer  (rear order.cur)  ::  TODO is this optimal? or -:(flop ..)?
-      ::  if there's a tx we sent ourselves, update our nonce
+      =+  final-producer=(rear order.cur)
       ?:  =(our.bowl final-producer)
         `state(basket (~(uni in basket) eggs.act))
+      ::  clear our basket and forward to final producer in epoch
       :_  state(basket ~)
       :_  ~
       :*  %pass  /basket-gossip
@@ -258,11 +259,9 @@
       ==
     ::
         %receive
-      ?>  (allowed-participant our.bowl our.bowl now.bowl)
-      =/  cur=epoch  +:(need (pry:poc epochs))
       ?~  (find [src.bowl]~ order.cur)
-        ~|("can only receive eggs from known validators" !!)
-      ~|  "rejected basket: we're not the final validator for this epoch"
+        ~|("ziggurat: can only receive eggs from known validators" !!)
+      ~|  "ziggurat: rejected basket: we're not the final validator for this epoch"
       ?>  =(our.bowl (rear order.cur))
       `state(basket (~(uni in basket) eggs.act))
     ==
@@ -292,13 +291,11 @@
     ^-  (unit card)
     ?~  town-id  ~
     ::  grab on-chain data for that hall in this epoch
-    ?~  found=(~(get by p.globe.state) `@ux`'world')      ~
-    ?.  ?=(%& -.germ.u.found)                             ~
-    =/  world  (hole:smart ,(map @ud (map ship [@ux [@ux @p life]])) data.p.germ.u.found)
-    ?~  hall=(~(get by world) u.town-id)                  ~
-    :-  ~  :-  %give
-    :^  %fact  ~[/sequencer/updates]
-        %sequencer-update  !>([%new-hall u.hall])
+    ?~  found=(~(get by p.globe.state) `@ux`'world')  ~
+    ?.  ?=(%& -.germ.u.found)                         ~
+    =+  (hole:smart ,(map @ud (map ship [@ux [@ux @p life]])) data.p.germ.u.found)
+    ?~  hall=(~(get by -) u.town-id)                  ~
+    `[%give %fact ~[/sequencer/updates] %sequencer-update !>([%new-hall u.hall])]
   --
 ::
 ++  on-agent
@@ -309,8 +306,7 @@
       [%validator ?([%epoch-catchup @ @ ~] [%updates @ ~])]
     ~|  "can only receive validator updates when we are a validator!"
     ?>  =(mode %validator)
-    =*  kind  i.t.wire
-    ?-    kind
+    ?-    i.t.wire
         %updates
       ?<  ?=(%poke-ack -.sign)
       ?:  ?=(%watch-ack -.sign)
@@ -334,12 +330,11 @@
         ?.  ?=(^ p.sign)    `this
         =/  cur=epoch  +:(need (pry:poc epochs))
         =/  validators=(list ship)
-          ?:  (gth 2 (lent order.cur))
-            ::  in a 2-ship testnet, this results in empty validator set -> crash
-            ~(tap in (~(del in (~(del in (silt order.cur)) our.bowl)) src.bowl))
-          ~(tap in (~(del in (silt order.cur)) our.bowl))
-        ?>  ?=(^ validators)
+          ?:  =(2 (lent order.cur))
+            ~(tap in (~(del in (silt order.cur)) our.bowl))
+          ~(tap in (~(del in (~(del in (silt order.cur)) our.bowl)) src.bowl))
         `this
+        ~&  >>>  "ziggurat: hmmm... look at line 339"
         ::  :_  this
         ::  (start-epoch-catchup i.validators num.cur)^~
       ?>  ?=(%fact -.sign)
@@ -364,22 +359,25 @@
       (got-hed-hash next-slot-num epochs cur)
     ?+    -.update  !!
         %new-block
-      ~&  "received a block from {<src.bowl>} at {<now.bowl>}"
-      ~|  "new blocks cannot be applied to past epochs"
-      ::  getting crash here on catchup from downtime -- todo address this
-      ?<  (lth epoch-num.update num.cur)
+      ~&  "received a block from {<src.bowl>}"
+      ?:  (lth epoch-num.update num.cur)
+        ~&  >>>  "%ziggurat: ignoring an old block from a prior epoch"
+        `state
       ?:  (gth epoch-num.update num.cur)
         ::  the new block is from an epoch beyond what we have as current,
         ::  determine who and whether to try and catch up
         =/  validators=(list ship)
-          ?.  (gth 2 (lent order.cur))
-            ::  in a 2-ship testnet, this results in empty validator set -> crash
-            ~(tap in (~(del in (~(del in (silt order.cur)) our.bowl)) src.bowl))
-          ~(tap in (~(del in (silt order.cur)) our.bowl))
-        ?>  ?=(^ validators)
+          ?:  =(2 (lent order.cur))
+            ~(tap in (~(del in (silt order.cur)) our.bowl))
+          ~(tap in (~(del in (~(del in (silt order.cur)) our.bowl)) src.bowl))
+        ?.  ?=(^ validators)
+          ::  if we believe we're the only validator, just ignore old block
+          `state
+        ::  otherwise try to catch up
         :_  state
         (start-epoch-catchup i.validators num.cur)^~
-      ::  incorporate new-block into our epoch
+      ::  incorporate block into our epoch
+      ::
       =^  cards  cur
         %-  ~(their-block epo cur prev-hash [our now src]:bowl)
         [header `block]:update
@@ -401,13 +399,13 @@
   ++  epoch-catchup
     |=  =update
     ^-  (quip card _state)
-    ~|  "must be an %epoch-catchup update"
     ?>  ?=(%epochs-catchup -.update)
-    ~&  catching-up-to+src.bowl
+    ~&  >>>  "%ziggurat: catching up to {<src.bowl>}"
     =/  a=(list (pair @ud epoch))  (bap:poc epochs.update)
     =/  b=(list (pair @ud epoch))  (bap:poc epochs)
     ?~  epochs.update  `state
     ?~  epochs
+      ~|  "invalid history"
       ?>  (validate-history our.bowl epochs.update)
       `state(epochs epochs.update)
     ~|  "invalid history"
@@ -442,11 +440,9 @@
   |^  ^-  (quip card _this)
   ?+    wire  (on-arvo:def wire sign-arvo)
       [%timers ?([%slot @ @ ~] [%epoch-catchup @ @ ~])]
-    ~&  "ziggurat: slot timer popped @ {<now.bowl>}"
     ~|  "ziggurat: error: these timers are only relevant for validators!"
     ?>  =(%validator mode)
-    =*  kind  i.t.wire
-    ?:  ?=(%epoch-catchup kind)
+    ?:  ?=(%epoch-catchup i.t.wire)
       `this
     =/  epoch-num  (slav %ud i.t.t.wire)
     =/  slot-num  (slav %ud i.t.t.t.wire)
@@ -473,11 +469,12 @@
     ?.  =(next-slot-num slot-num)
       ::  timer does not match slot we view as currently open, ignore
       ?.  =(ship our.bowl)  `state
-      ~|("we can only produce the next block, not past or future blocks" !!)
+      ~|("%ziggurat: error: we can only produce the next block, not past or future blocks" !!)
     =/  prev-hash
       (got-hed-hash slot-num epochs cur)
     ?:  =(ship our.bowl)
       ::  we are responsible for producing a block in this slot
+      ::
       ?.  =(our.bowl (rear order.cur))
         ::  normal block
         =+  (~(put by chunks.state) relay-town-id [~ globe.state])
@@ -486,21 +483,20 @@
         [cards state(epochs (put:poc epochs num.cur cur), chunks ~)]
       ::  if this is the last block in the epoch,
       ::  perform global-level transactions
-      ::  insert transaction to advance
-      =+  /(scot %p our.bowl)/wallet/(scot %da now.bowl)/account/(scot %ux (need address.state))/(scot %ud relay-town-id)/noun
-      =+  .^(account:smart %gx -)
+      =+  .^  account:smart  %gx
+              /(scot %p our.bowl)/wallet/(scot %da now.bowl)
+              /account/(scot %ux (need address.state))/(scot %ud relay-town-id)/noun
+          ==
       =/  globe-chunk
-        %+  ~(mill-all mil - relay-town-id 0 now.bowl)
-          globe.state
-        ~(tap in basket.state)
-      =:  globe.state   +.globe-chunk
-          basket.state  ~
+        (~(mill-all mil - relay-town-id 0 now.bowl) globe.state ~(tap in basket.state))
+      =:  basket.state  ~
+          globe.state   +.globe-chunk
           chunks.state  (~(put by chunks.state) relay-town-id globe-chunk)
       ==
       =^  cards  cur
         (~(our-block epo cur prev-hash [our now src]:bowl) chunks.state)
       [cards state(epochs (put:poc epochs num.cur cur), chunks ~)]
-    ::  someone else is responsible for producing this block,
+    ::  someone else was responsible for producing this block,
     ::  but they have not done so
     =^  cards  cur
       ~(skip-block epo cur prev-hash [our now src]:bowl)
