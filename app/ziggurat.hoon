@@ -18,10 +18,10 @@
       ::  possibly we can show that no logic can result in unwanted secret
       ::  manipulation
       =basket           ::  accept town mgmt txs from stars
-      globe=town:smart  ::  store town hall info; update once per epoch
+      globe=town:smart  ::  store town hall info; update end of each epoch
   ==
 +$  inflated-state-0  [state-0 =mil]
-+$  mil  $_  ~(mill mill 0) 
++$  mil  $_  ~(mill mill 0)
 --
 ::
 =|  inflated-state-0
@@ -34,60 +34,52 @@
 +*  this  .
     def   ~(. (default-agent this %|) bowl)
 ::
-++  on-init  `this(state [[%0 %none ~ ~ ~ ~ [~ ~]] ~(mill mill +:(cue q.q.smart-lib))])
+++  on-init
+  `this(state [[%0 %none ~ ~ ~ ~ [~ ~]] ~(mill mill +:(cue q.q.smart-lib))])
 ::
 ++  on-save  !>(-.state)
 ++  on-load
   |=  =old=vase
   ^-  (quip card _this)
-  =/  old-state  !<(state-0 old-vase)
-  =/  mil   ~(mill mill +:(cue q.q.smart-lib))
-  `this(state [old-state mil])
+  =+  ~(mill mill +:(cue q.q.smart-lib))
+  `this(state [!<(state-0 old-vase) -])
 ::
 ++  on-watch
   |=  =path
   ^-  (quip card _this)
-  ?+    path  !!
+  ?+    path  ~|("%ziggurat: error: got erroneous %watch" !!)
       [%validator ?([%epoch-catchup @ ~] [%updates ~])]
-    ?:  =(mode %none)
-      `this
+    ?:  =(mode %none)  ~|("%ziggurat: error: got %watch when not active" !!)
+    ~|  "%ziggurat: error: only stars can listen to block production!"
     ?>  (allowed-participant [src our now]:bowl)
-    ::  ~|  "only validators can listen to block production!"
-    ::  =/  validator-set
-    ::      =/  found  (~(got by p.globe.state) `@ux`'ziggurat')
-    ::      ?.  ?=(%& -.germ.found)  !!
-    ::      ~(key by (hole:smart ,(map ship [@ux @p life]) data.p.germ.found))
-    ::  ?>  (~(has in validator-set) src.bowl)
-    =*  kind  i.t.path
-    ?-    kind
+    ?-    i.t.path
         %updates
       ::  do nothing here, but send all new blocks and epochs on this path
       `this
     ::
         %epoch-catchup
-      ~|  "we must be a validator to be listened to on this path!"
+      ~|  "%ziggurat: error: we must be a validator to be listened to on this path"
       ?>  =(mode %validator)
       ::  TODO: figure out whether to use this number or not
-      ::=/  start=(unit @ud)
+      ::  =/  start=(unit @ud)
       ::  =-  ?:(=(- 0) ~ `(dec -))
       ::  (slav %ud i.t.t.path)
-      ~&  >  "got a watch on %epoch-catchup, sharing epochs"
+      ~&  "%ziggurat: got a watch on %epoch-catchup, sharing epochs"
       :_  this
-      :+  =-  [%give %fact ~ %zig-update !>(-)]
-          ^-  update
-          [%epochs-catchup epochs]
+      :+  [%give %fact ~ %zig-update !>([%epochs-catchup epochs])] 
         [%give %kick ~ ~]
       ~
     ==
   ::
       [%sequencer %updates ~]
+    ~|  "%ziggurat: error: only {<our.bowl>} can listen here"
     ?>  =(src.bowl our.bowl)
     ::  send next-producer on this path for our sequencer agent
     `this
   ::
       [%indexer %updates ~]
-    ~|  "comets and moons may not be fishermen, tiny dos protection"
-    ?>  (allowed-participant [src our now]:bowl)
+    ::  ~|  "comets and moons may not be indexers, tiny dos protection"
+    ::  ?>  (lte (met 3 src.bowl) 4)
     ::  do nothing here, but send all new blocks and epochs on this path
     `this
   ==
@@ -96,7 +88,7 @@
   |=  [=mark =vase]
   ^-  (quip card _this)
   |^
-  ?+    mark  !!
+  ?+    mark  ~|("%ziggurat: error: got erroneous %poke" !!)
       %zig-chain-poke
     =^  cards  state
       (poke-chain !<(chain-poke vase))
@@ -108,8 +100,9 @@
     [cards this]
     ::
       %noun
-    ::  TODO this poke should be gated by something, right?
+    ~|  "%ziggurat: error: {<src.bowl>} not welcome here"
     ?>  (allowed-participant [src our now]:bowl)
+    ~|  "%ziggurat: error: invalid history"
     ?>  (validate-history our.bowl epochs)
     `this
   ==
@@ -164,17 +157,8 @@
                   %poke  %zig-wallet-poke
                   !>([%set-node 0 i.others])
               ==
-              :*  %pass  /submit-tx
-                  %agent  [our.bowl %wallet]
-                  %poke  %zig-wallet-poke
-                  !>  :-  %submit
-                      :*  u.address.state
-                          `@ux`'capitol'
-                          relay-town-id  ::  0
-                          [1 10.000]  ::  TODO let poke set gas rate
-                          [%become-validator sig]
-                      ==
-          ==  ==
+              (poke-capitol our.bowl u.address.state [1 100.000] [%become-validator sig])
+          ==
       ==
     ::
         %stop
@@ -184,17 +168,7 @@
       =/  sig  (sign:zig-sig our.bowl now.bowl 'attestation')
       :_  state
       %+  snoc  (subscriptions-cleanup wex.bowl sup.bowl)
-      :*  %pass  /submit-tx
-          %agent  [our.bowl %wallet]
-          %poke  %zig-wallet-poke
-          !>  :-  %submit
-              :*  u.address.state
-                  `@ux`'capitol'
-                  relay-town-id  ::  0
-                  [1 10.000]  ::  TODO let poke set gas rate
-                  [%stop-validating sig]
-              ==
-      ==
+      (poke-capitol our.bowl u.address.state [rate.gas.act bud.gas.act] [%stop-validating sig])
     ::
         %new-epoch
       ?>  =(src.bowl our.bowl)
@@ -271,14 +245,14 @@
       ?>  (allowed-participant our.bowl our.bowl now.bowl)
       =.  eggs.act  (filter eggs.act |=(=egg:smart =(relay-town-id town-id.p.egg)))
       =/  cur=epoch  +:(need (pry:poc epochs))
-      =/  last-producer  (rear order.cur)  ::  TODO is this optimal? or -:(flop ..)?
+      =/  final-producer  (rear order.cur)  ::  TODO is this optimal? or -:(flop ..)?
       ::  if there's a tx we sent ourselves, update our nonce
-      ?:  =(our.bowl last-producer)
+      ?:  =(our.bowl final-producer)
         `state(basket (~(uni in basket) eggs.act))
       :_  state(basket ~)
       :_  ~
       :*  %pass  /basket-gossip
-          %agent  [last-producer %ziggurat]
+          %agent  [final-producer %ziggurat]
           %poke  %zig-weave-poke
           !>([%receive (~(uni in eggs.act) basket.state)])
       ==
@@ -288,7 +262,7 @@
       =/  cur=epoch  +:(need (pry:poc epochs))
       ?~  (find [src.bowl]~ order.cur)
         ~|("can only receive eggs from known validators" !!)
-      ~|  "rejected basket: we're not the last validator"
+      ~|  "rejected basket: we're not the final validator for this epoch"
       ?>  =(our.bowl (rear order.cur))
       `state(basket (~(uni in basket) eggs.act))
     ==
@@ -536,7 +510,6 @@
 ++  on-peek
   |=  =path
   ^-  (unit (unit cage))
-  ::
   ::  scries for sequencer agent
   ::
   ?.  =(%x -.path)  ~
@@ -554,7 +527,6 @@
       [%slot ~]
     =/  cur=epoch  +:(need (pry:poc epochs))
     ``noun+!>(`@ud`?~(p=(bind (pry:sot slots.cur) head) 0 +(u.p)))
-  ::
   ::  scries for contracts
   ::
       [%rice @ ~]
@@ -566,36 +538,17 @@
     ``noun+!>(``rice:smart`p.germ.u.res)
   ::
       [%wheat @ @ta ^]
-    ::  call read arm of contract
-    =/  id  (slav %ux i.t.t.path)
-    =/  arg=^path  [i.t.t.t.path ~]
-    =/  contract-rice=(list @ux)
-      %+  turn  t.t.t.t.path
-      |=(addr=@ (slav %ux addr))
-    ?~  res=(~(get by p.globe.state) id)  ``noun+!>(~)
-    ?.  ?=(%| -.germ.u.res)               ``noun+!>(~)
-    ?~  cont.p.germ.u.res                 ``noun+!>(~)
-    =/  owns
-      %-  ~(gas by *(map id:smart grain:smart))
-      %+  murn  contract-rice
-      |=  find=id:smart
-      ?~  found=(~(get by p.globe.state) find)  ~
-      ?.  ?=(%& -.germ.u.found)                 ~
-      ?.  =(lord.u.found id)                    ~
-      `[find u.res]
-    ::  this isn't an ideal method but okay for now
-    ::  goal is to return ~ if some rice weren't found
-    ?.  =(~(wyt by owns) (lent contract-rice))
-      ``noun+!>(~)
-    =/  cont  (hole:smart contract:smart u.cont.p.germ.u.res)
-    =/  cart  [~ id 0 relay-town-id owns] ::  TODO blocknum
-    ``noun+!>(`(~(read cont cart) path))
+    (read-contract path 0 relay-town-id p.globe.state)
   ::
       [%sizeof @ ~]
     ::  give size of item in global granary
     =/  id  (slav %ux i.t.t.path)
     ?~  res=(~(get by p.globe.state) id)  ``noun+!>(~)
     ``noun+!>(`(met 3 (jam res)))
+  ::
+      [%chain-size ~]
+    ::  give size of full chain state
+    ``noun+!>((met 3 (jam epochs.state)))
   ==
 ::
 ++  on-leave  on-leave:def

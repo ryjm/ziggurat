@@ -32,21 +32,20 @@
     def   ~(. (default-agent this %|) bowl)
 ::
 ++  on-init
-  `this(state [[%0 ~ [~ ~] ~ ~] ~(mill mill +:(cue q.q.smart-lib))])
+  :-  ~[(sequencer-sub-card our.bowl)]
+  this(state [[%0 ~ [~ ~] ~ ~] ~(mill mill +:(cue q.q.smart-lib))])
 ::
 ++  on-save  !>(-.state)
 ++  on-load
   |=  =old=vase
   ^-  (quip card _this)
-  =/  old-state  !<(state-0 old-vase)
   ::  on-load: pre-cue our compiled smart contract library
   ::  (not yet able to use, but will switch to this)
-  =/  mil   ~(mill mill +:(cue q.q.smart-lib))
-  :_  this(state [old-state mil])
+  =+  ~(mill mill +:(cue q.q.smart-lib))
+  :_  this(state [!<(state-0 old-vase) -])
   ::  connect to our %ziggurat agent
-  ?.  (~(has by wex.bowl) [/sequencer/updates our.bowl %ziggurat])
-    ~[(sequencer-sub-card our.bowl)]
-  ~
+  ?:  (~(has by wex.bowl) [/sequencer/updates our.bowl %ziggurat])  ~
+  ~[(sequencer-sub-card our.bowl)]
 ::
 ++  on-watch
   |=  =path
@@ -120,13 +119,19 @@
       ?^  hall.state  ~|("can't init a town, already active in one" !!)
       =+  [%init sig town-id.act]
       :_  state(town ?~(starting-state.act [~ ~] u.starting-state.act), town-id `town-id.act)
-      ~[(poke-capitol our.bowl u.our-address [rate.gas.act bud.gas.act] -)]
+      :-  (poke-capitol our.bowl u.our-address [rate.gas.act bud.gas.act] -)
+      ?.  (~(has by wex.bowl) [/sequencer/updates our.bowl %ziggurat])
+        ~[(sequencer-sub-card our.bowl)]
+      ~
     ::
         %join
       ?^  hall.state  ~|("can't join a town, already active in one" !!)
       :_  state(town-id `town-id.act)
       =+  [%join sig town-id.act]
-      ~[(poke-capitol our.bowl u.our-address [rate.gas.act bud.gas.act] -)]
+      :-  (poke-capitol our.bowl u.our-address [rate.gas.act bud.gas.act] -)
+      ?.  (~(has by wex.bowl) [/sequencer/updates our.bowl %ziggurat])
+        ~[(sequencer-sub-card our.bowl)]
+      ~
     ::
         %exit
       ::  submit tx indicating our absence. wait for ack to actually leave!
@@ -267,30 +272,7 @@
     ``noun+!>(``rice:smart`p.germ.u.res)
   ::
       [%wheat @ @ta ^]
-    ::  call read arm of contract
-    =/  id  (slav %ux i.t.t.path)
-    =/  arg=^path  [i.t.t.t.path ~]
-    =/  contract-rice=(list @ux)
-      %+  turn  t.t.t.t.path
-      |=(addr=@ (slav %ux addr))
-    ?~  res=(~(get by p.town.state) id)  ``noun+!>(~)
-    ?.  ?=(%| -.germ.u.res)              ``noun+!>(~)
-    ?~  cont.p.germ.u.res                ``noun+!>(~)
-    =/  owns
-      %-  ~(gas by *(map id:smart grain:smart))
-      %+  murn  contract-rice
-      |=  find=id:smart
-      ?~  found=(~(get by p.town.state) find)  ~
-      ?.  ?=(%& -.germ.u.found)                ~
-      ?.  =(lord.u.found id)                   ~
-      `[find u.res]
-    ::  this isn't an ideal method but okay for now
-    ::  goal is to return ~ if some rice weren't found
-    ?.  =(~(wyt by owns) (lent contract-rice))
-      ``noun+!>(~)
-    =/  cont  (hole:smart contract:smart u.cont.p.germ.u.res)
-    =/  cart  [~ id 0 (need town-id.state) owns] ::  TODO blocknum
-    ``noun+!>(`(~(read cont cart) path))
+    (read-contract path 0 (need town-id.state) p.town.state)
   ::
       [%sizeof @ ~]
     ::  give size of item in town granary

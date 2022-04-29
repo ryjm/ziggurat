@@ -29,7 +29,6 @@
 +$  update
   $%  [%epochs-catchup =epochs]
       [%blocks-catchup epoch-num=@ud =slots]
-      ::  TODO data availability here?
       [%new-block epoch-num=@ud header=block-header =block]
       [%saw-block epoch-num=@ud header=block-header]
       [%indexer-block epoch-num=@ud header=block-header blk=(unit block)]
@@ -43,7 +42,7 @@
 +$  chain-poke
   $%  [%set-addr =id:smart]
       [%start mode=?(%indexer %validator) history=epochs validators=(set ship) starting-state=town:smart]
-      [%stop ~]
+      [%stop gas=[rate=@ud bud=@ud]]
       [%new-epoch ~]
       [%receive-chunk town-id=@ud =chunk]
   ==

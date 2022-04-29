@@ -79,12 +79,7 @@
       `@ux`'capitol'  ::  lord
       `@ux`'capitol'  ::  holder
       0               ::  town-id
-      :-  %|          ::  germ
-      ^-  wheat:smart
-      ::  =/  cont  (of-wain:format capitol-contract)
-      ::  :-  `(~(text-deploy deploy p.bek now) cont)
-      :-  `(cue q.q.capitol-contract)
-      ~
+      [%| `(cue q.q.capitol-contract) ~]
   ==
 =/  fake-granary
   ^-  granary:smart

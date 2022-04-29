@@ -9,10 +9,13 @@
   ::
   ::  +our-block: produce a block during our slot
   ::
+  ::  TODO: we really can't ever crash in here. skip-block if we must.
   ++  our-block
     |=  data=chunks
     ^-  (quip card epoch)
     ~&  >>  "chunks in block: {<~(key by data)>}"
+    ~&  >>  "0 size: {<(met 3 (jam (~(get by data) 0)))>}"
+    ~&  >>  "1 size: {<(met 3 (jam (~(get by data) 2)))>}"
     =/  [last-num=@ud last-slot=(unit slot)]
       (get-last-slot slots.cur)
     ?<  ?&((gth (lent (tap:sot slots.cur)) 1) ?=(~ last-slot))
@@ -38,6 +41,7 @@
       =/  hed=block-header  [next-num prev-hed-hash data-hash]
       [hed `[(sign:sig our now (sham hed)) data]]
     ~&  "producing a block at {<now>}"
+    ~&  "blocksize: {<(met 3 (jam slot))>}"
     :_  cur(slots (put:sot slots.cur next-num slot))
     %+  weld
       (give-on-updates [%new-block num.cur p.slot (need q.slot)] q.slot)

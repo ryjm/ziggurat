@@ -306,7 +306,7 @@
         ?~  blk.update  `state  :: TODO: log block header?
         =*  epoch-num   epoch-num.update
         =*  block-num   num.header.update
-        ~&  >  "uqbar-indexer: got block {<epoch-num>}:{<block-num>}"
+        ~&  >  "uqbar-indexer: got block {<epoch-num>}:{<block-num>}, update size {<(met 3 (jam update))>}"
         ::  ~&  >  "uqbar-indexer:  with header {<header.update>}"
         ::  ~&  >  "uqbar-indexer:  with hash {<(sham header.update)>}"
         =/  new-slot=slot:zig  [header.update blk.update]

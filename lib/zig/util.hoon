@@ -3,6 +3,34 @@
     +$  card  card:agent:gall
     --
 |%
+::
+::  +allowed-participant: grades whether a ship is permitted to participate
+::  in Uqbar validation. currently using hardcoded whitelist
+::  
+++  allowed-participant
+  |=  [=ship our=ship now=@da]
+  ^-  ?
+  (~(has in whitelist) ship)
+++  whitelist
+  ^-  (set ship)
+  %-  ~(gas in *(set ship))
+  :~  ::  fakeships for localhost testnets
+      ~zod  ~bus  ~nec
+      ::  hodzod's testing moons
+      ~ransur-rabtyr-dozzod-bacrys
+      ~todnub-figsym-dozzod-bacrys
+      ::  hosted's testing moons
+      ~ricmun-lasfer-hosted-fornet
+  ==
+::  Potential future gating function:
+::
+::  ?|  =(%king (clan:title ship))
+::      =(%czar (clan:title ship))  ::  this is really for fakezod testing
+::      ?&  =(%earl (clan:title ship))
+::          =(%king (clan:title (sein:title our now ship)))
+::      ==
+::  ==
+::
 ++  new-epoch-timers
   |=  [=epoch our=ship]
   ^-  (list card)
@@ -152,31 +180,31 @@
       !>([%submit address `@ux`'capitol' relay-town-id [rate bud] args])
   ==
 ::
-::  +allowed-participant: grades whether a ship is permitted to participate
-::  in Uqbar validation. currently using hardcoded whitelist
-::  
-::
-++  allowed-participant
-  |=  [=ship our=ship now=@da]
-  ^-  ?
-  (~(has in whitelist) ship)
-++  whitelist
-  ^-  (set ship)
-  %-  ~(gas in *(set ship))
-  :~  ::  fakeships for localhost testnets
-      ~zod  ~bus  ~nec
-      ::  hodzod's testing moons
-      ~ransur-rabtyr-dozzod-bacrys
-      ~todnub-figsym-dozzod-bacrys
-      ::  hosted's testing moons
-      ~ricmun-lasfer-hosted-fornet
-  ==
-  ::  Potential future gating function:
-  ::
-  ::  ?|  =(%king (clan:title ship))
-  ::      =(%czar (clan:title ship))  ::  this is really for fakezod testing
-  ::      ?&  =(%earl (clan:title ship))
-  ::          =(%king (clan:title (sein:title our now ship)))
-  ::      ==
-  ::  ==
+++  read-contract
+  |=  [=path blocknum=@ud town-id=@ud =granary:smart]
+  ^-  (unit (unit cage))
+  ?>  ?=([%wheat @ @ta ^] path)
+  =/  id  (slav %ux i.t.t.path)
+  =/  arg=^path  [i.t.t.t.path ~]
+  =/  contract-rice=(list @ux)
+    %+  turn  t.t.t.t.path
+    |=(addr=@ (slav %ux addr))
+  ?~  res=(~(get by granary) id)  ``noun+!>(~)
+  ?.  ?=(%| -.germ.u.res)         ``noun+!>(~)
+  ?~  cont.p.germ.u.res           ``noun+!>(~)
+  =/  owns
+    %-  ~(gas by *(map id:smart grain:smart))
+    %+  murn  contract-rice
+    |=  find=id:smart
+    ?~  found=(~(get by granary) find)  ~
+    ?.  ?=(%& -.germ.u.found)           ~
+    ?.  =(lord.u.found id)              ~
+    `[find u.res]
+  ::  this isn't an ideal method but okay for now
+  ::  goal is to return ~ if some rice weren't found
+  ?.  =(~(wyt by owns) (lent contract-rice))
+    ``noun+!>(~)
+  =/  cont  (hole:smart contract:smart u.cont.p.germ.u.res)
+  =/  cart  [~ id blocknum town-id owns] ::  TODO blocknum
+  ``noun+!>(`(~(read cont cart) arg))
 --

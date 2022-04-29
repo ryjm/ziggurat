@@ -15,6 +15,7 @@
   +$  collection-metadata
     $:  name=@t
         symbol=@t
+        ::  WHOA!  GOTTA GET RID OF THIS! BRINGS WHOLE HOON INTO RICE!
         item-mold=mold  ::  provide the shape of each NFT, traits, etc
         supply=@ud
         cap=(unit @ud)  ::  (~ if mintable is false)
