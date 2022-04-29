@@ -81,9 +81,8 @@
     ==
   ::
       [%sequencer %updates ~]
-    ~|  "only stars and star-moons can be sequencers"
-    ?>  (allowed-participant [src our now]:bowl)
-    ::  send next-producer on this path for sequencers
+    ?>  =(src.bowl our.bowl)
+    ::  send next-producer on this path for our sequencer agent
     `this
   ::
       [%indexer %updates ~]
@@ -468,7 +467,8 @@
   |^  ^-  (quip card _this)
   ?+    wire  (on-arvo:def wire sign-arvo)
       [%timers ?([%slot @ @ ~] [%epoch-catchup @ @ ~])]
-    ~|  "these timers are only relevant for validators!"
+    ~&  "ziggurat: slot timer popped @ {<now.bowl>}"
+    ~|  "ziggurat: error: these timers are only relevant for validators!"
     ?>  =(%validator mode)
     =*  kind  i.t.wire
     ?:  ?=(%epoch-catchup kind)
@@ -560,10 +560,10 @@
       [%rice @ ~]
     =/  id  (slav %ux i.t.t.path)
     ?~  res=(~(get by p.globe.state) id)
-      [~ ~]
+      ``noun+!>(~)
     ?.  ?=(%& -.germ.u.res)
-      [~ ~]
-    ``noun+!>(`rice:smart`p.germ.u.res)
+      ``noun+!>(~)
+    ``noun+!>(``rice:smart`p.germ.u.res)
   ::
       [%wheat @ @ta ^]
     ::  call read arm of contract
@@ -572,27 +572,30 @@
     =/  contract-rice=(list @ux)
       %+  turn  t.t.t.t.path
       |=(addr=@ (slav %ux addr))
-    ?~  res=(~(get by p.globe.state) id)  [~ ~]
-    ?.  ?=(%| -.germ.u.res)               [~ ~]
-    ?~  cont.p.germ.u.res                 [~ ~]
-    ::  TODO make way for reads to get some rice input..
-    ::  =/  owns
-    ::    %-  ~(gas by *(map:smart id:smart grain:smart))
-    ::    %+  murn  ~(tap in owns.p.germ.u.res)
-    ::    |=  find=id:smart
-    ::    ?~  found=(~(get by p.town.state) find)  ~
-    ::    ?.  ?=(%& -.germ.u.found)                ~
-    ::    ?.  =(lord.u.found id)                   ~
-    ::    `[find u.res]
+    ?~  res=(~(get by p.globe.state) id)  ``noun+!>(~)
+    ?.  ?=(%| -.germ.u.res)               ``noun+!>(~)
+    ?~  cont.p.germ.u.res                 ``noun+!>(~)
+    =/  owns
+      %-  ~(gas by *(map id:smart grain:smart))
+      %+  murn  contract-rice
+      |=  find=id:smart
+      ?~  found=(~(get by p.globe.state) find)  ~
+      ?.  ?=(%& -.germ.u.found)                 ~
+      ?.  =(lord.u.found id)                    ~
+      `[find u.res]
+    ::  this isn't an ideal method but okay for now
+    ::  goal is to return ~ if some rice weren't found
+    ?.  =(~(wyt by owns) (lent contract-rice))
+      ``noun+!>(~)
     =/  cont  (hole:smart contract:smart u.cont.p.germ.u.res)
-    =/  cart  [~ id 0 relay-town-id ~]
-    ``noun+!>((~(read cont cart) path))
+    =/  cart  [~ id 0 relay-town-id owns] ::  TODO blocknum
+    ``noun+!>(`(~(read cont cart) path))
   ::
       [%sizeof @ ~]
     ::  give size of item in global granary
     =/  id  (slav %ux i.t.t.path)
-    ?~  res=(~(get by p.globe.state) id)  [~ ~]
-    ``noun+!>((met 3 (jam res)))
+    ?~  res=(~(get by p.globe.state) id)  ``noun+!>(~)
+    ``noun+!>(`(met 3 (jam res)))
   ==
 ::
 ++  on-leave  on-leave:def

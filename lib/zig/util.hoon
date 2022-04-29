@@ -1,4 +1,4 @@
-/-  *ziggurat
+/-  *ziggurat, uqbar-wallet
 =>  |%
     +$  card  card:agent:gall
     --
@@ -132,6 +132,25 @@
     c   
   =.  c  $(a l.a, c c)
   $(a r.a, c c)
+::
+++  sequencer-sub-card
+  |=  our=ship
+  ^-  card
+  :*  %pass   /sequencer/updates
+      %agent  [our %ziggurat]
+      %watch  /sequencer/updates
+  ==
+::
+++  poke-capitol
+  |=  [our=ship address=id:smart [rate=@ud bud=@ud] args=supported-args:uqbar-wallet]
+  ^-  card
+  ::  only dealing on relay chain (town 0)
+  ::  with capitol contract
+  :*  %pass  /submit-tx
+      %agent  [our %wallet]
+      %poke  %zig-wallet-poke
+      !>([%submit address `@ux`'capitol' relay-town-id [rate bud] args])
+  ==
 ::
 ::  +allowed-participant: grades whether a ship is permitted to participate
 ::  in Uqbar validation. currently using hardcoded whitelist

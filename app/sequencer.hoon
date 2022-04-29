@@ -7,6 +7,7 @@
 ::  Choose which library smart contracts are executed against here
 ::
 /*  smart-lib  %noun  /lib/zig/compiled/smart-lib/noun
+=,  util
 |%
 +$  card  card:agent:gall
 +$  state-0
@@ -30,29 +31,36 @@
 +*  this  .
     def   ~(. (default-agent this %|) bowl)
 ::
-++  on-init  `this(state [[%0 ~ [~ ~] ~ ~] ~(mill mill +:(cue q.q.smart-lib))])
+++  on-init
+  `this(state [[%0 ~ [~ ~] ~ ~] ~(mill mill +:(cue q.q.smart-lib))])
 ::
 ++  on-save  !>(-.state)
 ++  on-load
   |=  =old=vase
   ^-  (quip card _this)
   =/  old-state  !<(state-0 old-vase)
+  ::  on-load: pre-cue our compiled smart contract library
+  ::  (not yet able to use, but will switch to this)
   =/  mil   ~(mill mill +:(cue q.q.smart-lib))
-  `this(state [old-state mil])
+  :_  this(state [old-state mil])
+  ::  connect to our %ziggurat agent
+  ?.  (~(has by wex.bowl) [/sequencer/updates our.bowl %ziggurat])
+    ~[(sequencer-sub-card our.bowl)]
+  ~
 ::
 ++  on-watch
   |=  =path
   ^-  (quip card _this)
-  ?.  ?=([%new-chunk ~] path)  !!
-    ?~  hall.state  !!
-    ?>  (allowed-participant:util [src our now]:bowl)
-    `this
+  ?.  ?=([%new-chunk ~] path)  ~|("%sequencer: error: got erroneous %watch" !!)
+  ?~  hall.state  ~|("%sequencer: error: got watch while not active in a hall" !!)
+  ?>  (allowed-participant:util [src our now]:bowl)
+  `this
 ::
 ++  on-poke
   |=  [=mark =vase]
   ^-  (quip card _this)
   |^
-  ?+    mark  !!
+  ?+    mark  ~|("%sequencer: error: got erroneous %poke" !!)
       %zig-weave-poke
     =^  cards  state
       (poke-basket !<(weave-poke vase))
@@ -71,15 +79,13 @@
     ?~  hall.state
       ~&  >>  "ignoring tx, we're not active in a council"
       [~ state]
-      =*  hall  u.hall.state
     ?-    -.act
         %forward
       ::  getting an egg from user / eggs from fellow sequencer
-      ::  add to our basket
-      ::  ensure each egg in our town
+      ::  add to our basket after ensuring each egg is to our town
       =.  eggs.act  (filter:util eggs.act |=(=egg:smart =((need town-id.state) town-id.p.egg)))
       =/  slot-num  .^(@ud %gx /(scot %p our.bowl)/ziggurat/(scot %da now.bowl)/slot/noun)
-      =/  current-producer  (snag (mod slot-num (lent order.u.hall.state)) order.u.hall.this)
+      =/  current-producer  (snag (mod slot-num (lent order.u.hall.state)) order.u.hall.state)
       ?:  =(our.bowl current-producer)
         `state(basket (~(uni in basket) eggs.act))
       ~&  >>  "forwarding eggs"
@@ -102,79 +108,32 @@
     |=  act=hall-poke
     ^-  (quip card _state)
     ?>  =(src.bowl our.bowl)
-    ::  assert that we're active in main chain
+    ::  assert that we're active in relay chain
     ?.  .^(? %gx /(scot %p our.bowl)/ziggurat/(scot %da now.bowl)/active/noun)
       ~|("can't run a town, ziggurat not active" !!)
-    =/  our-address  .^((unit id:smart) %gx /(scot %p our.bowl)/ziggurat/(scot %da now.bowl)/address/noun)
+    =/  our-address
+      .^((unit id:smart) %gx /(scot %p our.bowl)/ziggurat/(scot %da now.bowl)/address/noun)
     ?~  our-address  ~|("sequencer requires an associated public key from ziggurat" !!)
-    =/  sig  (sign:sig our.bowl now.bowl 'attestation')
+    =/  sig  (sign:zig-sig our.bowl now.bowl 'attestation')
     ?-    -.act
         %init
-      ::  assert we're not already running a town
       ?^  hall.state  ~|("can't init a town, already active in one" !!)
-      ::  submit tx to ziggurat for inclusion in next epoch
+      =+  [%init sig town-id.act]
       :_  state(town ?~(starting-state.act [~ ~] u.starting-state.act), town-id `town-id.act)
-      ::  subscribe to updates from ziggurat
-      :~  :*  %pass   /sequencer/updates
-              %agent  [our.bowl %ziggurat]
-              %watch  /sequencer/updates
-          ==
-          :*  %pass  /submit-tx
-              %agent  [our.bowl %wallet]
-              %poke  %zig-wallet-poke
-              !>  :-  %submit
-                  :*  u.our-address
-                      `@ux`'capitol'
-                      relay-town-id  ::  0
-                      [rate.gas.act bud.gas.act]
-                      [%init sig town-id.act]
-                  ==
-      ==  ==
+      ~[(poke-capitol our.bowl u.our-address [rate.gas.act bud.gas.act] -)]
     ::
         %join
-      ::  assert we're not already running a town
       ?^  hall.state  ~|("can't join a town, already active in one" !!)
-      ::  submit tx to ziggurat for inclusion in next epoch
       :_  state(town-id `town-id.act)
-          ::  subscribe to updates from ziggurat
-      :~  :*  %pass   /sequencer/updates
-              %agent  [our.bowl %ziggurat]
-              %watch  /sequencer/updates
-          ==
-          :*  %pass  /submit-tx
-              %agent  [our.bowl %wallet]
-              %poke  %zig-wallet-poke
-              !>  :-  %submit
-                  :*  u.our-address
-                      `@ux`'capitol'
-                      relay-town-id  ::  0
-                      [rate.gas.act bud.gas.act]
-                      [%join sig town-id.act]
-                  ==
-      ==  ==
+      =+  [%join sig town-id.act]
+      ~[(poke-capitol our.bowl u.our-address [rate.gas.act bud.gas.act] -)]
     ::
         %exit
-      ::  submit tx indicating our absence. wait for ack to actually leave
-      ::  assert we're running a town
+      ::  submit tx indicating our absence. wait for ack to actually leave!
       ?~  town-id.state  ~|("can't exit a town, not in one" !!)
-      ::  submit tx to ziggurat for inclusion in next epoch
+      =+  [%exit sig u.town-id.state]
       :_  state
-      :~  :*  %pass  /submit-tx
-              %agent  [our.bowl %wallet]
-              %poke  %zig-wallet-poke
-              !>  :-  %submit
-                  :*  u.our-address
-                      `@ux`'capitol'
-                      relay-town-id  ::  0
-                      [rate.gas.act bud.gas.act]
-                      [%exit sig u.town-id.state]
-                  ==
-          ==
-          :*  %pass  /clear
-              %agent  [our.bowl %sequencer]
-              %poke  %zig-hall-poke
-              !>([%clear-state ~])
-      ==  ==
+      ~[(poke-capitol our.bowl u.our-address [rate.gas.act bud.gas.act] -)]
     ::
         %clear-state
       :_  state(town-id ~, town [~ ~], hall ~, basket ~)
@@ -201,7 +160,7 @@
     ?.  ?=(%fact -.sign)                   (on-agent:def wire sign)
     ?.  ?=(%zig-chunk-update p.cage.sign)  (on-agent:def wire sign)
     =/  update  !<(chunk-update q.cage.sign)
-    ?~  hall.state  !!
+    ?~  hall.state  ~|("%sequencer: error: got chunk update while not in a hall" !!)
     ?>  (~(has by council.u.hall.state) src.bowl)
     ::  TODO add some validation of the new chunk here so we can reject bad ones
     ::  currently assuming sequencers are working together like friends :)
@@ -217,8 +176,9 @@
       ::  receive this at beginning of epoch, update our hall-state
       ::  shuffle with root of globe / something each epoch
       ?.  (~(has by council.update) our.bowl)
-        ::  if we're not in the hall, set our status to inactive
-        `this(hall ~, town [~ ~])
+        ::  if we're not in the hall, reset our state
+        :_  this
+        ~[[%pass /clear %agent [our.bowl %sequencer] %poke %zig-hall-poke !>([%clear-state ~])]]
       =/  sequencers  ~(key by council.update)
       =/  not-yet-subbed  (~(del in sequencers) our.bowl)
       :_  this(hall `[council.update ~(tap in sequencers)]) ::  NOT SHUFFLED ATM
@@ -304,7 +264,7 @@
       ``noun+!>(~)
     ?.  ?=(%& -.germ.u.res)
       ``noun+!>(~)
-    ``noun+!>(`rice:smart`p.germ.u.res)
+    ``noun+!>(``rice:smart`p.germ.u.res)
   ::
       [%wheat @ @ta ^]
     ::  call read arm of contract
@@ -316,10 +276,7 @@
     ?~  res=(~(get by p.town.state) id)  ``noun+!>(~)
     ?.  ?=(%| -.germ.u.res)              ``noun+!>(~)
     ?~  cont.p.germ.u.res                ``noun+!>(~)
-    ::  TODO make way for reads to get some rice input!
     =/  owns
-      ::  make unit map, fail if some missing
-      ::  make output of a scry a (unit *)
       %-  ~(gas by *(map id:smart grain:smart))
       %+  murn  contract-rice
       |=  find=id:smart
@@ -327,6 +284,10 @@
       ?.  ?=(%& -.germ.u.found)                ~
       ?.  =(lord.u.found id)                   ~
       `[find u.res]
+    ::  this isn't an ideal method but okay for now
+    ::  goal is to return ~ if some rice weren't found
+    ?.  =(~(wyt by owns) (lent contract-rice))
+      ``noun+!>(~)
     =/  cont  (hole:smart contract:smart u.cont.p.germ.u.res)
     =/  cart  [~ id 0 (need town-id.state) owns] ::  TODO blocknum
     ``noun+!>(`(~(read cont cart) path))
@@ -334,8 +295,8 @@
       [%sizeof @ ~]
     ::  give size of item in town granary
     =/  id  (slav %ux i.t.t.path)
-    ?~  res=(~(get by p.town.state) id)  [~ ~]
-    ``noun+!>((met 3 (jam res)))
+    ?~  res=(~(get by p.town.state) id)  ``noun+!>(~)
+    ``noun+!>(`(met 3 (jam res)))
   ==
 ::
 ++  on-leave  on-leave:def
