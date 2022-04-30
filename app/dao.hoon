@@ -54,6 +54,10 @@
       indexer=(unit dock) ::  TODO: indexer should be set of indexers?
       is-host-change-in-progress=?
   ==
+++  dao-contract-id  ::  TODO: remove hardcode
+  `@ux`'dao'
+++  dao-town-id  ::  TODO: remove hardcode
+  1
 --
 ::
 =|  state-zero
@@ -230,6 +234,8 @@
         =+  !<(=update:uqbar-indexer q.cage.sign)
         =/  [dao-id=id:smart new-dao=dao:d]
           (get-dao-from-update update)
+        ~&  >  "dao: got dao fact for {<dao-id>}:"
+        ~&  >  "dao: {<new-dao>}"
         ?~  (~(get by ship-to-id.new-dao) our.bowl)
           ::  We are no longer a member of DAO: remove it.
           =^  cards  state
@@ -457,7 +463,7 @@
     (~(del by daos) dao-id)
   ::  TODO: also remove-comms if entry exists
   :_  state
-  :-  (send-diff %on-chain dao-id %remove-dao ~)
+  :-  (send-diff %remove-dao dao-id)
   ?~  li=(leave-indexer dao-id)  ~  [u.li ~]
 ::  +dao-update: update DAO
 ::
@@ -470,23 +476,32 @@
   ^-  (quip card _state)
   |^
   ?-  -.off-chain-update
-      %add-comms     (add-comms +.off-chain-update)
-      %remove-comms  (remove-comms +.off-chain-update)
-      %on-chain
-    =*  dao-id  dao-id.off-chain-update
-    =*  update  update.off-chain-update
-    ?-  -.update
-        %add-dao             (add-dao dao-id +.update)
-        %remove-dao          (remove-dao dao-id)
-        %add-member          (add-member dao-id +.update)
-        %remove-member       (remove-member dao-id +.update)
-        %add-permissions     (add-permissions dao-id +.update)
-        %remove-permissions  (remove-permissions dao-id +.update)
-        %add-roles           (add-roles dao-id +.update)
-        %remove-roles        (remove-roles dao-id +.update)
-        %add-subdao          (add-subdao dao-id +.update)
-        %remove-subdao       (remove-subdao dao-id +.update)
-    ==
+      %add-comms           (add-comms +.off-chain-update)
+      %remove-comms        (remove-comms +.off-chain-update)
+      %add-dao             (add-dao +.off-chain-update)
+      %remove-dao          (remove-dao +.off-chain-update)
+      %add-member          (add-member +.off-chain-update)
+      %remove-member       (remove-member +.off-chain-update)
+      %add-permissions     (add-permissions +.off-chain-update)
+      %remove-permissions  (remove-permissions +.off-chain-update)
+      %add-roles           (add-roles +.off-chain-update)
+      %remove-roles        (remove-roles +.off-chain-update)
+      %add-subdao          (add-subdao +.off-chain-update)
+      %remove-subdao       (remove-subdao +.off-chain-update)
+    :: =*  dao-id  dao-id.off-chain-update
+    :: =*  update  update.off-chain-update
+    :: ?-  -.update
+    ::     %add-dao             (add-dao dao-id +.update)
+    ::     %remove-dao          (remove-dao dao-id)
+    ::     %add-member          (add-member dao-id +.update)
+    ::     %remove-member       (remove-member dao-id +.update)
+    ::     %add-permissions     (add-permissions dao-id +.update)
+    ::     %remove-permissions  (remove-permissions dao-id +.update)
+    ::     %add-roles           (add-roles dao-id +.update)
+    ::     %remove-roles        (remove-roles dao-id +.update)
+    ::     %add-subdao          (add-subdao dao-id +.update)
+    ::     %remove-subdao       (remove-subdao dao-id +.update)
+    :: ==
   ==
   ::
   ++  add-comms
@@ -509,12 +524,19 @@
     ~[(send-diff %remove-comms dao-id)]
   ::
   ++  add-dao
-    |=  [dao-id=id:smart =dao:d]
+    |=  [salt=@ =dao:d]
     ^-  (quip card _state)
+    =/  dao-id=id:smart
+      %:  fry-rice:smart
+          dao-contract-id
+          dao-contract-id
+          dao-town-id
+          salt
+      ==
     ?:  ?=(^ (peek-dao dao-id))  `state
     =.  daos  (~(put by daos) dao-id dao)
     :_  state
-    :-  (send-diff %on-chain dao-id %add-dao dao)
+    :-  (send-diff %add-dao salt dao)
     ?~  wi=(watch-indexer dao-id)  ~  [u.wi ~]
   ::
   ++  add-member
@@ -526,7 +548,7 @@
       |=  =dao:d
       (~(add-member update:dao-lib dao) roles id him)
     :_  state
-    ~[(send-diff %on-chain dao-id %add-member roles id him)]
+    ~[(send-diff %add-member dao-id roles id him)]
   ::
   ++  remove-member
     |=  [dao-id=id:smart =id:smart]
@@ -537,7 +559,7 @@
       |=  =dao:d
       (~(remove-member update:dao-lib dao) id)
     :_  state
-    ~[(send-diff %on-chain dao-id %remove-member id)]
+    ~[(send-diff %remove-member dao-id id)]
   ::
   ++  add-permissions
     |=  [dao-id=id:smart name=@tas =address:d roles=(set role:d)]
@@ -548,7 +570,7 @@
       |=  =dao:d
       (~(add-permissions update:dao-lib dao) name address roles)
     :_  state
-    ~[(send-diff %on-chain dao-id %add-permissions name address roles)]
+    ~[(send-diff %add-permissions dao-id name address roles)]
   ::
   ++  remove-permissions
     |=  [dao-id=id:smart name=@tas =address:d roles=(set role:d)]
@@ -560,7 +582,7 @@
       %^  %~  remove-permissions  update:dao-lib  dao
       name  address  roles
     :_  state
-    ~[(send-diff %on-chain dao-id %remove-permissions name address roles)]
+    ~[(send-diff %remove-permissions dao-id name address roles)]
   ::
   ++  add-subdao
     |=  [dao-id=id:smart subdao-id=id:smart]
@@ -571,7 +593,7 @@
       |=  =dao:d
       (~(add-subdao update:dao-lib dao) subdao-id)
     :_  state
-    ~[(send-diff %on-chain dao-id %add-subdao subdao-id)]
+    ~[(send-diff %add-subdao dao-id subdao-id)]
   ::
   ++  remove-subdao
     |=  [dao-id=id:smart subdao-id=id:smart]
@@ -582,7 +604,7 @@
       |=  =dao:d
       (~(remove-subdao update:dao-lib dao) subdao-id)
     :_  state
-    ~[(send-diff %on-chain dao-id %remove-subdao subdao-id)]
+    ~[(send-diff %remove-subdao dao-id subdao-id)]
   ::  +add-roles: add roles to members
   ::
   ::    crash if member id is not in DAO
@@ -596,7 +618,7 @@
       |=  =dao:d
       (~(add-roles update:dao-lib dao) roles id)
     :_  state
-    ~[(send-diff %on-chain dao-id %add-roles roles id)]
+    ~[(send-diff %add-roles dao-id roles id)]
   ::  +remove-roles: remove roles from members
   ::
   ::    crash if member id is not in DAO
@@ -612,7 +634,7 @@
       |=  =dao:d
       (~(remove-roles update:dao-lib dao) roles id)
     :_  state
-    ~[(send-diff %on-chain dao-id %remove-roles roles id)]
+    ~[(send-diff %remove-roles dao-id roles id)]
   ::
   --
 ::  +send-diff: update subscribers of new state

@@ -1,5 +1,4 @@
 /-  d=dao,
-    ms=metadata-store,
     r=resource
 /+  agentio,
     rl=resource,
@@ -253,7 +252,8 @@
   ++  make-noun-role-pairs
     |*  [noun=* roles=(set role:d)]
     ^-  (list (pair _noun role:d))
-    %+  turn  ~(tap in roles)
+    ::  cast in tap to avoid crash if passed `~`
+    %+  turn  ~(tap in `(set role:d)`roles)
     |=  =role:d
     [p=noun q=role]
   ::

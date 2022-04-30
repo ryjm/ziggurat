@@ -131,5 +131,5 @@ If run on a fakezod located at `~/urbit/zod`, the following will create the comp
 
 3. Create the off-chain DAO with us as owner:
 ```
--zig!create-dao-comms [[our %uqbar-dao] 'Uqbar DAO' 0xef44.5e1e.2113.c21d.7560.c831.6056.d984 0x2.e3c1.d19b.fd3e.43aa.319c.b816.1c89.37fb.b246.3a65.f84d.8562.155d.6181.8113.c85b ~ ~]
+-zig!create-dao-comms [[our %uqbar-dao] 'Uqbar DAO' `@`'uqbar-dao' 0x2.e3c1.d19b.fd3e.43aa.319c.b816.1c89.37fb.b246.3a65.f84d.8562.155d.6181.8113.c85b ~ ~]
 ```

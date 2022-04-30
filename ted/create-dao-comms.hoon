@@ -8,6 +8,16 @@
 =*  strand    strand:spider
 =*  poke-our  poke-our:strandio
 =>
+  |%
+  ::
+  ++  dao-contract-id  ::  TODO: remove hardcode
+    `@ux`'dao'
+  ::
+  ++  dao-town-id  ::  TODO: remove hardcode
+    1
+  ::
+  --
+=>
   |_  =bowl:spider
   ::
   +$  member-data
@@ -114,7 +124,7 @@
 =/  arg-mold
   $:  rid=resource:res
       dao-name=@t
-      dao-id=id:smart
+      dao-salt=@
       our-id=id:smart
       permissions=(unit permissions:d)
       member-data=(unit member-data)
@@ -123,10 +133,17 @@
 ?~  args  (pure:m !>(~))
 =*  rid          rid.u.args
 =*  dao-name     dao-name.u.args
-=*  dao-id       dao-id.u.args
+=*  dao-salt     dao-salt.u.args
 =*  our-id       our-id.u.args
 =*  permissions  permissions.u.args
 =*  member-data  member-data.u.args
+=/  dao-id=id:smart
+  %:  fry-rice:smart
+      dao-contract-id
+      dao-contract-id
+      dao-town-id
+      dao-salt
+  ==
 ;<  =bowl:spider  bind:m  get-bowl:strandio
 ~&  >  "constructing dao..."
 =/  =dao:d
@@ -143,7 +160,7 @@
 ~&  >  "poking %dao..."
 ;<  ~  bind:m
   %^  poke-our  %dao  %dao-update
-  !>(`off-chain-update:d`[%on-chain dao-id [%add-dao dao]])
+  !>(`on-chain-update:d`[%add-dao dao-salt dao])
 ;<  ~  bind:m
   %^  poke-our  %dao  %dao-update
   !>(`off-chain-update:d`[%add-comms dao-id rid])
