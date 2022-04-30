@@ -302,7 +302,10 @@
     =/  update  !<(update:uqbar-indexer q.cage.sign)
     =/  found=book
       (indexer-update-to-books update pub metadata-store.state)
-    =+  (~(put by tokens.state) pub found)
+    =/  curr=(unit book)  (~(get by tokens.state) pub)
+    =+  %+  ~(put by tokens.state)  pub
+        ?~  curr  found
+        (~(uni by u.curr) found)
     :_  this(tokens -)
     %+  welp  (find-new-metadata found our.bowl metadata-store.state)
     ~[[%give %fact ~[/book-updates] %zig-wallet-update !>([%new-book -])]]

@@ -16,15 +16,11 @@
       (get-last-slot slots.cur)
     =/  next-num  ?~(last-slot 0 +(last-num))
     ?:  ?&(?=(^ (tap:sot slots.cur)) ?=(~ last-slot))
-    ::  ?:  ?&((gth (lent (tap:sot slots.cur)) 1) ?=(~ last-slot))
-      ~&  >>>  "%ziggurat: skipping own block, invalid slot configuration"
-      skip-block
+      ~|("%ziggurat: skipping own block, invalid slot configuration" !!)
     ?~  our-num=(find our^~ order.cur)
-      ~&  >>>  "%ziggurat: skipping own block, we're not included in this epoch"
-      skip-block
+      ~|("%ziggurat: skipping own block, we're not included in this epoch" !!)
     ?.  =(u.our-num next-num)
-      ~&  >>>  "%ziggurat: skipping own block, it's not our turn"
-      skip-block
+      ~|("%ziggurat: skipping own block, it's not our turn" !!)
     ?:  ?|  (gth now (deadline:epo start-time.cur u.our-num))
             ?=(~ data)
         ==
@@ -75,7 +71,6 @@
       (get-last-slot slots.cur)
     =/  next-num  ?~(last-slot 0 +(last-num))
     ?:  ?&(?=(^ (tap:sot slots.cur)) ?=(~ last-slot))
-    ::  ?:  ?&((gth (lent (tap:sot slots.cur)) 1) ?=(~ last-slot))
       ~&  >>>  "%ziggurat: ignoring their block, invalid slot configuration"
       skip-block
     =/  prev-hed-hash

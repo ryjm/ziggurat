@@ -157,7 +157,11 @@
       [%chunk-gossip ~]
     ::  TODO manage rejected chunks here.
     ::  try and submit them to the next producer?
-    ~&  "%sequencer: our chunk was rejected by relay chain?"
+    ?:  ?=(%poke-ack -.sign)
+      ?~  p.sign
+        `this
+      ~&  "%sequencer: our chunk was rejected by relay chain?"
+      `this
     `this
   ::
       [%new-chunk ~]

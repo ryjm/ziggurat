@@ -333,10 +333,9 @@
           ?:  =(2 (lent order.cur))
             ~(tap in (~(del in (silt order.cur)) our.bowl))
           ~(tap in (~(del in (~(del in (silt order.cur)) our.bowl)) src.bowl))
-        `this
-        ~&  >>>  "ziggurat: hmmm... look at line 339"
-        ::  :_  this
-        ::  (start-epoch-catchup i.validators num.cur)^~
+        ?~  validators  !!
+        :_  this
+        (start-epoch-catchup i.validators num.cur)^~
       ?>  ?=(%fact -.sign)
       =^  cards  state
         (epoch-catchup !<(update q.cage.sign))
