@@ -400,7 +400,7 @@
     |=  =update
     ^-  (quip card _state)
     ?>  ?=(%epochs-catchup -.update)
-    ~&  >>>  "%ziggurat: catching up to {<src.bowl>}"
+    ~&  "%ziggurat: catching up to {<src.bowl>}"
     =/  a=(list (pair @ud epoch))  (bap:poc epochs.update)
     =/  b=(list (pair @ud epoch))  (bap:poc epochs)
     ?~  epochs.update  `state
@@ -415,11 +415,20 @@
       ~&  %picked-our-history
       `state
     ?~  b
-      ~&  %picked-their-history
       ::  if we pick their history, clear old timers if any exist
       ::  and set new ones based on latest epoch
-      :_  state(epochs epochs.update)
-      (new-epoch-timers +:(need (pry:poc epochs.update)) our.bowl)
+      ::  set global state to match last block in acquired history
+      ~&  %picked-their-history
+      =/  [n=@ud =epoch]  (need (pry:poc epochs.update))
+      =/  =slot
+        ?~  latest=(pry:sot slots.epoch)
+          ::  look in previous epoch
+          =/  prev=^epoch  (got:poc epochs.update (dec n))
+          +:(need (pry:sot slots.prev))
+        +.u.latest
+      =+  +:(~(got by `^chunks`q:(need q.slot)) 0)
+      :_  state(epochs epochs.update, globe -)
+      (new-epoch-timers epoch our.bowl)
     ?:  =(i.a i.b)
       $(a t.a, b t.b)
     =/  a-s=(list (pair @ud slot))  (tap:sot slots.q.i.a)
@@ -428,10 +437,18 @@
     ?~  a-s        ^$(a t.a, b t.b)
     ?~  b-s        ^$(a t.a, b t.b)
     ?~  q.q.i.a-s  ~&  %picked-our-history  `state
-    ?~  q.q.i.b-s  
+    ?~  q.q.i.b-s
       ~&  %picked-their-history
-      :_  state(epochs epochs.update)
-      (new-epoch-timers +:(need (pry:poc epochs.update)) our.bowl)
+      =/  [n=@ud =epoch]  (need (pry:poc epochs.update))
+      =/  =slot
+        ?~  latest=(pry:sot slots.epoch)
+          ::  look in previous epoch
+          =/  prev=^epoch  (got:poc epochs.update (dec n))
+          +:(need (pry:sot slots.prev))
+        +.u.latest
+      =+  +:(~(got by `^chunks`q:(need q.slot)) 0)
+      :_  state(epochs epochs.update, globe -)
+      (new-epoch-timers epoch our.bowl)
     $(a-s t.a-s, b-s t.b-s)
   --
 ::
