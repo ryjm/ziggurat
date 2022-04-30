@@ -483,10 +483,9 @@
         [cards state(epochs (put:poc epochs num.cur cur), chunks ~)]
       ::  if this is the last block in the epoch,
       ::  perform global-level transactions
-      =+  .^  account:smart  %gx
-              /(scot %p our.bowl)/wallet/(scot %da now.bowl)
-              /account/(scot %ux (need address.state))/(scot %ud relay-town-id)/noun
-          ==
+      ::  insert transaction to advance
+      =+  /(scot %p our.bowl)/wallet/(scot %da now.bowl)/account/(scot %ux (need address.state))/(scot %ud relay-town-id)/noun
+      =+  .^(account:smart %gx -)
       =/  globe-chunk
         (~(mill-all mil - relay-town-id 0 now.bowl) globe.state ~(tap in basket.state))
       =:  basket.state  ~
