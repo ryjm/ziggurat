@@ -107,16 +107,12 @@ where the argument `[our %ziggurat]` is a dock pointing to the ship running the 
 If run on a fakezod located at `~/urbit/zod`, the following will create the compiled DAO contract at `~/urbit/zod/.urb/put/dao.noun`:`
 ```
 =h .^(@t %cx /(scot %p our)/base/(scot %da now)/sys/hoon/hoon)
-=a .^(@t %cx /(scot %p our)/base/(scot %da now)/sys/arvo/hoon)
-=l .^(@t %cx /(scot %p our)/base/(scot %da now)/sys/lull/hoon)
 =s .^(@t %cx /(scot %p our)/zig/(scot %da now)/lib/zig/sys/smart/hoon)
 =c .^(@t %cx /(scot %p our)/zig/(scot %da now)/lib/zig/contracts/dao/hoon)
 
 =hh (slap !>(~) (ream h))
-=hha (slap hh (ream a))
-=hhal (slap hha (ream l))
-=hhals (slap hhal (ream s))
-=cont (slap hhals (ream c))
+=hhs (slap hh (ream s))
+=cont (slap hhs (ream c))
 .dao/noun cont
 ```
 

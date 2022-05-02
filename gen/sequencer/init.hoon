@@ -3,7 +3,8 @@
 /+  deploy=zig-deploy,
     smart=zig-sys-smart
 /*  fungible-contract  %txt  /lib/zig/contracts/fungible/hoon
-/*  dao-contract  %noun  /lib/zig/compiled/dao/noun
+/*  dao-contract  %txt  /lib/zig/contracts/dao/hoon
+:: /*  dao-contract  %noun  /lib/zig/compiled/dao/noun
 =/  pubkey-1  0x2.e3c1.d19b.fd3e.43aa.319c.b816.1c89.37fb.b246.3a65.f84d.8562.155d.6181.8113.c85b
 =/  pubkey-2  0x3.4cdd.5f53.b551.e62f.2238.6eb3.8abd.3e91.a546.fad3.2940.ff2d.c316.50dd.8d38.e609
 =/  pubkey-3  0x3.9452.264c.57a5.1b54.d380.70b0.7e0c.934d.15c0.6692.fa9c.7f35.eaf9.eb52.b925.1b7d
@@ -75,9 +76,9 @@
 ::  store only contract code, insert into shared subject
 =/  dao-contract-wheat
   ^-  wheat:smart
-  :: =/  cont  (of-wain:format dao-contract)
-  :: :-  `(~(text-deploy deploy p.bek now) cont)
-  :-  `(cue q.q.dao-contract)
+  =/  cont  (of-wain:format dao-contract)
+  :-  `(~(text-deploy deploy p.bek now) cont)
+  :: :-  `(cue q.q.dao-contract)
   (silt ~[uqbar-dao-id])
 =/  dao-contract-grain
   ^-  grain:smart

@@ -139,6 +139,42 @@
     ::
     ==
   ::
+  ++  gall  ^?  ::  arvo/sys/lull/hoon (excerpt)
+    |%
+    +$  bitt  (map duct (pair ship path))                 ::  incoming subs
+    +$  boat                                              ::  outgoing subs
+      %+  map  [=wire =ship =term]                        ::
+      [acked=? =path]                                     ::
+    +$  bowl                                              ::  standard app state
+            $:  $:  our=ship                              ::  host
+                    src=ship                              ::  guest
+                    dap=term                              ::  agent
+                ==                                        ::
+                $:  wex=boat                              ::  outgoing subs
+                    sup=bitt                              ::  incoming subs
+                ==                                        ::
+                $:  act=@ud                               ::  change number
+                    eny=@uvJ                              ::  entropy
+                    now=@da                               ::  current time
+                    byk=beak                              ::  load source
+            ==  ==                                        ::
+    ::  additional types required to compile
+    ::  (from arvo/sys/arvo/hoon and arvo/sys/lull/hoon)
+    +$  beak  [p=ship q=desk r=case]                      ::  path prefix
+    +$  wire  path
+    +$  duct  (list wire)
+    +$  desk  @tas
+    +$  case
+      $%  ::  %da:  date
+          ::  %tas: label
+          ::  %ud:  sequence
+          ::
+          [%da p=@da]
+          [%tas p=@tas]
+          [%ud p=@ud]
+      ==
+    --
+  ::
   ++  r  ::  landscape/sur/resource/hoon
     ^?
     |%
@@ -228,11 +264,6 @@
     --
   ::
   ++  agentio  ::  base-dev/lib/agentio/hoon
-    =>
-      |%
-      ++  card  card:agent:gall
-      --
-    ::
     |_  =bowl:gall
     ++  scry
       |=  [desk=@tas =path]
