@@ -1,3 +1,4 @@
+/+  *mip
 |%
 +$  child  *
 +$  parent  *
@@ -33,10 +34,19 @@
       ::[%jet core=phash sample=* jet=@t]
   ==
 :: subject -> formula -> hint
-+$  hints  (map phash (map phash cairo-hint))
++$  hints  (mip phash phash cairo-hint)
 ::  map of a noun's merkle children. root -> [left right]
 +$  merk-tree  (map phash [phash phash])
-::
+::  map from axis to jet name
++$  jetmap  (map @ @tas)
+::  Axis map of jets in stdlib
+++  jets
+  %-  ~(gas by *jetmap)
+  :~  [20 %add]
+      [21 %dec]
+      [4 %mul]
+      [11 %double]
+  ==
 ++  pre-comp
   %-  ~(gas by *(map * phash))
   :~  [0 2.089.986.280.348.253.421.170.679.821.480.865.132.823.066.470.938.446.095.505.822.317.253.594.081.284]
