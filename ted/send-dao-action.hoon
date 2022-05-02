@@ -10,7 +10,18 @@
 =*  take-fact  take-fact:strandio
 =*  watch      watch:strandio
 =>
-  |_  [=account:smart action=?(%add-dao %vote %propose) dao-id=id:smart =on-chain-update:d]
+  |%
+  +$  arguments
+    $%  [%add-dao salt=@ =dao:d]
+        [%vote dao-id=id:smart proposal-id=id:smart]
+        [%propose dao-id=id:smart =on-chain-update:d]
+        [%execute dao-id=id:smart =on-chain-update:d]  ::  called only by this contract
+    ==
+  ::
+  --
+::
+=>
+  |_  [=account:smart contract-args=arguments]
   ::
   ++  dao-contract-id  ::  HARDCODE to work with gen/sequencer/init.hoon
     `@ux`'dao'
@@ -47,10 +58,10 @@
   ++  make-proposal-yolk
     ^-  yolk:smart
     :^    account
-        ?:  ?=(%add-dao -.on-chain-update)  `on-chain-update
-        `[action dao-id on-chain-update]
+        `contract-args
       ~
-    (~(put in *(set id:smart)) dao-id)
+    ?:  ?=(%add-dao -.contract-args)  ~
+    (~(put in *(set id:smart)) dao-id.contract-args)
   ::
   ++  make-signature
     |=  =yolk:smart
@@ -78,17 +89,13 @@
 =/  arg-mold
   $:  sequencer=ship
       =caller:smart
-      action=?(%add-dao %vote %propose)
-      dao-id=id:smart
-      =on-chain-update:d
+      contract-args=arguments
   ==
 =/  args  !<((unit arg-mold) arg)
 ?~  args  (pure:m !>(~))
-=*  sequencer        sequencer.u.args
-=*  caller           caller.u.args
-=*  action           action.u.args
-=*  dao-id           dao-id.u.args
-=*  on-chain-update  on-chain-update.u.args
+=*  sequencer  sequencer.u.args
+=*  caller     caller.u.args
+=*  contract-args  contract-args.u.args
 ;<  =account:smart  bind:m  (caller-to-account caller)
 ~&  >  "poking sequencer..."
 ;<  ~  bind:m
@@ -97,10 +104,8 @@
   :-  %forward
   %-  %~  put  in  *(set egg:smart) 
   %=  make-proposal-egg
-      account          account
-      action           action
-      dao-id           dao-id
-      on-chain-update  on-chain-update
+      account        account
+      contract-args  contract-args
   ==
 ~&  >  "done"
 (pure:m !>(~))

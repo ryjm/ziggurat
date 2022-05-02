@@ -102,7 +102,7 @@ where the argument `[our %ziggurat]` is a dock pointing to the ship running the 
 }
 ```
 
-### Build DAO contractS
+### Build DAO contracts
 
 If run on a fakezod located at `~/urbit/zod`, the following will create the compiled DAO contract at `~/urbit/zod/.urb/put/dao.noun`:`
 ```
@@ -128,4 +128,27 @@ If run on a fakezod located at `~/urbit/zod`, the following will create the comp
 3. Create the off-chain DAO with us as owner:
 ```
 -zig!create-dao-comms [[our %uqbar-dao] 'Uqbar DAO' `@`'uqbar-dao' 0x2.e3c1.d19b.fd3e.43aa.319c.b816.1c89.37fb.b246.3a65.f84d.8562.155d.6181.8113.c85b ~ ~]
+```
+
+### Changing DAO state
+
+To change the DAO state, a transaction must be sent to the chain.
+The helper thread `ted/send-dao-action.hoon` builds transactions.
+For example, from a ship that is a DAO owner (and additionally currently limited to `~zod` as of 220502), the following will submit transactions to create two proposals and then add a vote to each.
+If the threshold is surpassed by the vote, the proposals will pass.
+```
+::  account ids
+=pubkey 0x2.e3c1.d19b.fd3e.43aa.319c.b816.1c89.37fb.b246.3a65.f84d.8562.155d.6181.8113.c85b
+=zigs-id 0x10b.4ca5.fb93.480b.a0d7.c168.0f3e.6d43
+=dao-id 0xef44.5e1e.2113.c21d.7560.c831.6056.d984
+
+::  prepare on-chain-update objects for proposals
+=add-perm-host-update [%add-permissions dao-id %host [our %uqbar-dao] (~(put in *(set @tas)) %comms-host)]
+=add-role-host-update [%add-roles dao-id (~(put in *(set @tas)) %comms-host) pubkey]
+
+::  proposals and votes
+-zig!send-dao-action [our [pubkey 1 zigs-id] [%propose dao-id add-perm-host-update]]
+-zig!send-dao-action [our [pubkey 2 zigs-id] [%propose dao-id add-role-host-update]]
+-zig!send-dao-action [our [pubkey 3 zigs-id] [%vote dao-id 0x54c2.59a7]]
+-zig!send-dao-action [our [pubkey 4 zigs-id] [%vote dao-id 0x44f5.977d]]
 ```
