@@ -90,8 +90,10 @@ where the argument `[our %ziggurat]` is a dock pointing to the ship running the 
 
 {generate-hot-wallet: {password: "password", nick: "nickname"}}
 
+# leave hdpath empty ("") to let wallet auto-increment from 0 on main path
 {derive-new-address: {hdpath: "m/44'/60'/0'/0/0", nick: "nickname"}}
 
+# use this to save a hardware wallet account
 {add-tracked-address: {address: "0x1234.5678" nick: "nickname"}}
 
 {delete-address: {address: "0x1234.5678"}}
@@ -101,6 +103,11 @@ where the argument `[our %ziggurat]` is a dock pointing to the ship running the 
 {set-node: {town: 1, ship: "~zod"}}  # set the sequencer to send txs to, per town
 
 {set-indexer: {ship: "~zod"}}
+
+#  TODO here:
+#  add poke to submit signed transaction from HW wallet
+#  will need a new flow where frontend builds tx, pokes to receive signable package,
+#  then signs with HW and pokes again with signature.
 
 {submit-custom: {from: "0x1234", to: "0x5678", town: 1, gas: {rate: 1, bud: 10000}, args: "[%give ... .. (this is HOON)]", my-grains: {"0x1111", "0x2222"}, cont-grains: {"0x3333", "0x4444"}}}
 
