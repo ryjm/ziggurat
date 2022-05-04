@@ -433,7 +433,7 @@
     ::  for validator & sequencer use, to execute mill
     =/  pub  (slav %ux i.t.t.path)
     =/  town-id  (slav %ud i.t.t.t.path)
-    =/  nonce  (~(gut by (~(got by nonces.state) pub)) town-id 0)
+    =/  nonce  (~(gut by (~(gut by nonces.state) pub ~)) town-id 0)
     =+  (fry-rice:smart pub `@ux`'zigs-contract' town-id `@`'zigs')
     ``noun+!>(`account:smart`[pub nonce -])
   ::
