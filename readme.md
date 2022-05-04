@@ -67,9 +67,9 @@ where the argument `[our %ziggurat]` is a dock pointing to the ship running the 
 ```
 (1 here is the town-id)
 
-### To use the wallet
+# To use the wallet
 
-1. Scry for a JSON dict of accounts, keyed by address, containing seed and nonces:
+1. Scry for a JSON dict of accounts, keyed by address, containing private key, nickname, and nonces:
 `.^(@ux %gx /=wallet=/accounts/noun)`
 
 2. Scry for a JSON dict of known assets (rice), keyed by address, then by rice address:
@@ -82,20 +82,27 @@ where the argument `[our %ziggurat]` is a dock pointing to the ship running the 
 `.^(json %gx /=wallet=/seed/json)`
 
 
-Wallet pokes available:
+### Wallet pokes available:
 (only those with JSON support shown)
+
 ```
-{populate: {seed: "0xbeef"}}
+{import-seed: {mnemonic: "12-24 word phrase", password: "password", nick: "nickname for the first address in this wallet"}}
 
-{import: {mnemonic: "12-24 word phrase", password: "password"}}
+{generate-hot-wallet: {password: "password", nick: "nickname"}}
 
-{create: true}
+{derive-new-address: {hdpath: "m/44'/60'/0'/0/0", nick: "nickname"}}
 
-{delete: {pubkey: "0x1234.5678"}}  # public key to stop tracking in wallet
+{delete-address: {pubkey: "0x1234.5678"}}
+
+{edit-nickname: {pubkey: "0x1234.5678", nick: "nickname"}}
 
 {set-node: {town: 1, ship: "~zod"}}  # set the sequencer to send txs to, per town
 
-# currently only supporting token sends
+{set-indexer: {ship: "~zod"}}
+
+{submit-custom: {from: "0x1234", to: "0x5678", town: 1, gas: {rate: 1, bud: 10000}, args: "[%give ... .. (this is HOON)]", my-grains: {"0x1111", "0x2222"}, cont-grains: {"0x3333", "0x4444"}}}
+
+# for TOKEN and NFT transactions
 # 'from' is our pubkey
 # 'to' is the address of the smart contract
 # 'town' is the number ID of the town on which the contract&rice are deployed
@@ -113,10 +120,11 @@ Wallet pokes available:
 }
 ```
 
-(an example poke that will work upon chain initialization in dojo):
+(example pokes that will work upon chain initialization in dojo):
 ```
+#  ZIGS
 :wallet &zig-wallet-poke [%submit 0x3.e87b.0cbb.431d.0e8a.2ee2.ac42.d9da.cab8.063d.6bb6.2ff9.b2aa.e1b9.0f56.9c3f.3423 0x74.6361.7274.6e6f.632d.7367.697a 1 [1 10.000] [%give 1.936.157.050 0x2.eaea.cffd.2bbe.e0c0.02dd.b5f8.dd04.e63f.297f.14cf.d809.b616.2137.126c.da9e.8d3d 777]]
 
-
+#  NFT
 :wallet &zig-wallet-poke [%submit 0x3.e87b.0cbb.431d.0e8a.2ee2.ac42.d9da.cab8.063d.6bb6.2ff9.b2aa.e1b9.0f56.9c3f.3423 0xcafe.babe 1 [1 10.000] [%give 32.770.263.103.071.854 0x2.eaea.cffd.2bbe.e0c0.02dd.b5f8.dd04.e63f.297f.14cf.d809.b616.2137.126c.da9e.8d3d 1]]
 ```

@@ -12,26 +12,15 @@
     (process jon)
     ++  process
       %-  of
-      :~  [%populate parse-seed]
-          [%import parse-import]
-          [%create parse-create]
-          [%delete parse-delete]
-          [%set-node parse-set]
-          [%submit parse-submit]
+      :~  [%import-seed (ot ~[[%mnemonic sa] [%password sa] [%nick sa]])]
+          [%generate-hot-wallet (ot ~[[%password sa] [%nick sa]])]
+          [%derive-new-address (ot ~[[%hdpath sa] [%nick sa]])]
+          [%delete-address (ot ~[[%pubkey (se %ux)]])]
+          [%edit-nickname (ot ~[[%pubkey (se %ux)] [%nick sa]])]
+          [%set-node (ot ~[[%town ni] [%ship (se %p)]])]
+          [%set-indexer (ot ~[[%ship (se %p)]])]
           [%submit-custom parse-custom]
-      ==
-    ++  parse-import
-      (ot ~[[%mnemonic sa] [%password sa]])
-    ++  parse-create
-      (ot ~[[%password sa]])
-    ++  parse-seed
-      (ot ~[[%seed (se %ux)]])
-    ++  parse-delete
-      (ot ~[[%pubkey (se %ux)]])
-    ++  parse-set
-      %-  ot
-      :~  [%town ni]
-          [%ship (se %p)]
+          [%submit parse-submit]
       ==
     ++  parse-custom
       %-  ot

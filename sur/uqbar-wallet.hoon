@@ -20,16 +20,18 @@
   ==
 ::
 +$  wallet-poke
-  $%  [%populate seed=@ux]  :: populate wallet with fake data, for testing
-      [%fetch-metadata id=@ux type=token-type]
-      [%import mnemonic=tape password=tape]
-      [%create password=tape]
-      ::  TODO add poke to spawn new keypair from seed
-      [%delete pubkey=@ux]  ::  only removes tracking, doesn't lose anything
+  $%  [%import-seed mnemonic=tape password=tape nick=tape]
+      [%generate-hot-wallet password=tape nick=tape]
+      [%derive-new-address hdpath=tape nick=tape]
+      [%delete-address address=@ux]
+      [%edit-nickname address=@ux nick=tape]
       [%set-node town=@ud =ship]
       [%set-indexer =ship]
-      [%set-nonce address=@ux town=@ud new=@ud]  ::  for testing
-      ::
+      ::  testing and internal
+      [%set-nonce address=@ux town=@ud new=@ud]
+      [%populate seed=@ux]
+      [%fetch-metadata id=@ux type=token-type]
+      ::  TX submit pokes
       $:  %submit-custom
           ::  essentially a full egg
           from=id:smart

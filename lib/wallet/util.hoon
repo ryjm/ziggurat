@@ -15,23 +15,38 @@
   =+  [%tx-status (hash-egg egg) egg args]
   [%give %fact ~[/tx-updates] %zig-wallet-update !>(-)]
 ::
-++  create-id-subscriptions
-  |=  [keys=(set @ux) indexer=ship]
-  ^-  (list card)
-  %+  turn
-    ~(tap in keys)
-  |=  k=@ux
-  =-  [%pass - %agent [indexer %uqbar-indexer] %watch -]
-  /id/(scot %ux k)
-::
-++  create-holder-subscriptions
+++  create-holder-and-id-subs
   |=  [pubkeys=(set @ux) indexer=ship]
   ^-  (list card)
+  %+  weld
+    %+  turn
+      ~(tap in pubkeys)
+    |=  k=@ux
+    =-  [%pass - %agent [indexer %uqbar-indexer] %watch -]
+    /id/(scot %ux k)
   %+  turn
     ~(tap in pubkeys)
   |=  k=@ux
   =-  [%pass - %agent [indexer %uqbar-indexer] %watch -]
   /holder/(scot %ux k)
+::
+++  clear-holder-and-id-sub
+  |=  [id=@ux wex=boat:gall]
+  ^-  (list card)
+  %+  murn  ~(tap by wex)
+  |=  [[=wire =ship =term] *]
+  ^-  (unit card)
+  ?.  |(=([%id id] wire) =([%holder id] wire))  ~
+  `[%pass wire %agent [ship term] %leave ~]
+::
+++  clear-all-holder-and-id-subs
+  |=  wex=boat:gall
+  ^-  (list card)
+  %+  murn  ~(tap by wex)
+  |=  [[=wire =ship =term] *]
+  ^-  (unit card)
+  ?.  |(?=([%id *] wire) ?=([%holder *] wire))  ~
+  `[%pass wire %agent [ship term] %leave ~]  
 ::
 ++  create-asset-subscriptions
   |=  [tokens=(map @ux =book) indexer=ship]
