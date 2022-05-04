@@ -15,10 +15,11 @@
       :~  [%import-seed (ot ~[[%mnemonic sa] [%password sa] [%nick sa]])]
           [%generate-hot-wallet (ot ~[[%password sa] [%nick sa]])]
           [%derive-new-address (ot ~[[%hdpath sa] [%nick sa]])]
-          [%delete-address (ot ~[[%pubkey (se %ux)]])]
-          [%edit-nickname (ot ~[[%pubkey (se %ux)] [%nick sa]])]
+          [%delete-address (ot ~[[%address (se %ux)]])]
+          [%edit-nickname (ot ~[[%address (se %ux)] [%nick sa]])]
           [%set-node (ot ~[[%town ni] [%ship (se %p)]])]
           [%set-indexer (ot ~[[%ship (se %p)]])]
+          [%add-tracked-address (ot ~[[%address (se %ux)] [%nick sa]])]
           [%submit-custom parse-custom]
           [%submit parse-submit]
       ==

@@ -92,9 +92,11 @@ where the argument `[our %ziggurat]` is a dock pointing to the ship running the 
 
 {derive-new-address: {hdpath: "m/44'/60'/0'/0/0", nick: "nickname"}}
 
-{delete-address: {pubkey: "0x1234.5678"}}
+{add-tracked-address: {address: "0x1234.5678" nick: "nickname"}}
 
-{edit-nickname: {pubkey: "0x1234.5678", nick: "nickname"}}
+{delete-address: {address: "0x1234.5678"}}
+
+{edit-nickname: {address: "0x1234.5678", nick: "nickname"}}
 
 {set-node: {town: 1, ship: "~zod"}}  # set the sequencer to send txs to, per town
 
@@ -103,13 +105,13 @@ where the argument `[our %ziggurat]` is a dock pointing to the ship running the 
 {submit-custom: {from: "0x1234", to: "0x5678", town: 1, gas: {rate: 1, bud: 10000}, args: "[%give ... .. (this is HOON)]", my-grains: {"0x1111", "0x2222"}, cont-grains: {"0x3333", "0x4444"}}}
 
 # for TOKEN and NFT transactions
-# 'from' is our pubkey
+# 'from' is our address
 # 'to' is the address of the smart contract
 # 'town' is the number ID of the town on which the contract&rice are deployed
 # 'gas' rate and bud are amounts of zigs to spend on tx
 # 'args' will eventually cover many types of transactions,
 # currently only concerned with token sends following this format,
-# where 'token' is address of token metadata rice, 'to' is pubkey receiving tokens.
+# where 'token' is address of token metadata rice, 'to' is address receiving tokens.
 {submit:
   {from: "0x3.e87b.0cbb.431d.0e8a.2ee2.ac42.d9da.cab8.063d.6bb6.2ff9.b2aa.e1b9.0f56.9c3f.3423",
    to: "0x74.6361.7274.6e6f.632d.7367.697a",

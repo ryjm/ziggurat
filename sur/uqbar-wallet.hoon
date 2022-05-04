@@ -27,6 +27,9 @@
       [%edit-nickname address=@ux nick=tape]
       [%set-node town=@ud =ship]
       [%set-indexer =ship]
+      ::  HW wallet stuff
+      [%add-tracked-address address=@ux nick=tape]
+      [%submit-signed hash=@ux sig=[v=@ r=@ s=@]]
       ::  testing and internal
       [%set-nonce address=@ux town=@ud new=@ud]
       [%populate seed=@ux]

@@ -123,6 +123,10 @@
         keys  (~(put by keys) public-key:- [`private-key:- nick.act])
       ==
     ::
+        %add-tracked-address
+      :-  (create-holder-and-id-subs (silt ~[address.act]) (need indexer.state))
+      state(keys (~(put by keys) address.act [~ nick.act]))
+    ::
         %delete-address
       ::  can recover by re-deriving same path
       :-  (clear-holder-and-id-sub address.act wex.bowl)
@@ -183,6 +187,9 @@
         transaction-store  ~
         metadata-store  ~
       ==
+    ::
+        %submit-signed
+      !!  ::  TODO
     ::
         %submit-custom
       =/  our-nonces     (~(gut by nonces.state) from.act ~)
