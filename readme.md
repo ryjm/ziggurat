@@ -61,7 +61,7 @@ where the argument `[our %ziggurat]` is a dock pointing to the ship running the 
 ```
 (to add other ships, follow above instructions with 2nd and 3rd seed/pubkey combos, but use poke `:ziggurat &zig-chain-poke [%start %validator ~ validators=(silt ~[~zod]) [~ ~]]`) here, where `~[~zod]` is some set of ships validating (you only need one that's not you)
 
-6. Start up a town that has the token contract deployed. Wait until the wallet sees an update from the indexer to do this. There will be a printout that says `"wallet: fetching metadata..."`
+6. Start up a town that has the token contract deployed. Wait until the wallet sees an update from the indexer to do this.
 ```
 :sequencer|init 1
 ```

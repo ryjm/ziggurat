@@ -153,23 +153,6 @@
       =+  acc=(~(got by nonces.state) address.act)
       `state(nonces (~(put by nonces) address.act (~(put by acc) town.act new.act)))
     ::
-        %fetch-metadata
-      ::  manually import metadata for a token
-      ~&  "%wallet: fetching metadata..."
-      ~|  "%wallet: failed to find matching metadata"
-      =/  upd=update:uqbar-indexer
-        (need .^((unit update:uqbar-indexer) %gx /(scot %p our.bowl)/uqbar-indexer/(scot %da now.bowl)/grain/(scot %ux id.act)/noun))
-      ?>  ?=(%grain -.upd)
-      =/  meta-grain=grain:smart  +.-:~(tap in grains.upd)  
-      ?>  ?=(%& -.germ.meta-grain)
-      =/  =asset-metadata
-        ?+  type.act  !!
-          %token  [type.act ;;(token-metadata data.p.germ.meta-grain)]
-          %nft    [type.act ;;(nft-metadata data.p.germ.meta-grain)]
-        ==
-      ?>  =(salt.p.germ.meta-grain salt.asset-metadata)
-      `state(metadata-store (~(put by metadata-store.state) salt.asset-metadata asset-metadata))
-    ::
         %populate
       ::  populate wallet with fake data for testing
       ::  will WIPE previous wallet state!!
@@ -348,9 +331,11 @@
     =+  %+  ~(put by tokens.state)  pub
         ?~  curr  found
         (~(uni by u.curr) found)
-    :_  this(tokens -)
-    %+  welp  (find-new-metadata found our.bowl metadata-store.state)
-    ~[[%give %fact ~[/book-updates] %zig-wallet-update !>([%new-book -])]]
+    :-  ~[[%give %fact ~[/book-updates] %zig-wallet-update !>([%new-book -])]]
+    %=  this
+      tokens  -
+      metadata-store  (find-new-metadata found our.bowl metadata-store [our now]:bowl)
+    ==
   ::
       [%id @ ~]
     ::  update to a tracked account

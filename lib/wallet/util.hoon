@@ -1,4 +1,4 @@
-/-  *uqbar-wallet, uqbar-indexer
+/-  *wallet, uqbar-indexer
 =>  |%
     +$  card  card:agent:gall
     --
@@ -100,23 +100,44 @@
   ==
 ::
 ++  find-new-metadata
-  |=  [=book our=ship =metadata-store]
+  |=  [=book our=ship =metadata-store [our=ship now=time]]
   =/  book=(list [[town=@ud lord=id:smart salt=@] [=token-type =grain:smart]])  ~(tap by book)
-  |-  ^-  (list card)
-  ?~  book  ~
+  |-  ^-  ^metadata-store
+  ?~  book  metadata-store
   ?:  (~(has by metadata-store) salt.i.book)  $(book t.book)
   ::  if we don't know the type of an asset, we need to try and fit it to
   ::  a mold we know of. this is not great and should be eventually provided
   ::  from some central authority
   ?.  ?=(%& -.germ.grain.i.book)  $(book t.book)
-  =*  data  data.p.germ.grain.i.book
-  =/  tok  (mule |.(;;(token-account data)))
-  ?:  ?=(%& -.tok)
-    :_  $(book t.book)
-    [%pass /find/(scot %u salt.i.book) %agent [our %wallet] %poke %zig-wallet-poke !>([%fetch-metadata metadata.p.tok %token])]
-  =/  nft  (mule |.(;;(nft-account data)))
-  ?:  ?=(%& -.nft)
-    :_  $(book t.book)
-    [%pass /find/(scot %u salt.i.book) %agent [our %wallet] %poke %zig-wallet-poke !>([%fetch-metadata metadata.p.nft %nft])]
-  $(book t.book)
+  =*  rice  p.germ.grain.i.book
+  ::  put %token / %nft label inside chain standard?
+  =/  found=(unit asset-metadata)
+    =+  tok=(mule |.(;;(token-account data.rice)))
+    ?:  ?=(%& -.tok)
+      (fetch-metadata %token metadata.p.tok [our now])
+    =+  nft=(mule |.(;;(nft-account data.rice)))
+    ?:  ?=(%& -.nft)
+      (fetch-metadata %nft metadata.p.nft [our now])
+    ~
+  ?~  found  $(book t.book)
+  $(book t.book, metadata-store (~(put by metadata-store) salt.rice u.found))
+++  fetch-metadata
+  |=  [=token-type =id:smart [our=ship now=time]]
+  ^-  (unit asset-metadata)
+  ::  manually import metadata for a token
+  =+  .^((unit update:uqbar-indexer) %gx /(scot %p our)/uqbar-indexer/(scot %da now)/grain/(scot %ux id)/noun)
+  ?~  -
+    ~&  >>>  "%wallet: failed to find matching metadata for a grain we hold"
+    ~
+  ?>  ?=(%grain -.u.-)
+  =/  meta-grain=grain:smart  +.-:~(tap in grains.u.-)
+  ?>  ?=(%& -.germ.meta-grain)
+  =/  found=(unit asset-metadata)
+    ?+  token-type  ~
+      %token  `[%token ;;(token-metadata data.p.germ.meta-grain)]
+      %nft    `[%nft ;;(nft-metadata data.p.germ.meta-grain)]
+    ==
+  ?~  found  ~
+  ?>  =(salt.p.germ.meta-grain salt.u.found)
+  found
 --

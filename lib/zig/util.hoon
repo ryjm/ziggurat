@@ -1,4 +1,4 @@
-/-  *ziggurat, uqbar-wallet
+/-  *ziggurat, wallet
 =>  |%
     +$  card  card:agent:gall
     --
@@ -170,7 +170,7 @@
   ==
 ::
 ++  poke-capitol
-  |=  [our=ship address=id:smart [rate=@ud bud=@ud] args=supported-args:uqbar-wallet]
+  |=  [our=ship address=id:smart [rate=@ud bud=@ud] args=supported-args:wallet]
   ^-  card
   ::  only dealing on relay chain (town 0)
   ::  with capitol contract

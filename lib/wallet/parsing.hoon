@@ -1,4 +1,4 @@
-/-  *uqbar-wallet, uqbar-indexer
+/-  *wallet, uqbar-indexer
 /+  *wallet-util
 =,  enjs:format
 |%
@@ -33,9 +33,9 @@
             |=  [id=@ud =item]
             :-  (scot %ud id)
             %-  pairs
-            :~  ['desc' (tape desc.item)]
+            :~  ['desc' (tape (scow %t desc.item))]
                 ['attributes' (tape "TODO...")]
-                ['URI' (tape uri.item)]
+                ['URI' (tape (scow %t uri.item))]
             ==
         ==
       ==

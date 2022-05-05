@@ -174,8 +174,6 @@
       =/  cur=epoch  +:(need (pry:poc epochs))
       =/  last-slot-num=@ud
         (need (bind (pry:sot slots.cur) head))
-      =/  prev-hash
-        (got-hed-hash last-slot-num epochs cur)
       ?~  found=(~(get by p.globe.state) `@ux`'ziggurat')
         ::  haven't received global state yet, sit tight
         ~&  >>>  "%ziggurat: waiting to receive relay state"
@@ -183,7 +181,6 @@
       =/  validator-set
         ?>  ?=(%& -.germ.u.found)
         ~(key by (hole:smart ,(map ship [@ux @p life]) data.p.germ.u.found))
-      ~&  "%ziggurat: known validators: {<validator-set>}"
       ::  if we're no longer in validator set, leave the chain
       ?.  (~(has in validator-set) our.bowl)
         :-  (subscriptions-cleanup wex.bowl sup.bowl)
@@ -191,7 +188,7 @@
       =/  new-epoch=epoch
         :^    +(num.cur)
             (deadline start-time.cur (dec (lent order.cur)))
-          (shuffle validator-set (sham prev-hash))
+          (shuffle validator-set (epoch-seed last-slot-num epochs cur))
         ~
       =/  validators=(list ship)
         ~(tap in (~(del in validator-set) our.bowl))
@@ -199,20 +196,20 @@
               %+  lth  start-time.new-epoch
               (sub now.bowl (mul +((lent order.new-epoch)) epoch-interval))
           ==
+        ::  this epoch has already started
         ~&  >>>  "%ziggurat: attempting to catch up with known validators"
         :_  state
         (start-epoch-catchup i.validators num.cur)^~
       ::  either on-time to start epoch, or solo validator
-      ~&  new-epoch+num.new-epoch^(sham epochs)
       ::  set our timers for all the slots in this epoch,
       ::  subscribe to all the other validator ships,
       ::  and alert subscribing sequencers of the next block producer
+      ~&  epoch+num.new-epoch^validator-set^`@ux`(end [3 2] (sham epochs))
       :_  state(epochs (put:poc epochs num.new-epoch new-epoch))
-      =/  town-id  .^((unit @ud) %gx /(scot %p our.bowl)/sequencer/(scot %da now.bowl)/town-id/noun)
+      =+  %-  hall-update-card
+          .^((unit @ud) %gx /(scot %p our.bowl)/sequencer/(scot %da now.bowl)/town-id/noun)
       %-  zing
-      :~  ?~  hall-card=(hall-update-card town-id)
-            ~[(notify-sequencer -.order.new-epoch)]
-          ~[(notify-sequencer -.order.new-epoch) u.hall-card]
+      :~  [(notify-sequencer -.order.new-epoch) ?~(- ~ [u.- ~])]
           (watch-updates (silt (murn order.new-epoch filter-by-wex)))
           (new-epoch-timers new-epoch our.bowl)
       ==

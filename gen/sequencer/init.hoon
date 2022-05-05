@@ -98,7 +98,7 @@
           salt=`@`'nftsalt'
   ==  ==
 =/  item-1
-  [1 (silt ~[['hair' 'red'] ['eyes' 'blue'] ['mouth' 'smile']]) "a smiling monkey" "ipfs://QmUbFVTm113tJEuJ4hZY2Hush4Urzx7PBVmQGjv1dXdSV9" %.y]
+  [1 (silt ~[['hair' 'red'] ['eyes' 'blue'] ['mouth' 'smile']]) 'a smiling monkey' 'ipfs://QmUbFVTm113tJEuJ4hZY2Hush4Urzx7PBVmQGjv1dXdSV9' %.y]
 =/  nft-acc-id  (fry-rice:smart pubkey-1 0xcafe.babe town-id `@`'nftsalt')
 =/  nft-acc-grain
   :*  nft-acc-id

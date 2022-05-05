@@ -6,7 +6,7 @@
 +$  transaction-store  (map pub=@ux [sent=(map @ux [=egg:smart args=supported-args]) received=(map @ux =egg:smart)])
 +$  metadata-store  (map @ asset-metadata)  ::  metadata is keyed by SALT of grains associated.
 ::
-+$  token-type  @tas
++$  token-type  ?(%token %nft %unknown)
 ::
 +$  wallet-update
   $%  [%new-book tokens=(map pub=id:smart =book)]
@@ -33,7 +33,6 @@
       ::  testing and internal
       [%set-nonce address=@ux town=@ud new=@ud]
       [%populate seed=@ux]
-      [%fetch-metadata id=@ux type=token-type]
       ::  TX submit pokes
       $:  %submit-custom
           ::  essentially a full egg
@@ -110,8 +109,8 @@
 +$  item
   $:  id=@ud
       data=(set [@t @t])
-      desc=tape
-      uri=tape
+      desc=@t
+      uri=@t
       transferrable=?
   ==
 --

@@ -33,9 +33,9 @@
   ::  item id is # in collection (<=supply)
   +$  item  [id=@ud item-contents]  
   +$  item-contents
-    $:  data=(set [@t @t])  ::  must fit attributes in metadata
-        desc=tape
-        uri=tape
+    $:  data=(set [@t @t])  ::  path (remote scry source)
+        desc=@t
+        uri=@t
         transferrable=?
     ==
   ::

@@ -25,17 +25,17 @@
     +$  item  [id=@ud item-contents]  
     +$  item-contents
       $:  data=(set [@t @t])
-          desc=tape  ::  is this needed?
-          uri=tape   ::  path?
+          desc=@t
+          uri=@t
           transferrable=?
       ==
     ::
     ++  item-1  ^-  item
-      [1 (silt ~[['hair' 'red'] ['eyes' 'blue'] ['mouth' 'smile']]) "a smiling face" "ipfs://fake1" %.y]
+      [1 (silt ~[['hair' 'red'] ['eyes' 'blue'] ['mouth' 'smile']]) 'a smiling face' 'ipfs://fake1' %.y]
     ++  item-2  ^-  item
-      [2 (silt ~[['hair' 'brown'] ['eyes' 'green'] ['mouth' 'frown']]) "a frowny face" "ipfs://fake2" %.y]
+      [2 (silt ~[['hair' 'brown'] ['eyes' 'green'] ['mouth' 'frown']]) 'a frowny face' 'ipfs://fake2' %.y]
     ++  item-3  ^-  item
-      [3 (silt ~[['hair' 'grey'] ['eyes' 'black'] ['mouth' 'squiggle']]) "a weird face" "ipfs://fake3" %.n]
+      [3 (silt ~[['hair' 'grey'] ['eyes' 'black'] ['mouth' 'squiggle']]) 'a weird face' 'ipfs://fake3' %.n]
     ::
     ++  account-1  ^-  grain
       :*  0x1.beef
