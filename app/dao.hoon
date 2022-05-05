@@ -236,12 +236,12 @@
           (get-dao-from-update update)
         ~&  >  "dao: got dao fact for {<dao-id>}:"
         ~&  >  "dao: {<new-dao>}"
-        ?~  (~(get by ship-to-id.new-dao) our.bowl)
-          ::  We are no longer a member of DAO: remove it.
-          =^  cards  state
-            (remove-dao:dc dao-id)
-          [cards this]
-        ::  We are still a member of DAO: update it.
+        :: ?~  (~(get by ship-to-id.new-dao) our.bowl)
+        ::   ::  We are no longer a member of DAO: remove it.
+        ::   =^  cards  state
+        ::     (remove-dao:dc dao-id)
+        ::   [cards this]
+        :: ::  We are still a member of DAO: update it.
         =/  old-host-id=(unit id:smart)  (get-host dao-id ~)
         =/  new-host-id=(unit id:smart)  (get-host dao-id `new-dao)
         ?<  &(?=(^ old-host-id) ?=(~ new-host-id))
@@ -507,7 +507,7 @@
   ++  add-comms
     |=  [dao-id=id:smart rid=resource:res]
     ^-  (quip card _state)
-    ?~  (has-write-dao-permissions dao-id)  `state
+    :: ?~  (has-write-dao-permissions dao-id)  `state
     =.  dao-id-to-rid  (~(put by dao-id-to-rid) dao-id rid)
     =.  dao-rid-to-id  (~(put by dao-rid-to-id) rid dao-id)
     :_  state
@@ -524,7 +524,7 @@
     ~[(send-diff %remove-comms dao-id)]
   ::
   ++  add-dao
-    |=  [salt=@ =dao:d]
+    |=  [salt=@ dao=(unit dao:d)]
     ^-  (quip card _state)
     =/  dao-id=id:smart
       %:  fry-rice:smart
@@ -534,7 +534,9 @@
           salt
       ==
     ?:  ?=(^ (peek-dao dao-id))  `state
-    =.  daos  (~(put by daos) dao-id dao)
+    =.  daos
+      ?~  dao  daos
+      (~(put by daos) dao-id u.dao)
     :_  state
     :-  (send-diff %add-dao salt dao)
     ?~  wi=(watch-indexer dao-id)  ~  [u.wi ~]

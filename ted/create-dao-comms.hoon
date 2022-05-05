@@ -122,15 +122,31 @@
 =/  m  (strand ,vase)
 ^-  form:m
 =/  arg-mold
-  $:  rid=resource:res
-      dao-name=@t
-      dao-salt=@
-      our-id=id:smart
-      permissions=(unit permissions:d)
-      member-data=(unit member-data)
-  ==
+  $?  dao-salt=@
+      $:  rid=resource:res
+          dao-name=@t
+          dao-salt=@
+          our-id=id:smart
+          permissions=(unit permissions:d)
+          member-data=(unit member-data)
+  ==  ==
 =/  args  !<((unit arg-mold) arg)
 ?~  args  (pure:m !>(~))
+?:  ?=(@ u.args)
+  =*  dao-salt     dao-salt.u.args
+  =/  dao-id=id:smart
+    %:  fry-rice:smart
+        dao-contract-id
+        dao-contract-id
+        dao-town-id
+        dao-salt
+    ==
+  ~&  >  "adding dao to be watched to %dao..."
+  ;<  ~  bind:m
+    %^  poke-our  %dao  %dao-update
+    !>(`on-chain-update:d`[%add-dao dao-salt ~])
+  ~&  >  "done"
+  (pure:m !>(~))
 =*  rid          rid.u.args
 =*  dao-name     dao-name.u.args
 =*  dao-salt     dao-salt.u.args
@@ -160,7 +176,7 @@
 ~&  >  "poking %dao..."
 ;<  ~  bind:m
   %^  poke-our  %dao  %dao-update
-  !>(`on-chain-update:d`[%add-dao dao-salt dao])
+  !>(`on-chain-update:d`[%add-dao dao-salt `dao])
 ;<  ~  bind:m
   %^  poke-our  %dao  %dao-update
   !>(`off-chain-update:d`[%add-comms dao-id rid])

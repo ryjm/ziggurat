@@ -24,7 +24,7 @@
   ==
 ::
 +$  on-chain-update
-  $%  [%add-dao salt=@ =dao]
+  $%  [%add-dao salt=@ dao=(unit dao)]
       [%remove-dao dao-id=id:smart]
       [%add-member dao-id=id:smart roles=(set role) =id:smart him=ship]
       [%remove-member dao-id=id:smart =id:smart]

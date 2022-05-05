@@ -14,7 +14,6 @@
   ^-  chick
   |^
   ?~  args.inp  !!
-  ~&  >  "dao-cont: in contract"
   (process (hole arguments u.args.inp) (pin caller.inp))
   ::
   +$  arguments
@@ -35,7 +34,6 @@
   ::
   ++  process
     |=  [args=arguments caller-id=id]
-    ~&  >  "dao-cont: in +process"
     ?-    -.args
     ::
         %add-dao
@@ -51,7 +49,6 @@
       ==
     ::
         %vote
-      ~&  >  "dao-cont: in %vote"
       =*  dao-id       dao-id.args
       =*  proposal-id  proposal-id.args
       =/  [dao-grain=grain =dao:d]  (get-grain-and-dao dao-id)
@@ -81,7 +78,6 @@
       :: $(args [me.cart `update.prop grains.inp])
     ::
         %propose
-      ~&  >  "dao-cont: in %propose"
       =*  dao-id  dao-id.args
       =*  update  on-chain-update.args
       =/  [dao-grain=grain =dao:d]  (get-grain-and-dao dao-id)
@@ -102,7 +98,6 @@
       [%& (malt ~[[id.dao-grain dao-grain(data.p.germ dao)]]) ~]
     ::
         %execute
-      ~&  >  "dao-cont: in %execute"
       ?>  =(me.cart caller-id)
       =*  dao-id  dao-id.args
       =*  update  on-chain-update.args
@@ -313,15 +308,7 @@
       |=  =dao-identifier:d
       ^-  (unit dao:d)
       ?:  ?=(%& -.dao-identifier)  `p.dao-identifier
-      =/  scry-path=path
-        ?:  ?=(id p.dao-identifier)
-          /daos/(scot %ux p.dao-identifier)/noun
-        :(weld /daos (en-path:rl p.dao-identifier) /noun)
-      .^  (unit dao:d)
-          %gx
-          %+  scry:io  %dao
-          scry-path
-      ==
+      !!
     ::
     ++  is-allowed
       |=  $:  =member:d
@@ -393,13 +380,11 @@
           (~(get by id-to-ship.dao) id)
         ?:  ?=(^ existing-ship)
           ?:  =(him u.existing-ship)  dao
-          ~|  "%dao: cannot add member whose id corresponds to a different ship"
           !!
         =/  existing-id=(unit ^id)
           (~(get by ship-to-id.dao) him)
         ?:  ?=(^ existing-id)
           ?:  =(id u.existing-id)  dao
-          ~|  "%dao: cannot add member whose ship corresponds to a different id"
           !!
         ::
         %=  dao
@@ -414,12 +399,9 @@
         |=  [=id]
         ^-  dao:d
         ?~  him=(~(get by id-to-ship.dao) id)
-          ~|  "%dao: cannot find given member to remove in id-to-ship"
           !!
         ?~  existing-id=(~(get by ship-to-id.dao) u.him)
-          ~|  "%dao: cannot find given member to remove in ship-to-id"
           !!
-        ~|  "%dao: given id does not match records"
         ?>  =(id u.existing-id)
         ?~  roles=(~(get ju members.dao) id)  !!
         %=  dao
@@ -467,7 +449,6 @@
         |=  [roles=(set role:d) =id]
         ^-  dao:d
         ?~  (~(get ju members.dao) id)
-          ~|  "%dao: cannot find given member to add roles to"
           !!
         %=  dao
           members
@@ -479,7 +460,6 @@
         |=  [roles=(set role:d) =id]
         ^-  dao:d
         ?~  (~(get ju members.dao) id)
-          ~|  "%dao: cannot find given member to remove roles from"
           !!
         dao(members (remove-roles-helper members.dao roles id))
       ::
