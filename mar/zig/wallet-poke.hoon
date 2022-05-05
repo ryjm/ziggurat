@@ -12,14 +12,14 @@
     (process jon)
     ++  process
       %-  of
-      :~  [%import-seed (ot ~[[%mnemonic sa] [%password sa] [%nick sa]])]
-          [%generate-hot-wallet (ot ~[[%password sa] [%nick sa]])]
-          [%derive-new-address (ot ~[[%hdpath sa] [%nick sa]])]
+      :~  [%import-seed (ot ~[[%mnemonic so] [%password so] [%nick so]])]
+          [%generate-hot-wallet (ot ~[[%password so] [%nick so]])]
+          [%derive-new-address (ot ~[[%hdpath sa] [%nick so]])]
           [%delete-address (ot ~[[%address (se %ux)]])]
-          [%edit-nickname (ot ~[[%address (se %ux)] [%nick sa]])]
+          [%edit-nickname (ot ~[[%address (se %ux)] [%nick so]])]
           [%set-node (ot ~[[%town ni] [%ship (se %p)]])]
           [%set-indexer (ot ~[[%ship (se %p)]])]
-          [%add-tracked-address (ot ~[[%address (se %ux)] [%nick sa]])]
+          [%add-tracked-address (ot ~[[%address (se %ux)] [%nick so]])]
           [%submit-custom parse-custom]
           [%submit parse-submit]
       ==
@@ -48,13 +48,13 @@
       ==
     ++  parse-give
       %-  ot
-      :~  [%salt (se %ud)]
+      :~  [%solt (se %ud)]
           [%to (se %ux)]
           [%amount ni]
       ==
     ++  parse-nft
       %-  ot
-      :~  [%salt (se %ud)]
+      :~  [%solt (se %ud)]
           [%to (se %ux)]
           [%item-id ni]
       ==

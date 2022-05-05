@@ -8,34 +8,34 @@
   ?.  ?=(%& -.germ.grain)  !!
   :-  (scot %ux id.grain)
   %-  pairs
-  :~  ['id' (tape (scow %ux id.grain))]
-      ['lord' (tape (scow %ux lord.grain))]
-      ['holder' (tape (scow %ux holder.grain))]
+  :~  ['id' [%s (scot %ux id.grain)]]
+      ['lord' [%s (scot %ux lord.grain)]]
+      ['holder' [%s (scot %ux holder.grain)]]
       ['town' (numb town-id.grain)]
-      ['token_type' (tape (scow %tas token-type))]
+      ['token_type' [%s (scot %tas token-type)]]
       :-  'data'
       %-  pairs
-      ?+    token-type  ~[['unknown_data_structure' (tape "?")]]
+      ?+    token-type  ~[['unknown_data_structure' [%s '?']]]
           %token
         =+  ;;(token-account data.p.germ.grain)
         :~  ['balance' (numb balance.-)]
-            ['metadata' (tape (scow %ux metadata.-))]
-            ['salt' (tape (scow %u salt.p.germ.grain))]
+            ['metadata' [%s (scot %ux metadata.-)]]
+            ['salt' [%s (scot %u salt.p.germ.grain)]]
         ==
       ::
           %nft
         =+  ;;(nft-account data.p.germ.grain)
-        :~  ['metadata' (tape (scow %ux metadata.-))]
-            ['salt' (tape (scow %u salt.p.germ.grain))]
+        :~  ['metadata' [%s (scot %ux metadata.-)]]
+            ['salt' [%s (scot %u salt.p.germ.grain)]]
             :-  'items'
             %-  pairs
             %+  turn  ~(tap by items.-)
             |=  [id=@ud =item]
             :-  (scot %ud id)
             %-  pairs
-            :~  ['desc' (tape (scow %t desc.item))]
-                ['attributes' (tape "TODO...")]
-                ['URI' (tape (scow %t uri.item))]
+            :~  ['desc' [%s desc.item]]
+                ['attributes' [%s 'TODO...']]
+                ['URI' [%s uri.item]]
             ==
         ==
       ==
@@ -47,38 +47,38 @@
   ?.  ?=(account:smart from.p.t)  !!
   :-  (scot %ux hash)
   %-  pairs
-  :~  ['from' (tape (scow %ux id.from.p.t))]
+  :~  ['from' [%s (scot %ux id.from.p.t)]]
       ['nonce' (numb nonce.from.p.t)]
-      ['to' (tape (scow %ux to.p.t))]
+      ['to' [%s (scot %ux to.p.t)]]
       ['rate' (numb rate.p.t)]
       ['budget' (numb budget.p.t)]
       ['town' (numb town-id.p.t)]
       ['status' (numb status.p.t)]
-      ?~  args  ['args' (tape "received")]
+      ?~  args  ['args' [%s 'received']]
       :-  'args'
       %-  frond
       :-  (scot %tas -.args)
       %-  pairs
       ?-    -.u.args
           %give
-        :~  ['salt' (tape (scow %ux salt.u.args))]
-            ['to' (tape (scow %ux to.u.args))]
+        :~  ['salt' [%s (scot %ux salt.u.args)]]
+            ['to' [%s (scot %ux to.u.args)]]
             ['amount' (numb amount.u.args)]
         ==
           %give-nft
-        :~  ['salt' (tape (scow %ux salt.u.args))]
-            ['to' (tape (scow %ux to.u.args))]
+        :~  ['salt' [%s (scot %ux salt.u.args)]]
+            ['to' [%s (scot %ux to.u.args)]]
             ['item-id' (numb item-id.u.args)]
         ==
       ::
           ?(%become-validator %stop-validating)
-        ~[['signature' (tape (scow %p q.signature.u.args))]]
+        ~[['signature' [%s (scot %p q.signature.u.args)]]]
       ::
           ?(%init %join %exit)
-        ~[['signature' (tape (scow %p q.signature.u.args))] ['town' (numb town.u.args)]]
+        ~[['signature' [%s (scot %p q.signature.u.args)]] ['town' (numb town.u.args)]]
       ::
           %custom
-        ~[['args' (tape (scow %t args.u.args))]]
+        ~[['args' [%s args.u.args]]]
       ==
   ==
 --

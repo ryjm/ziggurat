@@ -20,15 +20,15 @@
   ==
 ::
 +$  wallet-poke
-  $%  [%import-seed mnemonic=tape password=tape nick=tape]
-      [%generate-hot-wallet password=tape nick=tape]
-      [%derive-new-address hdpath=tape nick=tape]
+  $%  [%import-seed mnemonic=@t password=@t nick=@t]
+      [%generate-hot-wallet password=@t nick=@t]
+      [%derive-new-address hdpath=tape nick=@t]
       [%delete-address address=@ux]
-      [%edit-nickname address=@ux nick=tape]
+      [%edit-nickname address=@ux nick=@t]
       [%set-node town=@ud =ship]
       [%set-indexer =ship]
       ::  HW wallet stuff
-      [%add-tracked-address address=@ux nick=tape]
+      [%add-tracked-address address=@ux nick=@t]
       [%submit-signed hash=@ux sig=[v=@ r=@ s=@]]
       ::  testing and internal
       [%set-nonce address=@ux town=@ud new=@ud]
