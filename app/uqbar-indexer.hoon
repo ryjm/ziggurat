@@ -355,13 +355,27 @@
           ::  pass only most recent update to subs
           ^-  _serve-update
           %=  serve-update
-              block-index   (~(gas ju *(jug @ux block-location:uqbar-indexer)) block-hash)
-              egg-index     (~(gas ju *(jug @ux egg-location:uqbar-indexer)) egg)
-              from-index    (~(gas ju *(jug @ux egg-location:uqbar-indexer)) from)
-              grain-index   (~(gas ju *(jug @ux town-location:uqbar-indexer)) grain)
-              holder-index  (~(gas ju *(jug @ux second-order-location:uqbar-indexer)) holder)
-              lord-index    (~(gas ju *(jug @ux second-order-location:uqbar-indexer)) lord)
-              to-index      (~(gas ju *(jug @ux egg-location:uqbar-indexer)) to)
+              block-index
+            (~(gas ju *(jug @ux block-location:uqbar-indexer)) block-hash)
+          ::
+              egg-index
+            (~(gas ju *(jug @ux egg-location:uqbar-indexer)) egg)
+          ::
+              from-index
+            (~(gas ju *(jug @ux egg-location:uqbar-indexer)) from)
+          ::
+              grain-index
+            (~(gas ju *(jug @ux town-location:uqbar-indexer)) grain)
+          ::
+              holder-index
+            (~(gas ju *(jug @ux second-order-location:uqbar-indexer)) holder)
+          ::
+              lord-index
+            (~(gas ju *(jug @ux second-order-location:uqbar-indexer)) lord)
+          ::
+              to-index
+            (~(gas ju *(jug @ux egg-location:uqbar-indexer)) to)
+          ::
           ==
         ::
         ++  make-all-sub-cards
@@ -546,7 +560,7 @@
       (get-slot-update location)
     ::
         %grain
-      =|  grains=(set [town-location:uqbar-indexer grain:smart])
+      =|  grains=(map grain-id=id:smart [town-location:uqbar-indexer grain:smart])
       |-
       ?~  locations
         ?~  grains  ~
@@ -561,7 +575,9 @@
         $(locations t.locations)
       %=  $
           locations  t.locations
-          grains     (~(put in grains) [location u.grain])
+          grains
+        (~(put by grains) id.u.grain [location u.grain])
+      ::
       ==
     ::
         ?(%egg %from %to)

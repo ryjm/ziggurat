@@ -302,7 +302,7 @@
       ^-  [id:smart dao:d]
       ?>  ?=(%grain -.update)
       =/  grains=(list [town-location:uqbar-indexer grain:smart])
-        ~(tap in grains.update)
+        ~(val by grains.update)
       ?>  =(1 (lent grains))
       =/  [* dao-grain=grain:smart]  (snag 0 grains)
       ?>  ?=(%& -.germ.dao-grain)
