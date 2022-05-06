@@ -220,6 +220,16 @@
     =.  app  (put-hint [%10 axis.f hval htar holdleaf sibs])
     [%& ~ u.u.mutant]^app
   ::
+       [%11 tag=@ next=*]
+    =^  next=body  app
+      $(f next.f)
+    :_  app
+    ?:  ?=(%| -.next)  %|^trace
+    ?~  p.next  %&^~
+    :+  %&  ~
+    .*  s
+    [11 tag.f 1 u.p.next]
+  ::
       [%11 [tag=@ clue=*] next=*]
     ?:  (lth bud 1)  [%&^~ app]
     =.  bud  (sub bud 1)
@@ -232,11 +242,12 @@
           ?=(?(%hunk %hand %lose %mean %spot) tag.f)
         [[tag.f u.p.clue] trace]
       $(f next.f)
-    ?:  ?=(%| -.next)  [%|^trace app]
-    ?~  p.next  [%&^~ app]
-    :-  %0
+    :_  app
+    ?:  ?=(%| -.next)  %|^trace
+    ?~  p.next  %&^~
+    :+  %&  ~
     .*  s
-    [11 [tag.f 1 p.u.clue] 1 p.u.next]
+    [11 [tag.f 1 u.p.clue] 1 u.p.next]
   ==
   :: Check if we are calling an arm in a core and if so lookup the axis
   :: in the jet map
