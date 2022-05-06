@@ -6,7 +6,7 @@
 ::
 ::  +allowed-participant: grades whether a ship is permitted to participate
 ::  in Uqbar validation. currently using hardcoded whitelist
-::  
+::
 ++  allowed-participant
   |=  [=ship our=ship now=@da]
   ^-  ?
@@ -65,6 +65,7 @@
 ++  notify-sequencer
   |=  =ship
   ^-  card
+  ~&  >  "%ziggurat: next producer is {<ship>}"
   :-  %give
   :^  %fact  ~[/sequencer/updates]
       %sequencer-update  !>([%next-producer ship])
@@ -151,13 +152,13 @@
   ==
 ::  +filter: filters a set with boolean gate
 ++  filter
-  |*  [a=(tree) b=gate] 
+  |*  [a=(tree) b=gate]
   =+  c=`(set _?>(?=(^ a) n.a))`~
   |-  ?~  a  c
   =.  c
     ?:  (b n.a)
       (~(put in c) n.a)
-    c   
+    c
   =.  c  $(a l.a, c c)
   $(a r.a, c c)
 ::

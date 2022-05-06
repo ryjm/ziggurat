@@ -66,7 +66,7 @@
       ::  (slav %ud i.t.t.path)
       ~&  "%ziggurat: got a watch on %epoch-catchup, sharing epochs"
       :_  this
-      :+  [%give %fact ~ %zig-update !>([%epochs-catchup epochs])] 
+      :+  [%give %fact ~ %zig-update !>([%epochs-catchup epochs])]
         [%give %kick ~ ~]
       ~
     ==
@@ -205,11 +205,15 @@
       ::  subscribe to all the other validator ships,
       ::  and alert subscribing sequencers of the next block producer
       ~&  epoch+num.new-epoch^validator-set^`@ux`(end [3 2] (sham epochs))
+      =/  next-producer=ship
+        ?~  +.order.new-epoch
+          -.order.new-epoch
+        -.+.order.new-epoch
       :_  state(epochs (put:poc epochs num.new-epoch new-epoch))
       =+  %-  hall-update-card
           .^((unit @ud) %gx /(scot %p our.bowl)/sequencer/(scot %da now.bowl)/town-id/noun)
       %-  zing
-      :~  [(notify-sequencer -.order.new-epoch) ?~(- ~ [u.- ~])]
+      :~  [(notify-sequencer next-producer) ?~(- ~ [u.- ~])]
           (watch-updates (silt (murn order.new-epoch filter-by-wex)))
           (new-epoch-timers new-epoch our.bowl)
       ==
