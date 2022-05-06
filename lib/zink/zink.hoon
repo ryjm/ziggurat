@@ -28,8 +28,8 @@
   ::  formula is a cell; do distribution
   ::
       [^ *]
-    ?:  (lth bud 1)  [%&^~ app]
-    =.  bud  (sub bud 1)
+    ?:  (lth bud 2)  [%&^~ app]
+    =.  bud  (sub bud 2)
     =^  hed=body  app
       $(f -.f)
     ?:  ?=(%| -.hed)  [%|^trace app]
@@ -44,8 +44,8 @@
     [%& ~ u.p.hed^u.p.tal]^app
   ::
       [%0 axis=@]
-    ?:  (lth bud 1)  [%&^~ app]
-    =.  bud  (sub bud 1)
+    ?:  (lth bud 2)  [%&^~ app]
+    =.  bud  (sub bud 2)
     =^  part  bud
       (frag axis.f s bud)
     ?~  part  [%&^~ app]
@@ -63,8 +63,8 @@
     [%& ~ const.f]^app
   ::
       [%2 sub=* for=*]
-    ?:  (lth bud 1)  [%&^~ app]
-    =.  bud  (sub bud 1)
+    ?:  (lth bud 2)  [%&^~ app]
+    =.  bud  (sub bud 2)
     =^  hsub  cax  (hash sub.f)
     =^  hfor  cax  (hash for.f)
     =^  subject=body  app
@@ -79,8 +79,8 @@
     $(s u.p.subject, f u.p.formula)
   ::
       [%3 arg=*]
-    ?:  (lth bud 1)  [%&^~ app]
-    =.  bud  (sub bud 1)
+    ?:  (lth bud 3)  [%&^~ app]
+    =.  bud  (sub bud 3)
     =^  argument=body  app
       $(f arg.f)
     ?:  ?=(%| -.argument)  [%|^trace app]
@@ -95,7 +95,6 @@
     [%& ~ %.y]^app
   ::
       [%4 arg=*]
-
     ?:  (lth bud 1)  [%&^~ app]
     =.  bud  (sub bud 1)
     =^  argument=body  app
@@ -108,8 +107,8 @@
     [%& ~ .+(u.p.argument)]^app
   ::
       [%5 a=* b=*]
-    ?:  (lth bud 1)  [%&^~ app]
-    =.  bud  (sub bud 1)
+    ?:  (lth bud 2)  [%&^~ app]
+    =.  bud  (sub bud 2)
     =^  ha  cax  (hash a.f)
     =^  hb  cax  (hash b.f)
     =^  a=body  app
@@ -124,8 +123,8 @@
     [%& ~ =(u.p.a u.p.b)]^app
   ::
       [%6 test=* yes=* no=*]
-    ?:  (lth bud 1)  [%&^~ app]
-    =.  bud  (sub bud 1)
+    ?:  (lth bud 3)  [%&^~ app]
+    =.  bud  (sub bud 3)
     =^  htest  cax  (hash test.f)
     =^  hyes   cax  (hash yes.f)
     =^  hno    cax  (hash no.f)
@@ -140,8 +139,8 @@
     ==
   ::
       [%7 subj=* next=*]
-    ?:  (lth bud 1)  [%&^~ app]
-    =.  bud  (sub bud 1)
+    ?:  (lth bud 2)  [%&^~ app]
+    =.  bud  (sub bud 2)
     =^  hsubj  cax  (hash subj.f)
     =^  hnext  cax  (hash next.f)
     =^  subject=body  app
@@ -155,8 +154,8 @@
     ==
   ::
       [%8 head=* next=*]
-    ?:  (lth bud 1)  [%&^~ app]
-    =.  bud  (sub bud 1)
+    ?:  (lth bud 2)  [%&^~ app]
+    =.  bud  (sub bud 2)
     =^  jax=body  app
       (jet head.f next.f)
     ?:  ?=(%| -.jax)  [%|^trace app]
@@ -174,8 +173,8 @@
     ==
   ::
       [%9 axis=@ core=*]
-    ?:  (lth bud 1)  [%&^~ app]
-    =.  bud  (sub bud 1)
+    ?:  (lth bud 3)  [%&^~ app]
+    =.  bud  (sub bud 3)
     =^  hcore  cax  (hash core.f)
     =^  core=body  app
       $(f core.f)
@@ -186,16 +185,16 @@
     ?~  arm  [%&^~ app]
     ?~  u.arm  [%|^trace app]
     =^  harm  cax  (hash u.u.arm)
-    =^  sibs  cax  (merk-sibs u.p.core axis.f)
-    =.  app  (put-hint [%9 axis.f hcore harm sibs])
+    =^  hsibs  cax  (merk-sibs u.p.core axis.f)
+    =.  app  (put-hint [%9 axis.f hcore harm hsibs])
     %=  $
       s  u.p.core
       f  u.u.arm
     ==
   ::
       [%10 [axis=@ value=*] target=*]
-    ?:  (lth bud 1)  [%&^~ app]
-    =.  bud  (sub bud 1)
+    ?:  (lth bud 4)  [%&^~ app]
+    =.  bud  (sub bud 4)
     =^  hval  cax  (hash value.f)
     =^  htar  cax  (hash target.f)
     ?:  =(0 axis.f)  [%|^trace app]
@@ -216,8 +215,8 @@
     ?~  oldleaf  [%&^~ app]
     ?~  u.oldleaf  [%|^trace app]
     =^  holdleaf  cax  (hash u.u.oldleaf)
-    =^  sibs  cax  (merk-sibs u.p.target axis.f)
-    =.  app  (put-hint [%10 axis.f hval htar holdleaf sibs])
+    =^  hsibs  cax  (merk-sibs u.p.target axis.f)
+    =.  app  (put-hint [%10 axis.f hval htar holdleaf hsibs])
     [%& ~ u.u.mutant]^app
   ::
        [%11 tag=@ next=*]
@@ -231,8 +230,6 @@
     [11 tag.f 1 u.p.next]
   ::
       [%11 [tag=@ clue=*] next=*]
-    ?:  (lth bud 1)  [%&^~ app]
-    =.  bud  (sub bud 1)
     =^  clue=body  app
       $(f clue.f)
     ?:  ?=(%| -.clue)  [%|^trace app]
@@ -309,11 +306,13 @@
       ?.  ?=([x=@ud y=@ud] sam)  %|^trace
       %&^(some (mul x.sam y.sam))
     ::
-        %double
+        %cain
       ?:  (lth bud 1)  %&^~
       =.  bud  (sub bud 1)
-      ?.  ?=(@ sam)  %|^trace
-      %&^(some (mul 2 sam))
+      =/  vax=(unit vase)
+        ((soft vase) sam)
+      ?~  vax  %|^trace
+      %&^(some (sell u.vax))
     ==
   ::
   ++  put-hint
@@ -456,6 +455,7 @@
   =/  src  .^(@t %cx file)
   =/  gun  (slap clib (ream src))
   =/  han  (~(mint ut p.gun) %noun gen)
+  ~&  %compiled
   (eval-noun [q.gun q.han] bud)
 ::
 ::  eval-hoon-with-cache: compile a hoon file and evaluate it with zink

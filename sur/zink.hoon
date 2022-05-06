@@ -45,7 +45,6 @@
   :~  [20 %add]
       [21 %dec]
       [4 %mul]
-      [11 %double]
   ==
 ++  pre-comp
   %-  ~(gas by *(map * phash))

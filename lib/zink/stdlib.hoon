@@ -17,8 +17,4 @@
   |-  ^-  @
   ?:  =(y 1)  a
   $(a (add a x), y (dec y))
-++  double
-  |=  [x=@]
-  ^-  @
-  (mul 2 x)
 --
