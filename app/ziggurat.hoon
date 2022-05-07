@@ -492,6 +492,8 @@
     ?:  =(ship our.bowl)
       ::  we are responsible for producing a block in this slot
       ::
+      ::  TODO: check what chunks we received and see if any were missing
+      ::
       ?.  =(our.bowl (rear order.cur))
         ::  normal block
         =+  (~(put by chunks.state) relay-town-id [~ globe.state])

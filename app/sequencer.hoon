@@ -21,7 +21,7 @@
 +$  mil  $_  ~(mill mill 0)
 --
 ::
-=|  inflated-state-0 
+=|  inflated-state-0
 =*  state  -
 ::
 %-  agent:dbug
@@ -84,14 +84,14 @@
       ::  add to our basket after ensuring each egg is to our town
       =.  eggs.act  (filter:util eggs.act |=(=egg:smart =((need town-id.state) town-id.p.egg)))
       =/  slot-num  .^(@ud %gx /(scot %p our.bowl)/ziggurat/(scot %da now.bowl)/slot/noun)
-      =/  current-producer  (snag (mod slot-num (lent order.u.hall.state)) order.u.hall.state)
-      ?:  =(our.bowl current-producer)
+      =/  next-producer  (snag (mod +(slot-num) (lent order.u.hall.state)) order.u.hall.state)
+      ?:  =(our.bowl next-producer)
         `state(basket (~(uni in basket) eggs.act))
       ~&  >>  "forwarding eggs"
       :_  state(basket ~)
       :_  ~
       :*  %pass  /basket-gossip
-          %agent  [current-producer %sequencer]
+          %agent  [next-producer %sequencer]
           %poke  %zig-weave-poke
           !>([%receive (~(uni in eggs.act) basket.state)])
       ==
@@ -214,8 +214,9 @@
       ::  create and send our chunk to them
       ~&  >>  "sequencer: attempting to produce a chunk"
       =/  our-address  .^((unit id:smart) %gx (weld z /address/noun))
-      =+  /(scot %p our.bowl)/wallet/(scot %da now.bowl)/account
-      =/  me  .^(account:smart %gx (weld - /(scot %ux (need our-address))/(scot %ud (need town-id.state))/noun))
+      =/  me
+        =+  /(scot %p our.bowl)/wallet/(scot %da now.bowl)/account
+        .^(account:smart %gx (weld - /(scot %ux (need our-address))/(scot %ud (need town-id.state))/noun))
       =/  our-chunk=chunk
         %+  ~(mill-all mil me (need town-id.state) 0 now.bowl)
           town.state
