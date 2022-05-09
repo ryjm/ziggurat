@@ -340,16 +340,16 @@
         %epoch-catchup
       ?<  ?=(%poke-ack -.sign)
       ?:  ?=(%kick -.sign)  `this
-      ?:  ?=(%watch-ack -.sign)
-        ?.  ?=(^ p.sign)    `this
-        =/  cur=epoch  +:(need (pry:poc epochs))
-        =/  validators=(list ship)
-          ?:  =(2 (lent order.cur))
-            ~(tap in (~(del in (silt order.cur)) our.bowl))
-          ~(tap in (~(del in (~(del in (silt order.cur)) our.bowl)) src.bowl))
-        ?~  validators  !!
-        :_  this
-        (start-epoch-catchup i.validators num.cur)^~
+      ?:  ?=(%watch-ack -.sign)  `this
+        ::  ?.  ?=(^ p.sign)    `this
+        ::  =/  cur=epoch  +:(need (pry:poc epochs))
+        ::  =/  validators=(list ship)
+        ::    ?:  =(2 (lent order.cur))
+        ::      ~(tap in (~(del in (silt order.cur)) our.bowl))
+        ::    ~(tap in (~(del in (~(del in (silt order.cur)) our.bowl)) src.bowl))
+        ::  ?~  validators  !!
+        ::  :_  this
+        ::  (start-epoch-catchup i.validators num.cur)^~
       ?>  ?=(%fact -.sign)
       =^  cards  state
         (epoch-catchup !<(update q.cage.sign))
@@ -416,22 +416,23 @@
     ~&  "%ziggurat: catching up to {<src.bowl>}"
     =/  a=(list (pair @ud epoch))  (bap:poc epochs.update)
     =/  b=(list (pair @ud epoch))  (bap:poc epochs)
-    ?~  epochs.update  `state
-    ?~  epochs
-      ~|  "invalid history"
-      ?>  (validate-history our.bowl epochs.update)
-      `state(epochs epochs.update)
+    ?~  epochs.update
+      ~&  %picked-our-history^": no competitor"
+      `state
     ~|  "invalid history"
     ?>  (validate-history our.bowl epochs.update)
+    ?~  epochs
+      ~&  %picked-their-history^": we had none"
+      `state(epochs epochs.update)
     |-  ^-  (quip card _state)
     ?~  a
-      ~&  %picked-our-history
+      ~&  %picked-our-history^": longer blockchain"
       `state
     ?~  b
       ::  if we pick their history, clear old timers if any exist
       ::  and set new ones based on latest epoch
       ::  set global state to match last block in acquired history
-      ~&  %picked-their-history
+      ~&  %picked-their-history^": longer blockchain"
       =/  [n=@ud =epoch]  (need (pry:poc epochs.update))
       =/  =slot
         ?~  latest=(pry:sot slots.epoch)
@@ -449,9 +450,8 @@
     |-  ^-  (quip card _state)
     ?~  a-s        ^$(a t.a, b t.b)
     ?~  b-s        ^$(a t.a, b t.b)
-    ?~  q.q.i.a-s  ~&  %picked-our-history  `state
     ?~  q.q.i.b-s
-      ~&  %picked-their-history
+      ~&  %picked-their-history^": more slots"
       =/  [n=@ud =epoch]  (need (pry:poc epochs.update))
       =/  =slot
         ?~  latest=(pry:sot slots.epoch)
@@ -462,6 +462,9 @@
       =+  +:(~(got by `^chunks`q:(need q.slot)) 0)
       :_  state(epochs epochs.update, globe -)
       (new-epoch-timers epoch our.bowl)
+    ?~  q.q.i.a-s
+      ~&  %picked-our-history^": more slots"
+      `state
     $(a-s t.a-s, b-s t.b-s)
   --
 ::

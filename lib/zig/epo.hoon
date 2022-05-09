@@ -24,7 +24,8 @@
     ?:  ?|  (gth now (deadline:epo start-time.cur u.our-num))
             ?=(~ data)
         ==
-      ~|("%ziggurat: skipping own block, we're late or have no chunks to package" !!)
+      ~&  >>>  "%ziggurat: skipping own block, we're late or have no chunks to package"
+      skip-block
     ::  TODO: use full sha-256 instead of half sha-256 (sham)
     ::
     =/  prev-hed-hash
