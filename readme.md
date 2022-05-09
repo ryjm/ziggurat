@@ -33,6 +33,8 @@ links to other desks, such as base-dev and garden-dev.
 
 ### To initialize a blockchain:
 
+*Note: make sure the ship you're is in the [whitelist](https://github.com/uqbar-dao/ziggurat/blob/e07ac60c29d94188f7594992b0fac347071a5c85/lib/zig/util.hoon#L14)*
+
 1. Start by populating the wallet with the correct data (need to do this first, but with block explorer we can make wallet find this itself):
 ```
 :wallet &zig-wallet-poke [%populate 0xbeef]
@@ -70,7 +72,7 @@ where the argument `[our %ziggurat]` is a dock pointing to the ship running the 
 # To use the wallet
 
 1. Scry for a JSON dict of accounts, keyed by address, containing private key, nickname, and nonces:
-`.^(@ux %gx /=wallet=/accounts/noun)`
+`.^(json %gx /=wallet=/accounts/noun)`
 
 2. Scry for a JSON dict of known assets (rice), keyed by address, then by rice address:
 `.^(json %gx /=wallet=/book/json)`
