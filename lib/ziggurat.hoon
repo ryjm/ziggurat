@@ -40,7 +40,7 @@
   =/  [* rest=slots]
     (pop:sot slots.cur)
   ?~  rest  (sham ~)  ::  epoch length 1 slot, order doesn't matter
-  ~&  >>>  "shuffling with {<`@ux`(sham p:`slot`+:(need (pry:sot rest)))>}"
+  ::  ~&  >>>  "shuffling with {<`@ux`(sham p:`slot`+:(need (pry:sot rest)))>}"
   (sham p:`slot`+:(need (pry:sot rest)))
 
 ::

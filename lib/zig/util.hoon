@@ -15,7 +15,7 @@
   ^-  (set ship)
   %-  ~(gas in *(set ship))
   :~  ::  fakeships for localhost testnets
-      ~zod  ~bus  ~nec
+      ~zod  ~bus  ~nec  ~wet  ~rys
       ::  hodzod's testing moons
       ~ransur-rabtyr-dozzod-bacrys
       ~todnub-figsym-dozzod-bacrys
@@ -153,7 +153,7 @@
 ++  next-block-producer
   |=  [slot=@ud order=(list ship) hed-hash=@]
   ^-  ship
-  ~&  >>>  "slot: {<slot>} order: {<order>} hed-hash: {<`@ux`hed-hash>}"
+  ::  ~&  >>>  "slot: {<slot>} order: {<order>} hed-hash: {<`@ux`hed-hash>}"
   ?:  (gth (lent order) (add slot 2))
     (snag (add slot 2) order)
   -:(shuffle (silt order) hed-hash)

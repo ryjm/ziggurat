@@ -24,8 +24,7 @@
     ?:  ?|  (gth now (deadline:epo start-time.cur u.our-num))
             ?=(~ data)
         ==
-      ~&  >>>  "%ziggurat: skipping own block, we're late or have no chunks to package"
-      skip-block
+      ~|("%ziggurat: skipping own block, we're late or have no chunks to package" !!)
     ::  TODO: use full sha-256 instead of half sha-256 (sham)
     ::
     =/  prev-hed-hash
@@ -80,6 +79,7 @@
       ~&  >>>  "%ziggurat: ignoring their block, it was submitted late"
       skip-block
     ?.  =(next-num num.hed)
+      ::  should we check the order here to make sure we're not messed up??
       ~&  >>>  "%ziggurat: ignoring their block, it was submitted out-of-order"
       skip-block
     ?.  =(src (snag num.hed order.cur))

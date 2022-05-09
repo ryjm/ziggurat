@@ -1,6 +1,7 @@
 /-  *ziggurat
 /+  smart=zig-sys-smart, deploy=zig-deploy, sig=zig-sig
 /*  capitol-contract  %noun  /lib/zig/compiled/capitol/noun
+/*  zigs-contract     %noun  /lib/zig/compiled/zigs/noun
 :-  %say
 |=  [[now=@da eny=@uvJ bek=beak] [=start=time ~] ~]
 :-  %zig-chain-poke
@@ -54,7 +55,15 @@
           minters=~
           deployer=0x0
           salt=`@`'zigs'
-      == 
+      ==
+  ==
+=/  zigs-wheat-grain
+  ^-  grain:smart
+  :*  zigs-wheat-id:smart  ::  id
+      zigs-wheat-id:smart  ::  lord
+      zigs-wheat-id:smart  ::  holder
+      0                    ::  town-id
+      [%| [`(cue q.q.zigs-contract) (silt ~[zigs-1 zigs-2 zigs-3 `@ux`'zigs-metadata'])]]
   ==
 =/  world-map
   ^-  grain:smart
@@ -88,6 +97,7 @@
         [`@ux`'world' world-map]
         [`@ux`'ziggurat' ziggurat-map]
         [`@ux`'zigs-metadata' zigs-metadata-grain]
+        [id.zigs-wheat-grain zigs-wheat-grain]
         [zigs-1 beef-zigs-grain]
         [zigs-2 dead-zigs-grain]
         [zigs-3 cafe-zigs-grain]

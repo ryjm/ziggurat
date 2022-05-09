@@ -1,5 +1,6 @@
 ::  ziggurat [uqbar-dao]
 ::
+/-  uqbar-indexer
 /+  *ziggurat, default-agent, dbug, verb
 /*  smart-lib  %noun  /lib/zig/compiled/smart-lib/noun
 =,  util
@@ -144,12 +145,22 @@
       ::  %epoch-catchup from one of the other known validators
       ~&  >  "%ziggurat: attempting to join relay chain"
       =+  sig=become-validator+(sign:zig-sig our.bowl now.bowl 'attestation')
-      =+  (gas:poc ~ [0 [0 *@da ~(tap in validators.act) ~]]^~)
+      ::  ask the indexer for current set of validators on-chain
+      ::  so we can subscribe to them all
+      =/  capitol-search
+        .^((unit update:uqbar-indexer) %gx /(scot %p our.bowl)/uqbar-indexer/(scot %da now.bowl)/grain/(scot %ux 'ziggurat')/noun)
+      ?~  capitol-search  ~|("%ziggurat: error: can't find validators on-chain" !!)
+      ?>  ?=(%grain -.u.capitol-search)
+      =/  capitol-grain=grain:smart  +.-:~(tap in grains.u.capitol-search)
+      ?>  ?=(%& -.germ.capitol-grain)
+      =/  validators  ~(key by (hole:smart (map ship *) data.p.germ.capitol-grain))
+      ::
+      =+  (gas:poc ~ [0 [0 *@da ~(tap in validators) ~]]^~)
       :_  state(mode %validator, epochs -)
       ::  make tx to add ourselves, send to another validator
       %-  zing
       :~  (subscriptions-cleanup wex.bowl sup.bowl)
-          (watch-updates validators.act)
+          (watch-updates validators)
           :~  :*  %pass  /set-node
                   %agent  [our.bowl %wallet]
                   %poke  %zig-wallet-poke
