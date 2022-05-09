@@ -35,22 +35,14 @@
   ^-  @
   ?:  ?&(=(slot-num 0) =(num.cur 0))
     (sham ~)
-  ?:  (gte slot-num 2)
-    ::  grab 2nd-to-last slot header hash in current epoch
-    ::
-    (sham p:(got:sot slots.cur (sub slot-num 2)))
-  ?:  =(slot-num 1)
-    ::  grab last slot header hash in previous epoch
-    ::
-    =-  (sham p.-)
-    `slot`+:(need (pry:sot slots:(got:poc epochs (dec num.cur))))
   ::  grab 2nd-to-last slot header hash in prev epoch
   ::
   =/  [* rest=slots]
-    (pop:sot slots:(got:poc epochs (dec num.cur)))
+    (pop:sot slots.cur)
   ?~  rest  (sham ~)  ::  epoch length 1 slot, order doesn't matter
-  =-  (sham p.-)
-  `slot`+:(need (pry:sot rest))
+  ~&  >>>  "shuffling with {<`@ux`(sham p:`slot`+:(need (pry:sot rest)))>}"
+  (sham prev-header-hash.p:`slot`+:(need (pry:sot rest)))
+
 ::
 ++  validate-history
   |=  [our=ship =epochs]

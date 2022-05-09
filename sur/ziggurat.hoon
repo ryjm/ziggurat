@@ -1,6 +1,6 @@
 /+  smart=zig-sys-smart
 |%
-++  epoch-interval  ~s20
+++  epoch-interval  ~s10
 ++  relay-town-id   0
 ::
 +$  epoch   [num=@ud =start=time order=(list ship) =slots]

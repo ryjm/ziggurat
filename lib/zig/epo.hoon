@@ -36,18 +36,13 @@
       =+  hed=[next-num prev-hed-hash data-hash]
       [hed `[(sign:sig our now (sham hed)) data]]
     ~&  >  "%ziggurat: producing a block size={<(met 3 (jam slot))>} at {<now>}"
-    =/  next-producer=ship
-      =+  (add next-num 2)
-      ?.  (gte (lent order.cur) -)
-        -:(shuffle (silt order.cur) prev-hed-hash)
-      (snag - order.cur)
     :_  cur(slots (put:sot slots.cur next-num slot))
     %+  weld
       (give-on-updates [%new-block num.cur p.slot (need q.slot)] q.slot)
     ::  if we're the final slot in epoch, trigger new one
     ?:  =((lent order.cur) +(next-num))
       (poke-new-epoch our +(num.cur))^~
-    (notify-sequencer next-producer)^~
+    (notify-sequencer (next-block-producer next-num order.cur (sham p.slot)))^~
   ::
   ::  +skip-slot: occurs when someone misses their turn
   ::
@@ -106,18 +101,13 @@
     ?.  =(prev-hed-hash prev-header-hash.hed)
       ~&  >>>  "%ziggurat: received mismatching header hash, starting epoch catchup"
       [(start-epoch-catchup src num.cur)^~ cur]
-    =/  next-producer=ship
-      =+  (add next-num 2)
-      ?:  =((lent order.cur) -)
-        -:(shuffle (silt order.cur) prev-hed-hash)
-      (snag - order.cur)
     :_  cur(slots (put:sot slots.cur next-num [hed blk]))
     %+  weld
       ::  notify others we saw this block
       (give-on-updates [%saw-block num.cur hed] blk)
     ::  if that was the final slot in epoch, trigger new one
     ?.  =((lent order.cur) +(next-num))
-      (notify-sequencer next-producer)^~
+      (notify-sequencer (next-block-producer next-num order.cur (sham hed)))^~
     (poke-new-epoch our +(num.cur))^~
   ::
   ::  +see-block: occurs when we are notified that a validator

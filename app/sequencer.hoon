@@ -212,7 +212,7 @@
           ==
         `this
       ::  create and send our chunk to them
-      ~&  >>  "sequencer: attempting to produce a chunk"
+      ~&  >>  "sequencer: attempting to produce a chunk for slot {<slot-num>}"
       =/  our-address  .^((unit id:smart) %gx (weld z /address/noun))
       =/  me
         =+  /(scot %p our.bowl)/wallet/(scot %da now.bowl)/account

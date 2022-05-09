@@ -100,8 +100,7 @@
     ::  if we're the block producer for this slot,
     ::  make our timer pop early so we don't miss the deadline
     ::  otherwise, just set timer for slot deadline
-    ::  (currently: try to produce block 1/2 of way to deadline)
-    =-  ?.(our-block - (sub - (div epoch-interval 2)))
+    =-  ?.(our-block - (sub - (mul 8 (div epoch-interval 10))))
     (deadline epoch-start slot-num)
   ~&  timer+[[%our our-block] epoch-num slot-num time]
   =-  [%pass - %arvo %b %wait time]
@@ -150,6 +149,14 @@
     len       (dec len)
     lis       (oust [num 1] `(list ship)`lis)
   ==
+::
+++  next-block-producer
+  |=  [slot=@ud order=(list ship) hed=@]
+  ^-  ship
+  ~&  >>>  "slot: {<slot>} order: {<order>} hed: {<`@ux`hed>}"
+  ?:  (gth (lent order) (add slot 2))
+    (snag +(slot) order)
+  -:(shuffle (silt order) hed)
 ::  +filter: filters a set with boolean gate
 ++  filter
   |*  [a=(tree) b=gate]

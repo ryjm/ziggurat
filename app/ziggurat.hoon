@@ -166,8 +166,7 @@
         ~|("%ziggurat: error: requires an associated public key" !!)
       =+  stop-validating+(sign:zig-sig our.bowl now.bowl 'attestation')
       :_  state
-      %+  snoc  (subscriptions-cleanup wex.bowl sup.bowl)
-      (poke-capitol our.bowl u.address.state [rate.gas.act bud.gas.act] -)
+      ~[(poke-capitol our.bowl u.address.state [rate.gas.act bud.gas.act] -)]
     ::
         %new-epoch
       ?>  =(src.bowl our.bowl)
@@ -230,10 +229,13 @@
       ~|  "ziggurat: error: only registered sequencers are allowed to submit a chunk"
       ?.  (~(has by u.hall) src.bowl)     !!
       =/  cur=epoch  +:(need (pry:poc epochs))
-      ~|  "ziggurat: rejecting chunk, we're not block producer"
-      ?>  ?~  slot-num=(bind (pry:sot slots.cur) head)
-            =(our.bowl -.order.cur)
-          =(our.bowl (snag +(u.slot-num) order.cur))
+      =+  slot-num=(bind (pry:sot slots.cur) head)
+      ~|  "ziggurat: rejecting chunk, we're not next block producer"
+      ?>  .=  our.bowl
+          ?~  slot-num
+            ?~(+.order.cur -.order.cur -.+.order.cur)
+          =+  (got-hed-hash u.slot-num epochs cur)
+          (next-block-producer u.slot-num order.cur -)
       `state(chunks (~(put by chunks.state) town-id.act chunk.act))
     ==
   ::
