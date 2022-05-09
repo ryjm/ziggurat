@@ -102,7 +102,7 @@ where the argument `[our %ziggurat]` is a dock pointing to the ship running the 
 }
 ```
 
-### Build DAO contracts
+### Build DAO contracts (not currently required -- built in `lib/zig/deploy.hoon`)
 
 If run on a fakezod located at `~/urbit/zod`, the following will create the compiled DAO contract at `~/urbit/zod/.urb/put/dao.noun`:`
 ```
@@ -125,9 +125,10 @@ If run on a fakezod located at `~/urbit/zod`, the following will create the comp
 :dao &set-indexer [our %uqbar-indexer]
 ```
 
-3. Create the off-chain DAO with us as owner:
+3. Set up subscription of off-chain DAO agent to on-chain DAO (which is created in `gen/sequencer/init.hoon`):
 ```
--zig!create-dao-comms [[our %uqbar-dao] 'Uqbar DAO' `@`'uqbar-dao' 0x2.e3c1.d19b.fd3e.43aa.319c.b816.1c89.37fb.b246.3a65.f84d.8562.155d.6181.8113.c85b ~ ~]
+::  argument is salt, which is unique to each DAO
+-zig!create-dao-comms [`@`'uqbar-dao']
 ```
 
 ### Changing DAO state
