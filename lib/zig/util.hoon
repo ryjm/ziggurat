@@ -151,12 +151,12 @@
   ==
 ::
 ++  next-block-producer
-  |=  [slot=@ud order=(list ship) hed=@]
+  |=  [slot=@ud order=(list ship) hed-hash=@]
   ^-  ship
-  ~&  >>>  "slot: {<slot>} order: {<order>} hed: {<`@ux`hed>}"
+  ~&  >>>  "slot: {<slot>} order: {<order>} hed-hash: {<`@ux`hed-hash>}"
   ?:  (gth (lent order) (add slot 2))
-    (snag +(slot) order)
-  -:(shuffle (silt order) hed)
+    (snag (add slot 2) order)
+  -:(shuffle (silt order) hed-hash)
 ::  +filter: filters a set with boolean gate
 ++  filter
   |*  [a=(tree) b=gate]
