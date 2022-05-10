@@ -160,7 +160,7 @@
     ?:  ?=(%poke-ack -.sign)
       ?~  p.sign
         `this
-      ~&  "%sequencer: our chunk was rejected by relay chain?"
+      ~&  >>>  "%sequencer: our chunk was rejected by relay chain"
       `this
     `this
   ::
@@ -205,18 +205,17 @@
     ::
         %next-producer
       ::  if we can, produce a chunk!
-      =/  z  /(scot %p our.bowl)/ziggurat/(scot %da now.bowl)
-      =/  slot-num  .^(@ud %gx (weld z /slot/noun))
+      ::  TODO delay this based on deadline for current slot
       ?:  ?|  ?=(~ hall.this)
-              !=(our.bowl (snag (mod slot-num (lent order.u.hall.this)) order.u.hall.this))
+              !=(our.bowl (snag (mod slot-num.update (lent order.u.hall.this)) order.u.hall.this))
           ==
         `this
       ::  create and send our chunk to them
-      ~&  >>  "sequencer: attempting to produce a chunk for slot {<slot-num>}"
-      =/  our-address  .^((unit id:smart) %gx (weld z /address/noun))
+      ~&  >>  "sequencer: attempting to produce a chunk for slot {<slot-num.update>}"
+      =/  our-address
+        .^((unit id:smart) %gx /(scot %p our.bowl)/ziggurat/(scot %da now.bowl)/address/noun)
       =/  me
-        =+  /(scot %p our.bowl)/wallet/(scot %da now.bowl)/account
-        .^(account:smart %gx (weld - /(scot %ux (need our-address))/(scot %ud (need town-id.state))/noun))
+        .^(account:smart %gx /(scot %p our.bowl)/wallet/(scot %da now.bowl)/account/(scot %ux (need our-address))/(scot %ud (need town-id.state))/noun)
       =/  our-chunk=chunk
         %+  ~(mill-all mil me (need town-id.state) 0 now.bowl)
           town.state
@@ -226,7 +225,7 @@
       :_  this(basket ~, town +.our-chunk)
       :~  :*  %pass  /chunk-gossip
               %agent  [ship.update %ziggurat]  %poke
-              %zig-chain-poke  !>([%receive-chunk (need town-id.state) our-chunk])
+              %zig-chain-poke  !>([%receive-chunk slot-num.update (need town-id.state) our-chunk])
           ==
           :*  %pass  /basket-gossip
               %agent  [our.bowl %sequencer]  %poke
@@ -234,7 +233,7 @@
           ==
           :*  %give  %fact
               ~[/new-chunk]  %zig-chunk-update
-              !>([%new-chunk +.our-chunk])
+              !>([%new-chunk slot-num.update +.our-chunk])
           ==
       ==
     ==

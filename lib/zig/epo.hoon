@@ -42,7 +42,7 @@
     ::  if we're the final slot in epoch, trigger new one
     ?:  =((lent order.cur) +(next-num))
       (poke-new-epoch our +(num.cur))^~
-    (notify-sequencer (next-block-producer next-num order.cur (sham p.slot)))^~
+    (notify-sequencer (next-block-producer next-num order.cur p.slot))^~
   ::
   ::  +skip-slot: occurs when someone misses their turn
   ::
@@ -108,7 +108,7 @@
       (give-on-updates [%saw-block num.cur hed] blk)
     ::  if that was the final slot in epoch, trigger new one
     ?.  =((lent order.cur) +(next-num))
-      (notify-sequencer (next-block-producer next-num order.cur (sham hed)))^~
+      (notify-sequencer (next-block-producer next-num order.cur hed))^~
     (poke-new-epoch our +(num.cur))^~
   ::
   ::  +see-block: occurs when we are notified that a validator

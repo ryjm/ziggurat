@@ -11,7 +11,7 @@
       mode=?(%indexer %validator %none)
       address=(unit id:smart)
       =epochs
-      =chunks
+      queue=(map slot-num=@ud chunks)
       ::  TODO need to make sure this design is acceptable in terms of
       ::  data availability and censorship. last validator in epoch is random,
       ::  but there's still only 1 per epoch and they could censor. since
@@ -194,10 +194,12 @@
       ::  if we're no longer in validator set, leave the chain
       ?.  (~(has in validator-set) our.bowl)
         :-  (subscriptions-cleanup wex.bowl sup.bowl)
-        state(mode %none, epochs ~, chunks ~, basket ~, globe [~ ~])
+        state(mode %none, epochs ~, queue ~, basket ~, globe [~ ~])
       =/  new-epoch=epoch
         :^    +(num.cur)
             (deadline start-time.cur (dec (lent order.cur)))
+          ::  ~&  >>>  `@ux`(epoch-seed last-slot-num epochs cur)
+          ::  ~&  >>>  (shuffle validator-set (epoch-seed last-slot-num epochs cur))
           (shuffle validator-set (epoch-seed last-slot-num epochs cur))
         ~
       =/  validators=(list ship)
@@ -215,39 +217,48 @@
       ::  subscribe to all the other validator ships,
       ::  and alert subscribing sequencers of the next block producer
       ~&  epoch+num.new-epoch^validator-set^`@ux`(end [3 2] (sham epochs))
-      =/  next-producer=ship
+      =/  [next-producer=ship next-slot=@ud]
         ?~  +.order.new-epoch
-          -.order.new-epoch
-        -.+.order.new-epoch
-      :_  state(epochs (put:poc epochs num.new-epoch new-epoch))
+          [-.order.new-epoch 0]
+        [-.+.order.new-epoch 1]
+      :_  %=  state
+            epochs  (put:poc epochs num.new-epoch new-epoch)
+            queue  (malt ~[[0 (~(gut by queue) 0 ~)]])
+          ==
       =+  %-  hall-update-card
           .^((unit @ud) %gx /(scot %p our.bowl)/sequencer/(scot %da now.bowl)/town-id/noun)
       %-  zing
-      :~  [(notify-sequencer next-producer) ?~(- ~ [u.- ~])]
+      :~  [(notify-sequencer next-slot next-producer) ?~(- ~ [u.- ~])]
           (watch-updates (silt (murn order.new-epoch filter-by-wex)))
           (new-epoch-timers new-epoch our.bowl)
       ==
     ::
         %receive-chunk
       ?>  (allowed-participant [src our now]:bowl)
-      ~&  "ziggurat: received chunk {<town-id.act>} from {<src.bowl>}"
+      ~&  "ziggurat: received chunk town={<town-id.act>} for slot={<for-slot.act>} from {<src.bowl>}"
       ::  only accept chunks from sequencers in on-chain council
-      ~|  "ziggurat: error: couldn't find that town on chain"
       =/  found  (~(got by p.globe.state) `@ux`'world')
-      ?.  ?=(%& -.germ.found)             !!
+      ?.  ?=(%& -.germ.found)
+        ~|("ziggurat: error: couldn't find that town on chain" !!)
       =+  (hole:smart ,(map @ud (map ship [@ux [@ux @p life]])) data.p.germ.found)
-      ?~  hall=(~(get by -) town-id.act)  !!
-      ~|  "ziggurat: error: only registered sequencers are allowed to submit a chunk"
-      ?.  (~(has by u.hall) src.bowl)     !!
+      ?~  hall=(~(get by -) town-id.act)
+        ~|("ziggurat: error: couldn't find that town on chain" !!)
+      ?.  (~(has by u.hall) src.bowl)
+        ~|("ziggurat: error: only registered sequencers are allowed to submit a chunk" !!)
       =/  cur=epoch  +:(need (pry:poc epochs))
-      =+  slot-num=(bind (pry:sot slots.cur) head)
-      ~|  "ziggurat: rejecting chunk, we're not next block producer"
-      ?>  .=  our.bowl
-          ?~  slot-num
+      =/  slot=(unit [key=@ud val=slot])  (pry:sot slots.cur)
+      ?.  .=  our.bowl
+          ?~  slot
             ?~(+.order.cur -.order.cur -.+.order.cur)
-          =+  (got-hed-hash u.slot-num epochs cur)
-          (next-block-producer u.slot-num order.cur -)
-      `state(chunks (~(put by chunks.state) town-id.act chunk.act))
+          ~&  >>  `@ux`(sham p.val.u.slot)
+          +:(next-block-producer num.p.val.u.slot order.cur p.val.u.slot)
+        ~&  >>>  "ziggurat: rejecting chunk, we're not next block producer"
+        !!
+      =+  (~(gut by queue.state) for-slot.act ~)
+      ?:  (~(has by -) town-id.act)
+        ~&  >>>  "ziggurat: rejecting chunk, we already have one for that town in that slot!"
+        !!
+      `state(queue (~(put by queue.state) for-slot.act (~(put by -) town-id.act chunk.act)))
     ==
   ::
   ++  poke-basket
@@ -425,9 +436,6 @@
       ~&  %picked-their-history^": we had none"
       `state(epochs epochs.update)
     |-  ^-  (quip card _state)
-    ?~  a
-      ~&  %picked-our-history^": longer blockchain"
-      `state
     ?~  b
       ::  if we pick their history, clear old timers if any exist
       ::  and set new ones based on latest epoch
@@ -443,6 +451,9 @@
       =+  +:(~(got by `^chunks`q:(need q.slot)) 0)
       :_  state(epochs epochs.update, globe -)
       (new-epoch-timers epoch our.bowl)
+    ?~  a
+      ~&  %picked-our-history^": longer blockchain"
+      `state
     ?:  =(i.a i.b)
       $(a t.a, b t.b)
     =/  a-s=(list (pair @ud slot))  (tap:sot slots.q.i.a)
@@ -512,10 +523,12 @@
       ::
       ?.  =(our.bowl (rear order.cur))
         ::  normal block
-        =+  (~(put by chunks.state) relay-town-id [~ globe.state])
+        =+  %+  ~(put by (~(gut by queue.state) slot-num ~))
+            relay-town-id  [~ globe.state]
         =^  cards  cur
           (~(our-block epo cur prev-hash [our now src]:bowl) -)
-        [cards state(epochs (put:poc epochs num.cur cur), chunks ~)]
+        :-  cards
+        state(epochs (put:poc epochs num.cur cur), queue (~(del by queue) slot-num))
       ::  if this is the last block in the epoch,
       ::  perform global-level transactions
       ::  insert transaction to advance
@@ -523,13 +536,17 @@
       =+  .^(account:smart %gx -)
       =/  globe-chunk
         (~(mill-all mil - relay-town-id 0 now.bowl) globe.state ~(tap in basket.state))
-      =:  basket.state  ~
-          globe.state   +.globe-chunk
-          chunks.state  (~(put by chunks.state) relay-town-id globe-chunk)
-      ==
+      =+  %+  ~(put by (~(gut by queue.state) slot-num ~))
+          relay-town-id  globe-chunk
       =^  cards  cur
-        (~(our-block epo cur prev-hash [our now src]:bowl) chunks.state)
-      [cards state(epochs (put:poc epochs num.cur cur), chunks ~)]
+        (~(our-block epo cur prev-hash [our now src]:bowl) -)
+      :-  cards
+      %=  state
+        basket  ~
+        globe  +.globe-chunk
+        queue  (~(del by queue) slot-num)
+        epochs  (put:poc epochs num.cur cur)
+      ==
     ::  someone else was responsible for producing this block,
     ::  but they have not done so
     =^  cards  cur

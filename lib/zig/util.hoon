@@ -63,12 +63,12 @@
   ==
 ::
 ++  notify-sequencer
-  |=  =ship
+  |=  [slot-num=@ud =ship]
   ^-  card
-  ~&  >  "%ziggurat: next producer is {<ship>}"
+  ~&  >  "%ziggurat: slot {<slot-num>} producer is {<ship>}"
   :-  %give
   :^  %fact  ~[/sequencer/updates]
-      %sequencer-update  !>([%next-producer ship])
+      %sequencer-update  !>([%next-producer slot-num ship])
 ::
 ::  +subscriptions-cleanup: close subscriptions of our various watchers
 ::
@@ -151,12 +151,13 @@
   ==
 ::
 ++  next-block-producer
-  |=  [slot=@ud order=(list ship) hed-hash=@]
-  ^-  ship
-  ::  ~&  >>>  "slot: {<slot>} order: {<order>} hed-hash: {<`@ux`hed-hash>}"
-  ?:  (gth (lent order) (add slot 2))
-    (snag (add slot 2) order)
-  -:(shuffle (silt order) hed-hash)
+  |=  [slot=@ud order=(list ship) hed=block-header]
+  ^-  [@ud ship]
+  ::  ~&  >>>  "slot: {<slot>} order: {<order>} hed-hash: {<`@ux`(sham head)>}"
+  =+  (add slot 2)
+  ?:  (gth (lent order) -)
+    [- (snag - order)]
+  [0 -:(shuffle (silt order) (sham hed))]
 ::  +filter: filters a set with boolean gate
 ++  filter
   |*  [a=(tree) b=gate]

@@ -34,17 +34,17 @@
       [%indexer-block epoch-num=@ud header=block-header blk=(unit block)]
   ==
 +$  sequencer-update
-  $%  [%next-producer =ship]
+  $%  [%next-producer slot-num=@ud =ship]
       [%new-hall council=(map ship [id:smart signature])]
   ==
-+$  chunk-update  [%new-chunk =town:smart]
++$  chunk-update  [%new-chunk slot-num=@ud =town:smart]
 ::
 +$  chain-poke
   $%  [%set-addr =id:smart]
       [%start mode=?(%indexer %validator) history=epochs validators=(set ship) starting-state=town:smart]
       [%stop gas=[rate=@ud bud=@ud]]
       [%new-epoch ~]
-      [%receive-chunk town-id=@ud =chunk]
+      [%receive-chunk for-slot=@ud town-id=@ud =chunk]
   ==
 ::
 +$  weave-poke
