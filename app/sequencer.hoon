@@ -223,17 +223,17 @@
       ::  currently clearing mempool with every chunk, but
       ::  this is not necessary: we forward our basket
       :_  this(basket ~, town +.our-chunk)
-      :~  :*  %pass  /chunk-gossip
-              %agent  [ship.update %ziggurat]  %poke
-              %zig-chain-poke  !>([%receive-chunk slot-num.update (need town-id.state) our-chunk])
-          ==
-          :*  %pass  /basket-gossip
+      :~  :*  %pass  /basket-gossip
               %agent  [our.bowl %sequencer]  %poke
               %zig-weave-poke  !>([%forward ~])
           ==
           :*  %give  %fact
               ~[/new-chunk]  %zig-chunk-update
               !>([%new-chunk slot-num.update +.our-chunk])
+          ==
+          :*  %pass  /chunk-gossip
+              %agent  [ship.update %ziggurat]  %poke
+              %zig-chain-poke  !>([%receive-chunk slot-num.update (need town-id.state) our-chunk])
           ==
       ==
     ==
