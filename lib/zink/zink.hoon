@@ -1,5 +1,5 @@
 /-  *zink
-/+  *zink-pedersen, *zink-json, *mip
+/+  *zink-pedersen, *zink-json
 |%
 ::
 +$  good  (unit *)
@@ -22,6 +22,7 @@
   ?:  (lth bud u.formula-cost)  [%&^~ [cax hit 0]]
   =.  bud  (sub bud u.formula-cost)
   |-
+  =.  hit  *hints
   ?+    f
     ~&  f
     [%|^trace app]
@@ -41,7 +42,7 @@
     =^  htal=(unit phash)  app  (hash +.f)
     ?~  htal  [%&^~ app]
     :-  [%& ~ u.p.hed^u.p.tal]
-    (put-hint [%cons u.hhed u.htal])
+    app(hit [%cons u.hhed u.htal]^hit)
   ::
       [%0 axis=@]
     =^  part  bud
@@ -53,13 +54,13 @@
     =^  hsibs=(unit (list phash))  app  (merk-sibs s axis.f)
     ?~  hsibs  [%&^~ app]
     :-  [%& ~ u.u.part]
-    (put-hint [%0 axis.f u.hpart u.hsibs])
+    app(hit [%0 axis.f u.hpart u.hsibs]^hit)
   ::
       [%1 const=*]
     =^  hres=(unit phash)  app  (hash const.f)
     ?~  hres  [%&^~ app]
     :-  [%& ~ const.f]
-    (put-hint [%1 u.hres])
+    app(hit [%1 u.hres]^hit)
   ::
       [%2 sub=* for=*]
     =^  hsub=(unit phash)  app  (hash sub.f)
@@ -77,7 +78,7 @@
     %_  $
       s    u.p.subject
       f    u.p.formula
-      app  (put-hint [%2 u.hsub u.hfor])
+      hit  [%2 u.hsub u.hfor]^hit
     ==
   ::
       [%3 arg=*]
@@ -88,14 +89,14 @@
     =^  harg=(unit phash)  app  (hash arg.f)
     ?~  harg  [%&^~ app]
     ?@  u.p.argument
-      =.  app  (put-hint [%3 u.harg %atom u.p.argument])
-      [%& ~ %.n]^app
+      :-  [%& ~ %.n]
+      app(hit [%3 u.harg %atom u.p.argument]^hit)
     =^  hhash=(unit phash)  app  (hash -.u.p.argument)
     ?~  hhash  [%&^~ app]
     =^  thash=(unit phash)  app  (hash +.u.p.argument)
     ?~  thash  [%&^~ app]
     :-  [%& ~ %.y]
-    (put-hint [%3 u.harg %cell u.hhash u.thash])
+    app(hit [%3 u.harg %cell u.hhash u.thash]^hit)
   ::
       [%4 arg=*]
     =^  argument=body  app
@@ -106,7 +107,7 @@
     ?~  p.argument  [%&^~ app]
     ?^  u.p.argument  [%|^trace app]
     :-  [%& ~ .+(u.p.argument)]
-    (put-hint [%4 u.harg u.p.argument])
+    app(hit [%4 u.harg u.p.argument]^hit)
   ::
       [%5 a=* b=*]
     =^  ha=(unit phash)  app  (hash a.f)
@@ -122,7 +123,7 @@
     ?:  ?=(%| -.b)  [%|^trace app]
     ?~  p.b  [%&^~ app]
     :-  [%& ~ =(u.p.a u.p.b)]
-    (put-hint [%5 u.ha u.hb])
+    app(hit [%5 u.ha u.hb]^hit)
   ::
       [%6 test=* yes=* no=*]
     =^  htest=(unit phash)  app  (hash test.f)
@@ -135,7 +136,7 @@
       $(f test.f)
     ?:  ?=(%| -.result)  [%|^trace app]
     ?~  p.result  [%&^~ app]
-    =.  app  (put-hint [%6 u.htest u.hyes u.hno])
+    =.  hit  [%6 u.htest u.hyes u.hno]^hit
     ?+  u.p.result  [%|^trace app]
       %&  $(f yes.f)
       %|  $(f no.f)
@@ -153,7 +154,7 @@
     %_  $
       s    u.p.subject
       f    next.f
-      app  (put-hint [%7 u.hsubj u.hnext])
+      hit  [%7 u.hsubj u.hnext]^hit
     ==
   ::
       [%8 head=* next=*]
@@ -172,7 +173,7 @@
     %_  $
       s    [u.p.head s]
       f    next.f
-      app  (put-hint [%8 u.hhead u.hnext])
+      hit  [%8 u.hhead u.hnext]^hit
     ==
   ::
       [%9 axis=@ core=*]
@@ -193,7 +194,7 @@
     %_  $
       s    u.p.core
       f    u.u.arm
-      app  (put-hint [%9 axis.f u.hcore u.harm u.hsibs])
+      hit  [%9 axis.f u.hcore u.harm u.hsibs]^hit
     ==
   ::
       [%10 [axis=@ value=*] target=*]
@@ -223,7 +224,7 @@
     =^  hsibs=(unit (list phash))  app  (merk-sibs u.p.target axis.f)
     ?~  hsibs  [%&^~ app]
     :-  [%& ~ u.u.mutant]
-    (put-hint [%10 axis.f u.hval u.htar u.holdleaf u.hsibs])
+    app(hit [%10 axis.f u.hval u.htar u.holdleaf u.hsibs]^hit)
   ::
        [%11 tag=@ next=*]
     =^  next=body  app
@@ -320,15 +321,6 @@
       ?~  vax  %|^trace
       %&^(some (sell u.vax))
     ==
-  ::
-  ++  put-hint
-    |=  hin=cairo-hint
-    ^-  appendix
-    =^  sroot=(unit phash)  app  (hash s)
-    ?~  sroot  app
-    =^  froot=(unit phash)  app  (hash f)
-    ?~  froot  app
-    app(hit (~(put bi hit) u.sroot u.froot hin))
   ::
   ++  frag
     |=  [axis=@ noun=* bud=@ud]
@@ -494,9 +486,9 @@
   =/  hs  (hash -.n)
   =/  hf  (hash +.n)
   %-  pairs:enjs:format
-  :~  ['subject' s+(num:enjs hs)]
-      ['formula' s+(num:enjs hf)]
-      ['hints' (all:enjs h)]
+  :~  hints+(hints:enjs h)
+      subject+s+(num:enjs hs)
+      formula+s+(num:enjs hf)
   ==
 ::
 ++  hash

@@ -34,7 +34,8 @@
       ::[%jet core=phash sample=* jet=@t]
   ==
 :: subject -> formula -> hint
-+$  hints  (mip phash phash cairo-hint)
+::+$  hints  (mip phash phash cairo-hint)
++$  hints  (list cairo-hint)
 ::  map of a noun's merkle children. root -> [left right]
 +$  merk-tree  (map phash [phash phash])
 ::  map from axis to jet name
