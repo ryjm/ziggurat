@@ -177,19 +177,19 @@
       =*  p  u.pending.state
       ?>  =(hash.act yolk-hash.p)
       =.  sig.p.egg.p  sig.act
-      =/  from=id:smart  (pin:smart from.p.egg.p)
-      =/  our-nonces     (~(gut by nonces.state) from ~)
-      =/  nonce=@ud      (~(gut by our-nonces) town-id.p.egg.p 0)
-      =/  node=ship      (~(gut by nodes.state) town-id.p.egg.p our.bowl)
+      ?>  ?=(account:smart from.p.egg.p)
+      =*  from   id.from.p.egg.p
+      =*  nonce  nonce.from.p.egg.p
+      =/  node=ship  (~(gut by nodes.state) town-id.p.egg.p our.bowl)
       =+  egg-hash=(hash-egg egg.p)
       =/  our-txs
         ?~  o=(~(get by transaction-store) from)
           [(malt ~[[egg-hash [egg.p args.p]]]) ~]
         u.o(sent (~(put by sent.u.o) egg-hash [egg.p args.p]))
-      ~&  >>  "%wallet: submitting tx"
+      ~&  >>  "%wallet: submitting self-signed tx"
+      ~&  >>  "with signature {<v.sig.act^r.sig.act^s.sig.act>}"
       :_  %=  state
             transaction-store  (~(put by transaction-store) from our-txs)
-            nonces  (~(put by nonces) from (~(put by our-nonces) town-id.p.egg.p +(nonce)))
           ==
       :~  (tx-update-card egg.p `args.p)
           :*  %pass  /submit-tx/(scot %ux egg-hash)
