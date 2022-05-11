@@ -1,10 +1,10 @@
-/-  uqbar-indexer
+/-  ui=uqbar-indexer
 /+  ui-lib=uqbar-indexer
 ::
-|_  =update:uqbar-indexer
+|_  =update:ui
 ++  grab
   |%
-  ++  noun  update:uqbar-indexer
+  ++  noun  update:ui
   ++  json  update:dejs:ui-lib
   --
 ::

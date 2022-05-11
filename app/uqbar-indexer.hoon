@@ -181,9 +181,11 @@
       =/  epoch-num=@ud  (slav %ud i.t.t.path)
       =/  block-num=@ud  (slav %ud i.t.t.t.path)
       =/  town-id=@ud  (slav %ud i.t.t.t.t.path)
-      :^  ~  ~  %noun
-      !>  ^-  (unit update:uqbar-indexer)
-      (serve-update %chunk [epoch-num block-num town-id])
+      ?~  up=(serve-update %chunk [epoch-num block-num town-id])
+        [~ ~]
+      :^  ~  ~  %uqbar-indexer-update
+      !>  ^-  update:uqbar-indexer
+      u.up
     ::
         $?  [%x %block-hash @ ~]
             :: [%x %chunk-hash @ @ ~]
@@ -197,23 +199,26 @@
       =/  =query-type:uqbar-indexer
         ;;(query-type:uqbar-indexer i.t.path)
       =/  hash=@ux  (slav %ux i.t.t.path)
-      :^  ~  ~  %noun
-      !>  ^-  (unit update:uqbar-indexer)
-      (serve-update query-type hash)
+      ?~  up=(serve-update query-type hash)  [~ ~]
+      :^  ~  ~  %uqbar-indexer-update
+      !>  ^-  update:uqbar-indexer
+      u.up
     ::
         [%x %slot ~]
-      :^  ~  ~  %noun
-      !>  ^-  (unit update:uqbar-indexer)
-      ?~  newest-epoch=(pry:poc:zig epochs)  ~
-      ?~  newest-slot=(pry:sot:zig slots.val.u.newest-epoch)  ~
-      `[%slot val.u.newest-slot]
+      ?~  newest-epoch=(pry:poc:zig epochs)  [~ ~]
+      ?~  newest-slot=(pry:sot:zig slots.val.u.newest-epoch)
+        [~ ~]
+      :^  ~  ~  %uqbar-indexer-update
+      !>  ^-  update:uqbar-indexer
+      [%slot val.u.newest-slot]
     ::
         [%x %slot-num @ @ ~]
       =/  epoch-num=@ud  (slav %ud i.t.t.path)
       =/  block-num=@ud  (slav %ud i.t.t.t.path)
-      :^  ~  ~  %noun
-      !>  ^-  (unit update:uqbar-indexer)
-      (serve-update %slot epoch-num block-num)
+      ?~  up=(serve-update %slot epoch-num block-num)  [~ ~]
+      :^  ~  ~  %uqbar-indexer-update
+      !>  ^-  update:uqbar-indexer
+      u.up
     ::
         [%x %id @ ~]
         ::  search over from and to and return all hits
@@ -222,13 +227,16 @@
         (serve-update %from hash)
       =/  to=(unit update:uqbar-indexer)
         (serve-update %to hash)
-      :^  ~  ~  %noun
-      !>  ^-  (unit update:uqbar-indexer)
-      %-  combine-update-sets
-      ;;  %-  list
-        %-  unit
-        [%egg eggs=(set [egg-location:uqbar-indexer egg:smart])]
-      ~[from to]
+      =/  up=(unit update:uqbar-indexer)
+        %-  combine-update-sets
+        ;;  %-  list
+          %-  unit
+          [%egg eggs=(set [egg-location:uqbar-indexer egg:smart])]
+        ~[from to]
+      ?~  up  [~ ~]
+      :^  ~  ~  %uqbar-indexer-update
+      !>  ^-  update:uqbar-indexer
+      u.up
     ::
         [%x %hash @ ~]
         ::  search over all hashes and return all hits
@@ -241,13 +249,16 @@
         (serve-update %from hash)
       =/  to=(unit update:uqbar-indexer)
         (serve-update %to hash)
-      :^  ~  ~  %noun
-      !>  ^-  (unit update:uqbar-indexer)
-      %-  combine-update-sets
-      ;;  %-  list
-        %-  unit
-        [%egg eggs=(set [egg-location:uqbar-indexer egg:smart])]
-      ~[egg from to]
+      =/  up=(unit update:uqbar-indexer)
+        %-  combine-update-sets
+        ;;  %-  list
+          %-  unit
+          [%egg eggs=(set [egg-location:uqbar-indexer egg:smart])]
+        ~[egg from to]
+      ?~  up  [~ ~]
+      :^  ~  ~  %uqbar-indexer-update
+      !>  ^-  update:uqbar-indexer
+      u.up
     ::
     ==
     ::  TODO: make blocks and grains play nice with eggs
