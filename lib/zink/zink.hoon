@@ -499,4 +499,60 @@
   =/  hh  $(n -.n)
   =/  ht  $(n +.n)
   (hash:pedersen hh ht)
+::
+++  conq
+  |%
+  ::
+  ::  To use this, pass in a vase of sys/hoon.hoon generated via:
+  ::  (slap !>(~) (ream text-of-hoon))
+  ::
+  ++  layers
+    |=  vax=vase
+    ^-  (list type)
+    %+  turn
+      :~  '..add'
+          '..biff'
+          '..egcd'
+          '..po'
+          '..musk'
+      ==
+    |=  s=@t
+    ^-  type
+    p:(slap vax (ream s))
+  ::
+  ++  all-arms-to-axes
+    |=  vax=vase
+    %-  ~(gas by *(map term @))
+    %+  turn  (list-arms vax)
+    |=  t=term
+    [t (arm-axis vax t)]
+  ::
+  ++  list-arms
+    |=  vax=vase
+    ^-  (list term)
+    (sloe p.vax)
+  ::
+  ++  arm-axis
+    |=  [vax=vase arm=term]
+    ^-  @
+    =/  r  (~(find ut p.vax) %read ~[arm])
+    ?>  ?=(%& -.r)
+    ?>  ?=(%| -.q.p.r)
+    p.q.p.r
+  ::
+  ++  hash-all-arms
+    |=  vax=vase
+    %-  ~(gas by *(map term [@ phash]))
+    %+  turn  (list-arms vax)
+    |=  t=term
+    =/  a=@  (arm-axis vax t)
+    ~&  [t a]
+    =/  h=phash  (hash q:(slot a vax))
+    [t [a h]]
+  ::
+  ++  hash-arms-per-layer
+    |=  [vax=vase layer=@t]
+    =/  cor  (slap vax (ream layer))
+    (hash-all-arms cor)
+  --
 --
