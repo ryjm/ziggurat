@@ -20,8 +20,14 @@
           [%set-node (ot ~[[%town ni] [%ship (se %p)]])]
           [%set-indexer (ot ~[[%ship (se %p)]])]
           [%add-tracked-address (ot ~[[%address (se %ux)] [%nick so]])]
+          [%submit-signed parse-signed]
           [%submit-custom parse-custom]
           [%submit parse-submit]
+      ==
+    ++  parse-signed
+      %-  ot
+      :~  [%hash (se %ud)]
+          [%sig (ot ~[[%v (se %ud)] [%r (se %ud)] [%s (se %ud)]])]
       ==
     ++  parse-custom
       %-  ot

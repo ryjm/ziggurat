@@ -29,22 +29,22 @@
       [%set-indexer =ship]
       ::  HW wallet stuff
       [%add-tracked-address address=@ux nick=@t]
-      [%submit-signed hash=@ux sig=[v=@ r=@ s=@]]
+      [%submit-signed hash=@ sig=[v=@ r=@ s=@]]
       ::  testing and internal
       [%set-nonce address=@ux town=@ud new=@ud]
       [%populate seed=@ux]
       ::  TX submit pokes
+      ::  if we have a private key for the 'from' address, sign. if not,
+      ::  allow hardware wallet to sign on frontend and %submit-signed
       $:  %submit-custom
-          ::  essentially a full egg
           from=id:smart
           to=id:smart
           town=@ud
           gas=[rate=@ud bud=@ud]
-          args=@t  ::  literally ream-ed to form args
+          args=@t  ::  literally `ream`ed to form args
           my-grains=(set id:smart)
           cont-grains=(set id:smart)
       ==
-      ::
       $:  %submit
           from=id:smart
           to=id:smart

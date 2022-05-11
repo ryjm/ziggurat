@@ -15,6 +15,7 @@
       nonces=(map pub=@ux (map town=@ud nonce=@ud))
       tokens=(map pub=@ux =book)
       =transaction-store
+      pending=(unit [yolk-hash=@ =egg:smart args=supported-args])
       =metadata-store
       indexer=(unit ship)
   ==
@@ -30,7 +31,7 @@
 +*  this  .
     def   ~(. (default-agent this %|) bowl)
 ::
-++  on-init  `this(state [%0 ['' '' 0] ~ ~ ~ ~ ~ ~ `our.bowl])
+++  on-init  `this(state [%0 ['' '' 0] ~ ~ ~ ~ ~ ~ ~ `our.bowl])
 ::
 ++  on-save  !>(state)
 ++  on-load
@@ -172,34 +173,65 @@
       ==
     ::
         %submit-signed
-      !!  ::  TODO
+      ?~  pending.state  !!
+      =*  p  u.pending.state
+      ?>  =(hash.act yolk-hash.p)
+      =.  sig.p.egg.p  sig.act
+      =/  from=id:smart  (pin:smart from.p.egg.p)
+      =/  our-nonces     (~(gut by nonces.state) from ~)
+      =/  nonce=@ud      (~(gut by our-nonces) town-id.p.egg.p 0)
+      =/  node=ship      (~(gut by nodes.state) town-id.p.egg.p our.bowl)
+      =+  egg-hash=(hash-egg egg.p)
+      =/  our-txs
+        ?~  o=(~(get by transaction-store) from)
+          [(malt ~[[egg-hash [egg.p args.p]]]) ~]
+        u.o(sent (~(put by sent.u.o) egg-hash [egg.p args.p]))
+      ~&  >>  "%wallet: submitting tx"
+      :_  %=  state
+            transaction-store  (~(put by transaction-store) from our-txs)
+            nonces  (~(put by nonces) from (~(put by our-nonces) town-id.p.egg.p +(nonce)))
+          ==
+      :~  (tx-update-card egg.p `args.p)
+          :*  %pass  /submit-tx/(scot %ux egg-hash)
+              %agent  [node ?:(=(0 town-id.p.egg.p) %ziggurat %sequencer)]
+              %poke  %zig-weave-poke
+              !>([%forward (silt ~[egg.p])])
+          ==
+      ==
     ::
         %submit-custom
+      ::  submit a transaction, with frontend-defined everything
       =/  our-nonces     (~(gut by nonces.state) from.act ~)
       =/  nonce=@ud      (~(gut by our-nonces) town.act 0)
       =/  node=ship      (~(gut by nodes.state) town.act our.bowl)
-      =/  =caller:smart
-        [from.act +(nonce) (fry-rice:smart from.act `@ux`'zigs-contract' town.act `@`'zigs')]
-      ::  submit a transaction, with frontend-defined everything
-      =/  =yolk:smart   [caller `(ream args.act) my-grains.act cont-grains.act]
+      =/  =caller:smart  :+  from.act  +(nonce)
+                         (fry-rice:smart from.act `@ux`'zigs-contract' town.act `@`'zigs')
+      =/  =yolk:smart    [caller `(ream args.act) my-grains.act cont-grains.act]
+      =/  keypair        (~(got by keys.state) from.act)
       =/  =egg:smart
         :_  yolk
         :*  caller
             %+  ecdsa-raw-sign:secp256k1:secp:crypto
               (sham (jam yolk))
-            (need priv:(~(got by keys.state) from.act))
+            (fall priv:keypair 0)
             to.act
             rate.gas.act
             bud.gas.act
             town.act
             100
         ==
+      ?~  priv.keypair
+        ::  if we don't have private key for this address, set as pending
+        ::  and allow frontend to sign with HW wallet or otherwise
+        ~&  >>  "%wallet: storing unsigned tx"
+        `state(pending `[(sham (jam yolk)) egg [%custom args.act]])
+      ::  if we have key, use signature and submit
       =+  egg-hash=(hash-egg egg)
       =/  our-txs
         ?~  o=(~(get by transaction-store) from.act)
           [(malt ~[[egg-hash [egg [%custom args.act]]]]) ~]
         u.o(sent (~(put by sent.u.o) egg-hash [egg [%custom args.act]]))
-      ~&  >>  "wallet: submitting tx"
+      ~&  >>  "%wallet: submitting tx"
       :_  %=  state
             transaction-store  (~(put by transaction-store) from.act our-txs)
             nonces  (~(put by nonces) from.act (~(put by our-nonces) town.act +(nonce)))
@@ -223,9 +255,9 @@
       =/  our-nonces     (~(gut by nonces.state) from.act ~)
       =/  nonce=@ud      (~(gut by our-nonces) town.act 0)
       =/  node=ship      (~(gut by nodes.state) town.act our.bowl)
-      =/  =book  (~(got by tokens.state) from.act)
-      =/  =caller:smart
-        [from.act +(nonce) (fry-rice:smart from.act `@ux`'zigs-contract' town.act `@`'zigs')]
+      =/  =book          (~(got by tokens.state) from.act)
+      =/  =caller:smart  :+  from.act  +(nonce)
+                        (fry-rice:smart from.act `@ux`'zigs-contract' town.act `@`'zigs')
       ::  need to check transaction type and collect rice based on it
       ::  only supporting small subset of contract calls, for tokens and NFTs
       =/  formatted=[args=(unit *) our-grains=(set @ux) cont-grains=(set @ux)]
@@ -268,10 +300,17 @@
           %exit  [`args.act ~ (silt ~[`@ux`'world'])]
           %custom  !!
         ==
+      =/  keypair       (~(got by keys.state) from.act)
       =/  =yolk:smart   [caller args.formatted our-grains.formatted cont-grains.formatted]
-      =/  signer        (need priv:(~(got by keys.state) from.act))
+      =/  signer        (fall priv:keypair 0)
       =/  sig           (ecdsa-raw-sign:secp256k1:secp:crypto (sham (jam yolk)) signer)
-      =/  =egg:smart    [[caller sig to.act rate.gas.act bud.gas.act town.act 100] yolk]
+      =/  =egg:smart    [[caller sig to.act rate.gas.act bud.gas.act town.act status=100] yolk]
+      ?~  priv.keypair
+        ::  if we don't have private key for this address, set as pending
+        ::  and allow frontend to sign with HW wallet or otherwise
+        ~&  >>  "%wallet: storing unsigned tx"
+        `state(pending `[(sham (jam yolk)) egg args.act])
+      ::  if we have key, use signature and submit
       =+  egg-hash=(hash-egg egg)
       =/  our-txs
         ?~  o=(~(get by transaction-store) from.act)
@@ -482,6 +521,16 @@
     %+  turn  ~(tap by received.our-txs)
     |=  [hash=@ux t=egg:smart]
     (parse-transaction:wallet-parsing hash t ~)
+  ::
+      [%pending ~]
+    ?~  pending.state  [~ ~]
+    =*  p  u.pending.state
+    =;  =json  ``json+!>(json)
+    =,  enjs:format
+    %-  pairs
+    :~  ['hash' [%s (scot %ux yolk-hash.p)]]
+        ['egg' +:(parse-transaction:wallet-parsing 0x0 egg.p `args.p)]
+    ==
   ::
       [%nodes ~]
     ::  provides a JSON array of towns we have ships known to be sequencing on
