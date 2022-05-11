@@ -48,7 +48,7 @@
     ==
   ::
   ++  chunks
-    |=  =chunks:smart
+    |=  =chunks:zig
     ^-  json
     %-  pairs
     %+  turn  ~(tap by chunks)
@@ -56,7 +56,7 @@
     [(scot %ud town-id) (chunk c)]
   ::
   ++  chunk
-    |=  =chunk:smart
+    |=  =chunk:zig
     ^-  json
     %-  pairs
     :+  [%transactions (transactions -.chunk)]
@@ -67,10 +67,10 @@
     |=  transactions=(list [@ux egg:smart])
     ^-  json
     :-  %a
-    %+  turn  ~(tap by transactions)
-    |=  [town-id=@ud c=chunk:zig]
+    %+  turn  transactions
+    |=  [hash=@ux e=egg:smart]
     %-  pairs
-    :+  [%hash %s (scot %ud town-id)]
+    :+  [%hash %s (scot %ux hash)]
       [%egg (egg e)]
     ~
     :: %-  pairs
@@ -93,13 +93,14 @@
     |=  =egg:smart
     ^-  json
     %-  pairs
-    :+  [%shell (p.egg)]
-      [%yolk (q.egg)]
+    :+  [%shell (shell p.egg)]
+      [%yolk (yolk q.egg)]
     ~
   ::
   ++  shell
     |=  =shell:smart
     ^-  json
+    ?>  ?=(account:smart from.shell)
     %-  pairs
     :~  [%from (account from.shell)]  :: always account?
         [%sig (signature sig.shell)]
@@ -112,9 +113,10 @@
   ++  yolk
     |=  =yolk:smart
     ^-  json
+    ?>  ?=(account:smart caller.yolk)
     %-  pairs
     :~  [%caller (account caller.yolk)]  :: always account?
-        [%args %s args.yolk]  :: can we do better here? E.g. mold?
+        [%args ~]  :: TODO: rewrite when can mold
         [%my-grains (ids my-grains.yolk)]
         [%cont-grains (ids cont-grains.yolk)]
     ==
@@ -169,18 +171,18 @@
     ==
   ::
   ++  germ
+    ::  TODO: rewrite when can get data/cont molds
     |=  =germ:smart
     ^-  json
-    %-  pairs
     ?:  ?=(%& -.germ)
-      :-  %rice
       %-  pairs
-      :+  [%salt (numb salt.p.germ)]
-        [%data (numb data.p.germ)]  :: can we do better here? E.g. mold?
+      :^    [%is-rice %b %&]
+          [%salt (numb salt.p.germ)]
+        [%data (numb 0)]  :: can we do better here? E.g. mold?
       ~
-    :-  %wheat
     %-  pairs
-    :+  [%cont (numb cont.p.germ)]  :: can we do better here? E.g. mold?
+    :^    [%is-rice %b %|]
+        [%cont ~]  :: can we do better here? E.g. mold?
       [%owns (ids owns.p.germ)]
     ~
   ::
@@ -205,9 +207,10 @@
   ++  block
     |=  block=(unit block:zig)
     ^-  json
+    ?~  block  ~
     %-  pairs
-    :+  [%signature (signature p.block)]
-      [%chunks (chunks q.block)]
+    :+  [%signature (signature p.u.block)]
+      [%chunks (chunks q.u.block)]
     ~
   ::
   ++  town
@@ -327,13 +330,16 @@
   ++  yolk
     |=  jon=json
     ^-  yolk:smart
+    :+  %.  jon
+        %-  ot
+        :-  [%caller account]  :: always account?
+        ~
+      ~    :: TODO: rewrite when can mold args
     %.  jon
     %-  ot
-    :~  [%caller account]  :: always account?
-        [%args ni]  :: will unit work here?
-        [%my-grains ids]
-        [%cont-grains ids]
-    ==
+    :+  [%my-grains ids]
+      [%cont-grains ids]
+    ~
   ::
   ++  account
     |=  jon=json
@@ -365,7 +371,7 @@
     |=  jon=json
     ^-  (map grain-id=id:smart [location=town-location:ui =grain:smart])
     %.  jon
-    %+  op  nu
+    %+  op  hex
     %-  ot
     :+  [%location town-location]
       [%grain grain]
@@ -384,18 +390,27 @@
     ==
   ::
   ++  germ
+    ::  TODO: rewrite when can get data/cont molds
     |=  jon=json
     ^-  germ:smart
-    %.  jon
-    %-  of
-    :+  :-  %rice
-        :+  [%salt ni]
-          [%data ni]  :: does unit work here?
+    ?>  ?=(%o -.jon)
+    =/  is-rice  (~(got by p.jon) %is-rice)
+    ?<  ?=(~ is-rice)
+    ?>  ?=(%b -.is-rice)
+    ?:  p.is-rice
+      ::  is rice
+      :+  %&
+        %.  jon
+        %-  ot
+        :-  [%salt ni]
         ~
-      :-  %wheat
-      :+  [%cont ni]  :: does unit work here?
-        [%owns ids]
+      `*`0
+    ::  is wheat
+    :+  %|
       ~
+    %.  jon
+    %-  ot
+    :-  [%owns ids]
     ~
   ::
   ++  slot
@@ -419,7 +434,9 @@
   ::
   ++  block
     |=  jon=json
-    ^-  block:zig
+    ^-  (unit block:zig)
+    ?~  jon  ~
+    :-  ~
     %.  jon
     %-  ot
     :+  [%signature signature]
@@ -439,13 +456,13 @@
     |=  jon=json
     ^-  granary:smart
     %.  jon
-    (op nu grain)
+    (op hex grain)
   ::
   ++  populace
     |=  jon=json
     ^-  populace:smart
     %.  jon
-    (op nu ni)
+    (op hex ni)
   ::
   --
 --
