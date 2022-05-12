@@ -73,10 +73,6 @@
     :+  [%hash %s (scot %ux hash)]
       [%egg (egg e)]
     ~
-    :: %-  pairs
-    :: %+  turn  transactions
-    :: |=  [hash=@ux e=egg:smart]
-    :: [(scot %ux hash) (egg e)]
   ::
   ++  eggs
     |=  eggs=(set [location=egg-location:ui =egg:smart])
@@ -102,7 +98,7 @@
     ^-  json
     ?>  ?=(account:smart from.shell)
     %-  pairs
-    :~  [%from (account from.shell)]  :: always account?
+    :~  [%from (account from.shell)]
         [%sig (signature sig.shell)]
         [%to %s (scot %ux to.shell)]
         [%rate (numb rate.shell)]
@@ -115,7 +111,7 @@
     ^-  json
     ?>  ?=(account:smart caller.yolk)
     %-  pairs
-    :~  [%caller (account caller.yolk)]  :: always account?
+    :~  [%caller (account caller.yolk)]
         [%args ~]  :: TODO: rewrite when can mold
         [%my-grains (ids my-grains.yolk)]
         [%cont-grains (ids cont-grains.yolk)]
@@ -178,11 +174,11 @@
       %-  pairs
       :^    [%is-rice %b %&]
           [%salt (numb salt.p.germ)]
-        [%data (numb 0)]  :: can we do better here? E.g. mold?
+        [%data (numb 0)]
       ~
     %-  pairs
     :^    [%is-rice %b %|]
-        [%cont ~]  :: can we do better here? E.g. mold?
+        [%cont ~]
       [%owns (ids owns.p.germ)]
     ~
   ::
@@ -398,7 +394,6 @@
     ?<  ?=(~ is-rice)
     ?>  ?=(%b -.is-rice)
     ?:  p.is-rice
-      ::  is rice
       :+  %&
         %.  jon
         %-  ot
