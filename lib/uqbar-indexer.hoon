@@ -233,6 +233,20 @@
     |=  [=id:smart nonce=@ud]
     [(scot %ux id) (numb nonce)]
   ::
+  ++  headers
+    |=  headers=(list [epoch-num=@ud bh=block-header:zig])
+    ^-  json
+    %-  pairs
+    :_  ~
+    :-  %headers
+    :-  %a
+    %+  turn  headers
+    |=  [epoch-num=@ud bh=block-header:zig]
+    %-  pairs
+    :+  [%epoch-num (numb epoch-num)]
+      [%block-header (block-header bh)]
+    ~
+  ::
   --
 ++  dejs
   =,  dejs:format

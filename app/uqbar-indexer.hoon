@@ -25,6 +25,8 @@
 ::      State of grain with given hash
 ::    /x/hash/[@ux]:
 ::      Info about hash
+::    /x/headers/[@ud]:
+::      Most recent [@ud] block headers (up to some cached max)
 ::    /x/holder/[@ux]:
 ::      Grains held by id with given hash
 ::    /x/id/[@ux]:
@@ -49,6 +51,12 @@
 ::
 ::    /grain/[@ux]:
 ::      A stream of changes to given grain.
+::
+::    /holder/[@ux]:
+::      A stream of new activity of given holder.
+::
+::    /lord/[@ux]:
+::      A stream of new activity of given lord.
 ::
 ::    /slot:
 ::      A stream of each new slot.
@@ -82,6 +90,8 @@
 ::
 +$  base-state-0
   $:  =epochs:zig
+      num-recent-headers=@ud
+      recent-headers=(list [epoch-num=@ud =block-header:zig])
   ==
 +$  indices-0
   $:  block-index=(jug @ux block-location:uqbar-indexer)
@@ -110,7 +120,7 @@
       uqbar-indexer-core  +>
       uic                 ~(. uqbar-indexer-core bowl)
   ::
-  ++  on-init  `this
+  ++  on-init  `this(num-recent-headers 50)
   ++  on-save  !>(state)
   ++  on-load
     |=  =old=vase
@@ -128,6 +138,11 @@
           %set-chain-source
         ?>  (team:title our.bowl src.bowl)
         (set-chain-source:uic !<(dock vase))
+      ::
+          %set-num-recent-headers
+        ?>  (team:title our.bowl src.bowl)
+        `state(num-recent-headers !<(@ud vase))
+      ::
       ::  TODO: add %consume-update and %serve-update pokes
       ::  https://github.com/uqbar-dao/ziggurat/blob/da1d37adf538ee908945557a68387d3c87e1c32e/app/uqbar-indexer.hoon#L138
       ::
@@ -170,12 +185,14 @@
     |=  =path
     |^  ^-  (unit (unit cage))
     ?+    path  (on-peek:def path)
+    ::
         [%x %block-height ~]
-      ?~  newest-epoch=(pry:poc:zig epochs)  ~
-      ?~  newest-slot=(pry:sot:zig slots.val.u.newest-epoch)  ~  :: TODO: return epoch and ~?
+      ?~  recent-headers  [~ ~]
+      =*  most-recent  i.recent-headers
       :^  ~  ~  %noun
       !>  ^-  [epoch-num=@ud block-num=@ud]
-      [key.u.newest-epoch key.u.newest-slot]
+      :-  epoch-num.most-recent
+      num.block-header.most-recent
     ::
         [%x %chunk-num @ @ @ ~]
       =/  epoch-num=@ud  (slav %ud i.t.t.path)
@@ -203,6 +220,16 @@
       :^  ~  ~  %uqbar-indexer-update
       !>  ^-  update:uqbar-indexer
       u.up
+    ::
+        [%x %headers @ ~]
+      ?~  recent-headers  [~ ~]
+      =/  num-headers=@ud  (slav %ud i.t.t.path)
+      :^  ~  ~  %uqbar-indexer-headers
+      !>  ^-  (list [epoch-num=@ud =block-header:zig])
+      %+  scag
+        num-headers
+      ^-  (list [epoch-num=@ud =block-header:zig])
+      recent-headers
     ::
         [%x %slot ~]
       ?~  newest-epoch=(pry:poc:zig epochs)  [~ ~]
@@ -324,7 +351,7 @@
         =/  working-epoch=epoch:zig
           ?~  existing-epoch=(get:poc:zig epochs epoch-num)
             :^    num=epoch-num
-                start-time=*time
+                start-time=*time  ::  TODO: get this info from sequencer
               order=~
             slots=(put:sot:zig *slots:zig block-num new-slot)
           %=  u.existing-epoch  ::  TODO: do more checks to avoid overwriting (unnecessary work)
@@ -338,14 +365,21 @@
         ::  store and index the new block
         ::
         =+  [block-hash egg from grain holder lord to]=((parse-block epoch-num block-num) new-slot)
-        =:  epochs        (put:poc:zig epochs epoch-num working-epoch)
-            block-index   (~(gas ju block-index) block-hash)
-            egg-index     (~(gas ju egg-index) egg)
-            from-index    (~(gas ju from-index) from)
-            grain-index   (~(gas ju grain-index) grain)
-            holder-index  (~(gas ju holder-index) holder)
-            lord-index    (~(gas ju lord-index) lord)
-            to-index      (~(gas ju to-index) to)
+        =:  block-index     (~(gas ju block-index) block-hash)
+            egg-index       (~(gas ju egg-index) egg)
+            from-index      (~(gas ju from-index) from)
+            grain-index     (~(gas ju grain-index) grain)
+            holder-index    (~(gas ju holder-index) holder)
+            lord-index      (~(gas ju lord-index) lord)
+            to-index        (~(gas ju to-index) to)
+            epochs          (put:poc:zig epochs epoch-num working-epoch)
+            recent-headers
+          :-  [epoch-num header.update]
+          %+  scag
+            (dec num-recent-headers)
+          ^-  (list [epoch-num=@ud =block-header:zig])
+          recent-headers
+        ::
         ==
         |^
         [(make-all-sub-cards block-num) state]
