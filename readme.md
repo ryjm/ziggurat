@@ -153,6 +153,85 @@ If the threshold is surpassed by the vote, the proposals will pass.
 -zig!send-dao-action [our [pubkey 4 zigs-id] [%vote dao-id 0x44f5.977d]]
 ```
 
+## Indexer
+
+The indexer exposes a variety of scry and subscription paths.
+A few are discussed below with examples.
+Please see the docstring at the top of `app/uqbar-indexer.hoon` for a fuller set of available paths.
+
+### Indexer scries
+
+Four example scries will be shown below for a user scrying from the Dojo; externally using the Curl commandline tool; and using the Urbit HTTP API.
+
+For simplicity, the following is assumed:
+
+I. The `%uqbar-indexer` app is running on the `%zig` desk on a fakezod.
+II. The fakezod is running at `localhost:8080`.
+
+Examples:
+
+1. The most recent 5 block headers.
+
+```
+::  inside Urbit
+=z -build-file /=zig=/sur/ziggurat/hoon
+.^((list [epoch-num=@ud =block-header:z]) %gx /=uqbar-indexer=/headers/5/noun)
+
+# using Curl
+curl -i -X POST localhost:8080/~/login -d 'password=lidlut-tabwed-pillex-ridrup'
+# record cookie from above and use below
+curl --cookie "urbauth-~zod=$ZOD_COOKIE" localhost:8080/~/scry/uqbar-indexer/headers/5.json
+
+# using HTTP API
+await api.scry({app: "uqbar-indexer", path: "/headers/5"});
+```
+
+2. All data in a chunk with epoch number, block number, and chunk/town number as `1`, `2`, and `3`, respectively (these should, of course, be substituted for variables appropriate).
+
+```
+::  inside Urbit
+::  TODO
+
+# using Curl
+# TODO
+
+# using HTTP API
+await api.scry({app: "uqbar-indexer", path: "/chunk-num/1/2/3"});
+```
+
+3. A given transaction with hash `0xdead.beef` (this should, of course, be substituted for a variable as appropriate).
+
+```
+::  inside Urbit
+::  TODO
+
+# using Curl
+# TODO
+
+# using HTTP API
+await api.scry({app: "uqbar-indexer", path: "/egg/0xdead.beef"});
+```
+
+4. All transcations for a given address with hash `0xcafe.babe` (this should, of course, be substituted for a variable as appropriate) (TODO: add start/end times to retrieve subset of transactions).
+
+```
+::  inside Urbit
+::  TODO
+
+# using Curl
+# TODO
+
+# using HTTP API
+await api.scry({app: "uqbar-indexer", path: "/from/0xcafe.babe"});
+```
+
+### Indexer subscriptions
+
+One example subscription will be discussed: subscribing to receive each new block (or "slot") that is processed by the indexer. (TODO)
+Please see the docstring at the top of `app/uqbar-indexer.hoon` for a fuller set of available paths.
+
+For the HTTP API, the app to subscribe to is `"uqbar-indexer"`, and the path is `"/slot"`.
+
 # Testing Zink
 
 ```
