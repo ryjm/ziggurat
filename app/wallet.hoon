@@ -189,6 +189,7 @@
       ~&  >>  "%wallet: submitting self-signed tx"
       ~&  >>  "with signature {<v.sig.act^r.sig.act^s.sig.act>}"
       :_  %=  state
+            pending  ~
             transaction-store  (~(put by transaction-store) from our-txs)
           ==
       :~  (tx-update-card egg.p `args.p)
@@ -211,9 +212,11 @@
       =/  =egg:smart
         :_  yolk
         :*  caller
+            ?~  priv.keypair
+              [0 0 0]
             %+  ecdsa-raw-sign:secp256k1:secp:crypto
               (sham (jam yolk))
-            (fall priv:keypair 0)
+            u.priv.keypair
             to.act
             rate.gas.act
             bud.gas.act
@@ -302,8 +305,9 @@
         ==
       =/  keypair       (~(got by keys.state) from.act)
       =/  =yolk:smart   [caller args.formatted our-grains.formatted cont-grains.formatted]
-      =/  signer        (fall priv:keypair 0)
-      =/  sig           (ecdsa-raw-sign:secp256k1:secp:crypto (sham (jam yolk)) signer)
+      =/  sig           ?~  priv.keypair
+                          [0 0 0]
+                        (ecdsa-raw-sign:secp256k1:secp:crypto (sham (jam yolk)) u.priv.keypair)
       =/  =egg:smart    [[caller sig to.act rate.gas.act bud.gas.act town.act status=100] yolk]
       ?~  priv.keypair
         ::  if we don't have private key for this address, set as pending
@@ -349,7 +353,6 @@
           this-tx(status.p.egg 101)
         ::  failed
         ~&  >>>  "wallet: tx was rejected by sequencer"
-
         this-tx(status.p.egg 103)
       :-  ~[(tx-update-card egg.this-tx `args.this-tx)]
       %=    this
