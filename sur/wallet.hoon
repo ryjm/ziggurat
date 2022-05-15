@@ -29,7 +29,7 @@
       [%set-indexer =ship]
       ::  HW wallet stuff
       [%add-tracked-address address=@ux nick=@t]
-      [%submit-signed hash=@ sig=[v=@ r=@ s=@]]
+      [%submit-signed hash=@ eth-hash=@ sig=[v=@ r=@ s=@]]
       ::  testing and internal
       [%set-nonce address=@ux town=@ud new=@ud]
       [%populate seed=@ux]

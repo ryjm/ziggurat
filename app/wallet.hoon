@@ -176,7 +176,9 @@
       ?~  pending.state  !!
       =*  p  u.pending.state
       ?>  =(hash.act yolk-hash.p)
-      =.  sig.p.egg.p  sig.act
+      =:  sig.p.egg.p  sig.act
+          eth-hash.p.egg.p  `eth-hash.act
+      ==  
       ?>  ?=(account:smart from.p.egg.p)
       =*  from   id.from.p.egg.p
       =*  nonce  nonce.from.p.egg.p
@@ -187,6 +189,7 @@
           [(malt ~[[egg-hash [egg.p args.p]]]) ~]
         u.o(sent (~(put by sent.u.o) egg-hash [egg.p args.p]))
       ~&  >>  "%wallet: submitting self-signed tx"
+      ~&  >>  "with eth-hash {<eth-hash.act>}"
       ~&  >>  "with signature {<v.sig.act^r.sig.act^s.sig.act>}"
       :_  %=  state
             pending  ~
@@ -217,11 +220,12 @@
             %+  ecdsa-raw-sign:secp256k1:secp:crypto
               (sham (jam yolk))
             u.priv.keypair
+            ~
             to.act
             rate.gas.act
             bud.gas.act
             town.act
-            100
+            status=100
         ==
       ?~  priv.keypair
         ::  if we don't have private key for this address, set as pending
@@ -308,7 +312,7 @@
       =/  sig           ?~  priv.keypair
                           [0 0 0]
                         (ecdsa-raw-sign:secp256k1:secp:crypto (sham (jam yolk)) u.priv.keypair)
-      =/  =egg:smart    [[caller sig to.act rate.gas.act bud.gas.act town.act status=100] yolk]
+      =/  =egg:smart    [[caller sig ~ to.act rate.gas.act bud.gas.act town.act status=100] yolk]
       ?~  priv.keypair
         ::  if we don't have private key for this address, set as pending
         ::  and allow frontend to sign with HW wallet or otherwise

@@ -27,6 +27,7 @@
     ++  parse-signed
       %-  ot
       :~  [%hash (se %ud)]
+          [%eth-hash (se %ud)]
           [%sig (ot ~[[%v (se %ud)] [%r (se %ud)] [%s (se %ud)]])]
       ==
     ++  parse-custom

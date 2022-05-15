@@ -107,7 +107,8 @@
 +$  egg  (pair shell yolk)
 +$  shell
   $:  from=caller
-      sig=[v=@ r=@ s=@] ::  signed hash of yolk
+      sig=[v=@ r=@ s=@]  ::  sig on either hash of yolk or eth-hash
+      eth-hash=(unit @)  ::  if transaction signed with eth wallet, use this to verify signature
       to=id
       rate=@ud
       budget=@ud
@@ -128,7 +129,7 @@
   ==
 ::
 +$  chick    (each rooster hen)
-::  add "crowing": list of [@tas json]
-+$  rooster  [changed=(map id grain) issued=(map id grain)]
+::  new: crow, emit information about transaction to be picked up by interested parties
++$  rooster  [changed=(map id grain) issued=(map id grain) crow=(list [@tas json])]
 +$  hen      [mem=(unit vase) next=[to=id town-id=@ud args=yolk] roost=rooster]
 --
