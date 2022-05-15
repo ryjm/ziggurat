@@ -189,11 +189,23 @@
       !>([%submit address `@ux`'capitol' relay-town-id [rate bud] args])
   ==
 ::
-++  read-contract
+++  read-rice
   |=  [=path blocknum=@ud town-id=@ud =granary:smart]
   ^-  (unit (unit cage))
-  ?>  ?=([%wheat @ @ta ^] path)
-  =/  id  (slav %ux i.t.t.path)
+  ?>  ?=([%rice @ ~] path)
+  =/  id  (slav %ux i.t.path)
+  ?~  res=(~(get by granary) id)
+    ``noun+!>(~)
+  ?.  ?=(%& -.germ.u.res)
+    ``noun+!>(~)
+  ``noun+!>(``rice:smart`p.germ.u.res)
+::
+++  read-wheat
+  |=  [=path blocknum=@ud town-id=@ud =granary:smart]
+  ^-  (unit (unit cage))
+  ?>  ?=([%wheat @ @tas @ta ^] path)
+  =/  id  (slav %ux i.t.path)
+  =/  read-type  (slav %tas i.t.t.path)
   =/  arg=^path  [i.t.t.t.path ~]
   =/  contract-rice=(list @ux)
     %+  turn  t.t.t.t.path
@@ -215,5 +227,8 @@
     ``noun+!>(~)
   =/  cont  (hole:smart contract:smart u.cont.p.germ.u.res)
   =/  cart  [~ id blocknum town-id owns] ::  TODO blocknum
-  ``noun+!>(`(~(read cont cart) arg))
+  ?+  read-type  ``noun+!>(~)
+    %noun  ``noun+!>(`~(noun ~(read cont cart) arg))
+    %json  ``json+!>(`~(json ~(read cont cart) arg))
+  ==
 --

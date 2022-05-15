@@ -578,15 +578,10 @@
   ::  scries for contracts
   ::
       [%rice @ ~]
-    =/  id  (slav %ux i.t.t.path)
-    ?~  res=(~(get by p.globe.state) id)
-      ``noun+!>(~)
-    ?.  ?=(%& -.germ.u.res)
-      ``noun+!>(~)
-    ``noun+!>(``rice:smart`p.germ.u.res)
+    (read-rice path 0 relay-town-id p.globe.state)
   ::
-      [%wheat @ @ta ^]
-    (read-contract path 0 relay-town-id p.globe.state)
+      [%wheat @ @tas @ta ^]  :: grain id, %noun/%json, argument @ta, then any associated rice IDs
+    (read-wheat path 0 relay-town-id p.globe.state)
   ::
       [%sizeof @ ~]
     ::  give size of item in global granary

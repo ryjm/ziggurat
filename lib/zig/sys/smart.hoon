@@ -78,8 +78,12 @@
     *chick
   ::
   ++  read
-    |~  path
-    *noun
+    ^|  |_  path
+    ++  json
+      *^json
+    ++  noun
+      *^noun
+    --
   --
 ::  transaction types, fed into contract
 ::

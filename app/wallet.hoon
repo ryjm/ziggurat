@@ -313,7 +313,7 @@
         ::  if we don't have private key for this address, set as pending
         ::  and allow frontend to sign with HW wallet or otherwise
         ~&  >>  "%wallet: storing unsigned tx"
-        `state(pending `[(sham (jam yolk)) egg args.act])
+        `state(pending `[(shax (jam yolk)) egg args.act])
       ::  if we have key, use signature and submit
       =+  egg-hash=(hash-egg egg)
       =/  our-txs

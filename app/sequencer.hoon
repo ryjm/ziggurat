@@ -268,15 +268,10 @@
     ``noun+!>(%.y)
   ::
       [%rice @ ~]
-    =/  id  (slav %ux i.t.t.path)
-    ?~  res=(~(get by p.town.state) id)
-      ``noun+!>(~)
-    ?.  ?=(%& -.germ.u.res)
-      ``noun+!>(~)
-    ``noun+!>(``rice:smart`p.germ.u.res)
+    (read-rice path 0 (need town-id.state) p.town.state)
   ::
       [%wheat @ @ta ^]
-    (read-contract path 0 (need town-id.state) p.town.state)
+    (read-wheat path 0 (need town-id.state) p.town.state)
   ::
       [%sizeof @ ~]
     ::  give size of item in town granary
