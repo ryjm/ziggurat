@@ -58,7 +58,7 @@
   =/  res=chick
     (~(write cont ziggurat-cart) inp)
   =/  correct=chick
-    [%& (malt ~[[`@ux`'ziggurat' updated-ziggurat]]) ~]
+    [%& (malt ~[[`@ux`'ziggurat' updated-ziggurat]]) ~ ~]
   (expect-eq !>(res) !>(correct))
 ::
 ++  test-become-validator-already-one  ^-  tang
@@ -105,7 +105,7 @@
   =/  res=chick
     (~(write cont cart) inp)
   =/  correct=chick
-    [%& (malt ~[[`@ux`'ziggurat' updated-ziggurat]]) ~]
+    [%& (malt ~[[`@ux`'ziggurat' updated-ziggurat]]) ~ ~]
   (expect-eq !>(res) !>(correct))
 ::
 ++  test-stop-validating-wasnt-one  ^-  tang
@@ -134,7 +134,7 @@
   =/  res=chick
     (~(write cont world-cart) inp)
   =/  correct=chick
-    [%& (malt ~[[`@ux`'world' updated-world]]) ~]
+    [%& (malt ~[[`@ux`'world' updated-world]]) ~ ~]
   (expect-eq !>(res) !>(correct))
 ::
 ::  Tests for %join calls
@@ -163,7 +163,7 @@
   =/  res=chick
     (~(write cont cart) inp)
   =/  correct=chick
-    [%& (malt ~[[`@ux`'world' updated-world]]) ~]
+    [%& (malt ~[[`@ux`'world' updated-world]]) ~ ~]
   (expect-eq !>(res) !>(correct))
 ::
 ::  Tests for %exit calls
@@ -192,6 +192,6 @@
   =/  res=chick
     (~(write cont cart) inp)
   =/  correct=chick
-    [%& (malt ~[[`@ux`'world' updated-world]]) ~]
+    [%& (malt ~[[`@ux`'world' updated-world]]) ~ ~]
   (expect-eq !>(res) !>(correct))
 --

@@ -53,7 +53,7 @@
 +$  wheat  [cont=(unit *) owns=(set id)]
 +$  crop   [nok=* owns=(map id grain)]  ::  wheat that's been processed by mill.hoon
 ::
-+$  granary   (map id grain)  ::  TODO: replace with +merk(?)
++$  granary   (map id grain)
 +$  populace  (map id @ud)
 +$  town      (pair granary populace)
 +$  land      (map @ud town)

@@ -15,7 +15,7 @@
       (gth rate.p.a rate.p.b)
     =|  [processed=(list [@ux egg]) reward=@ud]
     |-
-    ^-  [(list [@ux egg]) ^town]
+    ^-  [(list [@ux egg]) ^town]  ::  TODO add 'crow's to chunk -- list of announcements
     ?~  pending
       [processed town(p (~(pay tax p.town) reward))]
     =+  [res fee err]=(mill town i.pending)

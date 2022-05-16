@@ -4,7 +4,7 @@
 ::  for other smart contracts. Automatically (?) inserted
 ::  on any town that wishes to allow contract production.
 ::
-::  /+  *zig-sys-smart
+/+  *zig-sys-smart
 |_  =cart
 ++  write
   |=  inp=zygote
@@ -37,7 +37,7 @@
       ::
       =/  our-grain
         [our-id lord lord town-id.cart [%| `nok.args ~(key by produced)]]
-      [%& ~ (~(put by produced) our-id our-grain)]
+      [%& ~ (~(put by produced) our-id our-grain) ~]
     ::
         %upgrade
       ::  expect wheat of contract-to-upgrade in grains.input
@@ -48,14 +48,15 @@
               ?=(%| -.germ.contract)
           ==
       =.  cont.p.germ.contract  `new-nok.args
-      [%& (malt ~[[id.contract contract]]) ~]
+      [%& (malt ~[[id.contract contract]]) ~ ~]
     ==
   --
 ::
-::  not currently used
-::
 ++  read
-  |=  inp=path
-  ^-  *
-  ~
+  |_  =path
+  ++  json
+    ~
+  ++  noun
+    ~
+  --
 --

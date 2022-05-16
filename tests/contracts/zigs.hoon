@@ -92,7 +92,7 @@
   =/  res=chick
     (~(write cont cart) zygote)
   =/  correct=chick
-    [%& (malt ~[[id:`grain`updated-1 updated-1] [id:`grain`updated-2 updated-2]]) ~]
+    [%& (malt ~[[id:`grain`updated-1 updated-1] [id:`grain`updated-2 updated-2]]) ~ ~]
   (expect-eq !>(correct) !>(res))
 ::
 ++  test-give-unknown-receiver  ^-  tang
@@ -116,7 +116,7 @@
     :^  %|  ~
       :+  me.cart  town-id.cart
       [owner-1 `[%give 0xffff `new-id 30 10] (silt ~[0x1.beef]) (silt ~[new-id])]
-    [~ (malt ~[[new-id new]])]
+    [~ (malt ~[[new-id new]]) ~]
   (expect-eq !>(correct) !>(res))
 ::
 ++  test-give-not-enough  ^-  tang
@@ -165,7 +165,7 @@
   =/  res=chick
     (~(write cont cart) zygote)
   =/  correct=chick
-    [%& (malt ~[[id:`grain`updated-1 updated-1] [id:`grain`updated-2 updated-2]]) ~]
+    [%& (malt ~[[id:`grain`updated-1 updated-1] [id:`grain`updated-2 updated-2]]) ~ ~]
   (expect-eq !>(correct) !>(res))
 ::
 ++  test-give-metadata-mismatch  ^-  tang
@@ -256,7 +256,7 @@
   =/  res=chick
     (~(write cont cart) zygote)
   =/  correct=chick
-    [%& (malt ~[[id:`grain`updated-1 updated-1] [id:`grain`updated-2 updated-2]]) ~]
+    [%& (malt ~[[id:`grain`updated-1 updated-1] [id:`grain`updated-2 updated-2]]) ~ ~]
   (expect-eq !>(correct) !>(res))
 ::
 ++  test-take-send-third
@@ -283,7 +283,7 @@
   =/  res=chick
     (~(write cont cart) zygote)
   =/  correct=chick
-    [%& (malt ~[[id:`grain`updated-3 updated-3] [id:`grain`updated-2 updated-2]]) ~]
+    [%& (malt ~[[id:`grain`updated-3 updated-3] [id:`grain`updated-2 updated-2]]) ~ ~]
   (expect-eq !>(correct) !>(res))
 ::
 ++  test-take-send-mismatching-account
@@ -325,7 +325,7 @@
     :^  %|  ~
       :+  me.cart  town-id.cart
       [owner-1 `[%take 0xffff `new-id 0x1.dead 10] ~ (silt ~[new-id 0x1.dead])]
-    [~ (malt ~[[new-id new]])]
+    [~ (malt ~[[new-id new]]) ~]
   (expect-eq !>(res) !>(correct))
 ::
 ++  test-take-over-allowance
@@ -380,7 +380,7 @@
   =/  res=chick
     (~(write cont cart) zygote)
   =/  correct=chick
-    [%& (malt ~[[id:`grain`updated-1 updated-1]]) ~]
+    [%& (malt ~[[id:`grain`updated-1 updated-1]]) ~ ~]
   (expect-eq !>(correct) !>(res))
 ::
 ++  test-set-allowance-again
@@ -400,7 +400,7 @@
   =/  res=chick
     (~(write cont cart) zygote)
   =/  correct=chick
-    [%& (malt ~[[id:`grain`updated-1 updated-1]]) ~]
+    [%& (malt ~[[id:`grain`updated-1 updated-1]]) ~ ~]
   (expect-eq !>(correct) !>(res))
 ::
 ++  test-set-allowance-zero
@@ -420,7 +420,7 @@
   =/  res=chick
     (~(write cont cart) zygote)
   =/  correct=chick
-    [%& (malt ~[[id:`grain`updated-1 updated-1]]) ~]
+    [%& (malt ~[[id:`grain`updated-1 updated-1]]) ~ ~]
   (expect-eq !>(correct) !>(res))
 ::
 ++  test-set-allowance-self

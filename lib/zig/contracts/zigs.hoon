@@ -6,7 +6,7 @@
 ::  because %give must include their gas budget, in order for
 ::  zig spends to be guaranteed not to underflow.
 ::
-::  /+  *zig-sys-smart
+/+  *zig-sys-smart
 |_  =cart
 ++  write
   |=  inp=zygote
@@ -57,7 +57,7 @@
         :^  %|  ~
           :+  me.cart  town-id.cart
           [caller.inp `[%give to.args `id.new amount.args budget.args] (silt ~[id.giv]) (silt ~[id.new])]
-        [~ (malt ~[[id.new new]])]
+        [~ (malt ~[[id.new new]]) ~]
       ::  otherwise, add to the existing account for that pubkey
       =/  rec=grain  (~(got by owns.cart) u.account.args)
       ?>  &(=(holder.rec to.args) ?=(%& -.germ.rec))
@@ -66,7 +66,7 @@
       =:  data.p.germ.giv  giver(balance (sub balance.giver amount.args))
           data.p.germ.rec  receiver(balance (add balance.receiver amount.args))
       ==
-      [%& (malt ~[[id.giv giv] [id.rec rec]]) ~]
+      [%& (malt ~[[id.giv giv] [id.rec rec]]) ~ ~]
     ::
         %take
       =/  giv=grain  (~(got by owns.cart) from-account.args)
@@ -82,7 +82,7 @@
         :^  %|  ~
           :+  me.cart  town-id.cart
           [caller.inp `[%take to.args `id.new id.giv amount.args] ~ (silt ~[id.giv id.new])]
-        [~ (malt ~[[id.new new]])]
+        [~ (malt ~[[id.new new]]) ~]
       =/  rec=grain  (~(got by owns.cart) u.account.args)
       ?>  &(=(holder.rec to.args) ?=(%& -.germ.rec))
       =/  receiver=account  (hole account data.p.germ.rec)
@@ -94,7 +94,7 @@
           allowances  (~(jab by allowances.giver) caller-id |=(old=@ud (sub old amount.args)))
         == 
       ==
-      [%& (malt ~[[id.giv giv] [id.rec rec]]) ~]
+      [%& (malt ~[[id.giv giv] [id.rec rec]]) ~ ~]
     ::
         %set-allowance
       =/  acc=grain  -:~(val by grains.inp)
@@ -103,13 +103,15 @@
       =/  =account  (hole account data.p.germ.acc)
       =.  data.p.germ.acc
         account(allowances (~(put by allowances.account) who.args amount.args))
-      [%& (malt ~[[id.acc acc]]) ~]
+      [%& (malt ~[[id.acc acc]]) ~ ~]
     ==
   --
 ::
 ++  read
-  |=  inp=path
-  ^-  *
-  ::  TODO support reads such as 'get-balance' and 'get-allowances'
-  ~
+  |_  =path
+  ++  json
+    ~
+  ++  noun
+    ~
+  --
 --

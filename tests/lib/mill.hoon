@@ -87,7 +87,7 @@
   =/  yok=yolk:smart
     [[0xbeef 1 0x1.beef] `[%init ~] ~ ~]
   =/  shel=shell:smart
-    [[0xbeef 1 0x1.beef] [0 0 0] zigs-wheat-id:smart 1 500 0 0]
+    [[0xbeef 1 0x1.beef] [0 0 0] ~ zigs-wheat-id:smart 1 500 0 0]
   =/  egg  [shel yok]
   =/  res
     %+  ~(mill mill [0xdead 1 0x1.dead] 0 1 now)

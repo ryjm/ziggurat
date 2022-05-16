@@ -36,7 +36,7 @@
   =/  res=chick
     (~(write cont cart) zygote)
   =/  correct=chick
-    [%& ~ (malt ~[[id.new-grain new-grain]])]
+    [%& ~ (malt ~[[id.new-grain new-grain]]) ~]
   (expect-eq !>(correct) !>(res))
 ::
 ::  tests for %upgrade

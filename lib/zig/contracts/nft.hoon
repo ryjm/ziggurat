@@ -3,6 +3,7 @@
 ::  NFT standard. Provides abilities similar to ERC-721 tokens, also ability
 ::  to deploy and mint new sets of tokens.
 ::
+/+  *zig-sys-smart
 |_  =cart
 ++  write
   |=  inp=zygote
@@ -76,7 +77,7 @@
         :^  %|  ~
           :+  me.cart  town-id.cart
           [caller.inp `[%give to.args `id.new item-id.args] (silt ~[id.giv]) (silt ~[id.new])]
-        [~ (malt ~[[id.new new]])]
+        [~ (malt ~[[id.new new]]) ~]
       =/  rec=grain  (~(got by owns.cart) u.account.args)
       ?>  &(=(holder.rec to.args) ?=(%& -.germ.rec))
       =/  receiver=account  (hole account data.p.germ.rec)
@@ -84,7 +85,7 @@
       =:  data.p.germ.giv  giver(items (~(del by items.giver) item-id.args))
           data.p.germ.rec  receiver(items (~(put by items.receiver) item-id.args item))
       ==
-      [%& (malt ~[[id.giv giv] [id.rec rec]]) ~]
+      [%& (malt ~[[id.giv giv] [id.rec rec]]) ~ ~]
     ::
         %take
       =/  giv=grain  (~(got by owns.cart) from-rice.args)
@@ -101,7 +102,7 @@
         :^  %|  ~
           :+  me.cart  town-id.cart
           [caller.inp `[%take to.args `id.new id.giv item-id.args] ~ (silt ~[id.giv id.new])]
-        [~ (malt ~[[id.new new]])]
+        [~ (malt ~[[id.new new]]) ~]
       =/  rec=grain  (~(got by owns.cart) u.account.args)
       ?>  &(=(holder.rec to.args) ?=(%& -.germ.rec))
       =/  receiver=account  (hole account data.p.germ.rec)
@@ -113,7 +114,7 @@
           allowances  (~(del in allowances.giver) [caller-id item-id.args])
         == 
       ==
-      [%& (malt ~[[id.giv giv] [id.rec rec]]) ~]
+      [%& (malt ~[[id.giv giv] [id.rec rec]]) ~ ~]
     ::
         %set-allowance
       =/  acc=grain  -:~(val by grains.inp)
@@ -124,14 +125,14 @@
         ::  give full permission
         =.  data.p.germ.acc
           account(full-allowances (~(put in full-allowances.account) who.args))
-        [%& (malt ~[[id.acc acc]]) ~]
+        [%& (malt ~[[id.acc acc]]) ~ ~]
       ::  loop through items.args and set individual permissions
       =/  items=(list [@ud ?])  ~(tap by items.args)
       |-
       ?~  items
         ::  revoke full permission
         =.  full-allowances.account  (~(del in full-allowances.account) who.args)
-        [%& (malt ~[[id.acc acc(data.p.germ account)]]) ~]
+        [%& (malt ~[[id.acc acc(data.p.germ account)]]) ~ ~]
       %=  $
         items  t.items
         ::
@@ -169,14 +170,14 @@
           ==
         ::  finished minting, return chick
         ?~  issued-rice
-          [%& changed-rice ~]
+          [%& changed-rice ~ ~]
         ::  finished but need to mint to newly-issued rices
         =/  call-grains=(set id)
           ~(key by `(map id grain)`issued-rice)
         :^  %|  ~
           :+  me.cart  town-id.cart
           [caller.inp `[%mint token.args next-mints] ~ call-grains]
-        [changed-rice issued-rice]
+        [changed-rice issued-rice ~]
       ::
       ?~  account.i.mints
         ::  need to issue
@@ -261,14 +262,15 @@
         :-  -
         [- me.cart id town-id.cart [%& salt [id.metadata-grain new-items ~ ~]]]
       ::  big ol issued map
-      [%& ~ (~(put by accounts) id.metadata-grain metadata-grain)]
+      [%& ~ (~(put by accounts) id.metadata-grain metadata-grain) ~]
     ==
   --
 ::
-::  not yet using these
-::
 ++  read
-  |=  inp=path
-  ^-  *
-  ~
+  |_  =path
+  ++  json
+    ~
+  ++  noun
+    ~
+  --
 --

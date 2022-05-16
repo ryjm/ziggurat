@@ -104,7 +104,7 @@
         :^  %|  ~
           :+  me.cart  town-id.cart
           [caller.inp `[%give to.args `id.new amount.args] (silt ~[id.giv]) (silt ~[id.new])]
-        [~ (malt ~[[id.new new]])]
+        [~ (malt ~[[id.new new]]) ~]
       ::  giving account in zygote, and receiving one in owns.cart
       =/  rec=grain  (~(got by owns.cart) u.to-rice.args)
       ?>  ?=(%& -.germ.rec)
@@ -116,7 +116,7 @@
           data.p.germ.rec  receiver(balance (add balance.receiver amount.args))
       ==
       ::  return the result: two changed grains
-      [%& (malt ~[[id.giv giv] [id.rec rec]]) ~]  :: crow here
+      [%& (malt ~[[id.giv giv] [id.rec rec]]) ~ ~]
     ::
         %take
       ::  %take expects the account that will be taken from in owns.cart
@@ -138,7 +138,7 @@
         :^  %|  ~
           :+  me.cart  town-id.cart
           [caller.inp `[%take to.args `id.new id.giv amount.args] ~ (silt ~[id.giv id.new])]
-        [~ (malt ~[[id.new new]])]
+        [~ (malt ~[[id.new new]]) ~]
       ::  direct send
       =/  rec=grain  (~(got by owns.cart) u.to-rice.args)
       ?>  ?=(%& -.germ.rec)
@@ -155,7 +155,7 @@
           allowances  (~(jab by allowances.giver) caller-id |=(old=@ud (sub old amount.args)))
         == 
       ==
-      [%& (malt ~[[id.giv giv] [id.rec rec]]) ~]
+      [%& (malt ~[[id.giv giv] [id.rec rec]]) ~ ~]
     ::
         %set-allowance
       ::  let some pubkey spend tokens on your behalf
@@ -168,7 +168,7 @@
       =.  data.p.germ.acc
         account(allowances (~(put by allowances.account) who.args amount.args))
       ::  return single changed rice
-      [%& (malt ~[[id.acc acc]]) ~]
+      [%& (malt ~[[id.acc acc]]) ~ ~]
     ::
         %mint
       ::  expects token metadata in owns.cart
@@ -202,14 +202,14 @@
       ?~  mints
         ::  finished minting, return chick
         ?~  issued-rice
-          [%& changed-rice ~]
+          [%& changed-rice ~ ~]
         ::  finished but need to mint to newly-issued rices
         =/  call-grains=(set id)
           ~(key by `(map id grain)`issued-rice)
         :^  %|  ~
           :+  me.cart  town-id.cart
           [caller.inp `[%mint token.args next-mints] ~ call-grains]
-        [changed-rice issued-rice]
+        [changed-rice issued-rice ~]
       ::
       ?~  to-rice.i.mints
         ::  need to issue
@@ -274,14 +274,15 @@
         :-  -
         [- me.cart id town-id.cart [%& salt [bal ~ id.metadata-grain]]]
       ::  big ol issued map
-      [%& ~ (~(put by accounts) id.metadata-grain metadata-grain)]
+      [%& ~ (~(put by accounts) id.metadata-grain metadata-grain) ~]
     ==
   --
 ::
-::  not yet using these
-::
 ++  read
-  |=  inp=path
-  ^-  *
-  ~
+  |_  =path
+  ++  json
+    ~
+  ++  noun
+    ~
+  --
 --
