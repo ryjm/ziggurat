@@ -216,8 +216,10 @@
         .^((unit id:smart) %gx /(scot %p our.bowl)/ziggurat/(scot %da now.bowl)/address/noun)
       =/  me
         .^(account:smart %gx /(scot %p our.bowl)/wallet/(scot %da now.bowl)/account/(scot %ux (need our-address))/(scot %ud (need town-id.state))/noun)
+      =/  =height
+        .^(height %gx /(scot %p our.bowl)/ziggurat/(scot %da now.bowl)/block-height/noun)
       =/  our-chunk=chunk
-        %+  ~(mill-all mil me (need town-id.state) 0 now.bowl)
+        %+  ~(mill-all mil me (need town-id.state) height now.bowl)
           town.state
         ~(tap in basket.state)
       ::  currently clearing mempool with every chunk, but

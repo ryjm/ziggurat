@@ -226,7 +226,7 @@
   ?.  =(~(wyt by owns) (lent contract-rice))
     ``noun+!>(~)
   =/  cont  (hole:smart contract:smart u.cont.p.germ.u.res)
-  =/  cart  [~ id blocknum town-id owns] ::  TODO blocknum
+  =/  cart  [~ id blocknum town-id owns]
   ?+  read-type  ``noun+!>(~)
     %noun  ``noun+!>(`~(noun ~(read cont cart) arg))
     %json  ``json+!>(`~(json ~(read cont cart) arg))

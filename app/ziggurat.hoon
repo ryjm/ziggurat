@@ -196,7 +196,7 @@
       ::  if we're no longer in validator set, leave the chain
       ?.  (~(has in validator-set) our.bowl)
         :-  (subscriptions-cleanup wex.bowl sup.bowl)
-        state(mode %none, epochs ~, queue ~, basket ~, globe [~ ~])
+        state(mode %none, epochs ~, queue ~, basket ~, globe [~ ~], height 0)
       =/  new-epoch=epoch
         :^    +(num.cur)
             (deadline start-time.cur (dec (lent order.cur)))
@@ -544,7 +544,7 @@
       =+  /(scot %p our.bowl)/wallet/(scot %da now.bowl)/account/(scot %ux (need address.state))/(scot %ud relay-town-id)/noun
       =+  .^(account:smart %gx -)
       =/  globe-chunk
-        (~(mill-all mil - relay-town-id 0 now.bowl) globe.state ~(tap in basket.state))
+        (~(mill-all mil - relay-town-id height.state now.bowl) globe.state ~(tap in basket.state))
       =+  :_  height.state
           %+  ~(put by (~(gut by queue.state) slot-num ~))
           relay-town-id  globe-chunk
@@ -576,6 +576,9 @@
       [%active ~]
     ``noun+!>(`?`=(%validator mode.state))
   ::
+      [%block-height ~]
+    ``noun+!>(height.state)
+  ::
       [%address ~]
     ``noun+!>(`(unit id:smart)`address.state)
   ::
@@ -589,10 +592,10 @@
   ::  scries for contracts
   ::
       [%rice @ ~]
-    (read-rice path 0 relay-town-id p.globe.state)
+    (read-rice path height.state relay-town-id p.globe.state)
   ::
       [%wheat @ @tas @ta ^]  :: grain id, %noun/%json, argument @ta, then any associated rice IDs
-    (read-wheat path 0 relay-town-id p.globe.state)
+    (read-wheat path height.state relay-town-id p.globe.state)
   ::
       [%sizeof @ ~]
     ::  give size of item in global granary
