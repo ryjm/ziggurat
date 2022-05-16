@@ -4,7 +4,7 @@
 ::  for other smart contracts. Automatically (?) inserted
 ::  on any town that wishes to allow contract production.
 ::
-/+  *zig-sys-smart
+::  /+  *zig-sys-smart
 |_  =cart
 ++  write
   |=  inp=zygote

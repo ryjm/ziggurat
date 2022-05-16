@@ -5,7 +5,7 @@
 
 `=smart-txt .^(@t %cx /=zig=/lib/zig/sys/smart/hoon)`
 
-`=hoon-txt .^(@t %cx %/sys/hoon/hoon)`
+`=hoon-txt .^(@t %cx /=zig=/lib/zig/sys/hoon/hoon)`
 
 `=hoe (slap !>(~) (ream hoon-txt))`
 

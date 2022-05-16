@@ -10,7 +10,7 @@
 ::
 ::  TODO: verify ship signatures!
 ::
-/+  *zig-sys-smart
+::  /+  *zig-sys-smart
 |_  =cart
 ++  write
   |=  inp=zygote

@@ -28,7 +28,7 @@
 ::  I will heavily comment this contract in order to make it a good example
 ::  for others to use.
 ::
-/+  *zig-sys-smart
+::  /+  *zig-sys-smart
 |_  =cart
 ++  write
   |=  inp=zygote
