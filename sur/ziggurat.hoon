@@ -3,22 +3,24 @@
 ++  epoch-interval  ~s10
 ++  relay-town-id   0
 ::
-+$  epoch   [num=@ud =start=time order=(list ship) =slots]
+::  epoch >> slot >> block >> chunk
 ::
++$  epoch   [num=@ud =start=time order=(list ship) =slots]
 +$  epochs  ((mop @ud epoch) gth)
 ++  poc     ((on @ud epoch) gth)
 ::
-+$  block         (pair signature chunks)
-+$  block-header  [num=@ud prev-header-hash=@uvH data-hash=@uvH]
-+$  slot          (pair block-header (unit block))
-::
++$  slot   (pair block-header (unit block))
 +$  slots  ((mop @ud slot) gth)
 ++  sot    ((on @ud slot) gth)
 ::
-+$  signature   [p=@ux q=ship r=life]
++$  height        @ud  ::  block height
++$  block         [=height =signature =chunks]
++$  block-header  [num=@ud prev-header-hash=@uvH data-hash=@uvH]
 ::
 +$  chunks  (map town-id=@ud =chunk)
 +$  chunk   [(list [@ux egg:smart]) town:smart]
+::
++$  signature   [p=@ux q=ship r=life]
 ::
 +$  basket  (set egg:smart)  ::  mempool
 ::
@@ -53,8 +55,7 @@
   ==
 ::
 +$  hall-poke
-  $%  ::  will remove starting-state for persistent testnet
-      [%init town-id=@ud starting-state=(unit town:smart) gas=[rate=@ud bud=@ud]]
+  $%  [%init town-id=@ud starting-state=(unit town:smart) gas=[rate=@ud bud=@ud]]
       [%join town-id=@ud gas=[rate=@ud bud=@ud]]
       [%exit gas=[rate=@ud bud=@ud]]
       [%clear-state ~]

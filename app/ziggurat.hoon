@@ -1,5 +1,12 @@
 ::  ziggurat [uqbar-dao]
 ::
+::  TODO need to make sure this design is acceptable in terms of
+::  data availability and censorship. last validator in epoch is random,
+::  but there's still only 1 per epoch and they could censor. since
+::  the set of possible transactions in the town contract is so narrow,
+::  possibly we can show that no logic can result in unwanted secret
+::  manipulation
+::
 /-  uqbar-indexer
 /+  *ziggurat, default-agent, dbug, verb
 /*  smart-lib  %noun  /lib/zig/compiled/smart-lib/noun
@@ -12,14 +19,9 @@
       address=(unit id:smart)
       =epochs
       queue=(map slot-num=@ud chunks)
-      ::  TODO need to make sure this design is acceptable in terms of
-      ::  data availability and censorship. last validator in epoch is random,
-      ::  but there's still only 1 per epoch and they could censor. since
-      ::  the set of possible transactions in the town contract is so narrow,
-      ::  possibly we can show that no logic can result in unwanted secret
-      ::  manipulation
       =basket           ::  accept town mgmt txs from stars
       globe=town:smart  ::  store town hall info; update end of each epoch
+      =height
   ==
 +$  inflated-state-0  [state-0 =mil]
 +$  mil  $_  ~(mill mill 0)
@@ -36,7 +38,7 @@
     def   ~(. (default-agent this %|) bowl)
 ::
 ++  on-init
-  `this(state [[%0 %none ~ ~ ~ ~ [~ ~]] ~(mill mill +:(cue q.q.smart-lib))])
+  `this(state [[%0 %none ~ ~ ~ ~ [~ ~] 0] ~(mill mill +:(cue q.q.smart-lib))])
 ::
 ++  on-save  !>(-.state)
 ++  on-load
@@ -407,11 +409,13 @@
         [header `block]:update
       :-  cards
       ?.  =(next-slot-num (dec (lent order.cur)))
-        state(epochs (put:poc epochs num.cur cur))
+        state(epochs (put:poc epochs num.cur cur), height +(height))
       ::  update globe state if last block in epoch
-      ?~  new=(~(get by `^chunks`+.block.update) 0)
-        state(epochs (put:poc epochs num.cur cur))
-      state(epochs (put:poc epochs num.cur cur), globe +.u.new)
+      %=  state
+        height  +(height)
+        epochs  (put:poc epochs num.cur cur)
+        globe   +:(~(got by chunks.block.update) 0)
+      ==
     ::
         %saw-block
       :_  state
@@ -448,7 +452,7 @@
           =/  prev=^epoch  (got:poc epochs.update (dec n))
           +:(need (pry:sot slots.prev))
         +.u.latest
-      =+  +:(~(got by `^chunks`q:(need q.slot)) 0)
+      =+  +:(~(got by chunks:(need q.slot)) 0)
       :_  state(epochs epochs.update, globe -)
       (new-epoch-timers epoch our.bowl)
     ?~  a
@@ -470,7 +474,7 @@
           =/  prev=^epoch  (got:poc epochs.update (dec n))
           +:(need (pry:sot slots.prev))
         +.u.latest
-      =+  +:(~(got by `^chunks`q:(need q.slot)) 0)
+      =+  +:(~(got by chunks:(need q.slot)) 0)
       :_  state(epochs epochs.update, globe -)
       (new-epoch-timers epoch our.bowl)
     ?~  q.q.i.a-s
@@ -523,12 +527,17 @@
       ::
       ?.  =(our.bowl (rear order.cur))
         ::  normal block
-        =+  %+  ~(put by (~(gut by queue.state) slot-num ~))
+        =+  :_  height.state
+            %+  ~(put by (~(gut by queue.state) slot-num ~))
             relay-town-id  [~ globe.state]
         =^  cards  cur
           (~(our-block epo cur prev-hash [our now src]:bowl) -)
         :-  cards
-        state(epochs (put:poc epochs num.cur cur), queue (~(del by queue) slot-num))
+        %=  state
+          height  +(height)
+          queue   (~(del by queue) slot-num)
+          epochs  (put:poc epochs num.cur cur)
+        ==
       ::  if this is the last block in the epoch,
       ::  perform global-level transactions
       ::  insert transaction to advance
@@ -536,16 +545,18 @@
       =+  .^(account:smart %gx -)
       =/  globe-chunk
         (~(mill-all mil - relay-town-id 0 now.bowl) globe.state ~(tap in basket.state))
-      =+  %+  ~(put by (~(gut by queue.state) slot-num ~))
+      =+  :_  height.state
+          %+  ~(put by (~(gut by queue.state) slot-num ~))
           relay-town-id  globe-chunk
       =^  cards  cur
         (~(our-block epo cur prev-hash [our now src]:bowl) -)
       :-  cards
       %=  state
-        basket  ~
-        globe  +.globe-chunk
-        queue  (~(del by queue) slot-num)
-        epochs  (put:poc epochs num.cur cur)
+        basket        ~
+        height        +(height)
+        globe         +.globe-chunk
+        queue         (~(del by queue) slot-num)
+        epochs        (put:poc epochs num.cur cur)
       ==
     ::  someone else was responsible for producing this block,
     ::  but they have not done so

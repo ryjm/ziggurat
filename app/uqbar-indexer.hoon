@@ -482,8 +482,7 @@
   ^-  (unit chunk:zig)
   ?~  slot=(get-slot epoch-num block-num)  ~
   ?~  block=q.u.slot                       ~
-  =*  chunks  q.u.block
-  (~(get by chunks) town-id)
+  (~(get by chunks.u.block) town-id)
 ::
 ++  serve-update
   |=  [=query-type:uqbar-indexer =query-payload:uqbar-indexer]
@@ -496,7 +495,7 @@
       (get-slot epoch-num.query-payload block-num.query-payload)
     ?~  slot  ~
     ?~  q.u.slot  ~
-    =*  chunks  q.u.q.u.slot
+    =*  chunks  chunks.u.q.u.slot
     =/  chunk=(unit chunk:zig)
       (~(get by chunks) town-id.query-payload)
     ?~  chunk  ~
@@ -668,7 +667,7 @@
     =|  holder=(list [@ux second-order-location:uqbar-indexer])
     =|  lord=(list [@ux second-order-location:uqbar-indexer])
     =|  to=(list [@ux egg-location:uqbar-indexer])
-    =/  chunks=(list [town-id=@ud =chunk:zig])  ~(tap by q.block)
+    =/  chunks=(list [town-id=@ud =chunk:zig])  ~(tap by chunks.block)
     :-  block-hash
     |-
     ?~  chunks  [egg from grain holder lord to]

@@ -10,7 +10,7 @@
   ::  +our-block: produce a block during our slot
   ::
   ++  our-block
-    |=  data=chunks
+    |=  [data=chunks last-height=height]
     ^-  (quip card epoch)
     =/  [last-num=@ud last-slot=(unit slot)]
       (get-last-slot slots.cur)
@@ -34,8 +34,8 @@
     =/  data-hash  (sham data)
     =/  =slot
       =+  hed=[next-num prev-hed-hash data-hash]
-      [hed `[(sign:sig our now (sham hed)) data]]
-    ~&  >  "%ziggurat: producing a block size={<(met 3 (jam slot))>} at {<now>}"
+      [hed `[+(last-height) (sign:sig our now (sham hed)) data]]
+    ~&  >  "%ziggurat: producing a block: height={<+(last-height)>}, size={<(met 3 (jam slot))>}, at {<now>}"
     :_  cur(slots (put:sot slots.cur next-num slot))
     %+  weld
       (give-on-updates [%new-block num.cur p.slot (need q.slot)] q.slot)
@@ -87,11 +87,11 @@
       ~&  >>>  "%ziggurat: ignoring their block, it was submitted out-of-turn"
       skip-block
     ?.  ?|  ?=(~ blk)
-            ?=(^ q.u.blk)
+            ?=(^ chunks.u.blk)
         ==
       ~&  >>>  "%ziggurat: ignoring their block, it was empty!"
       skip-block
-    ?.  ?&  =(?~(blk (sham ~) (sham q.u.blk)) data-hash.hed)
+    ?.  ?&  =(?~(blk (sham ~) (sham chunks.u.blk)) data-hash.hed)
             ?|(?=(~ blk) !=(data-hash.hed (sham ~)))
         ==
       ~&  >>>  "%ziggurat: ignoring their block, header hash was invalid"
