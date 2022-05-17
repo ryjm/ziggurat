@@ -249,7 +249,7 @@
       ?.  .=  our.bowl
           ?~  slot
             ?~(+.order.cur -.order.cur -.+.order.cur)
-          ~&  >>  `@ux`(sham p.val.u.slot)
+          ::  ~&  >>  `@ux`(sham p.val.u.slot)
           +:(next-block-producer num.p.val.u.slot order.cur p.val.u.slot)
         ~&  >>>  "ziggurat: rejecting chunk, we're not next block producer"
         !!
@@ -550,11 +550,11 @@
         (~(our-block epo cur prev-hash [our now src]:bowl) -)
       :-  cards
       %=  state
-        basket        ~
-        height        +(height)
-        globe         +.globe-chunk
-        queue         (~(del by queue) slot-num)
-        epochs        (put:poc epochs num.cur cur)
+        basket  ~
+        height  +(height)
+        globe   +.globe-chunk
+        queue   (~(del by queue) slot-num)
+        epochs  (put:poc epochs num.cur cur)
       ==
     ::  someone else was responsible for producing this block,
     ::  but they have not done so
