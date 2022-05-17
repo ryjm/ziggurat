@@ -150,6 +150,15 @@
     lis       (oust [num 1] `(list ship)`lis)
   ==
 ::
+++  get-on-chain-validator-set
+  |=  =granary:smart
+  ^-  (unit (set ship))
+  ?~  found=(~(get by granary) `@ux`'ziggurat')  ~
+  ?.  ?=(%& -.germ.u.found)                      ~
+  :-  ~
+  %~  key  by
+  (hole:smart ,(map ship [@ux @p life]) data.p.germ.u.found)
+::
 ++  next-block-producer
   |=  [slot=@ud order=(list ship) hed=block-header]
   ^-  [@ud ship]
@@ -158,6 +167,13 @@
   ?:  (gth (lent order) -)
     [- (snag - order)]
   [0 -:(shuffle (silt order) (sham hed))]
+::
+++  get-second-to-last
+  |=  ord=(list ship)
+  =+  (lent ord)
+  ?:  =(- 1)
+    (rear ord)
+  (snag (sub - 2) ord)
 ::  +filter: filters a set with boolean gate
 ++  filter
   |*  [a=(tree) b=gate]

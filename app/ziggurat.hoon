@@ -186,26 +186,23 @@
       =/  cur=epoch  +:(need (pry:poc epochs))
       =/  last-slot-num=@ud
         (need (bind (pry:sot slots.cur) head))
-      ?~  found=(~(get by p.globe.state) `@ux`'ziggurat')
+      ?~  validator-set=(get-on-chain-validator-set p.globe.state)
         ::  haven't received global state yet, sit tight
         ~&  >>>  "%ziggurat: waiting to receive relay state"
         `state
-      =/  validator-set
-        ?>  ?=(%& -.germ.u.found)
-        ~(key by (hole:smart ,(map ship [@ux @p life]) data.p.germ.u.found))
       ::  if we're no longer in validator set, leave the chain
-      ?.  (~(has in validator-set) our.bowl)
+      ?.  (~(has in u.validator-set) our.bowl)
         :-  (subscriptions-cleanup wex.bowl sup.bowl)
         state(mode %none, epochs ~, queue ~, basket ~, globe [~ ~], height 0)
       =/  new-epoch=epoch
         :^    +(num.cur)
             (deadline start-time.cur (dec (lent order.cur)))
           ::  ~&  >>>  `@ux`(epoch-seed last-slot-num epochs cur)
-          ::  ~&  >>>  (shuffle validator-set (epoch-seed last-slot-num epochs cur))
-          (shuffle validator-set (epoch-seed last-slot-num epochs cur))
+          ::  ~&  >>>  (shuffle u.validator-set (epoch-seed last-slot-num epochs cur))
+          (shuffle u.validator-set (epoch-seed last-slot-num epochs cur))
         ~
       =/  validators=(list ship)
-        ~(tap in (~(del in validator-set) our.bowl))
+        ~(tap in (~(del in u.validator-set) our.bowl))
       ?:  ?&  ?=(^ validators)
               %+  lth  start-time.new-epoch
               (sub now.bowl (mul +((lent order.new-epoch)) epoch-interval))
@@ -218,7 +215,7 @@
       ::  set our timers for all the slots in this epoch,
       ::  subscribe to all the other validator ships,
       ::  and alert subscribing sequencers of the next block producer
-      ~&  epoch+num.new-epoch^validator-set^`@ux`(end [3 2] (sham epochs))
+      ~&  epoch+num.new-epoch^u.validator-set^`@ux`(end [3 2] (sham epochs))
       =/  [next-producer=ship next-slot=@ud]
         ?~  +.order.new-epoch
           [-.order.new-epoch 0]
@@ -237,7 +234,7 @@
     ::
         %receive-chunk
       ?>  (allowed-participant [src our now]:bowl)
-      ~&  "ziggurat: received chunk town={<town-id.act>} for slot={<for-slot.act>} from {<src.bowl>}"
+      ~&  >  "ziggurat: received chunk town={<town-id.act>} for slot={<for-slot.act>} from {<src.bowl>}"
       ::  only accept chunks from sequencers in on-chain council
       =/  found  (~(got by p.globe.state) `@ux`'world')
       ?.  ?=(%& -.germ.found)
@@ -273,7 +270,7 @@
         %forward
       ::  only accepts transactions from possible validators/sequencers
       =.  eggs.act  (filter eggs.act |=(=egg:smart =(relay-town-id town-id.p.egg)))
-      =+  final-producer=(rear order.cur)
+      =+  final-producer=(get-second-to-last order.cur)
       ?:  =(our.bowl final-producer)
         `state(basket (~(uni in basket) eggs.act))
       ::  clear our basket and forward to final producer in epoch
@@ -289,7 +286,7 @@
       ?~  (find [src.bowl]~ order.cur)
         ~|("ziggurat: can only receive eggs from known validators" !!)
       ~|  "ziggurat: rejected basket: we're not the final validator for this epoch"
-      ?>  =(our.bowl (rear order.cur))
+      ?>  =(our.bowl (get-second-to-last order.cur))
       `state(basket (~(uni in basket) eggs.act))
     ==
   ::
@@ -407,10 +404,10 @@
       =^  cards  cur
         %-  ~(their-block epo cur prev-hash [our now src]:bowl)
         [header `block]:update
+      ::  updating globe state on every block -- can limit this to
+      ::  only on block where we make changes (currently second-to-last)
+      ::  for efficiency's sake
       :-  cards
-      ?.  =(next-slot-num (dec (lent order.cur)))
-        state(epochs (put:poc epochs num.cur cur), height +(height))
-      ::  update globe state if last block in epoch
       %=  state
         height  +(height)
         epochs  (put:poc epochs num.cur cur)
@@ -525,7 +522,8 @@
       ::
       ::  TODO: check what chunks we received and see if any were missing
       ::
-      ?.  =(our.bowl (rear order.cur))
+      =+  second-to-last=(get-second-to-last order.cur)
+      ?.  =(our.bowl second-to-last)
         ::  normal block
         =+  :_  height.state
             %+  ~(put by (~(gut by queue.state) slot-num ~))
@@ -538,7 +536,7 @@
           queue   (~(del by queue) slot-num)
           epochs  (put:poc epochs num.cur cur)
         ==
-      ::  if this is the last block in the epoch,
+      ::  if this is the SECOND TO LAST block in the epoch,
       ::  perform global-level transactions
       ::  insert transaction to advance
       =+  /(scot %p our.bowl)/wallet/(scot %da now.bowl)/account/(scot %ux (need address.state))/(scot %ud relay-town-id)/noun
