@@ -36,11 +36,21 @@
     ::  validate transaction signature
     ::  using ecdsa-raw-sign in wallet, TODO review this
     ::  comment this out for tests
-    ?.  .=  id.from.p.egg
-        %-  compress-point:secp256k1:secp:crypto
-        %+  ecdsa-raw-recover:secp256k1:secp:crypto
-          ?~(eth-hash.p.egg (sham (jam q.egg)) u.eth-hash.p.egg)
-        sig.p.egg
+    =?  v.sig.p.egg  (gte v.sig.p.egg 27)  (sub v.sig.p.egg 27)
+    ~&  >>  egg
+    ::  ecdsa-raw-recover crashes so we virtualize
+    =/  recovered
+      %-  mule
+      |.
+      %-  compress-point:secp256k1:secp:crypto
+      %+  ecdsa-raw-recover:secp256k1:secp:crypto
+        ?~(eth-hash.p.egg (sham (jam q.egg)) u.eth-hash.p.egg)
+      sig.p.egg
+    ?:  ?=(%| -.recovered)
+      ~&  >>>  "FAILED TX"
+      [town 0 2]  ::  signature is broken in some way
+    ?.  =(id.from.p.egg p.recovered)
+    ~&  >>>  "mismatch: {<id.from.p.egg>}, {<`@ux`p.recovered>}"
       [town 0 2]  ::  signed tx doesn't match account
     =/  curr-nonce=@ud  (~(gut by q.town) id.from.p.egg 0)
     ?.  =(nonce.from.p.egg +(curr-nonce))
@@ -157,6 +167,7 @@
       ::    |=  nok=*
       ::    ^-  contract
       ::    ::=/  cued  (cue q.q.smart-lib)
+      :::   idea:  run this in mule outside mill
       ::    ::  crazy weird issue: importing this way results in unjetted execution (my guess)
       ::    ::  ~&  >>>  "smart-lib size: {<(met 3 (jam cued))>}"
       ::    ::  ~&  >>>  "library size: {<(met 3 (jam library))>}"
