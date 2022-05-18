@@ -483,8 +483,8 @@
 ++  create-hints
   |=  [n=^ h=hints]
   ^-  js=json
-  =/  hs  (hash -.n)
-  =/  hf  (hash +.n)
+  =/  hs  (hash -.n ~)
+  =/  hf  (hash +.n ~)
   %-  pairs:enjs:format
   :~  hints+(hints:enjs h)
       subject+s+(num:enjs hs)
@@ -492,10 +492,17 @@
   ==
 ::
 ++  hash
-  |=  n=*
+  |=  [n=* cax=(map * phash)]
   ^-  phash
   ?@  n
+    ?:  (lte n 12)
+      =/  ch  (~(get by cax) n)
+      ?^  ch  u.ch
+      (hash:pedersen n 0)
     (hash:pedersen n 0)
+  ?^  ch=(~(get by cax) n)
+    ~&  %cache-hit
+    u.ch
   =/  hh  $(n -.n)
   =/  ht  $(n +.n)
   (hash:pedersen hh ht)
@@ -503,22 +510,16 @@
 ++  conq
   |%
   ::
-  ::  To use this, pass in a vase of sys/hoon.hoon generated via:
+  ::  To use this, pass in a vase of lib/zig/sys/hoon.hoon generated via:
   ::  (slap !>(~) (ream text-of-hoon))
   ::
   ++  layers
-    |=  vax=vase
-    ^-  (list type)
-    %+  turn
-      :~  '..add'
-          '..biff'
-          '..egcd'
-          '..po'
-          '..musk'
-      ==
-    |=  s=@t
-    ^-  type
-    p:(slap vax (ream s))
+    ^-  (list @t)
+    :~  '..add'
+        '..biff'
+        '..egcd'
+        '..po'
+    ==
   ::
   ++  all-arms-to-axes
     |=  vax=vase
@@ -541,18 +542,36 @@
     p.q.p.r
   ::
   ++  hash-all-arms
-    |=  vax=vase
-    %-  ~(gas by *(map term [@ phash]))
-    %+  turn  (list-arms vax)
-    |=  t=term
+    |=  [vax=vase cax=(map * phash)]
+    ^-  (map * phash)
+    =/  lis=(list term)  (list-arms vax)
+    |-
+    ?~  lis  cax
+    =*  t  i.lis
     =/  a=@  (arm-axis vax t)
     ~&  [t a]
-    =/  h=phash  (hash q:(slot a vax))
-    [t [a h]]
+    =/  n  q:(slot a vax)
+    $(lis t.lis, cax (~(put by cax) n (hash n cax)))
   ::
   ++  hash-arms-per-layer
-    |=  [vax=vase layer=@t]
+    |=  [vax=vase layer=@t cax=(map * phash)]
+    ^-  (map * phash)
     =/  cor  (slap vax (ream layer))
-    (hash-all-arms cor)
+    (hash-all-arms cor cax)
+  ::
+  ++  main
+    |=  hoonlib-txt=@t
+    =/  hoonlib  (slap !>(~) (ream hoonlib-txt))
+    =/  cax
+      %-  ~(gas by *(map * phash))
+      %+  turn  (gulf 0 12)
+      |=  n=@
+      ^-  [* phash]
+      [n (hash n ~)]
+    =/  l  layers
+    |-
+    ?~  l
+      cax
+    $(l t.l, cax (hash-arms-per-layer hoonlib i.l cax))
   --
 --
