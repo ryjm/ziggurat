@@ -592,16 +592,31 @@
     ?.  ?=(@ux query-payload)  ~
     =/  locations=(list location:uqbar-indexer)
       ~(tap in get-locations)
+    |^
     ?+    query-type  !!
     ::
         %block-hash
+      get-block-hash
+    ::
+        %grain
+      get-grain
+    ::
+        ?(%egg %from %to)
+      get-egg-from-to
+    ::
+        ?(%holder %lord)
+      get-holder-lord
+    ::
+    ==
+    ::
+    ++  get-block-hash
       ~|  "uqbar-indexer: block hash not unique"
       ?>  =(1 (lent locations))
       =/  =location:uqbar-indexer  (snag 0 locations)
       ?.  ?=(block-location:uqbar-indexer location)  ~
       (get-slot-update location)
     ::
-        %grain
+    ++  get-grain
       =|  grains=(map grain-id=id:smart [town-location:uqbar-indexer grain:smart])
       |-
       ?~  locations
@@ -622,7 +637,7 @@
       ::
       ==
     ::
-        ?(%egg %from %to)
+    ++  get-egg-from-to
       =|  eggs=(set [egg-location:uqbar-indexer egg:smart])
       |-
       ?~  locations
@@ -649,7 +664,7 @@
           eggs       (~(put in eggs) [location egg])
       ==
     ::
-        ?(%holder %lord)
+    ++  get-holder-lord
       %+  roll  locations
       |=  $:  grain-id=location:uqbar-indexer
               out=(unit update:uqbar-indexer)
@@ -669,7 +684,8 @@
         (~(uni in grains.u.out) grains.u.next-update)
       ::
       ==
-    ==
+    ::
+    --
   ::
   ++  get-locations
     ^-  (set location:uqbar-indexer)
