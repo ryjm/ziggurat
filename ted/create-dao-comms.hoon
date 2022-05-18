@@ -1,4 +1,6 @@
-/-  spider,
+/-  pull-hook,
+    push-hook,
+    spider,
     d=dao,
     ms=metadata-store
 /+  strandio,
@@ -6,7 +8,11 @@
     smart=zig-sys-smart
 ::
 =*  strand    strand:spider
+=*  leave      leave:strandio
 =*  poke-our  poke-our:strandio
+=*  scry      scry:strandio
+=*  take-fact  take-fact:strandio
+=*  watch      watch:strandio
 =>
   |%
   ::
@@ -20,83 +26,17 @@
 =>
   |_  =bowl:spider
   ::
-  +$  member-data
-    %-  list
-    [him=ship =id:smart roles=(set role:d)]
-  ::
-  ++  make-dao-self
-    |=  [name=@tas dao-id=id:smart our-id=id:smart]
-    ^-  dao:d
-    |^
-    =|  =dao:d
-    =:  name.dao         name
-        permissions.dao  (make-permissions dao-id)
-        members.dao      make-members
-        id-to-ship.dao   (make-id-to-ship our-id)
-        ship-to-id.dao   (make-ship-to-id our-id)
-    ==
-    dao
-    ::
-    ++  make-permissions
-      |=  dao-id=id:smart
-      ^-  permissions:d
-      %+  %~  put  by  *permissions:d
-        name=%write
-      %+  %~  put  ju  *(jug address:d role:d)
-      dao-id  %owner
-    ::
-    ++  make-members
-      ^-  members:d
-      %+  %~  put  ju  *members:d
-      our-id  %owner
-    ::
-    ++  make-id-to-ship
-      |=  our-id=id:smart
-      ^-  id-to-ship:d
-      (~(put by *id-to-ship:d) our-id our.bowl)
-    ::
-    ++  make-ship-to-id
-      |=  our-id=id:smart
-      ^-  ship-to-id:d
-      (~(put by *ship-to-id:d) our.bowl our-id)
-    ::
-    --
-  ::
-  ++  make-dao-given
-    |=  [name=@tas dao-id=id:smart =permissions:d md=member-data]
-    ^-  dao:d
-    |^
-    =|  =dao:d
-    =:  name.dao         name
-        permissions.dao  permissions
-        members.dao      make-members
-        id-to-ship.dao   make-id-to-ship
-        ship-to-id.dao   make-ship-to-id
-    ==
-    dao
-    ::
-    ++  make-members
-      ^-  members:d
-      %-  %~  gas  ju  *members:d
-      %+  roll  md
-      |=  [[@ =id:smart roles=(set role:d)] out=(list [id:smart role:d])]
-      %+  weld  out
-      %+  turn  ~(tap in roles)
-      |=(=role:d [id role])
-    ::
-    ++  make-id-to-ship
-      ^-  id-to-ship:d
-      %-  %~  gas  by  *id-to-ship:d
-      %+  turn  md
-      |=([him=ship =id:smart *] [id him])
-    ::
-    ++  make-ship-to-id
-      ^-  ship-to-id:d
-      %-  %~  gas  by  *ship-to-id:d
-      %+  turn  md
-      |=([him=ship =id:smart *] [him id])
-    ::
-    --
+  ++  get-dao
+    |=  [dao-id=id:smart dao-rid=resource:res]
+    =/  m  (strand ,(unit dao:d))
+    ^-  form:m
+    ;<  dao-from-id=(unit dao:d)  bind:m
+      %+  scry  (unit dao:d)
+      /gx/dao/daos/(scot %ux dao-id)/noun
+    ;<  dao-from-rid=(unit dao:d)  bind:m
+      %+  scry  (unit dao:d)
+      /gx/dao/daos/ship/(scot %p entity.dao-rid)/[name.dao-rid]/noun
+    (pure:m (mate dao-from-id dao-from-rid))
   ::
   ++  make-metadatum
     |=  name=@tas
@@ -115,44 +55,53 @@
     ==
     metadatum
   ::
+  ++  watch-dao-if-not-exist
+    |=  [dao-salt=@ dao-id=id:smart rid=resource:res]
+    |^
+    =/  m  (strand ,~)
+    ^-  form:m
+    ::
+    ~&  >  "checking for existence of dao..."
+    ;<  existing-dao=(unit dao:d)  bind:m
+      (get-dao dao-id rid)
+    ?:  ?=(^ existing-dao)
+      ~&  >  "found pre-existing dao..."
+      (pure:m ~)
+    ::
+    ~&  >  "adding dao to be watched to %dao..."
+    ;<  ~  bind:m
+      %^  poke-our  %dao  %dao-update
+      !>(`on-chain-update:d`[%add-dao dao-salt ~])
+    ::
+    ;<  ~  bind:m
+      %^  watch  indexer-watch-wire
+      [entity.rid %uqbar-indexer]  indexer-watch-path
+    ~&  >  "waiting for update from indexer..."
+    ;<  =cage  bind:m  (take-fact indexer-watch-wire)
+    ;<  ~  bind:m
+      (leave indexer-watch-wire [entity.rid %uqbar-indexer])
+    (pure:m ~)
+    ::
+    ++  indexer-watch-wire
+      /create-dao-comms/(scot %ux dao-id)
+    ::
+    ++  indexer-watch-path
+      /grain/(scot %ux dao-id)
+    ::
+    --
+  ::
   --
 ::
 ^-  thread:spider
 |=  arg=vase
 =/  m  (strand ,vase)
 ^-  form:m
-=/  arg-mold
-  $?  dao-salt=@
-      $:  rid=resource:res
-          dao-name=@t
-          dao-salt=@
-          our-id=id:smart
-          permissions=(unit permissions:d)
-          member-data=(unit member-data)
-  ==  ==
-=/  args  !<((unit arg-mold) arg)
+=/  args  !<((unit [rid=resource:res dao-salt=@ dao-name=@t]) arg)
 ?~  args  (pure:m !>(~))
-?:  ?=(@ u.args)
-  =*  dao-salt     dao-salt.u.args
-  =/  dao-id=id:smart
-    %:  fry-rice:smart
-        dao-contract-id
-        dao-contract-id
-        dao-town-id
-        dao-salt
-    ==
-  ~&  >  "adding dao to be watched to %dao..."
-  ;<  ~  bind:m
-    %^  poke-our  %dao  %dao-update
-    !>(`on-chain-update:d`[%add-dao dao-salt ~])
-  ~&  >  "done"
-  (pure:m !>(~))
-=*  rid          rid.u.args
-=*  dao-name     dao-name.u.args
-=*  dao-salt     dao-salt.u.args
-=*  our-id       our-id.u.args
-=*  permissions  permissions.u.args
-=*  member-data  member-data.u.args
+;<  =bowl:spider  bind:m  get-bowl:strandio
+=*  rid       rid.u.args
+=*  dao-salt  dao-salt.u.args
+=*  dao-name  dao-name.u.args
 =/  dao-id=id:smart
   %:  fry-rice:smart
       dao-contract-id
@@ -160,29 +109,31 @@
       dao-town-id
       dao-salt
   ==
-;<  =bowl:spider  bind:m  get-bowl:strandio
-~&  >  "constructing dao..."
-=/  =dao:d
-  ?:  ?|  ?=(~ permissions)
-          ?=(~ member-data)
-      ==
-    (make-dao-self dao-name dao-id our-id)
-  %:  make-dao-given
-      dao-name
-      dao-id
-      u.permissions
-      u.member-data
-  ==
-~&  >  "poking %dao..."
+::
 ;<  ~  bind:m
-  %^  poke-our  %dao  %dao-update
-  !>(`on-chain-update:d`[%add-dao dao-salt `dao])
+  (watch-dao-if-not-exist dao-salt dao-id rid)
+::
 ;<  ~  bind:m
   %^  poke-our  %dao  %dao-update
   !>(`off-chain-update:d`[%add-comms dao-id rid])
-::  TODO: need to add group to metadata-push-hook?
+::
+~&  >  "poking dao-metadata-pu??-hook..."
+;<  ~  bind:m
+  ?:  =(our.bowl entity.rid)
+    %^  poke-our  %dao-metadata-push-hook  %push-hook-action
+    !>(`action:push-hook`[%add rid])
+  %^  poke-our  %dao-metadata-pull-hook  %pull-hook-action
+  !>(`action:pull-hook`[%add entity.rid rid])
+::
+::  TODO: add dao-contact-pu??-hook?
+::
+?.  =(our.bowl entity.rid)
+  ~&  >  "done"
+  (pure:m !>(~))
 ~&  >  "constructing metadatum..."
-=/  =metadatum:ms  (make-metadatum(bowl bowl) dao-name)
+=/  =metadatum:ms
+  (make-metadatum(bowl bowl) dao-name)
+::
 ~&  >  "poking metadata-store..."
 ;<  ~  bind:m
   %^  poke-our  %metadata-store  %metadata-action

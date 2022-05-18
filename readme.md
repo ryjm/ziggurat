@@ -127,8 +127,8 @@ If run on a fakezod located at `~/urbit/zod`, the following will create the comp
 
 3. Set up subscription of off-chain DAO agent to on-chain DAO (which is created in `gen/sequencer/init.hoon`):
 ```
-::  argument is salt, which is unique to each DAO
--zig!create-dao-comms [`@`'uqbar-dao']
+::  arguments are rid, which is analogous to a landscape group, salt, which is unique to each DAO, and DAO name
+-zig!create-dao-comms [[~zod %uqbar-dao] `@`'uqbar-dao' 'Uqbar DAO']
 ```
 
 ### Changing DAO state

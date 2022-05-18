@@ -28,7 +28,8 @@
 ::      Update the DAO. Further documented in /sur/dao.hoon
 ::
 ::
-/-  uqbar-indexer,
+/-  push-hook,
+    uqbar-indexer,
     d=dao,
     res=resource
 /+  agentio,
@@ -128,15 +129,19 @@
       =/  new-host=ship    (slav %p i.t.t.t.path)
       ?>  =(our.bowl new-host)
       ?~  dao=(~(get by daos) dao-id)  !!
-      ?~  dao-host=(get-host dao-id dao)  !!
-      ?>  =(our.bowl u.dao-host)
-      ?>  ?=(^ (~(get by ship-to-id.u.dao) src.bowl))  :: member?
+      ?>  (~(has by ship-to-id.u.dao) src.bowl)  :: member?
+      ::  +get-host will return ~ if our ship has not yet
+      ::  registered the change to DAO state, in which case
+      ::  allow watch so can send success later
+      ::  TODO: can we handle this case less hackily?
+      ?~  dao-host=(get-host dao-id dao)  `this
+      ?>  =(our.bowl (~(got by id-to-ship.u.dao) u.dao-host))
       ::  if we have not yet completed host change, send
       ::  success once done; else, send success immediately
       :_  this
       ?:  is-host-change-in-progress  ~
       :_  ~
-      (fact:io [%dao-host-change-success !>(`?`%.y)] ~)
+      (fact:io [%uqbar-dao-host-change-success !>(`?`%.y)] ~)
     ::
     ==
   ::
@@ -175,7 +180,7 @@
     |^
     ?+    wire  (on-agent:def wire sign)
     ::
-        [%dao-host-change @ @ @ @ @ ~]
+        [%dao-host-change @ @ @ @ ~]
       =/  dao-id=id:smart  (slav %ux i.t.wire)
       =/  old-host=(unit ship)
         ?:  =('~' i.t.t.wire)  ~
@@ -185,38 +190,36 @@
       ?+    -.sign  (on-agent:def wire sign)
       ::
           %kick
-        =/  watch-path=path
-          :^    %dao-host-change
-              (scot %uv dao-id)
-            (scot %p new-host)
-          ~
         :_  this
         :_  ~
-        %+  %~  watch  pass:io
-            (snoc watch-path (scot %da now.bowl))
-          [new-host %dao]
-        watch-path
+        %+  %~  watch  pass:io  wire
+        [new-host %dao]  wire
       ::
           %fact
-        ?>  ?=(%dao-host-change-success p.cage.sign)
+        ?>  ?=(%uqbar-dao-host-change-success p.cage.sign)
         =+  !<(success=? q.cage.sign)
+        ~&  >  "dao: got success {<success>} from new host"
         :_  this
-        :_  ~
         ?.  success
-          =/  sub-path=path  (scag 4 `path`t.wire)
-          %+  %~  leave-path  pass:io  (weld /leave sub-path)
-          [new-host %dao]  sub-path
+          :_  ~
+          %+  %~  leave-path  pass:io  (weld /leave `^wire`wire)
+          [new-host %dao]  wire
         =/  old-dao-rid=(unit resource:res)
           ?~  old-host  ~
           `[u.old-host rid-name]
         =/  new-dao-rid=resource:res
           [new-host rid-name]
-        %:  start-host-change-ted
-            old-dao-rid
-            new-dao-rid
-            wire
-            (cat 3 'thread_' (scot %uv (sham eny.bowl)))
-        ==
+        =/  tid=@ta  (cat 3 'thread_' (scot %uv (sham eny.bowl)))
+        :+  %+  %~  watch-our  pass:io
+                (weld `^wire`/thread `^wire`wire)
+            %spider  /thread-result/[tid]
+          %:  start-host-change-ted
+              old-dao-rid
+              new-dao-rid
+              wire
+              tid
+          ==
+        ~
       ::
       ==
     ::
@@ -234,51 +237,69 @@
         =+  !<(=update:uqbar-indexer q.cage.sign)
         =/  [dao-id=id:smart new-dao=dao:d]
           (get-dao-from-update update)
-        ~&  >  "dao: got dao fact for {<dao-id>}:"
-        ~&  >  "dao: {<new-dao>}"
-        :: ?~  (~(get by ship-to-id.new-dao) our.bowl)
-        ::   ::  We are no longer a member of DAO: remove it.
-        ::   =^  cards  state
-        ::     (remove-dao:dc dao-id)
-        ::   [cards this]
-        :: ::  We are still a member of DAO: update it.
+        ?~  (peek-dao dao-id)
+          `this(daos (~(put by daos) dao-id new-dao))
         =/  old-host-id=(unit id:smart)  (get-host dao-id ~)
         =/  new-host-id=(unit id:smart)  (get-host dao-id `new-dao)
-        ?<  &(?=(^ old-host-id) ?=(~ new-host-id))
         =/  new-host=(unit ship)
           ?~  new-host-id  ~
           (~(get by id-to-ship.new-dao) u.new-host-id)
+        =/  old-rid=(unit resource:res)
+          (~(get by dao-id-to-rid) dao-id)
+        =/  new-rid=(unit resource:res)
+          ?:  =(old-host-id new-host-id)  ~
+          ?~  old-rid   ~
+          ?~  new-host  old-rid
+          `[u.new-host name.u.old-rid]
         =/  cards=(list card)
           ?:  =(old-host-id new-host-id)  ~
-          ?~  new-host  ~
-          (make-host-change-cards dao-id new-dao u.new-host)
-        :: TODO: update off-chain state (i.e. dao-id-to-rid)
+          %-  zing
+          :+  ?~  new-host  ~
+              (make-host-change-cards dao-id new-dao u.new-host)
+            ?~  old-rid  ~
+            ?.  =(our.bowl entity.u.old-rid)  ~
+            (remove-push-hooks u.old-rid)
+          ~
         :-  cards
         %=  this
-          daos  (~(put by daos) dao-id new-dao)  :: TODO: instead walk through and make minimal change to existing structure?
-          is-host-change-in-progress
-            ?~(new-host %.n =(our.bowl u.new-host))
+            daos  (~(put by daos) dao-id new-dao)  :: TODO: instead walk through and make minimal change to existing structure?
+            is-host-change-in-progress
+          ?~(new-host %.n =(our.bowl u.new-host))
+        ::
+            dao-id-to-rid
+          ?~  new-rid  dao-id-to-rid
+          (~(put by dao-id-to-rid) dao-id u.new-rid)
+        ::
+            dao-rid-to-id
+          ?~  new-rid  dao-rid-to-id
+          %+  %~  put  by
+            ?~  old-rid  dao-rid-to-id
+            (~(del by dao-rid-to-id) u.old-rid)
+          u.new-rid  dao-id
         ::
         ==
       ::
       ==
     ::
-        [%thread @ @ @ @ @ ~]
+        [%thread %dao-host-change @ @ @ @ ~]
       =*  sub-path=path  t.wire
       =/  new-host=ship  (slav %p i.t.t.t.t.wire)
       ?+    -.sign  (on-agent:def wire sign)
           %poke-ack  ::  TODO: can we do better here?
         :_  this
-        ?:  ?=(~ p.sign)  ~
+        ?~  p.sign  ~
+        ~&  >>>  "dao: host change thread failed to start"
         (make-dao-host-change-success new-host sub-path %.n)
       ::
           %fact
         ?+    p.cage.sign  (on-agent:def wire sign)
             %thread-fail  ::  TODO: can we do better here?
+          ~&  >>>  "dao: host change thread failed during run"
           :_  this
           (make-dao-host-change-success new-host sub-path %.n)
         ::
             %thread-done
+          ~&  >  "dao: host change thread succeeded"
           :_  this(is-host-change-in-progress %.n)
           (make-dao-host-change-success new-host sub-path %.y)
         ::
@@ -288,12 +309,32 @@
     ::
     ==
     ::
+    ++  remove-push-hooks
+      |=  remove-rid=resource:res
+      =/  remove-wire=^wire
+        /remove/(scot %p entity.remove-rid)/[name.remove-rid]
+      |^  ^-  (list card)
+      :+  (remove-push-hook 'graph')
+        (remove-push-hook 'metadata')
+      ~
+      ::
+      ++  remove-push-hook
+        |=  app-infix=@ta
+        ^-  card
+        =/  full-app-name=@tas
+          (rap 3 %dao '-' app-infix '-' %push-hook ~)
+        %^  %~  poke-our  pass:io  (weld remove-wire /[app-infix])
+          full-app-name  %push-hook-action
+        !>(`action:push-hook`[%remove remove-rid])
+      ::
+      --
+    ::
     ++  make-dao-host-change-success
       |=  [new-host=ship sub-path=path success=?]
       ^-  (list card)
       :_  ~
       ?:  =(our.bowl new-host)
-        (fact:io [%dao-host-change-success !>(`?`success)] ~[sub-path])
+        (fact:io [%uqbar-dao-host-change-success !>(`?`success)] ~[sub-path])
       %+  %~  leave-path  pass:io  (weld /leave sub-path)
       [new-host %dao]  sub-path
     ::
@@ -317,11 +358,10 @@
       ^-  card
       =/  start-args
         :-  ~
-        :^  `tid  byk.bowl  %zig-on-host-change-dao
+        :^  `tid  byk.bowl(r da+now.bowl)  %on-host-change-dao
         !>  ^-  (unit (pair (unit resource:res) resource:res))
         `[old-dao-rid new-dao-rid]
-      %^  %~  poke-our  pass:io
-        (weld /thread watch-path)
+      %^  %~  poke-our  pass:io  (weld /thread watch-path)
       %spider  %spider-start  !>(start-args)
     ::
     ++  make-host-change-cards
@@ -337,7 +377,7 @@
         name.u.old-dao-rid
       =/  watch-path=path
         :~  %dao-host-change
-            (scot %uv dao-id)
+            (scot %ux dao-id)
             ?~(old-dao-rid '~' (scot %p entity.u.old-dao-rid))
             (scot %p new-host)
             rid-name
@@ -348,7 +388,7 @@
         =/  tid=@ta  (cat 3 'thread_' (scot %uv (sham eny.bowl)))
         =/  new-dao-rid=resource:res  [new-host rid-name]
         :+  %+  %~  watch-our  pass:io
-              (weld /thread watch-path)
+                (weld /thread watch-path)
             %spider  /thread-result/[tid]
           %:  start-host-change-ted
               old-dao-rid
@@ -360,8 +400,7 @@
       ::  if we are not, subscribe to new host to wait
       ::  for them to complete host change
       :_  ~
-      %+  %~  watch  pass:io
-          (snoc watch-path (scot %da now.bowl))
+      %+  %~  watch  pass:io  watch-path
       [new-host %dao]  watch-path
     ::
     --
@@ -375,16 +414,16 @@
     io       ~(. agentio bowl)
 ::
 ++  address-to-id
-    |=  =address:d
-    ^-  (unit id:smart)
-    ?:  ?=(id:smart address)  `address
-    (~(get by dao-rid-to-id) address)
+  |=  =address:d
+  ^-  (unit id:smart)
+  ?:  ?=(id:smart address)  `address
+  (~(get by dao-rid-to-id) address)
 ::
 ++  address-to-resource
-    |=  =address:d
-    ^-  (unit resource:res)
-    ?:  ?=(resource:res address)  `address
-    (~(get by dao-id-to-rid) address)
+  |=  =address:d
+  ^-  (unit resource:res)
+  ?:  ?=(resource:res address)  `address
+  (~(get by dao-id-to-rid) address)
 ::
 ++  peek-dao
   |=  identifier=address:d
@@ -401,7 +440,7 @@
   ?~  dao                                                  ~
   ?~  address-to-host=(~(get by permissions.u.dao) %host)  ~
   ?~  dao-rid=(~(get by dao-id-to-rid) dao-id)             ~
-  ?~  host-roles=(~(get ju u.address-to-host) u.dao-rid)   ~
+  ?~  host-roles=(~(get ju u.address-to-host) dao-id)      ~
   =/  members=(list [=id:smart roles=(set role:d)])
     ~(tap by members.u.dao)
   |-
@@ -420,7 +459,7 @@
   ?~  indexer  ~
   :-  ~
   %+  %~  watch  pass:io
-    /dao-update/(scot %ux dao-id)
+      /dao-update/(scot %ux dao-id)
   u.indexer  /grain/(scot %ux dao-id)
 ::
 ++  leave-indexer
@@ -429,7 +468,7 @@
   ?~  indexer  ~
   :-  ~
   %-  %~  leave  pass:io
-    /dao-update/(scot %ux dao-id)
+      /dao-update/(scot %ux dao-id)
   u.indexer
 ::
 ++  set-indexer  :: TODO: is this properly generalized?

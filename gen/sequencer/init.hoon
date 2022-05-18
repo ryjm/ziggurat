@@ -27,25 +27,60 @@
     ++  make-permissions
       |=  dao-id=id:smart
       ^-  permissions:d
-      %+  %~  put  by  *permissions:d
-        name=%write
-      %+  %~  put  ju  *(jug address:d role:d)
-      dao-id  %owner
+      %-  %~  gas  by  *permissions:d
+          :~  :-  name=%host
+            %-  %~  gas  ju  *(jug address:d role:d)
+            :-  [dao-id %comms-host]
+            ~
+      ::
+          :-  name=%write
+          %-  %~  gas  ju  *(jug address:d role:d)
+          :~  [dao-id %owner]
+              [[~zod %dao-chat] %owner]
+              [[~zod %dao-chat] %pleb]
+              [[~zod %dao-links] %owner]
+          ==
+      ::
+          :-  name=%read
+          %-  %~  gas  ju  *(jug address:d role:d)
+          :~  [[~zod %dao-chat] %owner]
+              [[~zod %dao-chat] %pleb]
+              [[~zod %dao-links] %owner]
+              [[~zod %dao-links] %pleb]
+              [[~nec %dao-chat] %owner]
+              [[~nec %dao-chat] %pleb]
+              [[~nec %dao-links] %owner]
+              [[~nec %dao-links] %pleb]
+          ==
+      ::
+      ==
     ::
     ++  make-members
       ^-  members:d
-      %+  %~  put  ju  *members:d
-      our-id  %owner
+      %-  %~  gas  ju  *members:d
+      :~  [pubkey-1 %owner]
+          [pubkey-1 %comms-host]
+          [pubkey-2 %pleb]
+          [pubkey-3 %pleb]
+      ==
     ::
     ++  make-id-to-ship
       |=  [our-id=id:smart our=ship]
       ^-  id-to-ship:d
-      (~(put by *id-to-ship:d) our-id our)
+      %-  %~  gas  by  *id-to-ship:d
+      :^    [pubkey-1 ~zod]
+          [pubkey-2 ~nec]
+        [pubkey-3 ~bus]
+      ~
     ::
     ++  make-ship-to-id
       |=  [our-id=id:smart our=ship]
       ^-  ship-to-id:d
-      (~(put by *ship-to-id:d) our our-id)
+      %-  %~  gas  by  *ship-to-id:d
+      :^    [~zod pubkey-1]
+          [~nec pubkey-2]
+        [~bus pubkey-3]
+      ~
     ::
     --
   ::
@@ -135,7 +170,7 @@
           minters=~
           deployer=0x0
           salt=`@`'zigs'
-      == 
+      ==
   ==
 ::  store only contract code, insert into shared subject
 =/  wheat
