@@ -1,4 +1,4 @@
-/+  *bink, smart=zig-sys-smart
+/+  *bink, smart=zig-sys-smart, ethereum
 /*  smart-lib  %noun  /lib/zig/compiled/smart-lib/noun
 =,  smart
 |_  library=*
@@ -40,11 +40,19 @@
     ~&  >>  egg
     ::  ecdsa-raw-recover crashes so we virtualize
     =/  recovered
+      ?~  eth-hash.p.egg
+        %-  mule
+        |.
+        %-  compress-point:secp256k1:secp:crypto
+        %+  ecdsa-raw-recover:secp256k1:secp:crypto
+          (sham (jam q.egg))
+        sig.p.egg
       %-  mule
       |.
-      %-  compress-point:secp256k1:secp:crypto
+      %-  address-from-pub:key:ethereum
+      %-  serialize-point:secp256k1:secp:crypto
       %+  ecdsa-raw-recover:secp256k1:secp:crypto
-        ?~(eth-hash.p.egg (sham (jam q.egg)) u.eth-hash.p.egg)
+        u.eth-hash.p.egg
       sig.p.egg
     ?:  ?=(%| -.recovered)
       ~&  >>>  "FAILED TX"
