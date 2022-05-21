@@ -666,7 +666,7 @@
       :-  ~
       %=  u.out
           grains
-        (~(uni in grains.u.out) grains.u.next-update)
+        (~(uni by grains.u.out) grains.u.next-update)
       ::
       ==
     ==
