@@ -47,7 +47,6 @@
     =/  my-grain=grain  -:~(val by owns.cart)
     ?>  =(lord.my-grain me.cart)
     ?>  ?=(%& -.germ.my-grain)
-    ::  TODO better name for data. multi-state? state?
     =/  state  (hole multisig-state data.p.germ.my-grain)
     ?:  ?=(%vote -.args)
       ::  should emit event triggering actual call
@@ -95,7 +94,10 @@
     [%& (malt ~[[id.my-grain my-grain]]) ~ ~]
 ::
 ++  read
-  |=  inp=path
-  ^-  *
-  ~
+  |_  =path
+    ++  json
+      ~
+    ++  noun
+      ~
+    --
 --
