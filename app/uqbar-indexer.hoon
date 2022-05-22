@@ -98,11 +98,11 @@
 +$  indices-0
   $:  block-index=(jug @ux block-location:uqbar-indexer)
       egg-index=(jug @ux egg-location:uqbar-indexer)
-      from-index=(jug @ux egg-location:uqbar-indexer)
+      from-index=(jug @ux second-order-location:uqbar-indexer)
       grain-index=(jug @ux town-location:uqbar-indexer)
       holder-index=(jug @ux second-order-location:uqbar-indexer)
       lord-index=(jug @ux second-order-location:uqbar-indexer)
-      to-index=(jug @ux egg-location:uqbar-indexer)
+      to-index=(jug @ux second-order-location:uqbar-indexer)
   ==
 +$  state-0  [%0 base-state-0 indices-0]
 ::
@@ -491,7 +491,7 @@
             (~(gas ju *(jug @ux egg-location:uqbar-indexer)) egg)
           ::
               from-index
-            (~(gas ju *(jug @ux egg-location:uqbar-indexer)) from)
+            (~(gas ju *(jug @ux second-order-location:uqbar-indexer)) from)
           ::
               grain-index
             (~(gas ju *(jug @ux town-location:uqbar-indexer)) grain)
@@ -503,7 +503,7 @@
             (~(gas ju *(jug @ux second-order-location:uqbar-indexer)) lord)
           ::
               to-index
-            (~(gas ju *(jug @ux egg-location:uqbar-indexer)) to)
+            (~(gas ju *(jug @ux second-order-location:uqbar-indexer)) to)
           ::
           ==
         ::
@@ -760,11 +760,11 @@
         %grain
       get-grain
     ::
-        ?(%egg %from %to)
-      get-egg-from-to
+        %egg
+      get-egg
     ::
-        ?(%holder %lord)
-      get-holder-lord
+        ?(%from %holder %lord %to)
+      get-second-order
     ::
     ==
     ::
@@ -796,7 +796,7 @@
       ::
       ==
     ::
-    ++  get-egg-from-to
+    ++  get-egg
       =|  eggs=(set [egg-location:uqbar-indexer egg:smart])
       |-
       ?~  locations
@@ -823,24 +823,48 @@
           eggs       (~(put in eggs) [location egg])
       ==
     ::
-    ++  get-holder-lord
+    ++  get-second-order
+      =/  update-type=?(%egg %grain)
+        ?:  ?|  ?=(%holder query-type)
+                ?=(%lord query-type)
+            ==
+          %grain
+        %egg
       %+  roll  locations
-      |=  $:  grain-id=location:uqbar-indexer
+      |=  $:  second-order-id=location:uqbar-indexer
               out=(unit update:uqbar-indexer)
           ==
       =/  next-update=(unit update:uqbar-indexer)
         %=  get-from-index
-            query-type     %grain
-            query-payload  grain-id
+            query-type     update-type
+            query-payload  second-order-id
         ==
-      ?~  next-update                 out
-      ?.  ?=(%grain -.u.next-update)  out
-      ?~  out                         next-update
-      ?.  ?=(%grain -.u.out)          next-update
+      ::  TODO: rewrite to avoid multiply type checking
+      ::  (currently doing so because the =(update-type ..)
+      ::  is not sufficient for the compiler to allow access
+      ::  to out and next-update attributes in ?+)
+      ?~  next-update                     out
+      ?.  =(update-type -.u.next-update)  out
+      ?~  out                             next-update
+      ?.  =(update-type -.u.out)          next-update
       :-  ~
-      %=  u.out
-          grains
-        (~(uni in grains.u.out) grains.u.next-update)
+      ?+  -.u.out  !!
+      ::
+          %egg
+        ?>  ?=(%egg -.u.next-update)
+        %=  u.out
+            eggs
+          (~(uni in eggs.u.out) eggs.u.next-update)
+        ::
+        ==
+      ::
+          %grain
+        ?>  ?=(%grain -.u.next-update)
+        %=  u.out
+            grains
+          (~(uni by grains.u.out) grains.u.next-update)
+        ::
+        ==
       ::
       ==
     ::
@@ -884,11 +908,11 @@
     |=  [=slot:zig]
     ^-  $:  (list [@ux block-location:uqbar-indexer])
             (list [@ux egg-location:uqbar-indexer])
-            (list [@ux egg-location:uqbar-indexer])
+            (list [@ux second-order-location:uqbar-indexer])
             (list [@ux town-location:uqbar-indexer])
             (list [@ux second-order-location:uqbar-indexer])
             (list [@ux second-order-location:uqbar-indexer])
-            (list [@ux egg-location:uqbar-indexer])
+            (list [@ux second-order-location:uqbar-indexer])
         ==
     ?>  ?=(^ q.slot)
     =*  block-header  p.slot
@@ -896,11 +920,11 @@
     =/  block-hash=(list [@ux block-location:uqbar-indexer])
       ~[[`@ux`data-hash.block-header epoch-num block-num]]  :: TODO: should key be @uvH?
     =|  egg=(list [@ux egg-location:uqbar-indexer])
-    =|  from=(list [@ux egg-location:uqbar-indexer])
+    =|  from=(list [@ux second-order-location:uqbar-indexer])
     =|  grain=(list [@ux town-location:uqbar-indexer])
     =|  holder=(list [@ux second-order-location:uqbar-indexer])
     =|  lord=(list [@ux second-order-location:uqbar-indexer])
-    =|  to=(list [@ux egg-location:uqbar-indexer])
+    =|  to=(list [@ux second-order-location:uqbar-indexer])
     =/  chunks=(list [town-id=@ud =chunk:zig])  ~(tap by q.block)
     :-  block-hash
     |-
@@ -923,11 +947,11 @@
   ++  parse-chunk
     |=  [town-id=@ud =chunk:zig]
     ^-  $:  (list [@ux egg-location:uqbar-indexer])
-            (list [@ux egg-location:uqbar-indexer])
+            (list [@ux second-order-location:uqbar-indexer])
             (list [@ux town-location:uqbar-indexer])
             (list [@ux second-order-location:uqbar-indexer])
             (list [@ux second-order-location:uqbar-indexer])
-            (list [@ux egg-location:uqbar-indexer])
+            (list [@ux second-order-location:uqbar-indexer])
         ==
     =*  txs      -.chunk
     =*  granary  p.+.chunk
@@ -970,12 +994,12 @@
   ++  parse-transactions
     |=  [town-id=@ud txs=(list [@ux egg:smart])]
     ^-  $:  (list [@ux egg-location:uqbar-indexer])
-            (list [@ux egg-location:uqbar-indexer])
-            (list [@ux egg-location:uqbar-indexer])
+            (list [@ux second-order-location:uqbar-indexer])
+            (list [@ux second-order-location:uqbar-indexer])
         ==
     =|  parsed-egg=(list [@ux egg-location:uqbar-indexer])
-    =|  parsed-from=(list [@ux egg-location:uqbar-indexer])
-    =|  parsed-to=(list [@ux egg-location:uqbar-indexer])
+    =|  parsed-from=(list [@ux second-order-location:uqbar-indexer])
+    =|  parsed-to=(list [@ux second-order-location:uqbar-indexer])
     =/  egg-num=@ud  0
     |-
     ?~  txs  [parsed-egg parsed-from parsed-to]
@@ -990,8 +1014,8 @@
     %=  $
         txs          t.txs
         parsed-egg   [[tx-hash egg-location] parsed-egg]
-        parsed-from  [[from egg-location] parsed-from]
-        parsed-to    [[to egg-location] parsed-to]
+        parsed-from  [[from tx-hash] parsed-from]
+        parsed-to    [[to tx-hash] parsed-to]
         egg-num      +(egg-num)
     ==
   --
