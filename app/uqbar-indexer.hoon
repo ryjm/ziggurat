@@ -189,7 +189,7 @@
         %-  combine-update-sets
         ;;  %-  list
           %-  unit
-          [%egg eggs=(set [egg-location:uqbar-indexer egg:smart])]
+          [%egg eggs=(map id:smart [egg-location:uqbar-indexer egg:smart])]
         ~[from-update to-update]
       ?~  update  ~
       :_  ~
@@ -309,6 +309,8 @@
         [%x %id @ ~]
         ::  search over from and to and return all hits
       =/  hash=@ux  (slav %ux i.t.t.path)
+      =/  egg=(unit update:uqbar-indexer)
+        (serve-update %egg hash)
       =/  from=(unit update:uqbar-indexer)
         (serve-update %from hash)
       =/  to=(unit update:uqbar-indexer)
@@ -317,8 +319,8 @@
         %-  combine-update-sets
         ;;  %-  list
           %-  unit
-          [%egg eggs=(set [egg-location:uqbar-indexer egg:smart])]
-        ~[from to]
+          [%egg eggs=(map id:smart [egg-location:uqbar-indexer egg:smart])]
+        ~[egg from to]
       ?~  up  [~ ~]
       :^  ~  ~  %uqbar-indexer-update
       !>  ^-  update:uqbar-indexer
@@ -339,7 +341,7 @@
         %-  combine-update-sets
         ;;  %-  list
           %-  unit
-          [%egg eggs=(set [egg-location:uqbar-indexer egg:smart])]
+          [%egg eggs=(map id:smart [egg-location:uqbar-indexer egg:smart])]
         ~[egg from to]
       ?~  up  [~ ~]
       :^  ~  ~  %uqbar-indexer-update
@@ -646,16 +648,16 @@
 :: https://github.com/uqbar-dao/ziggurat/blob/da1d37adf538ee908945557a68387d3c87e1c32e/app/uqbar-indexer.hoon#L361:
 ::
 ++  combine-update-sets
-  |=  updates=(list (unit [%egg eggs=(set [egg-location:uqbar-indexer egg:smart])]))
+  |=  updates=(list (unit [%egg eggs=(map id:smart [egg-location:uqbar-indexer egg:smart])]))
   ^-  (unit update:uqbar-indexer)
   ?~  updates  ~
-  =/  combined=(set [egg-location:uqbar-indexer egg:smart])
-    %-  %~  gas  in  *(set [egg-location:uqbar-indexer egg:smart])
+  =/  combined=(map id:smart [egg-location:uqbar-indexer egg:smart])
+    %-  %~  gas  by  *(map id:smart [egg-location:uqbar-indexer egg:smart])
     %-  zing
     %+  turn  updates
-    |=  update=(unit [%egg eggs=(set [egg-location:uqbar-indexer egg:smart])])
+    |=  update=(unit [%egg eggs=(map id:smart [egg-location:uqbar-indexer egg:smart])])
     ?~  update  ~
-    ~(tap in eggs.u.update)
+    ~(tap by eggs.u.update)
   `[%egg combined]
 ::
 ++  are-updates-same
@@ -676,10 +678,10 @@
     ?.  ?=(%egg -.u.two)  %.n
     =/  two-eggs=(set egg:smart)
       %-  %~  gas  in  *(set egg:smart)
-      %+  turn  ~(tap in eggs.u.two)
+      %+  turn  ~(val by eggs.u.two)
       |=  [egg-location:uqbar-indexer =egg:smart]
       egg
-    %-  %~  all  in  eggs.u.one
+    %-  %~  all  by  eggs.u.one
     |=  [egg-location:uqbar-indexer one-egg=egg:smart]
     (~(has in two-eggs) one-egg)
   ::
@@ -797,7 +799,7 @@
       ==
     ::
     ++  get-egg
-      =|  eggs=(set [egg-location:uqbar-indexer egg:smart])
+      =|  eggs=(map id:smart [egg-location:uqbar-indexer egg:smart])
       |-
       ?~  locations
         ?~  eggs  ~
@@ -820,7 +822,7 @@
           ==
       %=  $
           locations  t.locations
-          eggs       (~(put in eggs) [location egg])
+          eggs       (~(put by eggs) hash [location egg])
       ==
     ::
     ++  get-second-order
@@ -854,7 +856,7 @@
         ?>  ?=(%egg -.u.next-update)
         %=  u.out
             eggs
-          (~(uni in eggs.u.out) eggs.u.next-update)
+          (~(uni by eggs.u.out) eggs.u.next-update)
         ::
         ==
       ::

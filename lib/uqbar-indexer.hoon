@@ -75,11 +75,12 @@
     ~
   ::
   ++  eggs
-    |=  eggs=(set [location=egg-location:ui =egg:smart])
+    |=  eggs=(map egg-id=id:smart [location=egg-location:ui =egg:smart])
     ^-  json
-    :-  %a
-    %+  turn  ~(tap in eggs)
-    |=  [location=egg-location:ui e=egg:smart]
+    %-  pairs
+    %+  turn  ~(tap by eggs)
+    |=  [=id:smart location=egg-location:ui e=egg:smart]
+    :-  (scot %ux id)
     %-  pairs
     :+  [%location (egg-location location)]
       [%egg (egg e)]
@@ -307,9 +308,9 @@
   ::
   ++  eggs
     |=  jon=json
-    ^-  (set [location=egg-location:ui =egg:smart])
+    ^-  (map egg-id=id:smart [location=egg-location:ui =egg:smart])
     %.  jon
-    %-  as
+    %+  op  hex
     %-  ot
     :+  [%location egg-location]
       [%egg egg]

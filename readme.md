@@ -213,7 +213,7 @@ await api.scry({app: "uqbar-indexer", path: "/chunk-num/1/2/3"});
 await api.scry({app: "uqbar-indexer", path: "/egg/0xdead.beef"});
 ```
 
-4. All transcations for a given address with hash `0xcafe.babe` (this should, of course, be substituted for a variable as appropriate) (TODO: add start/end times to retrieve subset of transactions).
+4. All transactions for a given address with hash `0xcafe.babe` (this should, of course, be substituted for a variable as appropriate) (TODO: add start/end times to retrieve subset of transactions).
 
 ```
 ::  inside Urbit
