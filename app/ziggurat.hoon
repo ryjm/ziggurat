@@ -166,7 +166,7 @@
           :~  :*  %pass  /set-node
                   %agent  [our.bowl %wallet]
                   %poke  %zig-wallet-poke
-                  !>([%set-node 0 i.others])
+                  !>([%set-node relay-town-id i.others])
               ==
               (start-epoch-catchup i.others 0)
               (poke-capitol our.bowl u.address.state [1 100.000] sig)
@@ -222,7 +222,7 @@
         [-.+.order.new-epoch 1]
       :_  %=  state
             epochs  (put:poc epochs num.new-epoch new-epoch)
-            queue  (malt ~[[0 (~(gut by queue) 0 ~)]])
+            queue  (malt ~[[relay-town-id (~(gut by queue) relay-town-id ~)]])
           ==
       =+  %-  hall-update-card
           .^((unit @ud) %gx /(scot %p our.bowl)/sequencer/(scot %da now.bowl)/town-id/noun)
@@ -411,7 +411,7 @@
       %=  state
         height  +(height)
         epochs  (put:poc epochs num.cur cur)
-        globe   +:(~(got by chunks.block.update) 0)
+        globe   +:(~(got by chunks.block.update) relay-town-id)
       ==
     ::
         %saw-block
@@ -449,7 +449,7 @@
           =/  prev=^epoch  (got:poc epochs.update (dec n))
           +:(need (pry:sot slots.prev))
         +.u.latest
-      =+  +:(~(got by chunks:(need q.slot)) 0)
+      =+  +:(~(got by chunks:(need q.slot)) relay-town-id)
       :_  state(epochs epochs.update, globe -)
       (new-epoch-timers epoch our.bowl)
     ?~  a
@@ -471,7 +471,7 @@
           =/  prev=^epoch  (got:poc epochs.update (dec n))
           +:(need (pry:sot slots.prev))
         +.u.latest
-      =+  +:(~(got by chunks:(need q.slot)) 0)
+      =+  +:(~(got by chunks:(need q.slot)) relay-town-id)
       :_  state(epochs epochs.update, globe -)
       (new-epoch-timers epoch our.bowl)
     ?~  q.q.i.a-s

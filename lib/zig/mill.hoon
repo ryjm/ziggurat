@@ -31,8 +31,8 @@
   ::
   ++  mill
     |=  [=town =egg]
-    ^-  [^town fee=@ud errorcode=@ud]
-    ?.  ?=(account from.p.egg)  [town 0 1]
+    ^-  [^town fee=@ud =errorcode]
+    ?.  ?=(account from.p.egg)  [town 0 %1]
     ::  validate transaction signature
     ::  using ecdsa-raw-sign in wallet, TODO review this
     ::  comment this out for tests
@@ -56,17 +56,17 @@
       sig.p.egg
     ?:  ?=(%| -.recovered)
       ~&  >>>  "FAILED TX"
-      [town 0 2]  ::  signature is broken in some way
+      [town 0 %2]  ::  signature is broken in some way
     ?.  =(id.from.p.egg p.recovered)
     ~&  >>>  "mismatch: {<id.from.p.egg>}, {<`@ux`p.recovered>}"
-      [town 0 2]  ::  signed tx doesn't match account
+      [town 0 %2]  ::  signed tx doesn't match account
     =/  curr-nonce=@ud  (~(gut by q.town) id.from.p.egg 0)
     ?.  =(nonce.from.p.egg +(curr-nonce))
       ~&  >>>  "tx rejected; bad nonce"
-      [town 0 3]  ::  bad nonce
+      [town 0 %3]  ::  bad nonce
     ?.  (~(audit tax p.town) egg)
       ~&  >>>  "tx rejected; not enough budget"
-      [town 0 4]  ::  can't afford gas
+      [town 0 %4]  ::  can't afford gas
     =+  [gan rem err]=(~(work farm p.town) egg)
     =/  fee=@ud   (sub budget.p.egg rem)
     :_  [fee err]
@@ -122,7 +122,7 @@
     ::
     ++  work
       |=  =egg
-      ^-  [(unit ^granary) rem=@ud errorcode=@ud]
+      ^-  [(unit ^granary) rem=@ud =errorcode]
       =/  hatchling
         (incubate egg(budget.p (div budget.p.egg rate.p.egg)))
       ?~  final.hatchling
@@ -131,12 +131,12 @@
     ::
     ++  incubate
       |=  =egg
-      ^-  [(unit rooster) final=(unit ^granary) rem=@ud errorcode=@ud]
+      ^-  [(unit rooster) final=(unit ^granary) rem=@ud =errorcode]
       |^
       =/  args  (fertilize q.egg)
       ?~  stalk=(germinate to.p.egg cont-grains.q.egg)
         ~&  >>>  "failed to germinate"
-        [~ ~ budget.p.egg 5]
+        [~ ~ budget.p.egg %5]
       (grow u.stalk args egg)
       ::
       ++  fertilize
@@ -187,22 +187,21 @@
     ++  grow
       |=  [=crop =zygote =egg]
       ~>  %bout
-      ^-  [(unit rooster) final=(unit ^granary) rem=@ud errorcode=@ud]
+      ^-  [(unit rooster) final=(unit ^granary) rem=@ud =errorcode]
       |^
       =+  [chick rem err]=(weed to.p.egg ~ budget.p.egg)
       ?~  chick  [~ ~ rem err]
       ?:  ?=(%& -.u.chick)
         ::  rooster result, finished growing
         ?~  gan=(harvest p.u.chick to.p.egg from.p.egg)
-          [~ ~ rem 7]
+          [~ ~ rem %7]
         [`p.u.chick gan rem err]
       ::  hen result, continuation
       =*  next  next.p.u.chick
       =*  mem   mem.p.u.chick  :: FIX! USE THIS SOMEWHERE??
       ::  continuation calls can alter grains
       ?~  gan=(harvest roost.p.u.chick to.p.egg from.p.egg)
-        [~ ~ rem 7]
-      ::  =.  granary  u.gan  ::  ??
+        [~ ~ rem %7]
       %-  ~(incubate farm u.gan)
       egg(from.p to.p.egg, to.p to.next, budget.p rem, q args.next)
       ::
@@ -210,7 +209,7 @@
       ::
       ++  weed
         |=  [to=id mem=(unit vase) budget=@ud]
-        ^-  [(unit chick) rem=@ud errorcode=@ud]
+        ^-  [(unit chick) rem=@ud =errorcode]
         =/  cart  [mem to blocknum town-id owns.crop]
         ::  TODO figure out how to pre-cue this and get good results
         ::
@@ -222,9 +221,9 @@
         ~&  >>  "write result: {<res>}"
         ?:  ?=(%| -.-.res)
           ::  error in contract execution
-          [~ budget 6]
+          [~ budget %6]
         ::  chick result
-        [`p.-.res budget 0]
+        [`p.-.res budget %0]
       --
     ::
     ++  harvest

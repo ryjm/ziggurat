@@ -90,14 +90,16 @@
 ::  egg error codes:
 ::  code can be anything upon submission,
 ::  gets set for chunk inclusion in +mill
-::  0: successfully performed
-::  1: submitted with raw id / no account info
-::  2: bad signature
-::  3: incorrect nonce
-::  4: lack zigs to fulfill budget
-::  5: couldn't find contract
-::  6: crash in contract execution
-::  7: validation of changed/issued rice failed
++$  errorcode
+  $%  %0  ::  0: successfully performed
+      %1  ::  1: submitted with raw id / no account info
+      %2  ::  2: bad signature
+      %3  ::  3: incorrect nonce
+      %4  ::  4: lack zigs to fulfill budget
+      %5  ::  5: couldn't find contract
+      %6  ::  6: crash in contract execution
+      %7  ::  7: validation of changed/issued rice failed
+  ==
 ::
 ::  NOTE: continuation calls generate their own eggs, which
 ::  could potentially fail at one of these error points too.
