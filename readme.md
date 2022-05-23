@@ -33,68 +33,98 @@ links to other desks, such as base-dev and garden-dev.
 
 ### To initialize a blockchain:
 
+*Note: make sure the ship you're is in the [whitelist](https://github.com/uqbar-dao/ziggurat/blob/e07ac60c29d94188f7594992b0fac347071a5c85/lib/zig/util.hoon#L14)*
+
 1. Start by populating the wallet with the correct data (need to do this first, but with block explorer we can make wallet find this itself):
-`:wallet &zig-wallet-poke [%populate 0xbeef]`
+```
+:wallet &zig-wallet-poke [%populate 0xbeef]
+```
 *for testing: use `0xbeef` for ~zod, `0xdead` for next ship, `0xcafe` for 3rd*
 
 2. Give your validator agent a pubkey to match the data in the wallet:
-`:ziggurat &zig-chain-poke [%set-addr 0x2.e3c1.d19b.fd3e.43aa.319c.b816.1c89.37fb.b246.3a65.f84d.8562.155d.6181.8113.c85b]`
+```
+:ziggurat &zig-chain-poke [%set-addr 0x3.e87b.0cbb.431d.0e8a.2ee2.ac42.d9da.cab8.063d.6bb6.2ff9.b2aa.e1b9.0f56.9c3f.3423]
+
+0xbeef  0x3.e87b.0cbb.431d.0e8a.2ee2.ac42.d9da.cab8.063d.6bb6.2ff9.b2aa.e1b9.0f56.9c3f.3423
+0xdead  0x2.eaea.cffd.2bbe.e0c0.02dd.b5f8.dd04.e63f.297f.14cf.d809.b616.2137.126c.da9e.8d3d
+0xcafe  0x2.4a1c.4643.b429.dc12.6f3b.03f3.f519.aebb.5439.08d3.e0bf.8fc3.cb52.b92c.9802.636e
+```
 *This is one of 3 addresses with zigs already added, and corresponds to the seed `0xbeef`. to test with more, find matching pubkey in wallet*
 
-2. Start up a new main chain: *NOTE: this will take about 30 seconds, deploying a contract..*
-`:ziggurat|start-testnet now`
+3. To start the indexer/block explorer backend, use:
+```
+:uqbar-indexer &set-chain-source [our %ziggurat]
+```
+where the argument `[our %ziggurat]` is a dock pointing to the ship running the `%ziggurat` agent to receive block updates from.
 
-(to add other ships, use poke `:ziggurat &zig-chain-poke [%start %validator ~ validators=(silt ~[~zod ~nec]) [~ ~]]`)
+4. Start up a new main chain:
+```
+:ziggurat|start-testnet now
+```
+(to add other ships, follow above instructions with 2nd and 3rd seed/pubkey combos, but use poke `:ziggurat &zig-chain-poke [%start %validator ~ validators=(silt ~[~zod]) [~ ~]]`) here, where `~[~zod]` is some set of ships validating (you only need one that's not you)
 
-where `~[~zod ~nec]` is the current set of validators including the one being added
-
-3. Start up a town that has the token contract deployed: *will also take about 30 seconds*
-`:sequencer|init 1`
+6. Start up a town that has the token contract deployed. Wait until the wallet sees an update from the indexer to do this.
+```
+:sequencer|init 1
+```
 (1 here is the town-id)
 
-4. The chain is now running. **NOTE: while the wallet should be configured to successfully submit transactions with 'zigs' (not yet the fake wETH), it will not recieve updates to the data it holds upon transaction completion. We'll need to get data from the block explorer to do that.**
+# To use the wallet
 
-### To use the wallet
+1. Scry for a JSON dict of accounts, keyed by address, containing private key, nickname, and nonces:
+`.^(json %gx /=wallet=/accounts/noun)`
 
-2. Scry for a JSON dict of accounts, keyed by address, containing seed and nonces:
-`.^(@ux %gx /=wallet=/accounts/noun)`
-
-3. Scry for a JSON dict of known assets (rice), keyed by address, then by rice address:
+2. Scry for a JSON dict of known assets (rice), keyed by address, then by rice address:
 `.^(json %gx /=wallet=/book/json)`
 
-4. Scry for JSON dict of token metadata we're aware of:
+3. Scry for JSON dict of token metadata we're aware of:
 `.^(json %gx /=wallet=/token-metadata/json)`
 
-4. Wallet pokes available:
+4. Scry for seed phrase and password (todo separate these):
+`.^(json %gx /=wallet=/seed/json)`
+
+
+### Wallet pokes available:
 (only those with JSON support shown)
+
 ```
-{populate: true}
-
-{import: {mnemonic: "12-24 word phrase", password: "password"}}
-
-{create: true}
-
-{delete: {pubkey: "0x1234.5678"}}  # public key to stop tracking in wallet
-
+{import-seed: {mnemonic: "12-24 word phrase", password: "password", nick: "nickname for the first address in this wallet"}}
+{generate-hot-wallet: {password: "password", nick: "nickname"}}
+# leave hdpath empty ("") to let wallet auto-increment from 0 on main path
+{derive-new-address: {hdpath: "m/44'/60'/0'/0/0", nick: "nickname"}}
+# use this to save a hardware wallet account
+{add-tracked-address: {address: "0x1234.5678" nick: "nickname"}}
+{delete-address: {address: "0x1234.5678"}}
+{edit-nickname: {address: "0x1234.5678", nick: "nickname"}}
 {set-node: {town: 1, ship: "~zod"}}  # set the sequencer to send txs to, per town
-
-# currently only supporting token sends
-# 'from' is our pubkey
+{set-indexer: {ship: "~zod"}}
+{submit-custom: {from: "0x1234", to: "0x5678", town: 1, gas: {rate: 1, bud: 10000}, args: "[%give ... .. (this is HOON)]", my-grains: {"0x1111", "0x2222"}, cont-grains: {"0x3333", "0x4444"}}}
+# for TOKEN and NFT transactions
+# 'from' is our address
 # 'to' is the address of the smart contract
 # 'town' is the number ID of the town on which the contract&rice are deployed
 # 'gas' rate and bud are amounts of zigs to spend on tx
 # 'args' will eventually cover many types of transactions,
 # currently only concerned with token sends following this format,
-# where 'token' is address of token metadata rice, 'to' is pubkey receiving tokens.
+# where 'token' is address of token metadata rice, 'to' is address receiving tokens.
 {submit:
-  {from: "0x2.e3c1.d19b.fd3e.43aa.319c.b816.1c89.37fb.b246.3a65.f84d.8562.155d.6181.8113.c85b",
-   to: "0x656c.6269.676e.7566",
+  {from: "0x3.e87b.0cbb.431d.0e8a.2ee2.ac42.d9da.cab8.063d.6bb6.2ff9.b2aa.e1b9.0f56.9c3f.3423",
+   to: "0x74.6361.7274.6e6f.632d.7367.697a",
    town: 1,
    gas: {rate: 1, bud: 10000},
-   args: {give: {token: "0x61.7461.6461.7465.6d2d.7367.697a", to: "0x3.4cdd.5f53.b551.e62f.2238.6eb3.8abd.3e91.a546.fad3.2940.ff2d.c316.50dd.8d38.e609", amount: 777}}
+   args: {give: {salt: "1.936.157.050", to: "0x2.eaea.cffd.2bbe.e0c0.02dd.b5f8.dd04.e63f.297f.14cf.d809.b616.2137.126c.da9e.8d3d", amount: 777}}
    }
 }
 ```
+(example pokes that will work upon chain initialization in dojo):
+```
+#  ZIGS
+:wallet &zig-wallet-poke [%submit 0x3.e87b.0cbb.431d.0e8a.2ee2.ac42.d9da.cab8.063d.6bb6.2ff9.b2aa.e1b9.0f56.9c3f.3423 0x74.6361.7274.6e6f.632d.7367.697a 1 [1 10.000] [%give 1.936.157.050 0x2.eaea.cffd.2bbe.e0c0.02dd.b5f8.dd04.e63f.297f.14cf.d809.b616.2137.126c.da9e.8d3d 777]]
+
+#  NFT
+:wallet &zig-wallet-poke [%submit 0x3.e87b.0cbb.431d.0e8a.2ee2.ac42.d9da.cab8.063d.6bb6.2ff9.b2aa.e1b9.0f56.9c3f.3423 0xcafe.babe 1 [1 10.000] [%give 32.770.263.103.071.854 0x2.eaea.cffd.2bbe.e0c0.02dd.b5f8.dd04.e63f.297f.14cf.d809.b616.2137.126c.da9e.8d3d 1]]
+```
+
 
 # Testing Zink
 

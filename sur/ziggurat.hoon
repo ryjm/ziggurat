@@ -1,24 +1,26 @@
 /+  smart=zig-sys-smart
 |%
-++  epoch-interval  ~s30
+++  epoch-interval  ~s10
 ++  relay-town-id   0
 ::
-+$  epoch   [num=@ud =start=time order=(list ship) =slots]
+::  epoch >> slot >> block >> chunk
 ::
++$  epoch   [num=@ud =start=time order=(list ship) =slots]
 +$  epochs  ((mop @ud epoch) gth)
 ++  poc     ((on @ud epoch) gth)
 ::
-+$  block         (pair signature chunks)
-+$  block-header  [num=@ud prev-header-hash=@uvH data-hash=@uvH]
-+$  slot          (pair block-header (unit block))
-::
++$  slot   (pair block-header (unit block))
 +$  slots  ((mop @ud slot) gth)
 ++  sot    ((on @ud slot) gth)
 ::
-+$  signature   [p=@ux q=ship r=life]
++$  height        @ud  ::  block height
++$  block         [=height =signature =chunks]
++$  block-header  [num=@ud prev-header-hash=@uvH data-hash=@uvH]
 ::
 +$  chunks  (map town-id=@ud =chunk)
 +$  chunk   [(list [@ux egg:smart]) town:smart]
+::
++$  signature   [p=@ux q=ship r=life]
 ::
 +$  basket  (set egg:smart)  ::  mempool
 ::
@@ -29,23 +31,22 @@
 +$  update
   $%  [%epochs-catchup =epochs]
       [%blocks-catchup epoch-num=@ud =slots]
-      ::  TODO data availability here?
       [%new-block epoch-num=@ud header=block-header =block]
       [%saw-block epoch-num=@ud header=block-header]
       [%indexer-block epoch-num=@ud header=block-header blk=(unit block)]
   ==
 +$  sequencer-update
-  $%  [%next-producer =ship]
+  $%  [%next-producer slot-num=@ud =ship]
       [%new-hall council=(map ship [id:smart signature])]
   ==
-+$  chunk-update  [%new-chunk =town:smart]
++$  chunk-update  [%new-chunk slot-num=@ud =town:smart]
 ::
 +$  chain-poke
   $%  [%set-addr =id:smart]
       [%start mode=?(%indexer %validator) history=epochs validators=(set ship) starting-state=town:smart]
-      [%stop ~]
+      [%stop gas=[rate=@ud bud=@ud]]
       [%new-epoch ~]
-      [%receive-chunk town-id=@ud =chunk]
+      [%receive-chunk for-slot=@ud town-id=@ud =chunk]
   ==
 ::
 +$  weave-poke
@@ -54,59 +55,9 @@
   ==
 ::
 +$  hall-poke
-  $%  ::  will remove starting-state for persistent testnet
-      [%init town-id=@ud starting-state=(unit town:smart) gas=[rate=@ud bud=@ud]]
+  $%  [%init town-id=@ud starting-state=(unit town:smart) gas=[rate=@ud bud=@ud]]
       [%join town-id=@ud gas=[rate=@ud bud=@ud]]
       [%exit gas=[rate=@ud bud=@ud]]
       [%clear-state ~]
-  ==
-::
-::  uqbar wallet types
-::  TODO move into its own file as this grows
-::
-+$  book  (map [town=@ud lord=id:smart salt=@] grain:smart)
-::
-+$  wallet-poke
-  $%  [%populate seed=@ux]  :: populate wallet with fake data, for testing
-      [%import mnemonic=tape password=tape]
-      [%create ~]
-      ::  TODO add poke to spawn new keypair from seed
-      [%delete pubkey=@ux]  ::  only removes tracking, doesn't lose anything
-      [%set-node town=@ud =ship]
-      [%set-nonce address=@ux town=@ud new=@ud]  ::  for testing
-      $:  %submit
-          from=id:smart
-          to=id:smart  town=@ud
-          gas=[rate=@ud bud=@ud]
-          args=supported-args
-      ==
-  ==
-::
-+$  supported-args
-  $%  [%give token=id:smart to=id:smart amount=@ud]
-      ::  only used on backend for validators/sequencers
-      [%become-validator =signature]
-      [%stop-validating =signature]
-      [%init =signature town=@ud]
-      [%join =signature town=@ud]
-      [%exit =signature town=@ud]
-  ==
-::
-+$  token-metadata
-  $:  name=@t
-      symbol=@t
-      decimals=@ud
-      supply=@ud
-      cap=(unit @ud)
-      mintable=?
-      minters=(set id:smart)
-      deployer=id:smart
-      salt=@
-  ==
-::
-+$  token-account
-  $:  balance=@ud
-      allowances=(map sender=id:smart @ud)
-      metadata=id:smart
   ==
 --

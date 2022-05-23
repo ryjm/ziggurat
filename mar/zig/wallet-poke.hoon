@@ -1,4 +1,4 @@
-/-  *ziggurat
+/-  *ziggurat, *wallet
 =,  dejs:format
 |_  act=wallet-poke
 ++  grab
@@ -12,23 +12,33 @@
     (process jon)
     ++  process
       %-  of
-      :~  [%populate parse-seed]
-          [%import parse-import]
-          [%create bo]
-          [%delete parse-delete]
-          [%set-node parse-set]
+      :~  [%import-seed (ot ~[[%mnemonic so] [%password so] [%nick so]])]
+          [%generate-hot-wallet (ot ~[[%password so] [%nick so]])]
+          [%derive-new-address (ot ~[[%hdpath sa] [%nick so]])]
+          [%delete-address (ot ~[[%address (se %ux)]])]
+          [%edit-nickname (ot ~[[%address (se %ux)] [%nick so]])]
+          [%set-node (ot ~[[%town ni] [%ship (se %p)]])]
+          [%set-indexer (ot ~[[%ship (se %p)]])]
+          [%add-tracked-address (ot ~[[%address (se %ux)] [%nick so]])]
+          [%submit-signed parse-signed]
+          [%submit-custom parse-custom]
           [%submit parse-submit]
       ==
-    ++  parse-import
-      (ot ~[[%mnemonic sa] [%password sa]])
-    ++  parse-seed
-      (ot ~[[%seed (se %ux)]])
-    ++  parse-delete
-      (ot ~[[%pubkey (se %ux)]])
-    ++  parse-set
+    ++  parse-signed
       %-  ot
-      :~  [%town ni]
-          [%ship (se %p)]
+      :~  [%hash (se %ux)]
+          [%eth-hash (se %ux)]
+          [%sig (ot ~[[%v ni] [%r (se %ux)] [%s (se %ux)]])]
+      ==
+    ++  parse-custom
+      %-  ot
+      :~  [%from (se %ux)]
+          [%to (se %ux)]
+          [%town ni]
+          [%gas (ot ~[[%rate ni] [%bud ni]])]
+          [%args (se %t)]
+          [%my-grains (ar (se %ux))]
+          [%cont-grains (ar (se %ux))]
       ==
     ++  parse-submit
       %-  ot
@@ -41,12 +51,19 @@
     ++  parse-args
       %-  of
       :~  [%give parse-give]
+          [%give-nft parse-nft]
       ==
     ++  parse-give
       %-  ot
-      :~  [%token (se %ux)]
+      :~  [%salt (se %ud)]
           [%to (se %ux)]
           [%amount ni]
+      ==
+    ++  parse-nft
+      %-  ot
+      :~  [%salt (se %ud)]
+          [%to (se %ux)]
+          [%item-id ni]
       ==
     --
   --

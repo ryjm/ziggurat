@@ -31,7 +31,7 @@
   ++  beef-zigs-grain  ::  ~zod
     ^-  grain:smart
     :*  0x1.beef
-        `@ux`'fungible'
+        zigs-wheat-id:smart
         ::  associated seed: 0xbeef
         0xbeef
         0
@@ -40,7 +40,7 @@
   ++  dead-zigs-grain  ::  ~bus
     ^-  grain:smart
     :*  0x1.dead
-        `@ux`'fungible'
+        zigs-wheat-id:smart
         ::  associated seed: 0xdead
         0xdead
         0
@@ -49,20 +49,20 @@
   ++  cafe-zigs-grain  ::  ~nec
     ^-  grain:smart
     :*  0x1.cafe
-        `@ux`'fungible'
+        zigs-wheat-id:smart
         0xcafe
         0
         [%& `@`'zigs' [100.000 ~ `@ux`'zigs-metadata']]
     ==
   ++  wheat-grain
     ^-  grain:smart
-    =/  cont  (of-wain:format capitol-contract)
+    =/  cont  (of-wain:format trivial-contract)
     :*  zigs-wheat-id:smart  ::  id
         zigs-wheat-id:smart  ::  lord
         zigs-wheat-id:smart  ::  holders
         town-id              ::  town-id
         :+    %|             ::  germ
-          `(~(text-deploy deploy ~zod ~2022.4.5..00.49.42..08bf) cont)
+          `(~(text-deploy deploy ~zod ~2022.4.13..22.58.15..3862) cont)
         ~  ::  (silt ~[0x1.beef 0x1.dead 0x1.cafe])
     ==
   ++  fake-granary
@@ -81,17 +81,13 @@
   ++  fake-town
     ^-  town:smart
     [fake-granary fake-populace]
-  ++  fake-land
-    ^-  land:smart
-    (~(gas by:smart *(map @ud town:smart)) ~[[town-id fake-town]])
   --
 ++  test-trivial
-  =/  bud  500
   =/  now  *@da
   =/  yok=yolk:smart
     [[0xbeef 1 0x1.beef] `[%init ~] ~ ~]
   =/  shel=shell:smart
-    [[0xbeef 1 0x1.beef] [0 0 0] 0x0 1 bud 0]
+    [[0xbeef 1 0x1.beef] [0 0 0] ~ zigs-wheat-id:smart 1 500 0 0]
   =/  egg  [shel yok]
   =/  res
     %+  ~(mill mill [0xdead 1 0x1.dead] 0 1 now)

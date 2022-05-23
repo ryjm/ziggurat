@@ -25,6 +25,25 @@
   =-  (sham p.-)
   `slot`+:(need (pry:sot slots:(got:poc epochs (dec num.cur))))
 ::
+::  +epoch-seed: get value for seeding the shuffle to determine
+::  validator order in epoch. currently using 2nd-to-last block header
+::  hash. reasoning for this is to make sure sequencers can always know
+::  who next block producer will be, even at end of epoch/start of next.
+::
+++  epoch-seed
+  |=  [slot-num=@ud =epochs cur=epoch]
+  ^-  @
+  ?:  ?&(=(slot-num 0) =(num.cur 0))
+    (sham ~)
+  ::  grab 2nd-to-last slot header hash in prev epoch
+  ::
+  =/  [* rest=slots]
+    (pop:sot slots.cur)
+  ?~  rest  (sham ~)  ::  epoch length 1 slot, order doesn't matter
+  ::  ~&  >>>  "shuffling with {<`@ux`(sham p:`slot`+:(need (pry:sot rest)))>}"
+  (sham p:`slot`+:(need (pry:sot rest)))
+
+::
 ++  validate-history
   |=  [our=ship =epochs]
   |^  ^-  ?

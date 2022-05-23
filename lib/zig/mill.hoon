@@ -1,5 +1,5 @@
-/+  *bink, smart=zig-sys-smart
-/*  smart-lib  %noun  /lib/zig/sys/smart-lib-2/noun
+/+  *bink, smart=zig-sys-smart, ethereum
+/*  smart-lib  %noun  /lib/zig/compiled/smart-lib/noun
 =,  smart
 |_  library=*
 ++  mill
@@ -15,39 +15,61 @@
       (gth rate.p.a rate.p.b)
     =|  [processed=(list [@ux egg]) reward=@ud]
     |-
-    ^-  [(list [@ux egg]) ^town]
+    ^-  [(list [@ux egg]) ^town]  ::  TODO add 'crow's to chunk -- list of announcements
     ?~  pending
       [processed town(p (~(pay tax p.town) reward))]
-    =+  [res fee]=(mill town i.pending)
+    =+  [res fee err]=(mill town i.pending)
+    =+  i.pending(status.p err)
     %_  $
       pending    t.pending
-      processed  [[`@ux`(shax (jam i.pending)) i.pending] processed]
+      processed  [[`@ux`(shax (jam -)) -] processed]
       town       res
       reward     (add reward fee)
     ==
+  ::
   ::  +mill: processes a single egg and returns updated town
   ::
   ++  mill
     |=  [=town =egg]
-    ^-  [^town fee=@ud]
-    ?.  ?=(account from.p.egg)  [town 0]
+    ^-  [^town fee=@ud =errorcode]
+    ?.  ?=(account from.p.egg)  [town 0 %1]
     ::  validate transaction signature
     ::  using ecdsa-raw-sign in wallet, TODO review this
     ::  comment this out for tests
-    =/  point  (ecdsa-raw-recover:secp256k1:secp:crypto (sham (jam q.egg)) sig.p.egg)
-    ?.  =(id.from.p.egg (compress-point:secp256k1:secp:crypto point))
-      [town 0]  ::  signed tx doesn't match account
-    ?~  curr-nonce=(~(get by q.town) id.from.p.egg)
-      [town 0]  ::  missing account
-    ?.  =(nonce.from.p.egg +(u.curr-nonce))
+    =?  v.sig.p.egg  (gte v.sig.p.egg 27)  (sub v.sig.p.egg 27)
+    ~&  >>  egg
+    ::  ecdsa-raw-recover crashes so we virtualize
+    =/  recovered
+      ?~  eth-hash.p.egg
+        %-  mule
+        |.
+        %-  compress-point:secp256k1:secp:crypto
+        %+  ecdsa-raw-recover:secp256k1:secp:crypto
+          (sham (jam q.egg))
+        sig.p.egg
+      %-  mule
+      |.
+      %-  address-from-pub:key:ethereum
+      %-  serialize-point:secp256k1:secp:crypto
+      %+  ecdsa-raw-recover:secp256k1:secp:crypto
+        u.eth-hash.p.egg
+      sig.p.egg
+    ?:  ?=(%| -.recovered)
+      ~&  >>>  "FAILED TX"
+      [town 0 %2]  ::  signature is broken in some way
+    ?.  =(id.from.p.egg p.recovered)
+    ~&  >>>  "mismatch: {<id.from.p.egg>}, {<`@ux`p.recovered>}"
+      [town 0 %2]  ::  signed tx doesn't match account
+    =/  curr-nonce=@ud  (~(gut by q.town) id.from.p.egg 0)
+    ?.  =(nonce.from.p.egg +(curr-nonce))
       ~&  >>>  "tx rejected; bad nonce"
-      [town 0]  ::  bad nonce
+      [town 0 %3]  ::  bad nonce
     ?.  (~(audit tax p.town) egg)
       ~&  >>>  "tx rejected; not enough budget"
-      [town 0]  ::  can't afford gas
-    =+  [gan rem]=(~(work farm p.town) egg)
+      [town 0 %4]  ::  can't afford gas
+    =+  [gan rem err]=(~(work farm p.town) egg)
     =/  fee=@ud   (sub budget.p.egg rem)
-    :_  fee
+    :_  [fee err]
     :-  (~(charge tax ?~(gan p.town u.gan)) from.p.egg fee)
     (~(put by q.town) id.from.p.egg nonce.from.p.egg)
   ::
@@ -66,6 +88,7 @@
       ^-  ?
       ?.  ?=(account from.p.egg)                    %.n
       ?~  zigs=(~(get by granary) zigs.from.p.egg)  %.n
+      ?.  =(zigs-wheat-id lord.u.zigs)              %.n
       ?.  ?=(%& -.germ.u.zigs)                      %.n
       =/  acc  (hole token-account data.p.germ.u.zigs)
       (gth balance.acc budget.p.egg)
@@ -86,6 +109,7 @@
       ?~  zigs=(~(get by granary) zigs.miller)  granary
       ?.  ?=(%& -.germ.u.zigs)                  granary
       =/  acc  (hole token-account data.p.germ.u.zigs)
+      ?.  =(`@ux`'zigs-metadata' metadata.acc)  granary
       =.  balance.acc  (add balance.acc total)
       =.  data.p.germ.u.zigs  acc
       (~(put by granary) zigs.miller u.zigs)
@@ -98,22 +122,21 @@
     ::
     ++  work
       |=  =egg
-      ^-  [(unit ^granary) @ud]
+      ^-  [(unit ^granary) rem=@ud =errorcode]
       =/  hatchling
         (incubate egg(budget.p (div budget.p.egg rate.p.egg)))
-      :_  +.hatchling
-      ?~  -.hatchling  ~
-      (harvest u.-.hatchling to.p.egg from.p.egg)
+      ?~  final.hatchling
+        [~ rem.hatchling errorcode.hatchling]
+      +.hatchling
     ::
     ++  incubate
       |=  =egg
-      ^-  [(unit rooster) @ud]
-      ~&  >>  "incubating"
+      ^-  [(unit rooster) final=(unit ^granary) rem=@ud =errorcode]
       |^
       =/  args  (fertilize q.egg)
       ?~  stalk=(germinate to.p.egg cont-grains.q.egg)
         ~&  >>>  "failed to germinate"
-        `budget.p.egg
+        [~ ~ budget.p.egg %5]
       (grow u.stalk args egg)
       ::
       ++  fertilize
@@ -152,6 +175,7 @@
       ::    |=  nok=*
       ::    ^-  contract
       ::    ::=/  cued  (cue q.q.smart-lib)
+      :::   idea:  run this in mule outside mill
       ::    ::  crazy weird issue: importing this way results in unjetted execution (my guess)
       ::    ::  ~&  >>>  "smart-lib size: {<(met 3 (jam cued))>}"
       ::    ::  ~&  >>>  "library size: {<(met 3 (jam library))>}"
@@ -163,101 +187,50 @@
     ++  grow
       |=  [=crop =zygote =egg]
       ~>  %bout
-      ^-  [(unit rooster) @ud]
+      ^-  [(unit rooster) final=(unit ^granary) rem=@ud =errorcode]
       |^
-      =+  [chick rem]=(weed crop to.p.egg [%& zygote] ~ budget.p.egg)
-      ?~  chick  `rem
+      =+  [chick rem err]=(weed to.p.egg ~ budget.p.egg)
+      ?~  chick  [~ ~ rem err]
       ?:  ?=(%& -.u.chick)
         ::  rooster result, finished growing
-        [`p.u.chick rem]
+        ?~  gan=(harvest p.u.chick to.p.egg from.p.egg)
+          [~ ~ rem %7]
+        [`p.u.chick gan rem err]
       ::  hen result, continuation
-      |-
       =*  next  next.p.u.chick
-      =*  mem   mem.p.u.chick
-      ::  make it so continuation calls can alter grains, this is important
+      =*  mem   mem.p.u.chick  :: FIX! USE THIS SOMEWHERE??
+      ::  continuation calls can alter grains
       ?~  gan=(harvest roost.p.u.chick to.p.egg from.p.egg)
-        `rem
-      =.  granary  u.gan 
-      =^  child  rem
-        (incubate egg(from.p to.p.egg, to.p to.next, budget.p rem, q args.next))
-      ?~  child  `rem
-      ::  =/  gan  (harvest u.child to.p.egg from.p.egg)
-      ::  ?~  gan  `rem
-      [child rem]
-      ::  this event trigger phase actually wipes the result of continuations,
-      ::  no bueno. need to move the event trigger inside the above loop.
-      ::  above always returns a result, anyways.
-      ::  =.  granary  u.gan
-      ::  =^  eve  rem
-      ::    (weed crop to.p.egg [%| u.child] mem rem)
-      ::  ?~  eve  `rem
-      ::  ?:  ?=(%& -.u.eve)
-      ::    [`p.u.eve rem]
-      ::  %_  $
-      ::    next.p.u.chick  next.p.u.eve
-      ::    mem.p.u.chick   mem.p.u.eve
-      ::  ==
+        [~ ~ rem %7]
+      %-  ~(incubate farm u.gan)
+      egg(from.p to.p.egg, to.p to.next, budget.p rem, q args.next)
+      ::
+      ::  +weed: run contract formula with arguments and memory, bounded by bud
       ::
       ++  weed
-        |=  [=^crop to=id inp=embryo mem=(unit vase) budget=@ud]
-        ^-  [(unit chick) @ud]
+        |=  [to=id mem=(unit vase) budget=@ud]
+        ^-  [(unit chick) rem=@ud =errorcode]
         =/  cart  [mem to blocknum town-id owns.crop]
-        =+  [res bud]=(barn nok.crop inp cart budget)
-        ~&  >>  "res: {<res>}"
-        ?~  res               `bud
-        ?:  ?=(%| -.u.res)  
-          ~&  >>>  p.u.res    `bud
-        ?:  ?=(%& -.p.u.res)  `bud
-        ::  write or event result
-        [`p.p.u.res bud]
-      ::
-      ::  +barn: run contract formula with arguments and memory, bounded by bud
-      ::  [note: contract reads are scrys performed in sequencer]
-      ++  barn
-        |=  [nok=* inp=embryo =cart bud=@ud]
-        ^-  [(unit (each (each * chick) (list tank))) @ud]
         ::  TODO figure out how to pre-cue this and get good results
-        =/  =contract  (hole contract [nok +:(cue q.q.smart-lib)])
-        |^
-        ~&  >>  "inp: {<inp>}"
-        ~&  >  "cart: {<cart>}"
-        ?:  ?=(%| -.inp)
-          ::  event
-          =/  res  (event p.inp)
-          ::~&  >>>  "res: {<res>}"
-          ?~  -.res  `+.res
-          ?:  ?=(%& -.u.-.res)
-            [`[%& %| p.u.-.res] +.res]
-          [`[%| p.u.-.res] +.res]
-        ::  write
-        =/  res  (write p.inp)
-        ::~&  >>>  "res: {<res>}"
-        ?~  -.res  `+.res
-        ?:  ?=(%& -.u.-.res)
-          [`[%& %| p.u.-.res] +.res]
-        [`[%| p.u.-.res] +.res]
         ::
-        ++  write
-          |=  =^zygote
-          ^-  [(unit (each chick (list tank))) @ud]
-          ::  need jet dashboard to run bull
+        =/  =contract  (hole contract [nok.crop +:(cue q.q.smart-lib)])
+        =/  res
+          ::  need jet dashboard to run bull:
           ::  (bull |.(;;(chick (~(write contract cart) zygote))) bud)
-          :_  (sub bud 7)
-          `(mule |.(;;(chick (~(write contract cart) zygote))))
-        ++  event
-          |=  =rooster
-          ^-  [(unit (each chick (list tank))) @ud]
-          ::  (bull |.(;;(chick (~(event contract cart) rooster))) bud)
-          :_  (sub bud 8)
-          `(mule |.(;;(chick (~(event contract cart) rooster))))
-        --
+          (mule |.(;;(chick (~(write contract cart) zygote))))^(sub budget 7)
+        ~&  >>  "write result: {<res>}"
+        ?:  ?=(%| -.-.res)
+          ::  error in contract execution
+          [~ budget %6]
+        ::  chick result
+        [`p.-.res budget %0]
       --
     ::
     ++  harvest
       |=  [res=rooster lord=id from=caller]
       ^-  (unit ^granary)
       =-  ?.  -  
-            ~&  >>>  "harvest checks failed"  
+            ~&  >>>  "harvest checks failed"
             ~
           `(~(uni by granary) (~(uni by changed.res) issued.res))
       ?&  %-  ~(all in changed.res)
@@ -282,7 +255,7 @@
               =(lord lord.grain)
               ?:  ?=(%& -.germ.grain)
                 =(id (fry-rice holder.grain lord.grain town-id.grain salt.p.germ.grain))
-              =(id (fry-contract lord.grain town-id.grain germ.grain))
+              =(id (fry-contract lord.grain town-id.grain cont.p.germ.grain))
       ==  ==
     --
   --

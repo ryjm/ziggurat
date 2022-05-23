@@ -12,12 +12,10 @@
 ::  +fry: hash lord+town+germ to make contract grain pubkey
 ::
 ++  fry-contract
-  |=  [lord=id town=@ud =germ]
+  |=  [lord=id town=@ud nok=*]
   ^-  id
-  =-  `@ux`(sham (cat 3 lord (cat 3 town -)))
-  ?.  ?=(%| -.germ)
-    (jam germ)
-  (jam cont.p.germ)
+  =+  (jam nok)
+  `@ux`(sham (cat 3 lord (cat 3 town -))) 
 ::
 ++  fry-rice
   |=  [holder=id lord=id town=@ud salt=@]
@@ -29,6 +27,7 @@
   (end [3 8] (sham (cat 3 town (cat 3 lord salt))))
 ::
 ::  +pin: get ID from caller
+::
 ++  pin
   |=  =caller
   ^-  id
@@ -39,30 +38,27 @@
 ::  smart contract types
 ::
 +$  id             @ux  ::  pubkey
-++  zigs-wheat-id  0x0  ::  hardcoded "native" token contract
+++  zigs-wheat-id  `@ux`'zigs-contract'  ::  hardcoded "native" token contract
 ::
 +$  account    [=id nonce=@ud zigs=id]
 +$  caller     $@(id account)
 +$  signature  [r=@ux s=@ux type=?(%schnorr %ecdsa)]
 ::
+::  a grain holds either rice (data) or wheat (functions)
+::
++$  grain  [=id lord=id holder=id town-id=@ud =germ]
 +$  germ   (each rice wheat)
+::
 +$  rice   [salt=@ data=*]
 +$  wheat  [cont=(unit *) owns=(set id)]
-+$  crop   [nok=* owns=(map id grain)]
++$  crop   [nok=* owns=(map id grain)]  ::  wheat that's been processed by mill.hoon
 ::
-+$  grain
-  $:  =id
-      lord=id
-      holder=id
-      town-id=@ud
-      =germ
-  ==
-::
-+$  granary   (map id grain)  ::  TODO: replace with +merk
++$  granary   (map id grain)
 +$  populace  (map id @ud)
 +$  town      (pair granary populace)
 +$  land      (map @ud town)
-::  state accessible by contract
+::
+::  cart: state accessible by contract
 ::
 +$  cart
   $:  mem=(unit vase)
@@ -71,6 +67,7 @@
       town-id=@ud
       owns=(map id grain)
   ==
+::
 ::  contract definition
 ::
 +$  contract
@@ -81,23 +78,44 @@
     *chick
   ::
   ++  read
-    |~  path
-    *noun
-  ::
-  ++  event
-    |~  rooster
-    *chick
+    ^|  |_  path
+    ++  json
+      *^json
+    ++  noun
+      *^noun
+    --
   --
 ::  transaction types, fed into contract
+::
+::  egg error codes:
+::  code can be anything upon submission,
+::  gets set for chunk inclusion in +mill
++$  errorcode
+  $%  %0  ::  0: successfully performed
+      %1  ::  1: submitted with raw id / no account info
+      %2  ::  2: bad signature
+      %3  ::  3: incorrect nonce
+      %4  ::  4: lack zigs to fulfill budget
+      %5  ::  5: couldn't find contract
+      %6  ::  6: crash in contract execution
+      %7  ::  7: validation of changed/issued rice failed
+  ==
+::
+::  NOTE: continuation calls generate their own eggs, which
+::  could potentially fail at one of these error points too.
+::  currently keeping this simple, but could try to differentiate
+::  between first-call and continuation-call errors later
 ::
 +$  egg  (pair shell yolk)
 +$  shell
   $:  from=caller
-      sig=[v=@ r=@ s=@] ::  signed hash of yolk
+      sig=[v=@ r=@ s=@]  ::  sig on either hash of yolk or eth-hash
+      eth-hash=(unit @)  ::  if transaction signed with eth wallet, use this to verify signature
       to=id
       rate=@ud
       budget=@ud
       town-id=@ud
+      status=@ud  ::  error code
   ==
 +$  yolk
   $:  =caller
@@ -105,15 +123,15 @@
       my-grains=(set id)
       cont-grains=(set id)
   ==
+::  yolk that's been "fertilized" with data by execution engine
 +$  zygote
   $:  =caller
       args=(unit *)
       grains=(map id grain)
   ==
 ::
-+$  embryo   (each zygote rooster)
-::
 +$  chick    (each rooster hen)
-+$  rooster  [changed=(map id grain) issued=(map id grain)]
+::  new: crow, emit information about transaction to be picked up by interested parties
++$  rooster  [changed=(map id grain) issued=(map id grain) crow=(list [@tas json])]
 +$  hen      [mem=(unit vase) next=[to=id town-id=@ud args=yolk] roost=rooster]
 --

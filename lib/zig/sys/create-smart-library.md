@@ -5,7 +5,7 @@
 
 `=smart-txt .^(@t %cx /=zig=/lib/zig/sys/smart/hoon)`
 
-`=hoon-txt .^(@t %cx %/sys/hoon/hoon)`
+`=hoon-txt .^(@t %cx /=zig=/lib/zig/sys/hoon/hoon)`
 
 `=hoe (slap !>(~) (ream hoon-txt))`
 
@@ -13,5 +13,5 @@
 
 `=compiled (slap hoed (ream trivial))`
 
-`.smart-lib-new q:compiled`
+`.smart-lib q:compiled`
 
