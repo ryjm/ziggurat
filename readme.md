@@ -89,30 +89,16 @@ where the argument `[our %ziggurat]` is a dock pointing to the ship running the 
 
 ```
 {import-seed: {mnemonic: "12-24 word phrase", password: "password", nick: "nickname for the first address in this wallet"}}
-
 {generate-hot-wallet: {password: "password", nick: "nickname"}}
-
 # leave hdpath empty ("") to let wallet auto-increment from 0 on main path
 {derive-new-address: {hdpath: "m/44'/60'/0'/0/0", nick: "nickname"}}
-
 # use this to save a hardware wallet account
 {add-tracked-address: {address: "0x1234.5678" nick: "nickname"}}
-
 {delete-address: {address: "0x1234.5678"}}
-
 {edit-nickname: {address: "0x1234.5678", nick: "nickname"}}
-
 {set-node: {town: 1, ship: "~zod"}}  # set the sequencer to send txs to, per town
-
 {set-indexer: {ship: "~zod"}}
-
-#  TODO here:
-#  add poke to submit signed transaction from HW wallet
-#  will need a new flow where frontend builds tx, pokes to receive signable package,
-#  then signs with HW and pokes again with signature.
-
 {submit-custom: {from: "0x1234", to: "0x5678", town: 1, gas: {rate: 1, bud: 10000}, args: "[%give ... .. (this is HOON)]", my-grains: {"0x1111", "0x2222"}, cont-grains: {"0x3333", "0x4444"}}}
-
 # for TOKEN and NFT transactions
 # 'from' is our address
 # 'to' is the address of the smart contract
@@ -130,7 +116,6 @@ where the argument `[our %ziggurat]` is a dock pointing to the ship running the 
    }
 }
 ```
-
 (example pokes that will work upon chain initialization in dojo):
 ```
 #  ZIGS
@@ -138,4 +123,23 @@ where the argument `[our %ziggurat]` is a dock pointing to the ship running the 
 
 #  NFT
 :wallet &zig-wallet-poke [%submit 0x3.e87b.0cbb.431d.0e8a.2ee2.ac42.d9da.cab8.063d.6bb6.2ff9.b2aa.e1b9.0f56.9c3f.3423 0xcafe.babe 1 [1 10.000] [%give 32.770.263.103.071.854 0x2.eaea.cffd.2bbe.e0c0.02dd.b5f8.dd04.e63f.297f.14cf.d809.b616.2137.126c.da9e.8d3d 1]]
+```
+
+
+# Testing Zink
+
+```
+=z -build-file /=zig=/lib/zink/zink/hoon
+=r (~(eval-hoon zink:z ~) /=zig=/lib/zink/stdlib/hoon /=zig=/lib/zink/test/hoon %test '3')
+-.r     # product
++<.r    # json hints
++>.r    # pedersen hash cache
+# once you've run this once so you have a cache you should pass it in every time
+# You can pass ~ for library if you don't have one
+> =r (~(eval-hoon zink:z +>.r) ~ /=zig=/lib/zink/fib/hoon %fib '5')
+# +<.r is the hint json. You need to write it out to disk so you can pass it to cairo.
+@fib-5/json +<.r
+# Now fib-5.json is in PIER/.urb/put and you can pass it to cairo.
+# hash-noun will give you just a hash
+> =r (~(hash-noun zink:z +>.r) [1 2 3])
 ```
