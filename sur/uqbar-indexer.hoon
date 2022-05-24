@@ -29,7 +29,8 @@
       $:  %hash
           eggs=(map egg-id=id:smart [location=egg-location =egg:smart])
           grains=(map grain-id=id:smart [location=town-location =grain:smart])
+          slots=(map slot-id=id:smart [location=block-location =slot:zig])
       ==
-      [%slot =slot:zig]
+      [%slot slots=(map slot-id=id:smart [location=block-location =slot:zig])]
   ==
 --

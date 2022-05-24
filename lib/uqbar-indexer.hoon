@@ -27,14 +27,23 @@
         %hash
       %+  frond  %hash
       %-  pairs
-      :+  [%egg (eggs eggs.update)]
-        [%grain (grains grains.update)]
+      :^    [%eggs (eggs eggs.update)]
+          [%grains (grains grains.update)]
+        [%slots (slots slots.update)]
       ~
     ::
         %slot
-      (frond %slot (slot slot.update))
+      (frond %slots (slots slots.update))
     ::
     ==
+  ::
+  ++  block-location
+    |=  =block-location:ui
+    ^-  json
+    %-  pairs
+    :+  [%epoch-num (numb epoch-num.block-location)]
+      [%block-num (numb block-num.block-location)]
+    ~
   ::
   ++  town-location
     |=  =town-location:ui
@@ -191,6 +200,18 @@
       [%owns (ids owns.p.germ)]
     ~
   ::
+  ++  slots
+    |=  slots=(map slot-id=id:smart [location=block-location:ui =slot:zig])
+    ^-  json
+    %-  pairs
+    %+  turn  ~(tap by slots)
+    |=  [=id:smart location=block-location:ui s=slot:zig]
+    :-  (scot %ux id)
+    %-  pairs
+    :+  [%location (block-location location)]
+      [%slot (slot s)]
+    ~
+  ::
   ++  slot
     |=  =slot:zig
     ^-  json
@@ -268,9 +289,18 @@
     :~  [%chunk (ot ~[[%location town-location] [%chunk chunk]])]
         [%egg eggs]
         [%grain grains]
-        [%hash (ot ~[[%egg eggs] [%grain grains]])]
-        [%slot slot]
+        [%hash (ot ~[[%eggs eggs] [%grains grains] [%slots slots]])]
+        [%slot slots]
     ==
+  ::
+  ++  block-location
+    |=  jon=json
+    ^-  block-location:ui
+    %.  jon
+    %-  ot
+    :+  [%epoch-num ni]
+      [%block-num ni]
+    ~
   ::
   ++  town-location
     |=  jon=json
@@ -430,6 +460,16 @@
     %.  jon
     %-  ot
     :-  [%owns ids]
+    ~
+  ::
+  ++  slots
+    |=  jon=json
+    ^-  (map slot-id=id:smart [location=block-location:ui =slot:zig])
+    %.  jon
+    %+  op  hex
+    %-  ot
+    :+  [%location block-location]
+      [%slot slot]
     ~
   ::
   ++  slot
