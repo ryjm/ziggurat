@@ -17,8 +17,7 @@
   :~  ::  fakeships for localhost testnets
       ~zod  ~bus  ~nec  ~wet  ~rys
       ::  hodzod's testing moons
-      ~ransur-rabtyr-dozzod-bacrys
-      ~todnub-figsym-dozzod-bacrys
+      ~watryp-loplyd-dozzod-bacrys
       ::  hosted's testing moons
       ~ricmun-lasfer-hosted-fornet
   ==
