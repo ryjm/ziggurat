@@ -181,16 +181,16 @@
         [%id @ ~]
       :_  this
       =/  payload=@ux  (slav %ux i.t.path)
-      =/  from-update=(unit update:uqbar-indexer)
+      =/  from=(unit update:uqbar-indexer)
         (serve-previous-update %from payload)
-      =/  to-update=(unit update:uqbar-indexer)
+      =/  to=(unit update:uqbar-indexer)
         (serve-previous-update %to payload)
       =/  update=(unit update:uqbar-indexer)
-        %-  combine-update-sets
+        %-  combine-egg-updates
         ;;  %-  list
           %-  unit
           [%egg eggs=(map id:smart [egg-location:uqbar-indexer egg:smart])]
-        ~[from-update to-update]
+        ~[from to]
       ?~  update  ~
       :_  ~
       %+  fact:io
@@ -316,7 +316,7 @@
       =/  to=(unit update:uqbar-indexer)
         (serve-update %to hash)
       =/  up=(unit update:uqbar-indexer)
-        %-  combine-update-sets
+        %-  combine-egg-updates
         ;;  %-  list
           %-  unit
           [%egg eggs=(map id:smart [egg-location:uqbar-indexer egg:smart])]
@@ -333,16 +333,22 @@
       =/  hash=@ux  (slav %ux i.t.t.path)
       =/  egg=(unit update:uqbar-indexer)
         (serve-update %egg hash)
+      =/  grain=(unit update:uqbar-indexer)
+        (serve-update %grain hash)
       =/  from=(unit update:uqbar-indexer)
         (serve-update %from hash)
       =/  to=(unit update:uqbar-indexer)
         (serve-update %to hash)
       =/  up=(unit update:uqbar-indexer)
-        %-  combine-update-sets
+        %+  combine-updates
+          ;;  %-  list
+              %-  unit
+              [%egg eggs=(map id:smart [egg-location:uqbar-indexer egg:smart])]
+          [~[egg from to]]
         ;;  %-  list
-          %-  unit
-          [%egg eggs=(map id:smart [egg-location:uqbar-indexer egg:smart])]
-        ~[egg from to]
+            %-  unit
+            [%grain grains=(map id:smart [town-location:uqbar-indexer grain:smart])]
+        [~[grain]]
       ?~  up  [~ ~]
       :^  ~  ~  %uqbar-indexer-update
       !>  ^-  update:uqbar-indexer
@@ -647,9 +653,18 @@
 ::
 :: https://github.com/uqbar-dao/ziggurat/blob/da1d37adf538ee908945557a68387d3c87e1c32e/app/uqbar-indexer.hoon#L361:
 ::
-++  combine-update-sets
+++  combine-egg-updates
   |=  updates=(list (unit [%egg eggs=(map id:smart [egg-location:uqbar-indexer egg:smart])]))
   ^-  (unit update:uqbar-indexer)
+  ?~  updates  ~
+  =/  combined=(map id:smart [egg-location:uqbar-indexer egg:smart])
+    (combine-egg-updates-to-map updates)
+  ?~  combined  ~
+  `[%egg combined]
+::
+++  combine-egg-updates-to-map
+  |=  updates=(list (unit [%egg eggs=(map id:smart [egg-location:uqbar-indexer egg:smart])]))
+  ^-  (map id:smart [egg-location:uqbar-indexer egg:smart])
   ?~  updates  ~
   =/  combined=(map id:smart [egg-location:uqbar-indexer egg:smart])
     %-  %~  gas  by  *(map id:smart [egg-location:uqbar-indexer egg:smart])
@@ -658,7 +673,35 @@
     |=  update=(unit [%egg eggs=(map id:smart [egg-location:uqbar-indexer egg:smart])])
     ?~  update  ~
     ~(tap by eggs.u.update)
-  `[%egg combined]
+  combined
+::
+++  combine-grain-updates-to-map
+  |=  updates=(list (unit [%grain grains=(map id:smart [town-location:uqbar-indexer grain:smart])]))
+  ^-  (map id:smart [town-location:uqbar-indexer grain:smart])
+  ?~  updates  ~
+  =/  combined=(map id:smart [town-location:uqbar-indexer grain:smart])
+    %-  %~  gas  by  *(map id:smart [town-location:uqbar-indexer grain:smart])
+    %-  zing
+    %+  turn  updates
+    |=  update=(unit [%grain grains=(map id:smart [town-location:uqbar-indexer grain:smart])])
+    ?~  update  ~
+    ~(tap by grains.u.update)
+  combined
+::
+++  combine-updates
+  |=  $:  egg-updates=(list (unit [%egg eggs=(map id:smart [egg-location:uqbar-indexer egg:smart])]))
+          grain-updates=(list (unit [%grain grains=(map id:smart [town-location:uqbar-indexer grain:smart])]))
+      ==
+  ^-  (unit update:uqbar-indexer)
+  ?:  ?&  ?=(~ egg-updates)
+          ?=(~ grain-updates)
+      ==
+    ~
+  =/  combined-egg=(map id:smart [egg-location:uqbar-indexer egg:smart])
+    (combine-egg-updates-to-map egg-updates)
+  =/  combined-grain=(map id:smart [town-location:uqbar-indexer grain:smart])
+    (combine-grain-updates-to-map grain-updates)
+  `[%hash combined-egg combined-grain]
 ::
 ++  are-updates-same
   ::  %.y if non-location portion of update is same
@@ -668,7 +711,7 @@
   ?~  one  ?=(~ two)
   ?~  two  %.n
   :: ?.  ?=(-.u.one -.u.two)  %.n  ::  different update type?
-  ?-    -.u.one
+  ?+    -.u.one  !!
   ::
       %chunk
     ?.  ?=(%chunk -.u.two)  %.n

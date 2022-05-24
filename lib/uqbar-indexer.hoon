@@ -12,16 +12,24 @@
     ?-    -.update
     ::
         %chunk
+      %+  frond  %chunk
       %-  pairs
       :+  [%location (town-location location.update)]
         [%chunk (chunk chunk.update)]
       ~
     ::
         %egg
-      (frond %eggs (eggs eggs.update))
+      (frond %egg (eggs eggs.update))
     ::
         %grain
-      (frond %grains (grains grains.update))
+      (frond %grain (grains grains.update))
+    ::
+        %hash
+      %+  frond  %hash
+      %-  pairs
+      :+  [%egg (eggs eggs.update)]
+        [%grain (grains grains.update)]
+      ~
     ::
         %slot
       (frond %slot (slot slot.update))
@@ -260,6 +268,7 @@
     :~  [%chunk (ot ~[[%location town-location] [%chunk chunk]])]
         [%egg eggs]
         [%grain grains]
+        [%hash (ot ~[[%egg eggs] [%grain grains]])]
         [%slot slot]
     ==
   ::
