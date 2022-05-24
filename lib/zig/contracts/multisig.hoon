@@ -4,6 +4,7 @@
 ::  New multisigs can be generated through the %create
 ::  argument, and are stored in account-controlled rice.
 ::
+/+  *zig-sys-smart
 |_  =cart
 ++  write
   |=  inp=zygote
@@ -31,17 +32,29 @@
   ++  is-member
     |=  [=id state=multisig-state]
     ^-  ?
-    (~(has in members.state) caller-id)
+    (~(has in members.state) id)
   ++  is-me
     |=  =id
     ^-  ?
     =(me.cart id)
+  ++  shamspin
+    |=  ids=(list id)
+    ^-  @uvH
+    =<  q
+    %^  spin  ids
+      0v0
+    |=  [=id hash=@uvH]
+    :_  (sham (cat 3 (sham id) hash))
+    ~
   ++  process
     |=  [args=arguments caller-id=id]
     ?:  ?=(%create-multisig -.args)
       ::  issue a new multisig rice
       =/  new-sig-germ  [%& ~ [members.args init-thresh.args ~]]
-      =/  new-sig-id  (fry caller-id 0 new-sig-germ) 
+      =/  salt=@  
+        =-  (sham (cat 3 caller-id -))
+        (shamspin ~(tap in members.args))
+      =/  new-sig-id=id  (fry-rice caller-id me.cart town-id.cart salt)
       =-  [%& ~ (malt ~[[new-sig-id -]]) ~]
       [new-sig-id me.cart me.cart town-id.cart new-sig-germ]
     =/  my-grain=grain  -:~(val by owns.cart)
@@ -69,11 +82,13 @@
       ::  recurse with $
       ::  otherwise issue a hen chick with the call.
       :: [~ next=[to=me.cart town-id args=[me.cart ]] roost=rooster]
+      *chick
     =.  data.p.germ.my-grain
-      ?+    -.args  !!
+      ?-    -.args
           %submit-tx
         ::  validate member in multisig
         ?.  (is-member caller-id state)  !!
+        ::  TODO is mug appropriate here?
         state(pending (~(put by pending.state) (mug egg.args) [egg.args (silt ~[caller-id])]))
       ::
           %add-member
@@ -92,6 +107,7 @@
         state(threshold new-thresh.args)
       ==
     [%& (malt ~[[id.my-grain my-grain]]) ~ ~]
+  --
 ::
 ++  read
   |_  =path
