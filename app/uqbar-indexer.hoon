@@ -73,7 +73,7 @@
 ::    %serve-update:
 ::
 ::
-/-  uqbar-indexer,
+/-  ui=uqbar-indexer,
     zig=ziggurat
 /+  agentio,
     dbug,
@@ -93,16 +93,16 @@
       num-recent-headers=@ud
       recent-headers=(list [epoch-num=@ud =block-header:zig])
       $=  serve-previous-update
-    $-([=query-type:uqbar-indexer =query-payload:uqbar-indexer] (unit update:uqbar-indexer))
+    $-([=query-type:ui =query-payload:ui] (unit update:ui))
   ==
 +$  indices-0
-  $:  block-index=(jug @ux block-location:uqbar-indexer)
-      egg-index=(jug @ux egg-location:uqbar-indexer)
-      from-index=(jug @ux second-order-location:uqbar-indexer)
-      grain-index=(jug @ux town-location:uqbar-indexer)
-      holder-index=(jug @ux second-order-location:uqbar-indexer)
-      lord-index=(jug @ux second-order-location:uqbar-indexer)
-      to-index=(jug @ux second-order-location:uqbar-indexer)
+  $:  block-index=(jug @ux block-location:ui)
+      egg-index=(jug @ux egg-location:ui)
+      from-index=(jug @ux second-order-location:ui)
+      grain-index=(jug @ux town-location:ui)
+      holder-index=(jug @ux second-order-location:ui)
+      lord-index=(jug @ux second-order-location:ui)
+      to-index=(jug @ux second-order-location:ui)
   ==
 +$  state-0  [%0 base-state-0 indices-0]
 ::
@@ -170,7 +170,7 @@
       :_  ~
       %+  fact:io
         :-  %uqbar-indexer-update
-        !>  ^-  update:uqbar-indexer
+        !>  ^-  update:ui
         :+  %chunk
           :+  epoch-num=num.val.u.newest-epoch
             block-num=num.p.val.u.newest-slot
@@ -181,21 +181,21 @@
         [%id @ ~]
       :_  this
       =/  payload=@ux  (slav %ux i.t.path)
-      =/  from=(unit update:uqbar-indexer)
+      =/  from=(unit update:ui)
         (serve-previous-update %from payload)
-      =/  to=(unit update:uqbar-indexer)
+      =/  to=(unit update:ui)
         (serve-previous-update %to payload)
-      =/  update=(unit update:uqbar-indexer)
+      =/  update=(unit update:ui)
         %-  combine-egg-updates
         ;;  %-  list
           %-  unit
-          [%egg eggs=(map id:smart [egg-location:uqbar-indexer egg:smart])]
+          [%egg eggs=(map id:smart [egg-location:ui egg:smart])]
         ~[from to]
       ?~  update  ~
       :_  ~
       %+  fact:io
         :-  %uqbar-indexer-update
-        !>(`update:uqbar-indexer`u.update)
+        !>(`update:ui`u.update)
       ~
     ::
         ?([%grain @ ~] [%holder @ ~] [%lord @ ~])
@@ -207,7 +207,7 @@
       :_  ~
       %+  fact:io
         :-  %uqbar-indexer-update
-        !>(`update:uqbar-indexer`u.update)
+        !>(`update:ui`u.update)
       ~
     ::
         [%slot ~]
@@ -221,10 +221,10 @@
       :_  ~
       %+  fact:io
         :-  %uqbar-indexer-update
-        !>  ^-  update:uqbar-indexer
+        !>  ^-  update:ui
         :-  %slot
         %+  %~  put  by
-            *(map id:smart [block-location:uqbar-indexer slot:zig])
+            *(map id:smart [block-location:ui slot:zig])
           `@ux`data-hash.block-header
         :-  [epoch-num num.block-header]
         slot
@@ -268,7 +268,7 @@
       ?~  up=(serve-update %chunk [epoch-num block-num town-id])
         [~ ~]
       :^  ~  ~  %uqbar-indexer-update
-      !>  ^-  update:uqbar-indexer
+      !>  ^-  update:ui
       u.up
     ::
         $?  [%x %block-hash @ ~]
@@ -280,12 +280,12 @@
             [%x %lord @ ~]
             [%x %to @ ~]
         ==
-      =/  =query-type:uqbar-indexer
-        ;;(query-type:uqbar-indexer i.t.path)
+      =/  =query-type:ui
+        ;;(query-type:ui i.t.path)
       =/  hash=@ux  (slav %ux i.t.t.path)
       ?~  up=(serve-update query-type hash)  [~ ~]
       :^  ~  ~  %uqbar-indexer-update
-      !>  ^-  update:uqbar-indexer
+      !>  ^-  update:ui
       u.up
     ::
         [%x %headers @ ~]
@@ -306,10 +306,10 @@
       =*  slot  val.u.newest-slot
       =*  block-header  p.slot
       :^  ~  ~  %uqbar-indexer-update
-      !>  ^-  update:uqbar-indexer
+      !>  ^-  update:ui
       :-  %slot
       %+  %~  put  by
-          *(map id:smart [block-location:uqbar-indexer slot:zig])
+          *(map id:smart [block-location:ui slot:zig])
         `@ux`data-hash.block-header
       :-  [epoch-num num.block-header]
       slot
@@ -319,57 +319,57 @@
       =/  block-num=@ud  (slav %ud i.t.t.t.path)
       ?~  up=(serve-update %slot epoch-num block-num)  [~ ~]
       :^  ~  ~  %uqbar-indexer-update
-      !>  ^-  update:uqbar-indexer
+      !>  ^-  update:ui
       u.up
     ::
         [%x %id @ ~]
         ::  search over from and to and return all hits
       =/  hash=@ux  (slav %ux i.t.t.path)
-      =/  egg=(unit update:uqbar-indexer)
+      =/  egg=(unit update:ui)
         (serve-update %egg hash)
-      =/  from=(unit update:uqbar-indexer)
+      =/  from=(unit update:ui)
         (serve-update %from hash)
-      =/  to=(unit update:uqbar-indexer)
+      =/  to=(unit update:ui)
         (serve-update %to hash)
-      =/  up=(unit update:uqbar-indexer)
+      =/  up=(unit update:ui)
         %-  combine-egg-updates
         ;;  %-  list
           %-  unit
-          [%egg eggs=(map id:smart [egg-location:uqbar-indexer egg:smart])]
+          [%egg eggs=(map id:smart [egg-location:ui egg:smart])]
         ~[egg from to]
       ?~  up  [~ ~]
       :^  ~  ~  %uqbar-indexer-update
-      !>  ^-  update:uqbar-indexer
+      !>  ^-  update:ui
       u.up
     ::
         [%x %hash @ ~]
         ::  search over all hashes and return all hits
       =/  hash=@ux  (slav %ux i.t.t.path)
-      =/  egg=(unit update:uqbar-indexer)
+      =/  egg=(unit update:ui)
         (serve-update %egg hash)
-      =/  grain=(unit update:uqbar-indexer)
+      =/  grain=(unit update:ui)
         (serve-update %grain hash)
-      =/  from=(unit update:uqbar-indexer)
+      =/  from=(unit update:ui)
         (serve-update %from hash)
-      =/  slot=(unit update:uqbar-indexer)
+      =/  slot=(unit update:ui)
         (serve-update %block-hash hash)
-      =/  to=(unit update:uqbar-indexer)
+      =/  to=(unit update:ui)
         (serve-update %to hash)
-      =/  up=(unit update:uqbar-indexer)
+      =/  up=(unit update:ui)
         %^  combine-updates
             ;;  %-  list
                 %-  unit
-                [%egg (map id:smart [egg-location:uqbar-indexer egg:smart])]
+                [%egg (map id:smart [egg-location:ui egg:smart])]
             [~[egg from to]]
           ;;  %-  list
               %-  unit
-              [%grain (map id:smart [town-location:uqbar-indexer grain:smart])]
+              [%grain (map id:smart [town-location:ui grain:smart])]
           [~[grain]]
-        ;;  (unit [%slot (map id:smart [block-location:uqbar-indexer slot:zig])])
+        ;;  (unit [%slot (map id:smart [block-location:ui slot:zig])])
         slot
       ?~  up  [~ ~]
       :^  ~  ~  %uqbar-indexer-update
-      !>  ^-  update:uqbar-indexer
+      !>  ^-  update:ui
       u.up
     ::
     ==
@@ -511,25 +511,25 @@
           ^-  _serve-update
           %=  serve-update
               block-index
-            (~(gas ju *(jug @ux block-location:uqbar-indexer)) block-hash)
+            (~(gas ju *(jug @ux block-location:ui)) block-hash)
           ::
               egg-index
-            (~(gas ju *(jug @ux egg-location:uqbar-indexer)) egg)
+            (~(gas ju *(jug @ux egg-location:ui)) egg)
           ::
               from-index
-            (~(gas ju *(jug @ux second-order-location:uqbar-indexer)) from)
+            (~(gas ju *(jug @ux second-order-location:ui)) from)
           ::
               grain-index
-            (~(gas ju *(jug @ux town-location:uqbar-indexer)) grain)
+            (~(gas ju *(jug @ux town-location:ui)) grain)
           ::
               holder-index
-            (~(gas ju *(jug @ux second-order-location:uqbar-indexer)) holder)
+            (~(gas ju *(jug @ux second-order-location:ui)) holder)
           ::
               lord-index
-            (~(gas ju *(jug @ux second-order-location:uqbar-indexer)) lord)
+            (~(gas ju *(jug @ux second-order-location:ui)) lord)
           ::
               to-index
-            (~(gas ju *(jug @ux second-order-location:uqbar-indexer)) to)
+            (~(gas ju *(jug @ux second-order-location:ui)) to)
           ::
           ==
         ::
@@ -552,10 +552,10 @@
               :_  ~
               %+  fact:io
                 :-  %uqbar-indexer-update
-                !>  ^-  update:uqbar-indexer
+                !>  ^-  update:ui
                 :-  %slot
                 %+  %~  put  by
-                    *(map id:smart [block-location:uqbar-indexer slot:zig])
+                    *(map id:smart [block-location:ui slot:zig])
                   `@ux`data-hash.p.slot
                 :-  [epoch-num block-num]
                 slot
@@ -565,7 +565,7 @@
           ++  make-sub-cards
             |=  $:  id-type=?(%ux %ud)
                     payload-prefix=(unit [@ud @ud])
-                    =query-type:uqbar-indexer
+                    =query-type:ui
                     path-prefix=path
                 ==
             ^-  (list card)
@@ -574,16 +574,16 @@
             =/  payload=?(@u [@ud @ud @u])
               ?~  payload-prefix  id
               [-.u.payload-prefix +.u.payload-prefix id]
-            =/  old-update=(unit update:uqbar-indexer)
+            =/  old-update=(unit update:ui)
               (serve-previous-update query-type payload)
-            =/  update=(unit update:uqbar-indexer)
+            =/  update=(unit update:ui)
               (serve-most-recent-update query-type payload)
             ?:  (are-updates-same old-update update)  ~
             ?~  update  ~
             :-  ~
             %+  fact:io
               :-  %uqbar-indexer-update
-              !>(`update:uqbar-indexer`u.update)
+              !>(`update:ui`u.update)
             ~[(snoc path-prefix (scot id-type id))]
           ::
           --
@@ -677,65 +677,65 @@
 :: https://github.com/uqbar-dao/ziggurat/blob/da1d37adf538ee908945557a68387d3c87e1c32e/app/uqbar-indexer.hoon#L361:
 ::
 ++  combine-egg-updates
-  |=  updates=(list (unit [%egg eggs=(map id:smart [egg-location:uqbar-indexer egg:smart])]))
-  ^-  (unit update:uqbar-indexer)
+  |=  updates=(list (unit [%egg eggs=(map id:smart [egg-location:ui egg:smart])]))
+  ^-  (unit update:ui)
   ?~  updates  ~
-  =/  combined=(map id:smart [egg-location:uqbar-indexer egg:smart])
+  =/  combined=(map id:smart [egg-location:ui egg:smart])
     (combine-egg-updates-to-map updates)
   ?~  combined  ~
   `[%egg combined]
 ::
 ++  combine-egg-updates-to-map
-  |=  updates=(list (unit [%egg eggs=(map id:smart [egg-location:uqbar-indexer egg:smart])]))
-  ^-  (map id:smart [egg-location:uqbar-indexer egg:smart])
+  |=  updates=(list (unit [%egg eggs=(map id:smart [egg-location:ui egg:smart])]))
+  ^-  (map id:smart [egg-location:ui egg:smart])
   ?~  updates  ~
-  =/  combined=(map id:smart [egg-location:uqbar-indexer egg:smart])
-    %-  %~  gas  by  *(map id:smart [egg-location:uqbar-indexer egg:smart])
+  =/  combined=(map id:smart [egg-location:ui egg:smart])
+    %-  %~  gas  by  *(map id:smart [egg-location:ui egg:smart])
     %-  zing
     %+  turn  updates
-    |=  update=(unit [%egg eggs=(map id:smart [egg-location:uqbar-indexer egg:smart])])
+    |=  update=(unit [%egg eggs=(map id:smart [egg-location:ui egg:smart])])
     ?~  update  ~
     ~(tap by eggs.u.update)
   combined
 ::
 ++  combine-grain-updates-to-map
-  |=  updates=(list (unit [%grain grains=(map id:smart [town-location:uqbar-indexer grain:smart])]))
-  ^-  (map id:smart [town-location:uqbar-indexer grain:smart])
+  |=  updates=(list (unit [%grain grains=(map id:smart [town-location:ui grain:smart])]))
+  ^-  (map id:smart [town-location:ui grain:smart])
   ?~  updates  ~
-  =/  combined=(map id:smart [town-location:uqbar-indexer grain:smart])
-    %-  %~  gas  by  *(map id:smart [town-location:uqbar-indexer grain:smart])
+  =/  combined=(map id:smart [town-location:ui grain:smart])
+    %-  %~  gas  by  *(map id:smart [town-location:ui grain:smart])
     %-  zing
     %+  turn  updates
-    |=  update=(unit [%grain grains=(map id:smart [town-location:uqbar-indexer grain:smart])])
+    |=  update=(unit [%grain grains=(map id:smart [town-location:ui grain:smart])])
     ?~  update  ~
     ~(tap by grains.u.update)
   combined
 ::
 ++  combine-updates
-  |=  $:  egg-updates=(list (unit [%egg (map id:smart [egg-location:uqbar-indexer egg:smart])]))
-          grain-updates=(list (unit [%grain (map id:smart [town-location:uqbar-indexer grain:smart])]))
-          slot-update=(unit [%slot slots=(map id:smart [block-location:uqbar-indexer slot:zig])])
+  |=  $:  egg-updates=(list (unit [%egg (map id:smart [egg-location:ui egg:smart])]))
+          grain-updates=(list (unit [%grain (map id:smart [town-location:ui grain:smart])]))
+          slot-update=(unit [%slot slots=(map id:smart [block-location:ui slot:zig])])
       ==
-  ^-  (unit update:uqbar-indexer)
+  ^-  (unit update:ui)
   ?:  ?&  ?=(~ egg-updates)
           ?=(~ grain-updates)
           ?=(~ slot-update)
       ==
     ~
-  =/  combined-egg=(map id:smart [egg-location:uqbar-indexer egg:smart])
+  =/  combined-egg=(map id:smart [egg-location:ui egg:smart])
     (combine-egg-updates-to-map egg-updates)
-  =/  combined-grain=(map id:smart [town-location:uqbar-indexer grain:smart])
+  =/  combined-grain=(map id:smart [town-location:ui grain:smart])
     (combine-grain-updates-to-map grain-updates)
-  =/  slot=(map id:smart [block-location:uqbar-indexer slot:zig])
+  =/  slot=(map id:smart [block-location:ui slot:zig])
     ?~  slot-update
-      *(map id:smart [block-location:uqbar-indexer slot:zig])
+      *(map id:smart [block-location:ui slot:zig])
     slots.u.slot-update
   `[%hash combined-egg combined-grain slot]
 ::
 ++  are-updates-same
   ::  %.y if non-location portion of update is same
   ::  %.n if different
-  |=  [one=(unit update:uqbar-indexer) two=(unit update:uqbar-indexer)]
+  |=  [one=(unit update:ui) two=(unit update:ui)]
   ^-  ?
   ?~  one  ?=(~ two)
   ?~  two  %.n
@@ -751,10 +751,10 @@
     =/  two-eggs=(set egg:smart)
       %-  %~  gas  in  *(set egg:smart)
       %+  turn  ~(val by eggs.u.two)
-      |=  [egg-location:uqbar-indexer =egg:smart]
+      |=  [egg-location:ui =egg:smart]
       egg
     %-  %~  all  by  eggs.u.one
-    |=  [egg-location:uqbar-indexer one-egg=egg:smart]
+    |=  [egg-location:ui one-egg=egg:smart]
     (~(has in two-eggs) one-egg)
   ::
       %grain
@@ -762,10 +762,10 @@
     =/  two-grains=(set grain:smart)
       %-  %~  gas  in  *(set grain:smart)
       %+  turn  ~(val by grains.u.two)
-      |=  [town-location:uqbar-indexer =grain:smart]
+      |=  [town-location:ui =grain:smart]
       grain
     %-  %~  all  by  grains.u.one
-    |=  [town-location:uqbar-indexer one-grain=grain:smart]
+    |=  [town-location:ui one-grain=grain:smart]
     (~(has in two-grains) one-grain)
   ::
       %slot
@@ -773,21 +773,21 @@
     =/  two-slots=(set slot:zig)
       %-  %~  gas  in  *(set slot:zig)
       %+  turn  ~(val by slots.u.two)
-      |=  [block-location:uqbar-indexer =slot:zig]
+      |=  [block-location:ui =slot:zig]
       slot
     %-  %~  all  by  slots.u.one
-    |=  [block-location:uqbar-indexer one-slot=slot:zig]
+    |=  [block-location:ui one-slot=slot:zig]
     (~(has in two-slots) one-slot)
   ::
   ==
 ::
 ++  serve-update
-  |=  [=query-type:uqbar-indexer =query-payload:uqbar-indexer]
-  |^  ^-  (unit update:uqbar-indexer)
+  |=  [=query-type:ui =query-payload:ui]
+  |^  ^-  (unit update:ui)
   ?+    query-type  !!
   ::
       %chunk
-    ?.  ?=(town-location:uqbar-indexer query-payload)  ~
+    ?.  ?=(town-location:ui query-payload)  ~
     =/  slot=(unit slot:zig)
       (get-slot epoch-num.query-payload block-num.query-payload)
     ?~  slot  ~
@@ -805,39 +805,39 @@
     get-from-index
   ::
       %slot
-    ?.  ?=(block-location:uqbar-indexer query-payload)  ~
+    ?.  ?=(block-location:ui query-payload)  ~
     (get-slot-update query-payload)
   ::
   ==
   ::
   ++  get-slot-update
     |=  [epoch-num=@ud block-num=@ud]
-    ^-  (unit update:uqbar-indexer)
+    ^-  (unit update:ui)
     ?~  slot=(get-slot epoch-num block-num)  ~
     =*  block-header  p.u.slot
     :+  ~
       %slot
     %+  %~  put  by
-        *(map id:smart [block-location:uqbar-indexer slot:zig])
+        *(map id:smart [block-location:ui slot:zig])
       `@ux`data-hash.block-header
     :-  [epoch-num block-num]
     u.slot
   ::
   ++  get-chunk-update
-    ^-  (unit update:uqbar-indexer)
-    =/  locations=(list location:uqbar-indexer)
+    ^-  (unit update:ui)
+    =/  locations=(list location:ui)
       ~(tap in get-locations)
     ~|  "uqbar-indexer: chunk not unique"
     ?>  =(1 (lent locations))
-    =/  =location:uqbar-indexer  (snag 0 locations)
-    ?.  ?=(town-location:uqbar-indexer location)  ~
+    =/  =location:ui  (snag 0 locations)
+    ?.  ?=(town-location:ui location)  ~
     ?~  chunk=(get-chunk location)                ~
     `[%chunk location u.chunk]
   ::
   ++  get-from-index
-    ^-  (unit update:uqbar-indexer)
+    ^-  (unit update:ui)
     ?.  ?=(@ux query-payload)  ~
-    =/  locations=(list location:uqbar-indexer)
+    =/  locations=(list location:ui)
       ~(tap in get-locations)
     |^
     ?+    query-type  !!
@@ -861,18 +861,18 @@
       ?:  =(0 num-locations)  ~
       ~|  "uqbar-indexer: block hash not unique"
       ?>  =(1 num-locations)
-      =/  =location:uqbar-indexer  (snag 0 locations)
-      ?.  ?=(block-location:uqbar-indexer location)  ~
+      =/  =location:ui  (snag 0 locations)
+      ?.  ?=(block-location:ui location)  ~
       (get-slot-update location)
     ::
     ++  get-grain
-      =|  grains=(map grain-id=id:smart [town-location:uqbar-indexer grain:smart])
+      =|  grains=(map grain-id=id:smart [town-location:ui grain:smart])
       |-
       ?~  locations
         ?~  grains  ~
         `[%grain grains]
       =*  location  i.locations
-      ?.  ?=(town-location:uqbar-indexer location)
+      ?.  ?=(town-location:ui location)
         $(locations t.locations)
       ?~  chunk=(get-chunk location)
         $(locations t.locations)
@@ -887,13 +887,13 @@
       ==
     ::
     ++  get-egg
-      =|  eggs=(map id:smart [egg-location:uqbar-indexer egg:smart])
+      =|  eggs=(map id:smart [egg-location:ui egg:smart])
       |-
       ?~  locations
         ?~  eggs  ~
         `[%egg eggs]
       =*  location  i.locations
-      ?.  ?=(egg-location:uqbar-indexer location)
+      ?.  ?=(egg-location:ui location)
         $(locations t.locations)
       ?~  chunk=(get-chunk epoch-num.location block-num.location town-id.location)
         $(locations t.locations)  :: TODO: can we do better here?
@@ -921,10 +921,10 @@
           %grain
         %egg
       %+  roll  locations
-      |=  $:  second-order-id=location:uqbar-indexer
-              out=(unit update:uqbar-indexer)
+      |=  $:  second-order-id=location:ui
+              out=(unit update:ui)
           ==
-      =/  next-update=(unit update:uqbar-indexer)
+      =/  next-update=(unit update:ui)
         %=  get-from-index
             query-type     update-type
             query-payload  second-order-id
@@ -961,7 +961,7 @@
     --
   ::
   ++  get-locations
-    ^-  (set location:uqbar-indexer)
+    ^-  (set location:ui)
     ?>  ?=(@ux query-payload)
     ?+    query-type  !!
     ::
@@ -996,25 +996,25 @@
   |_  [epoch-num=@ud block-num=@ud]
   ++  $
     |=  [=slot:zig]
-    ^-  $:  (list [@ux block-location:uqbar-indexer])
-            (list [@ux egg-location:uqbar-indexer])
-            (list [@ux second-order-location:uqbar-indexer])
-            (list [@ux town-location:uqbar-indexer])
-            (list [@ux second-order-location:uqbar-indexer])
-            (list [@ux second-order-location:uqbar-indexer])
-            (list [@ux second-order-location:uqbar-indexer])
+    ^-  $:  (list [@ux block-location:ui])
+            (list [@ux egg-location:ui])
+            (list [@ux second-order-location:ui])
+            (list [@ux town-location:ui])
+            (list [@ux second-order-location:ui])
+            (list [@ux second-order-location:ui])
+            (list [@ux second-order-location:ui])
         ==
     ?>  ?=(^ q.slot)
     =*  block-header  p.slot
     =*  block         u.q.slot
-    =/  block-hash=(list [@ux block-location:uqbar-indexer])
+    =/  block-hash=(list [@ux block-location:ui])
       ~[[`@ux`data-hash.block-header epoch-num block-num]]  :: TODO: should key be @uvH?
-    =|  egg=(list [@ux egg-location:uqbar-indexer])
-    =|  from=(list [@ux second-order-location:uqbar-indexer])
-    =|  grain=(list [@ux town-location:uqbar-indexer])
-    =|  holder=(list [@ux second-order-location:uqbar-indexer])
-    =|  lord=(list [@ux second-order-location:uqbar-indexer])
-    =|  to=(list [@ux second-order-location:uqbar-indexer])
+    =|  egg=(list [@ux egg-location:ui])
+    =|  from=(list [@ux second-order-location:ui])
+    =|  grain=(list [@ux town-location:ui])
+    =|  holder=(list [@ux second-order-location:ui])
+    =|  lord=(list [@ux second-order-location:ui])
+    =|  to=(list [@ux second-order-location:ui])
     =/  chunks=(list [town-id=@ud =chunk:zig])  ~(tap by q.block)
     :-  block-hash
     |-
@@ -1036,12 +1036,12 @@
   ::
   ++  parse-chunk
     |=  [town-id=@ud =chunk:zig]
-    ^-  $:  (list [@ux egg-location:uqbar-indexer])
-            (list [@ux second-order-location:uqbar-indexer])
-            (list [@ux town-location:uqbar-indexer])
-            (list [@ux second-order-location:uqbar-indexer])
-            (list [@ux second-order-location:uqbar-indexer])
-            (list [@ux second-order-location:uqbar-indexer])
+    ^-  $:  (list [@ux egg-location:ui])
+            (list [@ux second-order-location:ui])
+            (list [@ux town-location:ui])
+            (list [@ux second-order-location:ui])
+            (list [@ux second-order-location:ui])
+            (list [@ux second-order-location:ui])
         ==
     =*  txs      -.chunk
     =*  granary  p.+.chunk
@@ -1052,13 +1052,13 @@
   ::
   ++  parse-granary
     |=  [town-id=@ud =granary:smart]
-    ^-  $:  (list [@ux town-location:uqbar-indexer])
-            (list [@ux second-order-location:uqbar-indexer])
-            (list [@ux second-order-location:uqbar-indexer])
+    ^-  $:  (list [@ux town-location:ui])
+            (list [@ux second-order-location:ui])
+            (list [@ux second-order-location:ui])
         ==
-    =|  parsed-grain=(list [@ux town-location:uqbar-indexer])
-    =|  parsed-holder=(list [@ux second-order-location:uqbar-indexer])
-    =|  parsed-lord=(list [@ux second-order-location:uqbar-indexer])
+    =|  parsed-grain=(list [@ux town-location:ui])
+    =|  parsed-holder=(list [@ux second-order-location:ui])
+    =|  parsed-lord=(list [@ux second-order-location:ui])
     =/  grains=(list [@ux grain:smart])
       ~(tap by granary)
     |-
@@ -1083,13 +1083,13 @@
   ::
   ++  parse-transactions
     |=  [town-id=@ud txs=(list [@ux egg:smart])]
-    ^-  $:  (list [@ux egg-location:uqbar-indexer])
-            (list [@ux second-order-location:uqbar-indexer])
-            (list [@ux second-order-location:uqbar-indexer])
+    ^-  $:  (list [@ux egg-location:ui])
+            (list [@ux second-order-location:ui])
+            (list [@ux second-order-location:ui])
         ==
-    =|  parsed-egg=(list [@ux egg-location:uqbar-indexer])
-    =|  parsed-from=(list [@ux second-order-location:uqbar-indexer])
-    =|  parsed-to=(list [@ux second-order-location:uqbar-indexer])
+    =|  parsed-egg=(list [@ux egg-location:ui])
+    =|  parsed-from=(list [@ux second-order-location:ui])
+    =|  parsed-to=(list [@ux second-order-location:ui])
     =/  egg-num=@ud  0
     |-
     ?~  txs  [parsed-egg parsed-from parsed-to]
@@ -1099,7 +1099,7 @@
     =*  from
       ?:  ?=(@ux from.p.egg)  from.p.egg
       id.from.p.egg
-    =/  =egg-location:uqbar-indexer
+    =/  =egg-location:ui
       [epoch-num block-num town-id egg-num]
     %=  $
         txs          t.txs
