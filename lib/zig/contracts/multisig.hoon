@@ -4,7 +4,7 @@
 ::  New multisigs can be generated through the %create
 ::  argument, and are stored in account-controlled rice.
 ::
-/+  *zig-sys-smart
+::/+  *zig-sys-smart
 |_  =cart
 ++  write
   |=  inp=zygote
