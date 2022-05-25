@@ -48,6 +48,7 @@
     ~
   ++  process
     |=  [args=arguments caller-id=id]
+    ^-  chick
     ?:  ?=(%create-multisig -.args)
       ::  issue a new multisig rice
       =/  new-sig-germ  [%& ~ [members.args init-thresh.args ~]]
@@ -61,7 +62,10 @@
     ?>  =(lord.my-grain me.cart)
     ?>  ?=(%& -.germ.my-grain)
     =/  state  (hole multisig-state data.p.germ.my-grain)
-    ?:  ?=(%vote -.args)
+    ::  N.B. because no type assert has been made, 
+    ::  data.p.germ.my-grain is basically * and thus has no type checking done
+    ?-    -.args
+        %vote
       ::  should emit event triggering actual call
       ::  if this sig pushes it over thresh
       ::  validate member in multisig
@@ -71,42 +75,45 @@
       =.  pending.state  (~(put by pending.state) tx-hash.args prop)
       ::  check if proposal is at threshold, execute if so
       ::  otherwise simply update rice
-      ::  TODO this doesn't seem exactly right anymore, since there is no event arm
+      ::  TODO this doesn't seem right. (also there is no event arm (?))
       ?:  (gth threshold.state ~(wyt in votes.prop))
-        =.  data.p.germ.my-grain  state
+        ::  TODO:
+        ::  exec tx.
+        ::  if the pending egg is a multisig action, just
+        ::  recurse with $
+        ::  otherwise issue a hen chick with the call.
+        :: [~ next=[to=me.cart town-id args=[me.cart ]] roost=rooster]
+        =.  data.p.germ.my-grain  state(pending (~(del by pending.state) tx-hash.args))
         [%& (malt ~[[id.my-grain my-grain]]) ~ ~]
+      =.  data.p.germ.my-grain  state
+      [%& (malt ~[[id.my-grain my-grain]]) ~ ~]
+    ::
+        %submit-tx
+      ::  validate member in multisig
+      ?.  (is-member caller-id state)  !!
+      ::  TODO is mug appropriate here?
       =.  data.p.germ.my-grain
-        state(pending (~(del by pending.state) tx-hash.args))
-      ::  TODO:
-      ::  if the pending egg is a multisig action, just
-      ::  recurse with $
-      ::  otherwise issue a hen chick with the call.
-      :: [~ next=[to=me.cart town-id args=[me.cart ]] roost=rooster]
-      *chick
-    =.  data.p.germ.my-grain
-      ?-    -.args
-          %submit-tx
-        ::  validate member in multisig
-        ?.  (is-member caller-id state)  !!
-        ::  TODO is mug appropriate here?
         state(pending (~(put by pending.state) (mug egg.args) [egg.args (silt ~[caller-id])]))
-      ::
-          %add-member
-        ::  this must be sent by contract
-        ?.  (is-me caller-id)  !!
-        state(members (~(put in members.state) id.args))
-      ::
-          %remove-member
-        ::  this must be sent by contract
-        ?.  (is-me caller-id)  !!
-        state(members (~(del in members.state) id))
-      ::
-          %set-threshold
-        ::  this must be sent by contract
-        ?.  (is-me caller-id)  !!
-        state(threshold new-thresh.args)
-      ==
-    [%& (malt ~[[id.my-grain my-grain]]) ~ ~]
+      [%& (malt ~[[id.my-grain my-grain]]) ~ ~]
+    ::
+        %add-member
+      ::  this must be sent by contract
+      ?.  (is-me caller-id)  !!
+      =.  data.p.germ.my-grain  state(members (~(put in members.state) id.args))
+      [%& (malt ~[[id.my-grain my-grain]]) ~ ~]
+    ::
+        %remove-member
+      ::  this must be sent by contract
+      ?.  (is-me caller-id)  !!
+      =.  data.p.germ.my-grain  state(members (~(del in members.state) id))
+      [%& (malt ~[[id.my-grain my-grain]]) ~ ~]
+    ::
+        %set-threshold
+      ::  this must be sent by contract
+      ?.  (is-me caller-id)  !!
+      =.  data.p.germ.my-grain  state(threshold new-thresh.args)
+      [%& (malt ~[[id.my-grain my-grain]]) ~ ~]
+    ==
   --
 ::
 ++  read
