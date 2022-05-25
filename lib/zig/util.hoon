@@ -20,6 +20,9 @@
       ~watryp-loplyd-dozzod-bacrys
       ::  hosted's testing moons
       ~ricmun-lasfer-hosted-fornet
+      ::  ~littel-wolfur's
+      ~harden-ripped-littel-wolfur
+      ~mipber
   ==
 ::  Potential future gating function:
 ::

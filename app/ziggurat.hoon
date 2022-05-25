@@ -183,9 +183,9 @@
     ::
         %new-epoch
       ?>  =(src.bowl our.bowl)
-      =/  cur=epoch  +:(need (pry:poc epochs))
-      =/  last-slot-num=@ud
-        (need (bind (pry:sot slots.cur) head))
+      =/  cur=epoch          +:(need (pry:poc epochs))
+      =/  last-slot=slot     +:(need (pry:sot slots.cur))
+      =/  last-slot-num=@ud  num.p.last-slot
       ?~  validator-set=(get-on-chain-validator-set p.globe.state)
         ::  haven't received global state yet, sit tight
         ~&  >>>  "%ziggurat: waiting to receive relay state"
@@ -222,7 +222,8 @@
         [-.+.order.new-epoch 1]
       :_  %=  state
             epochs  (put:poc epochs num.new-epoch new-epoch)
-            queue  (malt ~[[relay-town-id (~(gut by queue) relay-town-id ~)]])
+            queue   (malt ~[[relay-town-id (~(gut by queue) relay-town-id ~)]])
+            height  ?~(q.last-slot height height.u.q.last-slot)
           ==
       =+  %-  hall-update-card
           .^((unit @ud) %gx /(scot %p our.bowl)/sequencer/(scot %da now.bowl)/town-id/noun)
@@ -409,7 +410,7 @@
       ::  for efficiency's sake
       :-  cards
       %=  state
-        height  +(height)
+        height  height.block.update
         epochs  (put:poc epochs num.cur cur)
         globe   +:(~(got by chunks.block.update) relay-town-id)
       ==
@@ -441,6 +442,7 @@
       ::  if we pick their history, clear old timers if any exist
       ::  and set new ones based on latest epoch
       ::  set global state to match last block in acquired history
+      ::  TODO set block height based on theirs
       ~&  %picked-their-history^": longer blockchain"
       =/  [n=@ud =epoch]  (need (pry:poc epochs.update))
       =/  =slot

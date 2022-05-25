@@ -1,6 +1,6 @@
 /+  smart=zig-sys-smart
 |%
-++  epoch-interval  ~s10
+++  epoch-interval  ~s30
 ++  relay-town-id   0
 ::
 ::  epoch >> slot >> block >> chunk
