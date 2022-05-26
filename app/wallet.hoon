@@ -468,6 +468,8 @@
         |=  [town=@ud nonce=@ud]
         [(scot %ud town) (numb nonce)]
     ==
+      [%keys ~]
+    ``noun+!>(~(key by keys.state))
   ::
       [%account @ @ ~]
     ::  returns our account for the pubkey and town-id given
